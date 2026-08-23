@@ -30,6 +30,10 @@ describe('boardFromCells', () => {
   it('dokuz olmayan uzunlukta hata atar', () => {
     expect(() => boardFromCells([null, null])).toThrow(RangeError)
   })
+
+  it('hata mesajı beklenen ve gelen hücre sayısını bildirir', () => {
+    expect(() => boardFromCells([null, null])).toThrow('Tahta 9 hücre olmalı, 2 geldi')
+  })
 })
 
 describe('isValidMove', () => {
@@ -39,6 +43,11 @@ describe('isValidMove', () => {
 
   it('dolu hücre için false döner', () => {
     expect(isValidMove(b('....X....'), 4)).toBe(false)
+  })
+
+  it('sınırdaki geçerli indeksler için true döner', () => {
+    expect(isValidMove(EMPTY_BOARD, 0)).toBe(true)
+    expect(isValidMove(EMPTY_BOARD, 8)).toBe(true)
   })
 
   it('aralık dışı indeks için false döner', () => {
@@ -77,6 +86,18 @@ describe('applyMove', () => {
 
   it('tam sayı olmayan indekste InvalidMoveError atar', () => {
     expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(InvalidMoveError)
+  })
+
+  it('tam sayı olmayan indeksi occupied değil out-of-range sayar', () => {
+    expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(
+      expect.objectContaining({ reason: 'out-of-range' }),
+    )
+  })
+
+  it('negatif indeksi occupied değil out-of-range sayar', () => {
+    expect(() => applyMove(EMPTY_BOARD, -1, 'X')).toThrow(
+      expect.objectContaining({ reason: 'out-of-range' }),
+    )
   })
 })
 
