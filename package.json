@@ -1,0 +1,30 @@
+{
+  "name": "xox",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@11.15.1",
+  "engines": { "node": ">=24.0.0", "pnpm": ">=11.0.0" },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test --filter=!@xox/e2e",
+    "test:coverage": "turbo run test:coverage --filter=!@xox/e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip",
+    "e2e": "pnpm --filter @xox/e2e test",
+    "mutation": "pnpm --filter @xox/game-core mutation",
+    "gates": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test:coverage && pnpm knip"
+  },
+  "devDependencies": {
+    "prettier": "3.9.6",
+    "turbo": "2.10.11",
+    "typescript": "6.0.3",
+    "knip": "6.32.2",
+    "lefthook": "2.1.10",
+    "@commitlint/cli": "21.2.2",
+    "@commitlint/config-conventional": "21.2.2"
+  }
+}
