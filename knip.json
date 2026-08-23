@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "packages/*": { "entry": ["src/index.ts"], "project": ["src/**/*.ts"] },
+    "apps/web": {
+      "entry": [
+        "app/**/{page,layout,route,error,not-found,loading}.tsx",
+        "app/**/route.ts",
+        "middleware.ts",
+        "next.config.ts"
+      ],
+      "project": ["**/*.{ts,tsx}"]
+    },
+    "apps/mobile": { "entry": ["app/**/*.tsx", "app.config.ts"], "project": ["**/*.{ts,tsx}"] },
+    "apps/e2e": { "entry": ["tests/**/*.spec.ts", "playwright.config.ts"], "project": ["**/*.ts"] }
+  },
+  "ignoreDependencies": [
+    "@vitest/coverage-v8",
+    "lefthook",
+    "vitest",
+    "vite-tsconfig-paths",
+    "@vitejs/plugin-react",
+    "jsdom",
+    "@testing-library/react",
+    "@testing-library/jest-dom"
+  ],
+  "ignore": ["**/*.d.ts", "vitest.shared.ts"]
+}

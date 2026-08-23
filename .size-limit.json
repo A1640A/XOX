@@ -1,0 +1,8 @@
+[
+  {
+    "name": "web — ilk yükleme JS",
+    "path": "apps/web/.next/static/chunks/**/*.js",
+    "limit": "180 kB",
+    "gzip": true
+  }
+]
