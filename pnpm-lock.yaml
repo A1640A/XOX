@@ -105,6 +105,15 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(jiti@2.7.0)(yaml@2.9.0))
 
+  packages/shared:
+    dependencies:
+      '@xox/game-core':
+        specifier: workspace:*
+        version: link:../game-core
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
 packages:
 
   '@adobe/css-tools@4.5.0':

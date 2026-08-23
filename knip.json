@@ -15,6 +15,7 @@
     "apps/e2e": { "entry": ["tests/**/*.spec.ts", "playwright.config.ts"], "project": ["**/*.ts"] }
   },
   "ignoreDependencies": [
+    "@xox/game-core",
     "@vitest/coverage-v8",
     "lefthook",
     "vitest",
