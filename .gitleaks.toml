@@ -1,0 +1,20 @@
+title = "XOX secret taraması"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "mongodb-connection-string"
+description = "MongoDB bağlantı dizesi (kimlik bilgisi içeren)"
+regex = '''mongodb(\+srv)?:\/\/[^\s:@]+:[^\s:@]+@'''
+tags = ["database", "credentials"]
+
+[allowlist]
+description = "Örnek ve doküman dosyaları"
+paths = [
+  '''\.env\.example$''',
+  '''docs/superpowers/specs/.*\.md$''',
+]
+regexes = [
+  '''mongodb\+srv://<kullanici>:<sifre>@''',
+]
