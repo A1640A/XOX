@@ -1,0 +1,109 @@
+import { describe, expect, it } from 'vitest'
+import {
+  BOARD_SIZE,
+  EMPTY_BOARD,
+  applyMove,
+  availableMoves,
+  boardFromCells,
+  cellAt,
+  isValidMove,
+  nextPlayer,
+} from './board'
+import { InvalidMoveError } from './errors'
+import type { Board } from './types'
+
+const b = (s: string): Board =>
+  boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+
+describe('EMPTY_BOARD', () => {
+  it('dokuz boş hücreden oluşur', () => {
+    expect(EMPTY_BOARD).toHaveLength(BOARD_SIZE)
+    expect(EMPTY_BOARD.every((c) => c === null)).toBe(true)
+  })
+})
+
+describe('boardFromCells', () => {
+  it('dokuz hücreyi tahtaya çevirir', () => {
+    expect(cellAt(b('X........'), 0)).toBe('X')
+  })
+
+  it('dokuz olmayan uzunlukta hata atar', () => {
+    expect(() => boardFromCells([null, null])).toThrow(RangeError)
+  })
+})
+
+describe('isValidMove', () => {
+  it('boş hücre için true döner', () => {
+    expect(isValidMove(EMPTY_BOARD, 4)).toBe(true)
+  })
+
+  it('dolu hücre için false döner', () => {
+    expect(isValidMove(b('....X....'), 4)).toBe(false)
+  })
+
+  it('aralık dışı indeks için false döner', () => {
+    expect(isValidMove(EMPTY_BOARD, -1)).toBe(false)
+    expect(isValidMove(EMPTY_BOARD, 9)).toBe(false)
+  })
+
+  it('tam sayı olmayan indeks için false döner', () => {
+    expect(isValidMove(EMPTY_BOARD, 1.5)).toBe(false)
+  })
+})
+
+describe('applyMove', () => {
+  it('yeni tahta döner, girdiyi değiştirmez', () => {
+    const before = EMPTY_BOARD
+    const after = applyMove(before, 0, 'X')
+    expect(cellAt(after, 0)).toBe('X')
+    expect(cellAt(before, 0)).toBeNull()
+  })
+
+  it('dolu hücrede InvalidMoveError atar', () => {
+    expect(() => applyMove(b('X........'), 0, 'O')).toThrow(
+      expect.objectContaining({ name: 'InvalidMoveError', reason: 'occupied' }),
+    )
+  })
+
+  it('aralık dışı indekste InvalidMoveError atar', () => {
+    try {
+      applyMove(EMPTY_BOARD, 9, 'X')
+      expect.unreachable('hata atmalıydı')
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidMoveError)
+      expect((error as InvalidMoveError).reason).toBe('out-of-range')
+    }
+  })
+
+  it('tam sayı olmayan indekste InvalidMoveError atar', () => {
+    expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(InvalidMoveError)
+  })
+})
+
+describe('availableMoves', () => {
+  it('boş tahtada dokuz hamle döner', () => {
+    expect(availableMoves(EMPTY_BOARD)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8])
+  })
+
+  it('dolu hücreleri atlar', () => {
+    expect(availableMoves(b('XO.......'))).toEqual([2, 3, 4, 5, 6, 7, 8])
+  })
+
+  it('dolu tahtada boş dizi döner', () => {
+    expect(availableMoves(b('XOXOXOXOX'))).toEqual([])
+  })
+})
+
+describe('nextPlayer', () => {
+  it('boş tahtada X ile başlar', () => {
+    expect(nextPlayer(EMPTY_BOARD)).toBe('X')
+  })
+
+  it('X oynadıktan sonra O sırası', () => {
+    expect(nextPlayer(b('X........'))).toBe('O')
+  })
+
+  it('eşit sayıda taş varsa X sırası', () => {
+    expect(nextPlayer(b('XO.......'))).toBe('X')
+  })
+})
