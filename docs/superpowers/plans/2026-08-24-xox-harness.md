@@ -387,6 +387,7 @@ pnpm add -Dw eslint@10.9.0 @eslint/js@10.0.1 typescript-eslint@8.67.0 \
 - [ ] **Step 2: `eslint.config.mjs` yaz**
 
 ⚠️ İki ayrıntı hayati, kopyalarken atlama:
+
 - `boundaries` **v7 API'si** kullanılıyor: kural adı `boundaries/dependencies`, seçenek adı
   `policies`, hedefler `{ from: { element: { type } }, allow: { to: { element: { types } } } }`
   biçiminde sarmalanmış. Eski `element-types`/`rules` sözdizimi çalışır ama her koşuda
@@ -547,7 +548,7 @@ export default tseslint.config(
 
   // Konfig dosyaları — tip bilgisi gerektirmeyen
   {
-    files: ['**/*.config.{js,mjs,ts}', '**/*.setup.ts'],
+    files: ['**/*.config.{js,mjs,ts}', '**/*.setup.ts', 'vitest.shared.ts'],
     ...tseslint.configs.disableTypeChecked,
   },
 
@@ -587,6 +588,7 @@ Bir kuralın yazılmış olması çalıştığı anlamına gelmez. Kanıtla.
 yok; bu yüzden sonda geçici bir tsconfig ile birlikte kurulur.
 
 **Files:**
+
 - Create (geçici, sonra silinir): `packages/game-core/tsconfig.json`, `packages/game-core/src/__wall-probe.ts`
 
 - [ ] **Step 1: Geçici tsconfig ve ihlal eden dosyayı oluştur**
@@ -885,8 +887,17 @@ pnpm add -Dw @size-limit/preset-app@13.0.3 size-limit@13.0.3
     "apps/mobile": { "entry": ["app/**/*.tsx", "app.config.ts"], "project": ["**/*.{ts,tsx}"] },
     "apps/e2e": { "entry": ["tests/**/*.spec.ts", "playwright.config.ts"], "project": ["**/*.ts"] }
   },
-  "ignoreDependencies": ["@vitest/coverage-v8", "lefthook"],
-  "ignore": ["**/*.d.ts"]
+  "ignoreDependencies": [
+    "@vitest/coverage-v8",
+    "lefthook",
+    "vitest",
+    "vite-tsconfig-paths",
+    "@vitejs/plugin-react",
+    "jsdom",
+    "@testing-library/react",
+    "@testing-library/jest-dom"
+  ],
+  "ignore": ["**/*.d.ts", "vitest.shared.ts"]
 }
 ```
 
@@ -906,7 +917,12 @@ pnpm add -Dw @size-limit/preset-app@13.0.3 size-limit@13.0.3
 - [ ] **Step 3: knip'i çalıştır**
 
 Run: `pnpm knip`
-Expected: `✂️  Excellent, Knip found no issues.` (henüz kaynak yok)
+Expected: **exit code 0.** Paket/uygulama klasörleri hakkında "Configuration hints" satırları
+normaldir (workspace'ler henüz yok) ve exit code'u etkilemez.
+
+⚠️ Planın önceki sürümü `✂️ Excellent, Knip found no issues.` banner'ını bekliyordu; o satır
+yalnızca TTY'de basılır (`isShowProgress`), CI ve script bağlamında hiç görünmez. Başarı
+sinyali **exit code 0**'dır, banner değil.
 
 - [ ] **Step 4: Commit**
 
@@ -3311,6 +3327,7 @@ gerekir ve `@auth/mongodb-adapter` ile eşleşir. Sürüm yükseltirken ikisini 
 (`connection.getClient()`). Adapter'a yeni `MongoClient` verme — Atlas bağlantı limiti dolar.
 
 ## 2026-08-24 · pnpm sembolik bağlantıları boundaries kuralını sessizce öldürür
+
 `node_modules/@xox/*` pnpm'de semboliktir. `eslint-import-resolver-node` varsayılan olarak
 realpath çözmez, dolayısıyla çözülen yol `node_modules` içerir ve `@boundaries/elements`
 bunu "harici paket" sayar. Sonuç: `boundaries/dependencies` **hiçbir gerçek `@xox/*`
@@ -3319,12 +3336,14 @@ import'unda ateşlenmez** — kural var görünür, hiçbir şey korumaz.
 2026-08-24'te sonda ile hem ihlal (game-core → shared) hem izin (shared → game-core) doğrulandı.
 
 ## 2026-08-24 · `projectService: true` + kapsam dışı dosya = kural hiç çalışmaz
+
 `eslint.config.mjs` içinde `projectService: true` varken, hiçbir `tsconfig.json`'ın `include`'una
 girmeyen bir `.ts` dosyası **hiçbir kural değerlendirilmeden** "was not found by the project
 service" parse hatası verir. Yani kuralı test etmek için attığın sonda, kuralı hiç tetiklemez.
 **Yapılacak:** Yeni bir paket açarken `tsconfig.json`'ı `src/` ile aynı commit'te oluştur.
 
 ## 2026-08-24 · `eslint-plugin-jsx-a11y@6.10.2` peer'ı ESLint 10'u tanımıyor
+
 Peer aralığı `^3 – ^9`; bizde ESLint 10.9.0 var. `.npmrc`'de `strict-peer-dependencies=false`
 olduğu için kurulum ve lint sorunsuz çalışır — uyarı görmezden gelinebilir. Plugin ESLint 10
 desteği duyurunca pin güncellenmeli.
