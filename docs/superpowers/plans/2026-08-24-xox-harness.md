@@ -727,6 +727,10 @@ export default {
         'board',
         'deps',
         'docs',
+        // plan/hafıza dokümanı güncellemeleri ve Task 34'ün ci(deploy) commit'i için:
+        'plan',
+        'memory',
+        'deploy',
       ],
     ],
     'subject-case': [0],
@@ -3204,7 +3208,7 @@ pnpm gates    # typecheck + lint + format:check + test:coverage + knip
 
 ## Commit kuralı
 
-`<tip>(<kapsam>): <özet>` — kapsam: `web·mobile·e2e·core·shared·db·ui·ci·claude·board·deps·docs`
+`<tip>(<kapsam>): <özet>` — kapsam: `web·mobile·e2e·core·shared·db·ui·ci·claude·board·deps·docs·plan·memory·deploy`
 ````
 
 - [ ] **Step 2: Satır sayısını doğrula**
