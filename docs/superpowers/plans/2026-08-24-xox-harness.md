@@ -149,7 +149,16 @@ echo "24" > .nvmrc
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# pnpm 11 postinstall script'lerini varsayılan olarak engeller. lefthook'un tüm işlevi
+# postinstall'da git hook'larını kurmaktır — onaylanmazsa bağımlılık etkisiz kalır ve
+# `pnpm install` ERR_PNPM_IGNORED_BUILDS ile exit 1 verir.
+allowBuilds:
+  lefthook: true
 ```
+
+Not: lefthook'un postinstall'ı örnek içerikli bir `lefthook.yml` üretir. Onu commit etme —
+gerçek konfigürasyon Task 7'de yazılıp üzerine geçilecek.
 
 - [ ] **Step 4: `.npmrc` — katı çözümleme**
 
@@ -3117,6 +3126,11 @@ gerekir ve `@auth/mongodb-adapter` ile eşleşir. Sürüm yükseltirken ikisini 
 ## 2026-08-24 · Auth.js adapter'ı mongoose'u değil `mongodb` sürücüsünü ister
 İki ayrı bağlantı havuzu açmamak için `getMongoClient()` mongoose'un istemcisini paylaşır
 (`connection.getClient()`). Adapter'a yeni `MongoClient` verme — Atlas bağlantı limiti dolar.
+
+## 2026-08-24 · pnpm 11 postinstall script'lerini engeller
+`pnpm install` ilk kez koşarken `ERR_PNPM_IGNORED_BUILDS` ile exit 1 verir ve
+`pnpm-workspace.yaml`'a `allowBuilds` yer tutucusu yazar. lefthook için `true` yapılmalı —
+yoksa git hook'ları hiç kurulmaz ve tüm pre-commit kapıları sessizce devre dışı kalır.
 
 ## 2026-08-24 · `expo-router@~7.0.0` canary kurar
 expo-router artık Expo SDK ile hizalı sürümleniyor: SDK 57 için doğru sürüm `57.0.15`.
