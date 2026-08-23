@@ -825,6 +825,9 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 export const sharedConfig = defineConfig({
   plugins: [tsconfigPaths()],
   test: {
+    // Çöken bir Stryker koşusu .stryker-tmp/ bırakır; içindeki test kopyaları
+    // toplanırsa test sayısı iki katına çıkar ve sonuç yanıltıcı olur.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.stryker-tmp/**'],
     globals: false,
     clearMocks: true,
     restoreMocks: true,
@@ -953,13 +956,22 @@ git commit -m "chore: knip ölü kod tespiti ve bundle boyut bütçesi"
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "mutation": "stryker run"
+  },
+  "devDependencies": {
+    "@stryker-mutator/api": "10.0.0",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/vitest-runner": "10.0.0",
+    "@vitest/coverage-v8": "4.1.11",
+    "vitest": "4.1.11"
   }
 }
 ```
@@ -1060,7 +1072,6 @@ git commit -m "feat(core): game-core paket iskeleti ve alan tipleri"
 - [ ] **Step 1: Başarısız testi yaz**
 
 ```ts
-// packages/game-core/src/board.test.ts
 import { describe, expect, it } from 'vitest'
 import {
   BOARD_SIZE,
@@ -1076,7 +1087,7 @@ import { InvalidMoveError } from './errors'
 import type { Board } from './types'
 
 const b = (s: string): Board =>
-  boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+  boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
 
 describe('EMPTY_BOARD', () => {
   it('dokuz boş hücreden oluşur', () => {
@@ -1093,6 +1104,10 @@ describe('boardFromCells', () => {
   it('dokuz olmayan uzunlukta hata atar', () => {
     expect(() => boardFromCells([null, null])).toThrow(RangeError)
   })
+
+  it('hata mesajı beklenen ve gelen hücre sayısını bildirir', () => {
+    expect(() => boardFromCells([null, null])).toThrow('Tahta 9 hücre olmalı, 2 geldi')
+  })
 })
 
 describe('isValidMove', () => {
@@ -1102,6 +1117,11 @@ describe('isValidMove', () => {
 
   it('dolu hücre için false döner', () => {
     expect(isValidMove(b('....X....'), 4)).toBe(false)
+  })
+
+  it('sınırdaki geçerli indeksler için true döner', () => {
+    expect(isValidMove(EMPTY_BOARD, 0)).toBe(true)
+    expect(isValidMove(EMPTY_BOARD, 8)).toBe(true)
   })
 
   it('aralık dışı indeks için false döner', () => {
@@ -1123,7 +1143,7 @@ describe('applyMove', () => {
   })
 
   it('dolu hücrede InvalidMoveError atar', () => {
-    expect(() => applyMove(b('X........'), 0, 'O')).toThrowError(
+    expect(() => applyMove(b('X........'), 0, 'O')).toThrow(
       expect.objectContaining({ name: 'InvalidMoveError', reason: 'occupied' }),
     )
   })
@@ -1140,6 +1160,18 @@ describe('applyMove', () => {
 
   it('tam sayı olmayan indekste InvalidMoveError atar', () => {
     expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(InvalidMoveError)
+  })
+
+  it('tam sayı olmayan indeksi occupied değil out-of-range sayar', () => {
+    expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(
+      expect.objectContaining({ reason: 'out-of-range' }),
+    )
+  })
+
+  it('negatif indeksi occupied değil out-of-range sayar', () => {
+    expect(() => applyMove(EMPTY_BOARD, -1, 'X')).toThrow(
+      expect.objectContaining({ reason: 'out-of-range' }),
+    )
   })
 })
 
@@ -1241,7 +1273,7 @@ export function nextPlayer(board: Board): Player {
 - [ ] **Step 4: Testi çalıştır — GEÇMELİ**
 
 Run: `pnpm --filter @xox/game-core test`
-Expected: `Test Files  1 passed (1)` · `Tests  16 passed (16)`
+Expected: `Test Files  1 passed (1)` · `Tests  17 passed (17)`
 
 - [ ] **Step 5: Commit**
 
@@ -1261,14 +1293,13 @@ git commit -m "feat(core): tahta işlemleri — değişmez uygulama, katı hamle
 - [ ] **Step 1: Başarısız testi yaz**
 
 ```ts
-// packages/game-core/src/status.test.ts
 import { describe, expect, it } from 'vitest'
 import { boardFromCells } from './board'
 import { WIN_LINES, evaluateStatus } from './status'
 import type { Board } from './types'
 
 const b = (s: string): Board =>
-  boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+  boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
 
 describe('WIN_LINES', () => {
   it('sekiz kazanma hattı içerir', () => {
@@ -1354,7 +1385,7 @@ export function evaluateStatus(board: Board): GameStatus {
 - [ ] **Step 4: Testi çalıştır — GEÇMELİ**
 
 Run: `pnpm --filter @xox/game-core test`
-Expected: `Tests  27 passed (27)`
+Expected: `Tests  31 passed (31)`
 
 - [ ] **Step 5: Commit**
 
@@ -1374,7 +1405,6 @@ git commit -m "feat(core): kazanma/beraberlik değerlendirmesi — sekiz hat, ka
 - [ ] **Step 1: Başarısız testi yaz**
 
 ```ts
-// packages/game-core/src/ai.test.ts
 import { describe, expect, it } from 'vitest'
 import { EMPTY_BOARD, applyMove, availableMoves, boardFromCells } from './board'
 import { evaluateStatus } from './status'
@@ -1383,7 +1413,7 @@ import { InvalidMoveError } from './errors'
 import type { Board, Player } from './types'
 
 const b = (s: string): Board =>
-  boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+  boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
 
 /** Sabit diziden değer üreten sahte rastgele sayı üreteci — deterministik test için. */
 const seededRng = (values: readonly number[]): (() => number) => {
@@ -1397,7 +1427,7 @@ describe('bestMove', () => {
   })
 
   it('rakibin kazanmasını engeller', () => {
-    expect(bestMove(b('OO.X.X...'), 'X')).toBe(2)
+    expect(bestMove(b('OO.X..X..'), 'X')).toBe(2)
   })
 
   it('kazanmayı engellemeye tercih eder', () => {
@@ -1406,9 +1436,22 @@ describe('bestMove', () => {
   })
 
   it('hamle kalmamışsa InvalidMoveError atar', () => {
-    expect(() => bestMove(b('XOXXOOOXX'), 'X')).toThrowError(
-      expect.objectContaining({ reason: 'game-over' }),
+    expect(() => bestMove(b('XOXXOOOXX'), 'X')).toThrow(
+      expect.objectContaining({ index: -1, reason: 'game-over' }),
     )
+  })
+
+  it('eşit puanlı hamlelerde ilkini seçer — seçim deterministiktir', () => {
+    // Boş tahtada her hamle beraberlikle biter; sunucu otoritesi için sonuç
+    // yeniden üretilebilir olmalı, bu yüzden ilk en iyi hamle korunur.
+    expect(bestMove(EMPTY_BOARD, 'X')).toBe(0)
+  })
+
+  it('hemen kazanabilecekken kazancı bir tura ertelemez', () => {
+    // 3 oynanırsa 3-4-5 ile hemen kazanır. 6 da kazandırır (O'yu bloklar ve
+    // 2 ile 3'te çifte tehdit kurar) ama bir hamle sonra: derinlik cezası
+    // olmadan AI erteleyeni seçerdi.
+    expect(bestMove(b('....XX.OO'), 'X')).toBe(3)
   })
 })
 
@@ -1440,6 +1483,12 @@ describe('unbeatable zorluk', () => {
     expect(status.kind === 'draw' || (status.kind === 'won' && status.winner === 'O')).toBe(true)
   })
 
+  it('ikinci oynayan mükemmel AI, ilk boşluğu oynayan rakibe karşı da kaybetmez', () => {
+    const final = playFullGame('O', (board) => availableMoves(board)[0] ?? 0)
+    const status = evaluateStatus(final)
+    expect(status.kind === 'draw' || (status.kind === 'won' && status.winner === 'O')).toBe(true)
+  })
+
   it('iki mükemmel AI karşılaşırsa beraberlik olur', () => {
     let board = EMPTY_BOARD
     let status = evaluateStatus(board)
@@ -1464,6 +1513,35 @@ describe('chooseMove', () => {
     expect(chooseMove(b('XX.OO....'), 'X', 'medium', seededRng([0.9, 0]))).toBe(2)
   })
 
+  // Aşağıdaki tahtada en iyi hamle 2 (O'nun 0-1-2 tehdidini bloklar); boş
+  // hücreler [2, 4, 5, 7, 8] olduğundan rng=0.9 rastgele seçiciyi 8'e götürür.
+  // Böylece "en iyi" ile "rastgele" birbirinden ayırt edilebilir.
+  const forkBoard = 'OO.X..X..'
+
+  it('easy zorlukta en iyi hamleyi değil rastgele hamleyi oynar', () => {
+    expect(chooseMove(b(forkBoard), 'X', 'easy', seededRng([0.9, 0]))).toBe(8)
+  })
+
+  it('easy zorlukta rng 1 dönse bile son geçerli hamleyi seçer', () => {
+    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => 1)).toBe(8)
+  })
+
+  it('medium zorlukta rng < 0.5 ise rastgeleyi değil en iyiyi oynar', () => {
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.1, 0.9]))).toBe(2)
+  })
+
+  it('medium zorlukta rng >= 0.5 ise en iyiyi değil rastgeleyi oynar', () => {
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.9, 0.9]))).toBe(8)
+  })
+
+  it('medium zorlukta rng tam 0.5 ise rastgele oynar — sınır dahil değil', () => {
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.5, 0.9]))).toBe(8)
+  })
+
+  it('unbeatable zorlukta rastgeleliği yok sayar', () => {
+    expect(chooseMove(b(forkBoard), 'X', 'unbeatable', seededRng([0.9, 0.9]))).toBe(2)
+  })
+
   it('geçerli bir hamle indeksi döndürür', () => {
     const move = chooseMove(EMPTY_BOARD, 'X', 'easy')
     expect(availableMoves(EMPTY_BOARD)).toContain(move)
@@ -1471,6 +1549,9 @@ describe('chooseMove', () => {
 
   it('hamle kalmamışsa InvalidMoveError atar', () => {
     expect(() => chooseMove(b('XOXXOOOXX'), 'X', 'easy')).toThrow(InvalidMoveError)
+    expect(() => chooseMove(b('XOXXOOOXX'), 'X', 'easy')).toThrow(
+      expect.objectContaining({ index: -1, reason: 'game-over' }),
+    )
   })
 })
 ```
@@ -1497,9 +1578,14 @@ function opponentOf(player: Player): Player {
 /**
  * Çağıranlar listenin boş olmadığını önceden doğrular; bu yüzden burada
  * test edilemeyecek savunmacı bir dal açmak yerine tek daraltma yapılır.
+ *
+ * Kural çakışması: `non-nullable-type-assertion-style` burada `!` ister,
+ * `no-non-null-assertion` ise `!` kullanımını yasaklar. İkisi aynı anda
+ * sağlanamadığı için stil kuralı tek satırda susturulur.
  */
 function pickRandom(moves: readonly number[], rng: () => number): number {
   const index = Math.min(Math.floor(rng() * moves.length), moves.length - 1)
+  // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- `!` yasak
   return moves[index] as number
 }
 
@@ -1563,7 +1649,7 @@ export function chooseMove(
 - [ ] **Step 4: Testi çalıştır — GEÇMELİ**
 
 Run: `pnpm --filter @xox/game-core test`
-Expected: `Tests  39 passed (39)` — boş tahtadan minimax birkaç saniye sürebilir, normaldir.
+Expected: `Tests  43 passed (43)` — boş tahtadan minimax birkaç saniye sürebilir, normaldir.
 
 - [ ] **Step 5: Kapsamı doğrula — %100 olmalı**
 
@@ -1638,6 +1724,10 @@ pnpm add -D --filter @xox/game-core @stryker-mutator/core@10.0.0 @stryker-mutato
 export default {
   packageManager: 'pnpm',
   testRunner: 'vitest',
+  // pnpm sembolik bağ kurar; Stryker'ın varsayılan '@stryker-mutator/*' glob'u
+  // sembolik bağları izlemediği için eklenti açıkça belirtilir.
+  plugins: ['@stryker-mutator/vitest-runner'],
+  inPlace: true,
   reporters: ['html', 'clear-text', 'progress'],
   htmlReporter: { fileName: '../../reports/mutation/game-core.html' },
   coverageAnalysis: 'perTest',
@@ -1647,17 +1737,72 @@ export default {
 }
 ```
 
-- [ ] **Step 3: Çalıştır**
+- [ ] **Step 3: `packages/game-core/src/errors.test.ts` yaz**
+
+Mutasyon testi, yalnızca hata _sınıfını_ kontrol eden testlerin bozuk bir hata mesajını
+yakalamadığını ortaya çıkarır. Bu dosya o boşluğu kapatır:
+
+```ts
+import { describe, expect, it } from 'vitest'
+import { InvalidMoveError } from './errors'
+
+describe('InvalidMoveError', () => {
+  it('indeksi ve sebebi mesajda bildirir', () => {
+    expect(new InvalidMoveError(4, 'occupied').message).toBe('Geçersiz hamle: 4 (occupied)')
+  })
+
+  it('her sebep için mesajı ayrı ayrı biçimlendirir', () => {
+    expect(new InvalidMoveError(-1, 'game-over').message).toBe('Geçersiz hamle: -1 (game-over)')
+    expect(new InvalidMoveError(9, 'out-of-range').message).toBe('Geçersiz hamle: 9 (out-of-range)')
+  })
+
+  it('adını, indeksini ve sebebini alan olarak taşır', () => {
+    const error = new InvalidMoveError(2, 'occupied')
+    expect(error.name).toBe('InvalidMoveError')
+    expect(error.index).toBe(2)
+    expect(error.reason).toBe('occupied')
+  })
+
+  it('Error alt sınıfıdır', () => {
+    expect(new InvalidMoveError(0, 'occupied')).toBeInstanceOf(Error)
+  })
+})
+```
+
+- [ ] **Step 4: Çalıştır**
 
 Run: `pnpm --filter @xox/game-core mutation`
 Expected: `Mutation score: 9X.XX%` ve `break` eşiği (90) aşıldığı için exit code 0.
 
 Skor 90'ın altındaysa: rapor `reports/mutation/game-core.html`'de hangi mutantların hayatta kaldığını gösterir. Her hayatta kalan mutant, bir testin bir davranışı gerçekten doğrulamadığı anlamına gelir — test ekle, kodu değiştirme.
 
-- [ ] **Step 4: Commit**
+⚠️ **İlk koşu %90'ın altında çıkar (~%83) — bu beklenen.** Planın temel testleri davranışı
+tam kapatmaz. Hayatta kalan mutantları öldürmek için **yalnızca test ekle**; implementasyonu
+değiştirme, eşiği düşürme. Eklenmesi gereken testler (2026-08-24'te ölçüldü):
+
+| Nerede           | Ne eklenmeli                                                                                       | Öldürdüğü mutant                    |
+| ---------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `errors.test.ts` | Hata mesajının içeriği, alanlar, `instanceof Error`                                                | `super('')`                         |
+| `board.test.ts`  | `RangeError` mesaj içeriği                                                                         | mesaj mutantı                       |
+| `board.test.ts`  | `isValidMove` sınır indeksleri 0 ve 8                                                              | `index <= 0`                        |
+| `board.test.ts`  | `applyMove(2.5)` ve `applyMove(-1)` **`reason: 'out-of-range'`** dönmeli (`'occupied'` değil)      | 3 guard mutantı                     |
+| `ai.test.ts`     | Boş tahtada deterministik ilk-en-iyi seçimi                                                        | `>` → `>=`                          |
+| `ai.test.ts`     | `bestMove(b('....XX.OO')) === 3` — kazancı geciktirmemeli                                          | `WIN_SCORE + depth`                 |
+| `ai.test.ts`     | AI'ın O olduğu dördüncü playout eşleşmesi                                                          | `current === maximizing` ternary ×2 |
+| `ai.test.ts`     | Her iki throw noktasında `index: -1`, `reason: 'game-over'`                                        | throw mutantları                    |
+| `ai.test.ts`     | `chooseMove`: en-iyi ≠ rastgele olan bir tahtada easy/medium/unbeatable ayrımı, `rng()` tam 0.5'te | zorluk dalları                      |
+
+Bu testler eklendikten sonra skor **%94.58** olur. Kalan 9 mutantın tamamı `board.ts`'te ve
+**eşdeğer mutant**tır (öldürmek erişilemez savunmacı dal eklemeyi gerektirir, o da %100 dal
+kapsamasını bozar): `isValidMove` guard'ında 7 tane (guard kaldırılsa bile `undefined === null`
+zaten `false` döner), `availableMoves`'ta `i <= BOARD_SIZE` (fazladan tur `undefined` okur,
+hiçbir şey eklemez), `nextPlayer`'da `placed -= 1` (parite negasyona simetrik).
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add packages/game-core/stryker.config.mjs package.json pnpm-lock.yaml
+git add packages/game-core/stryker.config.mjs packages/game-core/src/errors.test.ts \
+  packages/game-core/src packages/game-core/package.json pnpm-lock.yaml
 git commit -m "test(core): Stryker mutasyon testi, %90 kırılma eşiği"
 ```
 
@@ -3329,6 +3474,25 @@ gerekir ve `@auth/mongodb-adapter` ile eşleşir. Sürüm yükseltirken ikisini 
 
 İki ayrı bağlantı havuzu açmamak için `getMongoClient()` mongoose'un istemcisini paylaşır
 (`connection.getClient()`). Adapter'a yeni `MongoClient` verme — Atlas bağlantı limiti dolar.
+
+## 2026-08-24 · Stryker pnpm monorepo'da iki ek ayar ister
+
+`plugins: ['@stryker-mutator/vitest-runner']` — pnpm plugin'i sembolik bağlar, Stryker'ın
+varsayılan `@stryker-mutator/*` glob'u sembolik bağlantı izlemez → `Cannot find TestRunner
+plugin "vitest"`. Ve `inPlace: true` — Stryker sandbox'ı yalnızca paket klasörünü kopyalar,
+dolayısıyla `vitest.config.ts`'teki `'../../vitest.shared'` importu sandbox içinde çözülemez.
+`inPlace` kaynakları yerinde mutasyona uğratıp koşu sonunda geri yükler.
+
+## 2026-08-24 · Çöken Stryker koşusu test sayısını iki katına çıkarır
+
+Koşu çökerse `.stryker-tmp/` geride kalır; vitest oradaki test kopyalarını da toplar ve
+`60 test` yerine `146 test` görürsün. `vitest.shared.ts` içindeki `exclude` bunu kapatıyor —
+o satırı silme. Elle temizlik: `rm -rf packages/*/.stryker-tmp`.
+
+## 2026-08-24 · `non-nullable-type-assertion-style` ile `no-non-null-assertion` çakışıyor
+
+`moves[index] as number` yazınca birincisi `!` kullan der, ikincisi `!`'i yasaklar. Çıkış yolu
+tek satırlık gerekçeli `eslint-disable-next-line`. Kök konfigürasyonu bunun için değiştirme.
 
 ## 2026-08-24 · pnpm sembolik bağlantıları boundaries kuralını sessizce öldürür
 
