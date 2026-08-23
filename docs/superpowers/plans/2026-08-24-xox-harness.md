@@ -386,6 +386,16 @@ pnpm add -Dw eslint@10.9.0 @eslint/js@10.0.1 typescript-eslint@8.67.0 \
 
 - [ ] **Step 2: `eslint.config.mjs` yaz**
 
+⚠️ İki ayrıntı hayati, kopyalarken atlama:
+- `boundaries` **v7 API'si** kullanılıyor: kural adı `boundaries/dependencies`, seçenek adı
+  `policies`, hedefler `{ from: { element: { type } }, allow: { to: { element: { types } } } }`
+  biçiminde sarmalanmış. Eski `element-types`/`rules` sözdizimi çalışır ama her koşuda
+  deprecation basar.
+- `settings['import/resolver'].node.preserveSymlinks = false` **zorunlu.** pnpm workspace
+  paketleri `node_modules/@xox/*` altında sembolik bağlantıdır; realpath çözülmezse yol
+  `node_modules` içerdiği için boundaries onu "harici paket" sayar ve kural **hiçbir gerçek
+  paketler-arası import'ta ateşlenmez.**
+
 ```js
 // eslint.config.mjs
 import js from '@eslint/js'
@@ -437,6 +447,12 @@ export default tseslint.config(
     },
     plugins: { 'import-x': importX, security, boundaries },
     settings: {
+      // pnpm workspace paketleri (@xox/*) node_modules altında symlink olarak durur.
+      // preserveSymlinks:false olmadan çözümleyici gerçek yolu değil symlink yolunu
+      // döndürür; bu da eslint-plugin-boundaries'in yerel paketleri "external" sanıp
+      // sınır kontrolünü sessizce atlamasına yol açar. Bu ayar olmadan boundaries
+      // kuralı paket-adı importlarında (gerçek kullanım şekli) asla tetiklenmez.
+      'import/resolver': { node: { preserveSymlinks: false } },
       'boundaries/elements': [
         { type: 'game-core', pattern: 'packages/game-core/**' },
         { type: 'shared', pattern: 'packages/shared/**' },
@@ -457,18 +473,34 @@ export default tseslint.config(
       'security/detect-object-injection': 'off',
       'no-console': ['error', { allow: ['warn', 'error'] }],
       'import-x/no-cycle': 'error',
-      'boundaries/element-types': [
+      // v7 API: kural adı 'element-types' -> 'dependencies', seçenek 'rules' -> 'policies'.
+      // game-core ve ui-tokens için politika tanımlanmadı: default: 'disallow' zaten
+      // hiçbir hedefe izin vermeme davranışını sağlıyor (eski `allow: []` ile eşdeğer).
+      'boundaries/dependencies': [
         'error',
         {
           default: 'disallow',
-          rules: [
-            { from: 'game-core', allow: [] },
-            { from: 'ui-tokens', allow: [] },
-            { from: 'shared', allow: ['game-core'] },
-            { from: 'db', allow: ['shared', 'game-core'] },
-            { from: 'web', allow: ['db', 'shared', 'game-core', 'ui-tokens'] },
-            { from: 'mobile', allow: ['shared', 'game-core', 'ui-tokens'] },
-            { from: 'e2e', allow: ['shared'] },
+          policies: [
+            {
+              from: { element: { type: 'shared' } },
+              allow: { to: { element: { type: 'game-core' } } },
+            },
+            {
+              from: { element: { type: 'db' } },
+              allow: { to: { element: { types: ['shared', 'game-core'] } } },
+            },
+            {
+              from: { element: { type: 'web' } },
+              allow: { to: { element: { types: ['db', 'shared', 'game-core', 'ui-tokens'] } } },
+            },
+            {
+              from: { element: { type: 'mobile' } },
+              allow: { to: { element: { types: ['shared', 'game-core', 'ui-tokens'] } } },
+            },
+            {
+              from: { element: { type: 'e2e' } },
+              allow: { to: { element: { type: 'shared' } } },
+            },
           ],
         },
       ],
@@ -509,7 +541,7 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
-      'boundaries/element-types': 'off',
+      'boundaries/dependencies': 'off',
     },
   },
 
@@ -3277,6 +3309,14 @@ gerekir ve `@auth/mongodb-adapter` ile eşleşir. Sürüm yükseltirken ikisini 
 
 İki ayrı bağlantı havuzu açmamak için `getMongoClient()` mongoose'un istemcisini paylaşır
 (`connection.getClient()`). Adapter'a yeni `MongoClient` verme — Atlas bağlantı limiti dolar.
+
+## 2026-08-24 · pnpm sembolik bağlantıları boundaries kuralını sessizce öldürür
+`node_modules/@xox/*` pnpm'de semboliktir. `eslint-import-resolver-node` varsayılan olarak
+realpath çözmez, dolayısıyla çözülen yol `node_modules` içerir ve `@boundaries/elements`
+bunu "harici paket" sayar. Sonuç: `boundaries/dependencies` **hiçbir gerçek `@xox/*`
+import'unda ateşlenmez** — kural var görünür, hiçbir şey korumaz.
+**Yapılacak:** `settings['import/resolver'].node.preserveSymlinks = false`. Bunu kaldırma.
+2026-08-24'te sonda ile hem ihlal (game-core → shared) hem izin (shared → game-core) doğrulandı.
 
 ## 2026-08-24 · `projectService: true` + kapsam dışı dosya = kural hiç çalışmaz
 `eslint.config.mjs` içinde `projectService: true` varken, hiçbir `tsconfig.json`'ın `include`'una
