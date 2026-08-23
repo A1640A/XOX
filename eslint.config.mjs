@@ -48,6 +48,12 @@ export default tseslint.config(
     },
     plugins: { 'import-x': importX, security, boundaries },
     settings: {
+      // pnpm workspace paketleri (@xox/*) node_modules altında symlink olarak durur.
+      // preserveSymlinks:false olmadan çözümleyici gerçek yolu değil symlink yolunu
+      // döndürür; bu da eslint-plugin-boundaries'in yerel paketleri "external" sanıp
+      // sınır kontrolünü sessizce atlamasına yol açar. Bu ayar olmadan boundaries
+      // kuralı paket-adı importlarında (gerçek kullanım şekli) asla tetiklenmez.
+      'import/resolver': { node: { preserveSymlinks: false } },
       'boundaries/elements': [
         { type: 'game-core', pattern: 'packages/game-core/**' },
         { type: 'shared', pattern: 'packages/shared/**' },
@@ -68,18 +74,34 @@ export default tseslint.config(
       'security/detect-object-injection': 'off',
       'no-console': ['error', { allow: ['warn', 'error'] }],
       'import-x/no-cycle': 'error',
-      'boundaries/element-types': [
+      // v7 API: kural adı 'element-types' -> 'dependencies', seçenek 'rules' -> 'policies'.
+      // game-core ve ui-tokens için politika tanımlanmadı: default: 'disallow' zaten
+      // hiçbir hedefe izin vermeme davranışını sağlıyor (eski `allow: []` ile eşdeğer).
+      'boundaries/dependencies': [
         'error',
         {
           default: 'disallow',
-          rules: [
-            { from: 'game-core', allow: [] },
-            { from: 'ui-tokens', allow: [] },
-            { from: 'shared', allow: ['game-core'] },
-            { from: 'db', allow: ['shared', 'game-core'] },
-            { from: 'web', allow: ['db', 'shared', 'game-core', 'ui-tokens'] },
-            { from: 'mobile', allow: ['shared', 'game-core', 'ui-tokens'] },
-            { from: 'e2e', allow: ['shared'] },
+          policies: [
+            {
+              from: { element: { type: 'shared' } },
+              allow: { to: { element: { type: 'game-core' } } },
+            },
+            {
+              from: { element: { type: 'db' } },
+              allow: { to: { element: { types: ['shared', 'game-core'] } } },
+            },
+            {
+              from: { element: { type: 'web' } },
+              allow: { to: { element: { types: ['db', 'shared', 'game-core', 'ui-tokens'] } } },
+            },
+            {
+              from: { element: { type: 'mobile' } },
+              allow: { to: { element: { types: ['shared', 'game-core', 'ui-tokens'] } } },
+            },
+            {
+              from: { element: { type: 'e2e' } },
+              allow: { to: { element: { type: 'shared' } } },
+            },
           ],
         },
       ],
@@ -120,7 +142,7 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
-      'boundaries/element-types': 'off',
+      'boundaries/dependencies': 'off',
     },
   },
 
