@@ -549,44 +549,84 @@ git commit -m "chore: ESLint strict-type-checked + bağımlılık sınırları +
 
 Bir kuralın yazılmış olması çalıştığı anlamına gelmez. Kanıtla.
 
+⚠️ **Sıralama tuzağı:** `eslint.config.mjs` içinde `projectService: true` var. Hiçbir
+`tsconfig.json`'ın `include`'una girmeyen bir `.ts` dosyası, **hiçbir kural çalışmadan önce**
+"was not found by the project service" parse hatası verir. Bu noktada henüz paket tsconfig'i
+yok; bu yüzden sonda geçici bir tsconfig ile birlikte kurulur.
+
 **Files:**
+- Create (geçici, sonra silinir): `packages/game-core/tsconfig.json`, `packages/game-core/src/__wall-probe.ts`
 
-- Create (geçici): `packages/game-core/src/__wall-probe.ts`
-
-- [ ] **Step 1: İhlal eden dosyayı oluştur**
+- [ ] **Step 1: Geçici tsconfig ve ihlal eden dosyayı oluştur**
 
 ```bash
 mkdir -p packages/game-core/src
+cat > packages/game-core/tsconfig.json <<'TSEOF'
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src/**/*.ts"]
+}
+TSEOF
 cat > packages/game-core/src/__wall-probe.ts <<'PROBE'
 import { test } from '@playwright/test'
 export const probe = test
 PROBE
 ```
 
-- [ ] **Step 2: Lint çalıştır — HATA VERMELİ**
+- [ ] **Step 2: Lint çalıştır — PLAYWRIGHT HATASI vermeli**
 
-Run: `pnpm lint packages/game-core/src/__wall-probe.ts`
-Expected: `error  Playwright YALNIZCA apps/e2e içinde kullanılır...  no-restricted-imports` — exit code 1.
+Run: `pnpm exec eslint packages/game-core/src/__wall-probe.ts`
 
-Hata gelmezse ESLint konfigürasyonunda `no-restricted-imports` kuralı uygulanmıyordur; Task 5 Step 2'yi tekrar kontrol et.
+Expected: çıktıda şu geçmeli —
+`Playwright YALNIZCA apps/e2e içinde kullanılır` ve kural adı `no-restricted-imports`, exit code 1.
 
-- [ ] **Step 3: Sondayı sil**
+Bunun yerine `was not found by the project service` görüyorsan geçici tsconfig oluşmamıştır.
+Bunun yerine **hiç hata yoksa** ESLint konfigürasyonunda `no-restricted-imports` uygulanmıyordur;
+Task 5 Step 2'yi tekrar kontrol et — kuralı düzeltmeden ilerleme.
+
+- [ ] **Step 3: apps/e2e istisnasının çalıştığını da kanıtla**
 
 ```bash
-rm packages/game-core/src/__wall-probe.ts
+mkdir -p apps/e2e/tests
+cat > apps/e2e/tsconfig.json <<'TSEOF'
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["**/*.ts"]
+}
+TSEOF
+cat > apps/e2e/tests/__wall-probe.spec.ts <<'PROBE'
+import { test } from '@playwright/test'
+export const probe = test
+PROBE
 ```
 
-- [ ] **Step 4: Lint tekrar temiz**
+Run: `pnpm exec eslint apps/e2e/tests/__wall-probe.spec.ts`
+Expected: `no-restricted-imports` hatası **YOK** (yalnızca çözülemeyen modül kaynaklı tip
+uyarıları olabilir — `@playwright/test` henüz kurulu değil, o normaldir).
+
+Duvar yalnızca engelliyorsa yarım iştir; doğru yerde **izin verdiğini** de kanıtlaman gerekir.
+
+- [ ] **Step 4: Tüm sondaları sil**
+
+```bash
+rm -rf packages apps
+```
+
+- [ ] **Step 5: Lint tekrar temiz**
 
 Run: `pnpm lint`
-Expected: exit code 0.
+Expected: exit code 0, çıktı yok.
 
-- [ ] **Step 5: Bulguyu hafızaya yaz**
+Run: `git status --short`
+Expected: çıktı yok — hiçbir sonda geride kalmamalı.
 
-`docs/memory/conventions.md` dosyasına ekle (dosya Task 22'de oluşur; henüz yoksa bu adımı Task 22 sonrasına ertele):
+- [ ] **Step 6: Bulguyu hafızaya yaz**
+
+`docs/memory/conventions.md` Task 25'te oluşur. O görev tamamlandığında şu satırı ekle:
 
 ```markdown
-- Playwright duvarı ESLint `no-restricted-imports` ile zorlanır ve `2026-08-24` tarihinde ihlal sondası ile doğrulandı.
+- Playwright duvarı ESLint `no-restricted-imports` ile zorlanır; hem engellediği (packages/**)
+  hem izin verdiği (apps/e2e) yön 2026-08-24'te sonda ile doğrulandı.
 ```
 
 ---
@@ -3238,11 +3278,24 @@ gerekir ve `@auth/mongodb-adapter` ile eşleşir. Sürüm yükseltirken ikisini 
 İki ayrı bağlantı havuzu açmamak için `getMongoClient()` mongoose'un istemcisini paylaşır
 (`connection.getClient()`). Adapter'a yeni `MongoClient` verme — Atlas bağlantı limiti dolar.
 
+## 2026-08-24 · `projectService: true` + kapsam dışı dosya = kural hiç çalışmaz
+`eslint.config.mjs` içinde `projectService: true` varken, hiçbir `tsconfig.json`'ın `include`'una
+girmeyen bir `.ts` dosyası **hiçbir kural değerlendirilmeden** "was not found by the project
+service" parse hatası verir. Yani kuralı test etmek için attığın sonda, kuralı hiç tetiklemez.
+**Yapılacak:** Yeni bir paket açarken `tsconfig.json`'ı `src/` ile aynı commit'te oluştur.
+
+## 2026-08-24 · `eslint-plugin-jsx-a11y@6.10.2` peer'ı ESLint 10'u tanımıyor
+Peer aralığı `^3 – ^9`; bizde ESLint 10.9.0 var. `.npmrc`'de `strict-peer-dependencies=false`
+olduğu için kurulum ve lint sorunsuz çalışır — uyarı görmezden gelinebilir. Plugin ESLint 10
+desteği duyurunca pin güncellenmeli.
+
 ## 2026-08-24 · pnpm 11 postinstall script'lerini engeller
 
 `pnpm install` ilk kez koşarken `ERR_PNPM_IGNORED_BUILDS` ile exit 1 verir ve
-`pnpm-workspace.yaml`'a `allowBuilds` yer tutucusu yazar. lefthook için `true` yapılmalı —
-yoksa git hook'ları hiç kurulmaz ve tüm pre-commit kapıları sessizce devre dışı kalır.
+`pnpm-workspace.yaml`'a `allowBuilds` yer tutucusu yazar. Şu ana kadar iki paket bunu tetikledi:
+`lefthook` (git hook'larını postinstall'da kurar — onaylanmazsa tüm pre-commit kapıları sessizce
+devre dışı kalır) ve `unrs-resolver` (`eslint-plugin-import-x`'in native resolver'ı — onaylanmazsa
+`pnpm install` ve `pnpm lint` hard-fail eder). İkisi de `true`.
 
 ## 2026-08-24 · `expo-router@~7.0.0` canary kurar
 
