@@ -14,37 +14,37 @@
 
 ## Sürüm matrisi (doğrulandı 2026-08-24 — bunları değiştirme)
 
-| Paket | Sürüm | Not |
-|---|---|---|
-| node | 24 | `.nvmrc` |
-| pnpm | 11.15.1 | `packageManager` alanı |
-| **typescript** | **6.0.3** | ⚠️ **7.0.2 KULLANMA** — `typescript-eslint@8.67` peer'ı `<6.1.0`. TS 7 = lint katmanı yok |
-| turbo | 2.10.11 | |
-| next | 16.3.2 | App Router |
-| react / react-dom | 19.2.8 | |
-| tailwindcss | 4.3.3 | v4 — CSS-first, `tailwind.config.js` yok |
-| next-auth | 5.0.0-beta.32 | `next-auth@beta`. v4 latest ama App Router için v5 gerekli |
-| @auth/mongodb-adapter | 3.11.3 | `mongodb` sürücüsünü kullanır, mongoose'u değil — bağlantı paylaşılacak |
-| mongoose | 9.9.3 | |
-| @vercel/functions | 3.9.5 | `experimental_upgradeWebSocket` |
-| zod | 4.4.3 | |
-| eslint | 10.9.0 | flat config |
-| typescript-eslint | 8.67.0 | |
-| eslint-plugin-boundaries | 7.2.0 | |
-| prettier | 3.9.6 | |
-| vitest / @vitest/coverage-v8 | 4.1.11 | |
-| @playwright/test | 1.62.1 | **yalnız `apps/e2e`** |
-| expo | 57.0.15 | |
-| react-native | 0.87.0 | |
-| react-native-web | 0.21.2 | |
-| expo-router | 57.0.15 | ⚠️ **`~7.0.0` YAZMA** — 7.x sürümleri canary. expo-router SDK ile hizalı sürümlenir |
-| @stryker-mutator/core | 10.0.0 | yalnız `game-core` |
-| knip | 6.32.2 | |
-| lefthook | 2.1.10 | |
-| @commitlint/cli | 21.2.2 | |
-| size-limit | 13.0.3 | |
-| mongodb-memory-server | 11.2.0 | |
-| gitleaks | brew | ⚠️ npm'deki `gitleaks@1.0.0` sahte — `brew install gitleaks` |
+| Paket                        | Sürüm         | Not                                                                                       |
+| ---------------------------- | ------------- | ----------------------------------------------------------------------------------------- |
+| node                         | 24            | `.nvmrc`                                                                                  |
+| pnpm                         | 11.15.1       | `packageManager` alanı                                                                    |
+| **typescript**               | **6.0.3**     | ⚠️ **7.0.2 KULLANMA** — `typescript-eslint@8.67` peer'ı `<6.1.0`. TS 7 = lint katmanı yok |
+| turbo                        | 2.10.11       |                                                                                           |
+| next                         | 16.3.2        | App Router                                                                                |
+| react / react-dom            | 19.2.8        |                                                                                           |
+| tailwindcss                  | 4.3.3         | v4 — CSS-first, `tailwind.config.js` yok                                                  |
+| next-auth                    | 5.0.0-beta.32 | `next-auth@beta`. v4 latest ama App Router için v5 gerekli                                |
+| @auth/mongodb-adapter        | 3.11.3        | `mongodb` sürücüsünü kullanır, mongoose'u değil — bağlantı paylaşılacak                   |
+| mongoose                     | 9.9.3         |                                                                                           |
+| @vercel/functions            | 3.9.5         | `experimental_upgradeWebSocket`                                                           |
+| zod                          | 4.4.3         |                                                                                           |
+| eslint                       | 10.9.0        | flat config                                                                               |
+| typescript-eslint            | 8.67.0        |                                                                                           |
+| eslint-plugin-boundaries     | 7.2.0         |                                                                                           |
+| prettier                     | 3.9.6         |                                                                                           |
+| vitest / @vitest/coverage-v8 | 4.1.11        |                                                                                           |
+| @playwright/test             | 1.62.1        | **yalnız `apps/e2e`**                                                                     |
+| expo                         | 57.0.15       |                                                                                           |
+| react-native                 | 0.87.0        |                                                                                           |
+| react-native-web             | 0.21.2        |                                                                                           |
+| expo-router                  | 57.0.15       | ⚠️ **`~7.0.0` YAZMA** — 7.x sürümleri canary. expo-router SDK ile hizalı sürümlenir       |
+| @stryker-mutator/core        | 10.0.0        | yalnız `game-core`                                                                        |
+| knip                         | 6.32.2        |                                                                                           |
+| lefthook                     | 2.1.10        |                                                                                           |
+| @commitlint/cli              | 21.2.2        |                                                                                           |
+| size-limit                   | 13.0.3        |                                                                                           |
+| mongodb-memory-server        | 11.2.0        |                                                                                           |
+| gitleaks                     | brew          | ⚠️ npm'deki `gitleaks@1.0.0` sahte — `brew install gitleaks`                              |
 
 ---
 
@@ -82,15 +82,15 @@ XOX/
 
 ### Sorumluluk sınırları
 
-| Birim | Tek sorumluluğu | Bağımlılığı |
-|---|---|---|
-| `game-core` | XOX kuralları + AI. Saf fonksiyonlar, I/O yok, framework yok | hiçbiri |
-| `shared` | İstemci↔sunucu sözleşmesi (zod). Davranış içermez | `game-core` |
-| `db` | Kalıcılık. Mongoose modelleri + bağlantı + seed/reset | `shared`, `game-core` |
-| `ui-tokens` | Görsel sabitler. Bileşen içermez | hiçbiri |
-| `web` | Next.js sunum + API. Kural mantığı içermez — `game-core`'a delege eder | hepsi |
-| `mobile` | Expo sunum. Kural mantığı içermez | `shared`, `game-core`, `ui-tokens` |
-| `e2e` | Kara kutu doğrulama. Uygulama koduna **import edemez** | `shared` (yalnız tipler) |
+| Birim       | Tek sorumluluğu                                                        | Bağımlılığı                        |
+| ----------- | ---------------------------------------------------------------------- | ---------------------------------- |
+| `game-core` | XOX kuralları + AI. Saf fonksiyonlar, I/O yok, framework yok           | hiçbiri                            |
+| `shared`    | İstemci↔sunucu sözleşmesi (zod). Davranış içermez                      | `game-core`                        |
+| `db`        | Kalıcılık. Mongoose modelleri + bağlantı + seed/reset                  | `shared`, `game-core`              |
+| `ui-tokens` | Görsel sabitler. Bileşen içermez                                       | hiçbiri                            |
+| `web`       | Next.js sunum + API. Kural mantığı içermez — `game-core`'a delege eder | hepsi                              |
+| `mobile`    | Expo sunum. Kural mantığı içermez                                      | `shared`, `game-core`, `ui-tokens` |
+| `e2e`       | Kara kutu doğrulama. Uygulama koduna **import edemez**                 | `shared` (yalnız tipler)           |
 
 ---
 
@@ -99,6 +99,7 @@ XOX/
 ### Task 1: Workspace kökü ve sürüm sabitleme
 
 **Files:**
+
 - Create: `package.json`, `pnpm-workspace.yaml`, `.nvmrc`, `.npmrc`, `.editorconfig`
 
 - [ ] **Step 1: Node sürümünü sabitle**
@@ -204,6 +205,7 @@ git commit -m "chore: pnpm workspace kökü ve sürüm sabitleme"
 ### Task 2: TypeScript taban konfigürasyonu
 
 **Files:**
+
 - Create: `tsconfig.base.json`, `tsconfig.json`
 
 - [ ] **Step 1: `tsconfig.base.json` — katı ayarlar**
@@ -272,6 +274,7 @@ git commit -m "chore: katı TypeScript taban konfigürasyonu (6.0.3 pinli)"
 ### Task 3: Turborepo pipeline
 
 **Files:**
+
 - Create: `turbo.json`
 
 - [ ] **Step 1: `turbo.json`**
@@ -314,6 +317,7 @@ git commit -m "chore: Turborepo pipeline tanımı"
 ### Task 4: Prettier
 
 **Files:**
+
 - Create: `.prettierrc.json`, `.prettierignore`
 
 - [ ] **Step 1: `.prettierrc.json`**
@@ -366,6 +370,7 @@ Bu fazın çıktısı: **hiçbir agent'ın atlayamayacağı mekanik kapılar.** 
 ### Task 5: ESLint flat config — strict-type-checked
 
 **Files:**
+
 - Create: `eslint.config.mjs`
 - Modify: `package.json` (devDependencies)
 
@@ -410,7 +415,17 @@ const PLAYWRIGHT_WALL = {
 }
 
 export default tseslint.config(
-  { ignores: ['**/node_modules/**', '**/.next/**', '**/.expo/**', '**/dist/**', '**/coverage/**', '**/.turbo/**', 'reports/**'] },
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/.expo/**',
+      '**/dist/**',
+      '**/coverage/**',
+      '**/.turbo/**',
+      'reports/**',
+    ],
+  },
 
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -535,6 +550,7 @@ git commit -m "chore: ESLint strict-type-checked + bağımlılık sınırları +
 Bir kuralın yazılmış olması çalıştığı anlamına gelmez. Kanıtla.
 
 **Files:**
+
 - Create (geçici): `packages/game-core/src/__wall-probe.ts`
 
 - [ ] **Step 1: İhlal eden dosyayı oluştur**
@@ -578,6 +594,7 @@ Expected: exit code 0.
 ### Task 7: Lefthook + commitlint + gitleaks
 
 **Files:**
+
 - Create: `lefthook.yml`, `commitlint.config.mjs`, `.gitleaks.toml`
 
 - [ ] **Step 1: gitleaks kur (npm paketi SAHTE — brew kullan)**
@@ -586,6 +603,7 @@ Expected: exit code 0.
 brew install gitleaks
 gitleaks version
 ```
+
 Expected: `v8.x.x` gibi bir sürüm.
 
 - [ ] **Step 2: `.gitleaks.toml`**
@@ -622,7 +640,20 @@ export default {
     'scope-enum': [
       2,
       'always',
-      ['web', 'mobile', 'e2e', 'core', 'shared', 'db', 'ui', 'ci', 'claude', 'board', 'deps', 'docs'],
+      [
+        'web',
+        'mobile',
+        'e2e',
+        'core',
+        'shared',
+        'db',
+        'ui',
+        'ci',
+        'claude',
+        'board',
+        'deps',
+        'docs',
+      ],
     ],
     'subject-case': [0],
     'header-max-length': [2, 'always', 100],
@@ -638,11 +669,11 @@ pre-commit:
   commands:
     gitleaks:
       run: gitleaks protect --staged --redact --config .gitleaks.toml
-      fail_text: "🔴 SECRET TESPİT EDİLDİ — repo PUBLIC. Commit engellendi."
+      fail_text: '🔴 SECRET TESPİT EDİLDİ — repo PUBLIC. Commit engellendi.'
     format:
       glob: '*.{ts,tsx,js,mjs,json,md,yml,yaml,css}'
       run: pnpm exec prettier --check {staged_files}
-      fail_text: "Biçim hatası — `pnpm format` çalıştır."
+      fail_text: 'Biçim hatası — `pnpm format` çalıştır.'
     lint:
       glob: '*.{ts,tsx}'
       run: pnpm exec eslint --max-warnings=0 {staged_files}
@@ -663,6 +694,7 @@ pre-push:
 ```bash
 pnpm exec lefthook install
 ```
+
 Expected: `sync hooks: ✔️ (pre-commit, commit-msg, pre-push)`
 
 - [ ] **Step 6: Secret engelini KANITLA**
@@ -673,6 +705,7 @@ cp /tmp/leak-probe.ts ./leak-probe.ts
 git add leak-probe.ts
 git commit -m "test: secret sondası" || echo "ENGELLENDİ — beklenen davranış"
 ```
+
 Expected: `🔴 SECRET TESPİT EDİLDİ` ve commit **başarısız**.
 
 - [ ] **Step 7: Sondayı temizle**
@@ -693,6 +726,7 @@ git commit -m "chore: lefthook + commitlint + gitleaks pre-commit kapıları"
 ### Task 8: Vitest workspace ve kapsam eşikleri
 
 **Files:**
+
 - Create: `vitest.shared.ts`
 
 - [ ] **Step 1: Vitest bağımlılıklarını kur**
@@ -732,12 +766,12 @@ kullanılmayan dosya olarak işaretleyip kapıları kırardı.
 
 - [ ] **Step 3: Kapsam eşiği politikası (her pakette uygulanacak, referans)**
 
-| Paket | lines | branches | functions | statements |
-|---|---|---|---|---|
-| `game-core` | 100 | 100 | 100 | 100 |
-| `shared` | 90 | 90 | 90 | 90 |
-| `db` | 90 | 85 | 90 | 90 |
-| `web` | 70 | 65 | 70 | 70 |
+| Paket       | lines | branches | functions | statements |
+| ----------- | ----- | -------- | --------- | ---------- |
+| `game-core` | 100   | 100      | 100       | 100        |
+| `shared`    | 90    | 90       | 90        | 90         |
+| `db`        | 90    | 85       | 90        | 90         |
+| `web`       | 70    | 65       | 70        | 70         |
 
 Bu eşikler her paketin kendi `vitest.config.ts`'inde `coverage.thresholds` olarak yazılır (Task 10, 12, 13, 16).
 
@@ -753,6 +787,7 @@ git commit -m "chore: Vitest ortak konfigürasyonu ve kapsam eşiği politikası
 ### Task 9: knip ve size-limit
 
 **Files:**
+
 - Create: `knip.json`, `.size-limit.json`
 
 - [ ] **Step 1: knip kur ve yapılandır**
@@ -767,7 +802,12 @@ pnpm add -Dw @size-limit/preset-app@13.0.3 size-limit@13.0.3
   "workspaces": {
     "packages/*": { "entry": ["src/index.ts"], "project": ["src/**/*.ts"] },
     "apps/web": {
-      "entry": ["app/**/{page,layout,route,error,not-found,loading}.tsx", "app/**/route.ts", "middleware.ts", "next.config.ts"],
+      "entry": [
+        "app/**/{page,layout,route,error,not-found,loading}.tsx",
+        "app/**/route.ts",
+        "middleware.ts",
+        "next.config.ts"
+      ],
       "project": ["**/*.{ts,tsx}"]
     },
     "apps/mobile": { "entry": ["app/**/*.tsx", "app.config.ts"], "project": ["**/*.{ts,tsx}"] },
@@ -810,6 +850,7 @@ git commit -m "chore: knip ölü kod tespiti ve bundle boyut bütçesi"
 ### Task 10: `@xox/game-core` — paket iskeleti ve tipler
 
 **Files:**
+
 - Create: `packages/game-core/package.json`, `packages/game-core/tsconfig.json`, `packages/game-core/vitest.config.ts`, `packages/game-core/src/types.ts`, `packages/game-core/src/errors.ts`
 
 - [ ] **Step 1: `packages/game-core/package.json`**
@@ -906,6 +947,7 @@ export class InvalidMoveError extends Error {
 pnpm add -D --filter @xox/game-core vitest@4.1.11 @vitest/coverage-v8@4.1.11
 pnpm --filter @xox/game-core typecheck
 ```
+
 Expected: çıktı yok, exit code 0.
 
 - [ ] **Step 7: Commit**
@@ -920,6 +962,7 @@ git commit -m "feat(core): game-core paket iskeleti ve alan tipleri"
 ### Task 11: Tahta işlemleri — TDD
 
 **Files:**
+
 - Create: `packages/game-core/src/board.ts`, `packages/game-core/src/board.test.ts`
 
 - [ ] **Step 1: Başarısız testi yaz**
@@ -940,7 +983,8 @@ import {
 import { InvalidMoveError } from './errors'
 import type { Board } from './types'
 
-const b = (s: string): Board => boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+const b = (s: string): Board =>
+  boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
 
 describe('EMPTY_BOARD', () => {
   it('dokuz boş hücreden oluşur', () => {
@@ -1119,6 +1163,7 @@ git commit -m "feat(core): tahta işlemleri — değişmez uygulama, katı hamle
 ### Task 12: Oyun durumu değerlendirme — TDD
 
 **Files:**
+
 - Create: `packages/game-core/src/status.ts`, `packages/game-core/src/status.test.ts`
 
 - [ ] **Step 1: Başarısız testi yaz**
@@ -1130,7 +1175,8 @@ import { boardFromCells } from './board'
 import { WIN_LINES, evaluateStatus } from './status'
 import type { Board } from './types'
 
-const b = (s: string): Board => boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+const b = (s: string): Board =>
+  boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
 
 describe('WIN_LINES', () => {
   it('sekiz kazanma hattı içerir', () => {
@@ -1230,6 +1276,7 @@ git commit -m "feat(core): kazanma/beraberlik değerlendirmesi — sekiz hat, ka
 ### Task 13: Minimax AI — TDD
 
 **Files:**
+
 - Create: `packages/game-core/src/ai.ts`, `packages/game-core/src/ai.test.ts`
 
 - [ ] **Step 1: Başarısız testi yaz**
@@ -1243,7 +1290,8 @@ import { bestMove, chooseMove } from './ai'
 import { InvalidMoveError } from './errors'
 import type { Board, Player } from './types'
 
-const b = (s: string): Board => boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+const b = (s: string): Board =>
+  boardFromCells([...s].map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
 
 /** Sabit diziden değer üreten sahte rastgele sayı üreteci — deterministik test için. */
 const seededRng = (values: readonly number[]): (() => number) => {
@@ -1279,9 +1327,7 @@ describe('unbeatable zorluk', () => {
       const status = evaluateStatus(board)
       if (status.kind !== 'playing') break
       const move =
-        status.turn === aiPlayer
-          ? chooseMove(board, aiPlayer, 'unbeatable')
-          : humanPicks(board)
+        status.turn === aiPlayer ? chooseMove(board, aiPlayer, 'unbeatable') : humanPicks(board)
       board = applyMove(board, move, status.turn)
     }
     return board
@@ -1444,12 +1490,22 @@ git commit -m "feat(core): derinlik cezalı minimax AI ve üç zorluk seviyesi"
 ### Task 14: `game-core` dışa aktarım yüzeyi
 
 **Files:**
+
 - Create: `packages/game-core/src/index.ts`
 
 - [ ] **Step 1: `packages/game-core/src/index.ts`**
 
 ```ts
-export { BOARD_SIZE, EMPTY_BOARD, applyMove, availableMoves, boardFromCells, cellAt, isValidMove, nextPlayer } from './board'
+export {
+  BOARD_SIZE,
+  EMPTY_BOARD,
+  applyMove,
+  availableMoves,
+  boardFromCells,
+  cellAt,
+  isValidMove,
+  nextPlayer,
+} from './board'
 export { WIN_LINES, evaluateStatus } from './status'
 export { bestMove, chooseMove } from './ai'
 export { InvalidMoveError } from './errors'
@@ -1474,6 +1530,7 @@ git commit -m "feat(core): genel API yüzeyi"
 ### Task 15: Stryker mutasyon testi — "yeşil ama yalancı test" savunması
 
 **Files:**
+
 - Create: `packages/game-core/stryker.config.mjs`
 
 - [ ] **Step 1: Stryker kur**
@@ -1519,6 +1576,7 @@ git commit -m "test(core): Stryker mutasyon testi, %90 kırılma eşiği"
 `shared` davranış içermez. Yalnızca istemci ve sunucunun **aynı** şemayı kullanmasını garanti eder.
 
 **Files:**
+
 - Create: `packages/shared/package.json`, `packages/shared/tsconfig.json`, `packages/shared/vitest.config.ts`, `packages/shared/src/constants.ts`, `packages/shared/src/ws-protocol.ts`, `packages/shared/src/ws-protocol.test.ts`, `packages/shared/src/index.ts`
 
 - [ ] **Step 1: Paket iskeleti**
@@ -1621,7 +1679,9 @@ describe('clientMessageSchema', () => {
   })
 
   it('aşırı uzun emojiyi reddeder', () => {
-    expect(clientMessageSchema.safeParse({ type: 'chat:emoji', emoji: 'x'.repeat(99) }).success).toBe(false)
+    expect(
+      clientMessageSchema.safeParse({ type: 'chat:emoji', emoji: 'x'.repeat(99) }).success,
+    ).toBe(false)
   })
 })
 
@@ -1707,7 +1767,12 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
     /** Monotonik sürüm — istemci iyimser güncellemeyi bununla geri alır. */
     version: z.number().int().nonnegative(),
   }),
-  z.object({ type: z.literal('move:applied'), index: moveIndexSchema, by: playerSchema, version: z.number().int() }),
+  z.object({
+    type: z.literal('move:applied'),
+    index: moveIndexSchema,
+    by: playerSchema,
+    version: z.number().int(),
+  }),
   z.object({ type: z.literal('move:rejected'), index: moveIndexSchema, reason: z.string() }),
   z.object({ type: z.literal('opponent:joined'), userId: z.string(), seat: playerSchema }),
   z.object({ type: z.literal('opponent:left'), userId: z.string() }),
@@ -1747,6 +1812,7 @@ git commit -m "feat(shared): zod tabanlı WS protokolü ve oda kodu sözleşmesi
 ### Task 17: `@xox/db` — kalıcılık katmanı
 
 **Files:**
+
 - Create: `packages/db/package.json`, `packages/db/tsconfig.json`, `packages/db/vitest.config.ts`, `packages/db/src/client.ts`, `packages/db/src/models/{user,room,game}.ts`, `packages/db/src/room-code.ts`, `packages/db/src/room-code.test.ts`, `packages/db/src/seed.ts`, `packages/db/src/reset.ts`, `packages/db/src/index.ts`
 
 - [ ] **Step 1: Paket iskeleti ve bağımlılıklar**
@@ -1800,7 +1866,9 @@ const cache: MongooseCache = (globalForMongoose.__xoxMongoose ??= { conn: null, 
 export function getMongoUri(): string {
   const uri = process.env['MONGODB_URI']
   if (uri === undefined || uri === '') {
-    throw new Error('MONGODB_URI tanımlı değil. .env.local veya Vercel ortam değişkenlerini kontrol et.')
+    throw new Error(
+      'MONGODB_URI tanımlı değil. .env.local veya Vercel ortam değişkenlerini kontrol et.',
+    )
   }
   return uri
 }
@@ -1871,7 +1939,8 @@ const userSchema = new Schema<UserDoc>(
   { timestamps: true, collection: 'users', _id: false },
 )
 
-export const User: Model<UserDoc> = (models['User'] as Model<UserDoc>) ?? model<UserDoc>('User', userSchema)
+export const User: Model<UserDoc> =
+  (models['User'] as Model<UserDoc>) ?? model<UserDoc>('User', userSchema)
 ```
 
 - [ ] **Step 4: `packages/db/src/models/room.ts`**
@@ -1895,8 +1964,20 @@ export interface RoomDoc {
 
 const roomSchema = new Schema<RoomDoc>(
   {
-    code: { type: String, required: true, unique: true, uppercase: true, minlength: 6, maxlength: 6 },
-    state: { type: String, enum: ['waiting', 'playing', 'finished'], default: 'waiting', index: true },
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+      minlength: 6,
+      maxlength: 6,
+    },
+    state: {
+      type: String,
+      enum: ['waiting', 'playing', 'finished'],
+      default: 'waiting',
+      index: true,
+    },
     seats: {
       X: { type: String, default: null },
       O: { type: String, default: null },
@@ -1910,7 +1991,8 @@ const roomSchema = new Schema<RoomDoc>(
 // Terk edilmiş odalar kendiliğinden temizlenir.
 roomSchema.index({ updatedAt: 1 }, { expireAfterSeconds: ROOM_TTL_SECONDS })
 
-export const Room: Model<RoomDoc> = (models['Room'] as Model<RoomDoc>) ?? model<RoomDoc>('Room', roomSchema)
+export const Room: Model<RoomDoc> =
+  (models['Room'] as Model<RoomDoc>) ?? model<RoomDoc>('Room', roomSchema)
 ```
 
 - [ ] **Step 5: `packages/db/src/models/game.ts`**
@@ -1958,7 +2040,8 @@ const gameSchema = new Schema<GameDoc>(
 
 gameSchema.index({ finishedAt: -1 })
 
-export const Game: Model<GameDoc> = (models['Game'] as Model<GameDoc>) ?? model<GameDoc>('Game', gameSchema)
+export const Game: Model<GameDoc> =
+  (models['Game'] as Model<GameDoc>) ?? model<GameDoc>('Game', gameSchema)
 ```
 
 - [ ] **Step 6: Oda kodu üretimi — önce başarısız test**
@@ -2111,6 +2194,7 @@ git commit -m "feat(db): mongoose modelleri, paylaşımlı bağlantı, oda kodu 
 ### Task 18: `@xox/ui-tokens` — görsel sabitler
 
 **Files:**
+
 - Create: `packages/ui-tokens/package.json`, `packages/ui-tokens/tsconfig.json`, `packages/ui-tokens/src/{colors,spacing,typography,index}.ts`
 
 - [ ] **Step 1: Paket iskeleti**
@@ -2205,6 +2289,7 @@ git commit -m "feat(ui): web ve mobil için paylaşılan tasarım tokenları"
 ### Task 19: `apps/web` — Next.js iskeleti
 
 **Files:**
+
 - Create: `apps/web/package.json`, `apps/web/tsconfig.json`, `apps/web/next.config.ts`, `apps/web/postcss.config.mjs`, `apps/web/vitest.config.ts`, `apps/web/app/{layout.tsx,page.tsx,globals.css}`, `apps/web/messages/tr.ts`, `.env.example`
 
 - [ ] **Step 1: `apps/web/package.json`**
@@ -2351,7 +2436,11 @@ export const metadata: Metadata = {
   description: tr.app.tagline,
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }): React.ReactElement {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}): React.ReactElement {
   return (
     <html lang="tr">
       <body className="min-h-dvh antialiased">{children}</body>
@@ -2407,6 +2496,7 @@ git commit -m "feat(web): Next.js 16 iskeleti, Tailwind v4, merkezî Türkçe me
 ### Task 20: Sağlık ve MongoDB ping uç noktası — TDD
 
 **Files:**
+
 - Create: `apps/web/app/api/health/route.ts`, `apps/web/app/api/health/route.test.ts`, `apps/web/vitest.config.ts`
 
 - [ ] **Step 1: `apps/web/vitest.config.ts`**
@@ -2516,12 +2606,13 @@ git commit -m "feat(web): sağlık uç noktası ve MongoDB erişilebilirlik kont
 
 ### Task 21: WebSocket echo uç noktası — **en büyük riskin kanıtı**
 
-Bu görev tüm gece koşusunun dayandığı varsayımı test eder: *Vercel Fluid Compute üzerinde
-WebSocket gerçekten çalışıyor mu?* Çalışmıyorsa tasarımdaki Redis yedeğine geçilir.
+Bu görev tüm gece koşusunun dayandığı varsayımı test eder: _Vercel Fluid Compute üzerinde
+WebSocket gerçekten çalışıyor mu?_ Çalışmıyorsa tasarımdaki Redis yedeğine geçilir.
 
 API doğrulandı: `vercel.com/docs/functions/websockets`.
 
 **Files:**
+
 - Create: `apps/web/app/api/ws/echo/route.ts`
 
 - [ ] **Step 1: `apps/web/app/api/ws/echo/route.ts`**
@@ -2575,6 +2666,7 @@ Vercel preview deploy'una karşı yapılır. Yerelde başarısız olması işi d
 ### Task 22: `apps/mobile` — Expo, native + web hedefi
 
 **Files:**
+
 - Create: `apps/mobile/package.json`, `apps/mobile/tsconfig.json`, `apps/mobile/app.json`, `apps/mobile/babel.config.js`, `apps/mobile/metro.config.js`, `apps/mobile/app/{_layout.tsx,index.tsx}`
 
 - [ ] **Step 1: `apps/mobile/package.json`**
@@ -2620,6 +2712,7 @@ Vercel preview deploy'una karşı yapılır. Yerelde başarısız olması işi d
 pnpm install
 pnpm --filter @xox/mobile exec expo install --fix
 ```
+
 Expected: Expo, SDK 57 ile uyumlu olmayan sürümleri düzeltir. `package.json` değişebilir — bu beklenen davranıştır.
 
 - [ ] **Step 3: `apps/mobile/metro.config.js` — pnpm monorepo çözümlemesi**
@@ -2748,6 +2841,7 @@ git commit -m "feat(mobile): Expo 57 iskeleti, monorepo Metro çözümlemesi, we
 ### Task 23: `apps/e2e` — izole Playwright projesi
 
 **Files:**
+
 - Create: `apps/e2e/package.json`, `apps/e2e/tsconfig.json`, `apps/e2e/playwright.config.ts`, `apps/e2e/fixtures/two-players.ts`, `apps/e2e/tests/smoke.spec.ts`
 
 - [ ] **Step 1: `apps/e2e/package.json`**
@@ -2872,7 +2966,7 @@ test.describe('harness duman testleri', () => {
     expect(await response.json()).toMatchObject({ ok: true })
   })
 
-  test('iki oyuncu fixture\'ı iki bağımsız oturum verir', async ({ twoPlayers }) => {
+  test("iki oyuncu fixture'ı iki bağımsız oturum verir", async ({ twoPlayers }) => {
     await Promise.all([twoPlayers.playerOne.goto('/'), twoPlayers.playerTwo.goto('/')])
     await expect(twoPlayers.playerOne.getByRole('heading', { name: 'XOX' })).toBeVisible()
     await expect(twoPlayers.playerTwo.getByRole('heading', { name: 'XOX' })).toBeVisible()
@@ -2890,7 +2984,9 @@ test.describe('WebSocket kanıtı', () => {
         reject(new Error('WebSocket 10 saniyede yanıt vermedi'))
       }, 10_000)
 
-      socket.on('open', () => { socket.send('merhaba') })
+      socket.on('open', () => {
+        socket.send('merhaba')
+      })
       socket.on('message', (data) => {
         clearTimeout(timer)
         socket.close()
@@ -2915,6 +3011,7 @@ sleep 8
 E2E_BASE_URL=http://localhost:3000 pnpm --filter @xox/e2e test --grep "ana sayfa"
 kill %1
 ```
+
 Expected: `1 passed`
 
 - [ ] **Step 8: Commit**
@@ -2933,6 +3030,7 @@ git commit -m "test(e2e): izole Playwright projesi, iki oyunculu fixture, WS kan
 Bu dosya **her zaman context'te** olur. 200 satırı geçmemeli — `xox-memory-curator` bütçesini korur.
 
 **Files:**
+
 - Create: `CLAUDE.md`
 
 - [ ] **Step 1: `CLAUDE.md` yaz**
@@ -2953,29 +3051,29 @@ Türkçe XOX oyunu. Web (Next.js → Vercel) + mobil (Expo). Online oda, gerçek
 
 ## Dizin haritası
 
-| Yol | İçerik |
-|---|---|
+| Yol                  | İçerik                                                      |
+| -------------------- | ----------------------------------------------------------- |
 | `packages/game-core` | Kural motoru + minimax AI. Saf TS, bağımlılıksız, %100 test |
-| `packages/shared` | zod şemaları — WS protokolü, oda kodu sözleşmesi |
-| `packages/db` | Mongoose modelleri, bağlantı, seed/reset |
-| `packages/ui-tokens` | Web + mobil ortak tasarım tokenları |
-| `apps/web` | Next.js 16 App Router |
-| `apps/mobile` | Expo 57 (native + web hedefi) |
-| `apps/e2e` | 🎭 Playwright — İZOLE |
-| `docs/board/` | Görev panosu, journal, raporlar — **lead'in hafızası** |
-| `docs/memory/` | Kararlar, tuzaklar, konvansiyonlar, API sözleşmesi |
-| `.claude/agents/` | 18 uzman agent |
+| `packages/shared`    | zod şemaları — WS protokolü, oda kodu sözleşmesi            |
+| `packages/db`        | Mongoose modelleri, bağlantı, seed/reset                    |
+| `packages/ui-tokens` | Web + mobil ortak tasarım tokenları                         |
+| `apps/web`           | Next.js 16 App Router                                       |
+| `apps/mobile`        | Expo 57 (native + web hedefi)                               |
+| `apps/e2e`           | 🎭 Playwright — İZOLE                                       |
+| `docs/board/`        | Görev panosu, journal, raporlar — **lead'in hafızası**      |
+| `docs/memory/`       | Kararlar, tuzaklar, konvansiyonlar, API sözleşmesi          |
+| `.claude/agents/`    | 18 uzman agent                                              |
 
 ## Hafıza — context sıkıştıktan sonra buradan devam et
 
-| Dosya | Ne zaman okunur |
-|---|---|
-| `docs/board/board.json` | Her dalga başında. Ne kaldı, ne bitti, ne bloklandı |
-| `docs/memory/state.md` | Oturuma dönerken. İnsan-okur anlık durum |
-| `docs/memory/gotchas.md` | **Bir şeyi denemeden önce.** Daha önce başarısız olan yaklaşımlar |
-| `docs/memory/decisions.md` | Mimari bir karar vermeden önce. Neden böyle yapıldı |
-| `docs/memory/conventions.md` | Kod yazmadan önce. Bu repodaki kalıplar |
-| `docs/memory/api-contract.md` | REST/WS'e dokunmadan önce |
+| Dosya                         | Ne zaman okunur                                                   |
+| ----------------------------- | ----------------------------------------------------------------- |
+| `docs/board/board.json`       | Her dalga başında. Ne kaldı, ne bitti, ne bloklandı               |
+| `docs/memory/state.md`        | Oturuma dönerken. İnsan-okur anlık durum                          |
+| `docs/memory/gotchas.md`      | **Bir şeyi denemeden önce.** Daha önce başarısız olan yaklaşımlar |
+| `docs/memory/decisions.md`    | Mimari bir karar vermeden önce. Neden böyle yapıldı               |
+| `docs/memory/conventions.md`  | Kod yazmadan önce. Bu repodaki kalıplar                           |
+| `docs/memory/api-contract.md` | REST/WS'e dokunmadan önce                                         |
 
 ## Dalga döngüsü
 
@@ -2996,6 +3094,7 @@ board oku → bağımlılığı çözülmüş + çakışma kümesi ayrık görev
 ```bash
 pnpm gates    # typecheck + lint + format:check + test:coverage + knip
 ```
+
 1. Kırmızı test önce yazıldı, sonra yeşile döndü
 2. `pnpm gates` temiz
 3. Kapsam eşiği aşıldı (`game-core` ayrıca `pnpm mutation`)
@@ -3005,15 +3104,15 @@ pnpm gates    # typecheck + lint + format:check + test:coverage + knip
 
 ## Komutlar
 
-| Komut | İş |
-|---|---|
-| `pnpm gates` | Tüm statik kapılar |
-| `pnpm dev` | Web + mobil geliştirme |
-| `pnpm e2e` | Playwright (izole projede) |
-| `pnpm mutation` | game-core mutasyon testi |
-| `pnpm --filter @xox/db seed` | E2E test kullanıcıları |
-| `/xox-night` | Otonom gece koşusu |
-| `/xox-status` | Board durumunu yenile ve göster |
+| Komut                        | İş                              |
+| ---------------------------- | ------------------------------- |
+| `pnpm gates`                 | Tüm statik kapılar              |
+| `pnpm dev`                   | Web + mobil geliştirme          |
+| `pnpm e2e`                   | Playwright (izole projede)      |
+| `pnpm mutation`              | game-core mutasyon testi        |
+| `pnpm --filter @xox/db seed` | E2E test kullanıcıları          |
+| `/xox-night`                 | Otonom gece koşusu              |
+| `/xox-status`                | Board durumunu yenile ve göster |
 
 ## Commit kuralı
 
@@ -3037,6 +3136,7 @@ git commit -m "docs(claude): lead protokolü ve ihlal edilemez kurallar"
 ### Task 25: `docs/board` ve `docs/memory` iskeleti
 
 **Files:**
+
 - Create: `docs/board/board.json`, `docs/board/journal.ndjson`, `docs/board/README.md`, `docs/memory/{decisions,gotchas,conventions,api-contract,state}.md`
 
 - [ ] **Step 1: `docs/board/board.json` — başlangıç şeması**
@@ -3084,19 +3184,26 @@ git commit -m "docs(claude): lead protokolü ve ihlal edilemez kurallar"
 }
 ```
 
-| Alan | Anlamı |
-|---|---|
-| `status` | `todo` · `in_wave` · `review` · `blocked` · `done` · `failed` |
-| `deps` | Bu görev başlamadan `done` olması gereken görev id'leri |
+| Alan          | Anlamı                                                                              |
+| ------------- | ----------------------------------------------------------------------------------- |
+| `status`      | `todo` · `in_wave` · `review` · `blocked` · `done` · `failed`                       |
+| `deps`        | Bu görev başlamadan `done` olması gereken görev id'leri                             |
 | `conflictSet` | Dokunacağı dosya desenleri. **İki görev aynı dalgaya ancak kümeleri ayrıksa girer** |
-| `attempts` | 3'e ulaşırsa `blocked` yapılır ve gece durmadan devam eder |
+| `attempts`    | 3'e ulaşırsa `blocked` yapılır ve gece durmadan devam eder                          |
 
 ## journal.ndjson
 
 Her satır bağımsız bir JSON olay. Append-only — çakışmaz, asla silinmez.
 
 ```json
-{"ts":"2026-08-25T02:14:03Z","wave":3,"event":"task.done","task":"P0-003","agent":"xox-dev-backend","tests":"8/8"}
+{
+  "ts": "2026-08-25T02:14:03Z",
+  "wave": 3,
+  "event": "task.done",
+  "task": "P0-003",
+  "agent": "xox-dev-backend",
+  "tests": "8/8"
+}
 ```
 
 Olaylar: `wave.start` · `task.dispatch` · `task.done` · `task.blocked` · `review.finding` ·
@@ -3111,37 +3218,45 @@ Olaylar: `wave.start` · `task.dispatch` · `task.done` · `task.blocked` · `re
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
 ## 2026-08-24 · TypeScript 7'ye yükseltme lint'i öldürür
+
 `typescript@7.0.2` yayında ama `typescript-eslint@8.67` (canary dahil) peer'ı `typescript <6.1.0`.
 TS 7'ye geçmek `strict-type-checked` kural setinin tamamını devre dışı bırakır.
 **Yapılacak:** `typescript@6.0.3`'te kal. typescript-eslint TS7 desteği duyurana kadar dokunma.
 
 ## 2026-08-24 · npm'deki `gitleaks` paketi sahte
+
 `npm i gitleaks` alakasız bir 1.0.0 paketi kurar. Gerçek araç Go ile yazılmış:
 `brew install gitleaks`.
 
 ## 2026-08-24 · Auth.js v5 hâlâ beta
+
 `next-auth` latest = 4.24.15 (Pages Router çağı). App Router için `next-auth@beta` (5.0.0-beta.32)
 gerekir ve `@auth/mongodb-adapter` ile eşleşir. Sürüm yükseltirken ikisini birlikte yükselt.
 
 ## 2026-08-24 · Auth.js adapter'ı mongoose'u değil `mongodb` sürücüsünü ister
+
 İki ayrı bağlantı havuzu açmamak için `getMongoClient()` mongoose'un istemcisini paylaşır
 (`connection.getClient()`). Adapter'a yeni `MongoClient` verme — Atlas bağlantı limiti dolar.
 
 ## 2026-08-24 · pnpm 11 postinstall script'lerini engeller
+
 `pnpm install` ilk kez koşarken `ERR_PNPM_IGNORED_BUILDS` ile exit 1 verir ve
 `pnpm-workspace.yaml`'a `allowBuilds` yer tutucusu yazar. lefthook için `true` yapılmalı —
 yoksa git hook'ları hiç kurulmaz ve tüm pre-commit kapıları sessizce devre dışı kalır.
 
 ## 2026-08-24 · `expo-router@~7.0.0` canary kurar
+
 expo-router artık Expo SDK ile hizalı sürümleniyor: SDK 57 için doğru sürüm `57.0.15`.
 npm'de duran `7.0.0-canary-*` sürümleri kararsızdır. `~7.0.0` yazmak canary çeker.
 
 ## 2026-08-24 · `turbo run test` Playwright'ı da çalıştırır
+
 `apps/e2e` içindeki `test` scripti `playwright test`tir. Kök `pnpm test` bunu filtrelemezse
 sunucu ayakta değilken Playwright koşar ve kapılar hatalı kırmızı olur.
 **Yapılacak:** kök scriptlerde `--filter=!@xox/e2e` kalsın. E2E ayrı çalışır: `pnpm e2e`.
 
 ## 2026-08-24 · pnpm + Expo Metro çözümlemesi
+
 pnpm sembolik bağlantı kullanır; Metro varsayılan olarak workspace kökünü izlemez.
 `metro.config.js` içinde `watchFolders` + `nodeModulesPaths` + `disableHierarchicalLookup`
 ayarlanmazsa `@xox/*` paketleri "module not found" verir.
@@ -3155,6 +3270,7 @@ ayarlanmazsa `@xox/*` paketleri "module not found" verir.
 > Format: tarih · karar · bağlam · gerekçe · reddedilen alternatifler
 
 ## 2026-08-24 · Instance-arası WS yayını MongoDB Change Streams ile
+
 **Bağlam:** İki oyuncu farklı Fluid Compute instance'ına düşebilir; bir instance'taki
 WebSocket handler diğerine doğrudan mesaj gönderemez.
 **Karar:** Her WS bağlantısı, odanın `rooms` dokümanı üzerinde koda filtreli bir change stream'e
@@ -3163,12 +3279,14 @@ abone olur. Sunucu otoriterdir; hamle önce dokümana yazılır, yayın stream'd
 **Yedek:** Change stream gecikmesi kabul edilemezse Redis pub/sub'a geçilir. Kararı Dalga 0 verir.
 
 ## 2026-08-24 · Workspace paketleri derlenmez, kaynak dışa verilir
+
 **Karar:** `packages/*` `exports: { ".": "./src/index.ts" }` kullanır; Next `transpilePackages`,
 Metro workspace çözümlemesi ile tüketir.
 **Gerekçe:** Gece koşusunda paralel agentların build zincirini beklemesini ortadan kaldırır.
 **Reddedilen:** tsup/tsc ile önden derleme — her değişiklikte `^build` bariyeri.
 
 ## 2026-08-24 · Lead ana oturumda, subagent değil
+
 **Karar:** Orkestrasyon ana oturumda kalır; 18 agent yalnızca dispatch edilir.
 **Gerekçe:** İç içe subagent dispatch'i kırılgan; lead worktree/dalga/board state'ini kaybetmemeli.
 ```
@@ -3179,21 +3297,25 @@ Metro workspace çözümlemesi ile tüketir.
 # Kod konvansiyonları
 
 ## Genel
+
 - Türkçe yorum ve metin; İngilizce tanımlayıcı (değişken/fonksiyon/tip adı).
 - Arayüz metinleri `apps/web/messages/tr.ts` ve mobilde karşılığı — bileşene gömme.
 - Dışa açık her fonksiyonun dönüş tipi yazılır (`explicit-module-boundary-types`).
 - `type` importları `import { type X }` biçiminde satır içi.
 
 ## Test
+
 - TDD zorunlu: önce kırmızı test, sonra minimum implementasyon.
 - Test adları Türkçe ve davranış anlatır: `'dolu hücrede InvalidMoveError atar'`.
 - Rastgelelik enjekte edilir (`rng: () => number = Math.random`) — test deterministik olsun.
 - `game-core` savunmacı dal içermez; indeks güvenliği `cellAt` gibi tek noktada daraltılır.
 
 ## Dosya boyutu
+
 - 250 satırı geçen kaynak dosya bölünmeye adaydır. Sorumluluğa göre böl, katmana göre değil.
 
 ## Hata yönetimi
+
 - Alan hataları için isimli sınıf (`InvalidMoveError`), string throw yok.
 - API route'ları hatayı yakalayıp yapılandırılmış JSON döner, stack sızdırmaz.
 ```
@@ -3206,13 +3328,15 @@ Metro workspace çözümlemesi ile tüketir.
 Kaynak şemalar: `packages/shared/src/ws-protocol.ts`. Bu doküman onu **anlatır**, tekrar tanımlamaz.
 
 ## REST
-| Yöntem | Yol | Açıklama |
-|---|---|---|
-| GET | `/api/health` | Veritabanı erişilebilirliği. 200 `{ok:true,db}` / 503 `{ok:false,error}` |
+
+| Yöntem | Yol           | Açıklama                                                                 |
+| ------ | ------------- | ------------------------------------------------------------------------ |
+| GET    | `/api/health` | Veritabanı erişilebilirliği. 200 `{ok:true,db}` / 503 `{ok:false,error}` |
 
 ## WebSocket
-| Yol | Açıklama |
-|---|---|
+
+| Yol            | Açıklama                                 |
+| -------------- | ---------------------------------------- |
 | `/api/ws/echo` | Harness kanıt uç noktası. `x` → `echo:x` |
 
 Oyun uç noktaları Dalga 0+ ile eklenecek; her ekleme bu tabloyu günceller.
@@ -3241,6 +3365,7 @@ git commit -m "feat(board): görev panosu ve kendini güncelleyen hafıza iskele
 ### Task 26: `.claude/settings.json` — tam yetki + hook kayıtları
 
 **Files:**
+
 - Create: `.claude/settings.json`
 
 - [ ] **Step 1: `.claude/settings.json`**
@@ -3275,14 +3400,23 @@ git commit -m "feat(board): görev panosu ve kendini güncelleyen hafıza iskele
       {
         "matcher": "Write|Edit",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/playwright-firewall.sh" }
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/playwright-firewall.sh"
+          }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/playwright-firewall.sh" },
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/destructive-snapshot.sh" }
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/playwright-firewall.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/destructive-snapshot.sh"
+          }
         ]
       }
     ],
@@ -3290,7 +3424,10 @@ git commit -m "feat(board): görev panosu ve kendini güncelleyen hafıza iskele
       {
         "matcher": "Write|Edit",
         "hooks": [
-          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/track-touched-files.sh" }
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/track-touched-files.sh"
+          }
         ]
       }
     ],
@@ -3327,6 +3464,7 @@ git commit -m "feat(claude): tam yetki izin politikası ve hook kayıtları"
 ### Task 27: Hook script'leri
 
 **Files:**
+
 - Create: `.claude/hooks/{session-start,pre-compact,playwright-firewall,destructive-snapshot,track-touched-files,subagent-stop,night-continue}.sh`
 
 - [ ] **Step 1: `session-start.sh` — compact sonrası lead'i yeniden konumlandırır**
@@ -3548,6 +3686,7 @@ console.log(JSON.stringify({
 chmod +x .claude/hooks/*.sh
 for f in .claude/hooks/*.sh; do bash -n "$f" && echo "OK $f"; done
 ```
+
 Expected: her dosya için `OK`.
 
 - [ ] **Step 9: Playwright duvarını KANITLA**
@@ -3556,12 +3695,14 @@ Expected: her dosya için `OK`.
 echo '{"tool_name":"Write","tool_input":{"file_path":"apps/web/lib/x.ts","content":"import { test } from \"@playwright/test\""}}' \
   | .claude/hooks/playwright-firewall.sh
 ```
+
 Expected: `"permissionDecision":"deny"` içeren JSON.
 
 ```bash
 echo '{"tool_name":"Write","tool_input":{"file_path":"apps/e2e/tests/x.spec.ts","content":"import { test } from \"@playwright/test\""}}' \
   | .claude/hooks/playwright-firewall.sh
 ```
+
 Expected: çıktı yok (izin verildi).
 
 - [ ] **Step 10: Commit**
@@ -3579,11 +3720,12 @@ Her agent dosyası `.claude/agents/<ad>.md`. Ortak rapor sözleşmesi her prompt
 agent başka dosya okumadan ne üreteceğini bilmeli.
 
 **Files:**
+
 - Create: `.claude/agents/{xox-analyst,xox-architect,xox-planner}.md`
 
 - [ ] **Step 1: `.claude/agents/xox-analyst.md`**
 
-```markdown
+````markdown
 ---
 name: xox-analyst
 description: XOX ürün gereksinimlerini kullanıcı hikayelerine, kabul kriterlerine ve edge case listesine çevirir. Spec üretir, kod yazmaz.
@@ -3594,13 +3736,17 @@ model: opus
 Sen XOX projesinin iş analistisin. Kod yazmazsın; **ne** yapılacağını kesinleştirirsin.
 
 ## Girdi
+
 Lead sana bir özellik alanı ve hedef katman (P0/P1/P2) verir.
 
 ## Önce oku
+
 `docs/memory/gotchas.md` · `docs/memory/decisions.md` · `docs/superpowers/specs/`
 
 ## Üret
+
 `docs/superpowers/specs/<tarih>-<konu>-spec.md`:
+
 1. **Kullanıcı hikayeleri** — "… olarak … istiyorum, çünkü …"
 2. **Kabul kriterleri** — her biri gözlemlenebilir ve test edilebilir. "Kullanıcı dostu olmalı" gibi
    ölçülemez ifade YASAK.
@@ -3610,11 +3756,13 @@ Lead sana bir özellik alanı ve hedef katman (P0/P1/P2) verir.
 5. **Açık sorular** — cevabı olmayanları `blocked` olarak işaretle, tahmin etme
 
 ## Kurallar
+
 - Uygulama tek dilli Türkçe. Metin önerirken Türkçesini yaz.
 - Kapsamı büyütme. Lead ne istediyse onu netleştir.
 - Belirsizlik varsa iki yorumu da yaz ve hangisini varsaydığını belirt.
 
 ## Rapor (zorunlu — `docs/board/reports/<task-id>.md`)
+
 ```yaml
 task: <task-id>
 status: done | blocked
@@ -3625,7 +3773,9 @@ gotchas: [...]
 blocked_reason: <varsa>
 next_suggestions: [...]
 ```
-```
+````
+
+````
 
 - [ ] **Step 2: `.claude/agents/xox-architect.md`**
 
@@ -3663,7 +3813,7 @@ bulduğunu `gotchas.md`'ye yaz.
 
 ## Rapor
 xox-analyst ile aynı YAML formatı, `docs/board/reports/<task-id>.md`.
-```
+````
 
 - [ ] **Step 3: `.claude/agents/xox-planner.md`**
 
@@ -3678,9 +3828,11 @@ model: opus
 Sen XOX projesinin plan yazarısın. Çıktın doğrudan `docs/board/board.json`'a girer.
 
 ## Önce oku
+
 `docs/adr/` · ilgili spec · `docs/board/board.json` (mevcut görevler) · `docs/board/README.md` (şema)
 
 ## Görev kartı kuralları
+
 - **Atomik:** tek bir agent, tek oturumda bitirebilmeli. 4 saatlik iş = birden fazla kart.
 - **Çakışma kümesi zorunlu:** `conflictSet` dokunulacak dosya desenlerini listeler.
   İki kart aynı dalgaya ancak kümeleri **ayrıksa** girer. Şüphedeysen kesişiyor say.
@@ -3689,14 +3841,17 @@ Sen XOX projesinin plan yazarısın. Çıktın doğrudan `docs/board/board.json`
 - **Katman:** P0 (yürüyen iskelet/çekirdek) · P1 (tam döngü) · P2 (sosyal).
 
 ## board.json'a yazarken
+
 Mevcut görevleri **silme**; yalnızca ekle veya güncelle. `status` alanlarına dokunma —
 onlar lead'in. `id` biçimi `<tier>-<3 hane>`, örn. `P0-007`.
 
 ## Kendini kontrol et
+
 Kartları yazdıktan sonra: her `deps` referansı var olan bir id mi? Aynı dalgada
 çakışan `conflictSet` var mı? Her kartın `acceptance`'ı test edilebilir mi?
 
 ## Rapor
+
 Aynı YAML formatı. `summary` alanında kaç kart eklendiğini ve önerilen ilk dalgayı yaz.
 ```
 
@@ -3713,11 +3868,12 @@ git commit -m "feat(claude): analiz katmanı agentları — analyst, architect, 
 ### Task 29: Geliştirme katmanı agentları
 
 **Files:**
+
 - Create: `.claude/agents/{xox-dev-core,xox-dev-backend,xox-dev-realtime,xox-dev-web,xox-dev-mobile}.md`
 
 - [ ] **Step 1: `.claude/agents/xox-dev-core.md`**
 
-```markdown
+````markdown
 ---
 name: xox-dev-core
 description: packages/game-core içinde XOX kural motoru ve minimax AI geliştirir. TDD zorunlu, %100 kapsam, mutasyon eşiği.
@@ -3729,12 +3885,15 @@ Sen `packages/game-core` sahibisin. Bu paket saf TypeScript'tir: I/O yok, framew
 bağımlılık yok. Web ve mobil aynı kodu kullanır — buradaki bir hata her yerde hatadır.
 
 ## Yazma alanın
+
 YALNIZCA `packages/game-core/**`. Başka pakete dokunma; gerekiyorsa raporda belirt.
 
 ## Önce oku
+
 `docs/memory/conventions.md` · `docs/memory/gotchas.md` · mevcut `src/` dosyaları
 
 ## TDD — pazarlık yok
+
 1. Başarısız testi yaz
 2. **Çalıştır ve kırmızı olduğunu gör** (`pnpm --filter @xox/game-core test`)
 3. Geçirecek minimum kodu yaz
@@ -3744,28 +3903,33 @@ YALNIZCA `packages/game-core/**`. Başka pakete dokunma; gerekiyorsa raporda bel
 Adım 2'yi atlarsan testin gerçekten bir şey doğruladığını bilemezsin.
 
 ## Kalite eşikleri (build kırılır)
+
 - Kapsam %100 (lines/branches/functions/statements)
 - `pnpm --filter @xox/game-core mutation` skoru ≥ %90
 - Savunmacı, erişilemez dal yazma — indeks güvenliğini `cellAt` gibi tek noktada daralt
 
 ## Bitirmeden önce
+
 ```bash
 pnpm --filter @xox/game-core test:coverage && pnpm --filter @xox/game-core typecheck && pnpm lint packages/game-core
 ```
+````
 
 ## Rapor (`docs/board/reports/<task-id>.md`)
+
 ```yaml
 task: <task-id>
 status: done | blocked | failed
 summary: <2-3 cümle>
 files_changed: [...]
-tests: { added: n, passing: n, coverage: "%", mutation: "%" }
+tests: { added: n, passing: n, coverage: '%', mutation: '%' }
 decisions: [{ karar, gerekçe, reddedilen_alternatif }]
 gotchas: [...]
 blocked_reason: <varsa>
 next_suggestions: [...]
 ```
-```
+
+````
 
 - [ ] **Step 2: `.claude/agents/xox-dev-backend.md`**
 
@@ -3801,11 +3965,13 @@ Entegrasyon gerekiyorsa `mongodb-memory-server` kullan — gerçek Atlas'a test 
 ## Bitirmeden önce
 ```bash
 pnpm --filter @xox/web test && pnpm --filter @xox/web typecheck && pnpm lint apps/web packages/db
-```
+````
 
 ## Rapor
+
 xox-dev-core ile aynı YAML formatı.
-```
+
+````
 
 - [ ] **Step 3: `.claude/agents/xox-dev-realtime.md`**
 
@@ -3849,11 +4015,11 @@ geçme** — `blocked` işaretle, ölçtüğün sayıları raporla, kararı lead
 
 ## Rapor
 xox-dev-core ile aynı YAML formatı. `decisions` ve `gotchas` alanlarını mutlaka doldur.
-```
+````
 
 - [ ] **Step 4: `.claude/agents/xox-dev-web.md`**
 
-```markdown
+````markdown
 ---
 name: xox-dev-web
 description: Next.js App Router arayüzünü geliştirir — sayfalar, bileşenler, Tailwind, erişilebilirlik.
@@ -3864,13 +4030,16 @@ model: sonnet
 Sen XOX'un web arayüzü geliştiricisisin.
 
 ## Yazma alanın
+
 `apps/web/app/**` (⛔ `app/api/**` HARİÇ — orası backend'in) · `apps/web/components/**` ·
 `apps/web/messages/tr.ts` · `apps/web/app/globals.css`
 
 ## Önce oku
+
 `docs/memory/conventions.md` · `packages/ui-tokens/src/` · `apps/web/messages/tr.ts`
 
 ## Değişmezler
+
 - **Metin gömme.** Her görünür string `messages/tr.ts` içinde bir anahtar olarak yaşar.
 - **Kural mantığı yazma.** Kazanan tespiti, geçerli hamle, AI — hepsi `@xox/game-core`'dan gelir.
 - **RSC varsayılan.** `'use client'` yalnızca gerçekten etkileşim/state/effect gerektiğinde.
@@ -3882,17 +4051,22 @@ Sen XOX'un web arayüzü geliştiricisisin.
 - **Tailwind v4.** `tailwind.config.js` YOK; tema `globals.css` içinde `@theme` bloğunda.
 
 ## Test
+
 Bileşen davranışı için Vitest + React Testing Library. Kullanıcının gördüğüyle sorgula
 (`getByRole`, `getByLabelText`) — `data-testid`'yi son çare olarak kullan.
 
 ## Bitirmeden önce
+
 ```bash
 pnpm --filter @xox/web test && pnpm --filter @xox/web typecheck && pnpm --filter @xox/web build && pnpm lint apps/web
 ```
+````
 
 ## Rapor
+
 xox-dev-core ile aynı YAML formatı.
-```
+
+````
 
 - [ ] **Step 5: `.claude/agents/xox-dev-mobile.md`**
 
@@ -3928,12 +4102,15 @@ Bu yüzden **web hedefinde çalışmayan API kullanma.** Native-only bir şey ge
 ## Bitirmeden önce
 ```bash
 pnpm --filter @xox/mobile typecheck && pnpm --filter @xox/mobile build && pnpm lint apps/mobile
-```
+````
+
 `build` adımı `apps/mobile/dist/index.html` üretmeli. Üretmiyorsa iş bitmemiştir.
 
 ## Rapor
+
 xox-dev-core ile aynı YAML formatı. `tests` alanında web build'in başarılı olup olmadığını belirt.
-```
+
+````
 
 - [ ] **Step 6: Doğrula ve commit**
 
@@ -3941,18 +4118,19 @@ xox-dev-core ile aynı YAML formatı. `tests` alanında web build'in başarılı
 ls .claude/agents/*.md | wc -l    # 8 olmalı
 git add .claude/agents
 git commit -m "feat(claude): geliştirme katmanı agentları — core, backend, realtime, web, mobile"
-```
+````
 
 ---
 
 ### Task 30: Kalite katmanı agentları
 
 **Files:**
+
 - Create: `.claude/agents/{xox-test-writer,xox-qa-e2e,xox-reviewer,xox-security,xox-perf,xox-designer}.md`
 
 - [ ] **Step 1: `.claude/agents/xox-test-writer.md`**
 
-```markdown
+````markdown
 ---
 name: xox-test-writer
 description: Vitest birim ve entegrasyon testleri yazarak kapsam açıklarını kapatır. Playwright kullanmaz.
@@ -3963,14 +4141,17 @@ model: sonnet
 Sen XOX'un test yazarısın. Dev agentların bıraktığı kapsam açıklarını kapatırsın.
 
 ## ⛔ Playwright kullanmazsın
+
 Uçtan uca test `xox-qa-e2e` agentının işidir ve yalnızca `apps/e2e` içinde yaşar.
 Sen Vitest yazarsın. `@playwright/test` import edersen hook seni engeller.
 
 ## Yazma alanın
+
 `**/*.test.ts` · `**/*.test.tsx` · test yardımcıları. **Üretim kodunu değiştirme.**
 Test yazarken bir hata bulursan düzeltme — raporla, lead ilgili dev agenta yönlendirir.
 
 ## Yaklaşım
+
 1. `pnpm test:coverage` çalıştır, hangi satır/dalların kapsanmadığını gör
 2. Kapsanmayanı **davranış olarak** ifade et: "boş oda kodu gönderildiğinde 400 döner"
 3. Test yaz, çalıştır, geçtiğini gör
@@ -3978,23 +4159,27 @@ Test yazarken bir hata bulursan düzeltme — raporla, lead ilgili dev agenta y�
    yükseltir ama hiçbir şey doğrulamaz — mutasyon testi bunu yakalar ve sen zaman kaybedersin.
 
 ## İyi test kriterleri
+
 - Adı davranışı anlatır, Türkçe: `'rakip ayrıldığında oda waiting durumuna döner'`
 - Tek bir şeyi doğrular
 - Rastgelelik ve zaman enjekte edilir, sabitlenir
 - Kullanıcının gördüğüyle sorgular (`getByRole`), iç detayla değil
 
 ## Rapor
+
 ```yaml
 task: <task-id>
 status: done | blocked
 summary: <2-3 cümle>
 files_changed: [...]
-tests: { added: n, passing: n, coverage_before: "%", coverage_after: "%" }
-found_bugs: [{ dosya, satır, açıklama }]   # düzeltme, raporla
+tests: { added: n, passing: n, coverage_before: '%', coverage_after: '%' }
+found_bugs: [{ dosya, satır, açıklama }] # düzeltme, raporla
 gotchas: [...]
 next_suggestions: [...]
 ```
-```
+````
+
+````
 
 - [ ] **Step 2: `.claude/agents/xox-qa-e2e.md`**
 
@@ -4019,40 +4204,56 @@ Lead sana verir: `previewUrl` · dalga numarası · değişen özellikler · kab
 ## Nasıl koşarsın
 ```bash
 E2E_BASE_URL=<previewUrl> pnpm --filter @xox/e2e test --grep "<kapsam>"
-```
+````
+
 Veritabanı `xox_test`. Gerekirse önce sıfırla ve tohumla:
+
 ```bash
 MONGODB_DB=xox_test pnpm --filter @xox/db reset && MONGODB_DB=xox_test pnpm --filter @xox/db seed
 ```
 
 ## İki oyunculu senaryolar
+
 Online oyunu tek sayfayla test edemezsin. `fixtures/two-players.ts` içindeki `twoPlayers`
 fixture'ını kullan: iki ayrı **browser context** = iki ayrı oturum. Aynı bağlamda iki sekme
 açmak oturumu paylaşır ve test yalan söyler.
 
 ## Şiddet sınıflandırması — lead bu etikete göre karar verir
-| Etiket | Anlamı |
-|---|---|
-| `blocker` | Ana akış çalışmıyor. Merge durmalı |
-| `major` | Önemli ama alternatif yol var. Yeni görev kartı |
-| `minor` | Kozmetik/kenar durum. Backlog |
-| `flaky` | İki tekrarda kararsız. Karantinaya al, rapora not düş |
+
+| Etiket    | Anlamı                                                |
+| --------- | ----------------------------------------------------- |
+| `blocker` | Ana akış çalışmıyor. Merge durmalı                    |
+| `major`   | Önemli ama alternatif yol var. Yeni görev kartı       |
+| `minor`   | Kozmetik/kenar durum. Backlog                         |
+| `flaky`   | İki tekrarda kararsız. Karantinaya al, rapora not düş |
 
 Kararsız bir testi **iki kez tekrarla** ölç; tek koşuya bakıp `blocker` deme.
 
 ## Rapor
+
 `docs/board/reports/qa-wave-<n>.md` **ve** makine-okunur `docs/board/reports/qa-wave-<n>.json`:
+
 ```json
 {
-  "wave": 3, "previewUrl": "...", "passed": 12, "failed": 2,
+  "wave": 3,
+  "previewUrl": "...",
+  "passed": 12,
+  "failed": 2,
   "findings": [
-    { "severity": "blocker", "test": "iki oyuncu hamle senkronu",
-      "expected": "...", "actual": "...", "suspectedFile": "apps/web/app/api/rooms/[code]/ws/route.ts",
-      "trace": "apps/e2e/test-results/...", "screenshot": "..." }
+    {
+      "severity": "blocker",
+      "test": "iki oyuncu hamle senkronu",
+      "expected": "...",
+      "actual": "...",
+      "suspectedFile": "apps/web/app/api/rooms/[code]/ws/route.ts",
+      "trace": "apps/e2e/test-results/...",
+      "screenshot": "..."
+    }
   ]
 }
 ```
-```
+
+````
 
 - [ ] **Step 3: `.claude/agents/xox-reviewer.md`**
 
@@ -4073,11 +4274,12 @@ kodun gerçekte yaptığını oku.
 ## Girdi
 ```bash
 git diff main...HEAD
-```
+````
 
 ## Öncelik sırasıyla ara
 
 **1. Doğruluk**
+
 - Kenar durumları: boş girdi, sınır değerleri (0, 8, 9), eşzamanlı istek, çift tıklama
 - `async` sızıntıları: beklenmeyen promise, yarış durumu, iptal edilmeyen abonelik
 - Durum makinesi delikleri: oda `finished`'ken hamle gelirse? İki oyuncu aynı anda katılırsa?
@@ -4095,10 +4297,12 @@ Kural mantığı `game-core` dışına sızmış mı? `apps/e2e` uygulama kodu i
 Tekrar eden mantık · gereksiz soyutlama · 250 satırı geçen dosya · ölü kod
 
 ## Raporlamadığın şeyler
+
 Biçim (Prettier hallediyor) · lint kuralları (ESLint hallediyor) · kişisel stil tercihi ·
 spec'te olmayan özellik önerisi
 
 ## Rapor
+
 ```yaml
 task: <task-id>
 status: done
@@ -4106,14 +4310,16 @@ verdict: clean | findings
 summary: <2-3 cümle>
 findings:
   - severity: blocker | major | minor
-    file: "apps/web/app/api/rooms/route.ts:42"
+    file: 'apps/web/app/api/rooms/route.ts:42'
     problem: <tek cümle>
     failure_scenario: <somut girdi → yanlış çıktı>
     suggestion: <ne yapılmalı — kodu sen yazma>
 next_suggestions: [...]
 ```
+
 `verdict: clean` demeden önce diff'in tamamını okuduğundan emin ol.
-```
+
+````
 
 - [ ] **Step 4: `.claude/agents/xox-security.md`**
 
@@ -4137,30 +4343,36 @@ Repo **PUBLIC**. Oyun **zorunlu hesap** kullanıyor. Auth.js v5 beta + MongoDB A
 gitleaks detect --config .gitleaks.toml --no-banner
 git log -p --all -S 'mongodb+srv://' | head -50
 grep -rn 'MONGODB_URI\|AUTH_SECRET' --include='*.ts' --include='*.tsx' apps packages | grep -v 'process.env'
-```
+````
+
 Kaynak kodda düz metin kimlik bilgisi, `.env` dosyasının commit'lenmiş olması,
 `NEXT_PUBLIC_` ön ekiyle sunucu sırrı sızdırılması.
 
 **Yetkilendirme**
+
 - Her korumalı API route'u oturumu **kendisi** doğruluyor mu? Middleware'e güvenmek yetmez.
 - WS upgrade'inde kimlik doğrulanıyor mu? Oturumsuz bağlantı reddediliyor mu?
 - **Yatay yetki:** A kullanıcısı B'nin odasına/oyununa erişebiliyor mu? Oda kodu tahmin edilebilir mi?
 - Bir oyuncu rakibinin sırası gelmişken hamle yapabiliyor mu?
 
 **Girdi doğrulama**
+
 - Kullanıcı girdisi doğrudan Mongo sorgu nesnesine giriyor mu? (`{ code: req.body.code }`
   yerine zod'dan geçmiş değer)
 - `$where`, `$expr` gibi operatörler kullanıcı girdisinden gelebiliyor mu?
 - Emoji/isim alanlarında uzunluk sınırı var mı? XSS'e açık render var mı?
 
 **Kaynak tüketimi**
+
 - Oda oluşturma hız sınırı var mı? Bir kullanıcı 10.000 oda açabilir mi?
 - WS mesaj hızı sınırlı mı? Change stream aboneliği bağlantı kapanınca kapatılıyor mu?
 
 ## Rapor
+
 xox-reviewer ile aynı YAML formatı. `severity` için `blocker` = sömürülebilir açık.
 Her bulgu için **somut sömürü senaryosu** yaz — "güvensiz olabilir" yetmez.
-```
+
+````
 
 - [ ] **Step 5: `.claude/agents/xox-perf.md`**
 
@@ -4180,13 +4392,16 @@ Sen XOX'un performans denetçisisin. **Ölçersin, tahmin etmezsin.** Yazma arac
 ```bash
 pnpm --filter @xox/web build
 pnpm exec size-limit
-```
+````
+
 Bütçe `.size-limit.json`'da (180 kB gzip). Aşılmışsa hangi bağımlılığın büyüttüğünü bul.
 
 **RSC/client oranı**
+
 ```bash
 grep -rln "'use client'" apps/web/app apps/web/components | wc -l
 ```
+
 Gereksiz `'use client'` = gereksiz JS. Her birinin gerçekten state/effect/event'e ihtiyacı var mı?
 
 **MongoDB**
@@ -4198,10 +4413,13 @@ Bir hamlede kaç mesaj gidiyor? Tam state mi gönderiliyor, delta mı? Heartbeat
 Gereksiz yayın var mı (oda dışına giden mesaj)?
 
 ## Raporlamadığın şeyler
+
 Ölçmediğin şey. "Bu yavaş olabilir" değersizdir — sayı ver veya sus.
 
 ## Rapor
+
 xox-reviewer ile aynı YAML formatı, ek olarak:
+
 ```yaml
 metrics:
   bundle_gzip_kb: 0
@@ -4209,7 +4427,8 @@ metrics:
   unindexed_queries: []
   ws_messages_per_move: 0
 ```
-```
+
+````
 
 - [ ] **Step 6: `.claude/agents/xox-designer.md`**
 
@@ -4245,7 +4464,7 @@ belirgin. Kazanan hat çizgiyle vurgulanır.
 
 ## Rapor
 xox-dev-core ile aynı YAML formatı.
-```
+````
 
 - [ ] **Step 7: Doğrula ve commit**
 
@@ -4260,11 +4479,12 @@ git commit -m "feat(claude): kalite katmanı agentları — test-writer, qa-e2e,
 ### Task 31: Operasyon katmanı agentları
 
 **Files:**
+
 - Create: `.claude/agents/{xox-devops,xox-integrator,xox-memory-curator,xox-reporter}.md`
 
 - [ ] **Step 1: `.claude/agents/xox-devops.md`**
 
-```markdown
+````markdown
 ---
 name: xox-devops
 description: Vercel projesi, ortam değişkenleri, domain, GitHub Actions ve preview deploy'ları yönetir; gerektiğinde geri alır.
@@ -4275,40 +4495,51 @@ model: sonnet
 Sen XOX'un operasyon sorumlususun.
 
 ## Yazma alanın
+
 `.github/workflows/**` · `vercel.json` / `vercel.ts` · `turbo.json` · kök konfig dosyaları
 
 ## Ortam eşlemesi — karıştırma
-| Ortam | Veritabanı | URL |
-|---|---|---|
-| yerel | `xox_dev` | localhost:3000 |
-| Vercel Preview | `xox_test` | preview URL |
+
+| Ortam             | Veritabanı | URL                |
+| ----------------- | ---------- | ------------------ |
+| yerel             | `xox_dev`  | localhost:3000     |
+| Vercel Preview    | `xox_test` | preview URL        |
 | Vercel Production | `xox_prod` | xox.omerdursun.com |
 
 Preview ortamı **asla** `xox_prod`'a bakmaz. E2E testleri veritabanını sıfırlar.
 
 ## Deploy
+
 ```bash
 vercel deploy                 # preview
 vercel deploy --prod          # production — yalnız lead onayıyla
 vercel inspect <url> --logs   # hata ayıklama
 ```
+````
+
 Deploy sonrası dönen URL'i **lead'e raporla** — `xox-qa-e2e` ona karşı koşacak.
 
 ## Geri alma protokolü
+
 `main` kırıldıysa ve iki denemede toparlanmadıysa:
+
 ```bash
 git tag -l 'good/wave-*' | sort -V | tail -1     # son bilinen iyi nokta
 git revert --no-edit <bozuk-merge-sha>
 ```
+
 Repoyu `reset --hard` ile geçmişe atma — `revert` kullan, geçmiş korunsun.
 
 ## Secret disiplini
+
 Ortam değişkenlerini `vercel env add` ile ekle. Değerlerini **rapora yazma**, log'a basma,
 dosyaya kaydetme. `.env.local` asla commit edilmez.
 
 ## Rapor
+
 xox-dev-core ile aynı YAML formatı. `summary` içinde deploy URL'ini ver.
-```
+
+````
 
 - [ ] **Step 2: `.claude/agents/xox-integrator.md`**
 
@@ -4330,10 +4561,12 @@ git checkout main && git pull --ff-only
 git merge --no-ff feat/<task-id> -m "merge(<task-id>): <başlık>"
 pnpm install                      # workspace bağımlılığı değişmiş olabilir
 pnpm gates                        # typecheck + lint + format + coverage + knip
-```
+````
+
 `gates` yeşilse sonraki branch'e geç. Kırmızıysa **aynı merge içinde** düzelt ve tekrar koş.
 
 ## Çakışma çözümü
+
 - Çakışmayı **anlamaya** çalış, birini körlemesine seçme. İki taraf da bir amaçla yazıldı.
 - `pnpm-lock.yaml` çakışırsa: çakışan hâli sil, `pnpm install` ile yeniden üret.
 - `board.json` çakışırsa: iki taraftaki görevleri **birleştir**, hiçbirini düşürme.
@@ -4341,29 +4574,35 @@ pnpm gates                        # typecheck + lint + format + coverage + knip
 - Çözemiyorsan merge'ü iptal et (`git merge --abort`), görevi `blocked` işaretle, raporla.
 
 ## Merge sonrası
+
 Tüm dalga birleştiğinde:
+
 ```bash
 pnpm build && pnpm test
 git tag good/wave-<n>
 ```
+
 Tag atılmadan dalga bitmiş sayılmaz — bu, bozuk bir merge'den geri dönüş noktasıdır.
 
 ## Başarısızlık
+
 İki denemede `main` yeşile dönmezse **kendi başına daha fazla deneme yapma**:
 son `good/wave-*` tag'ini raporla, `git revert` öner, kararı lead versin.
 
 ## Rapor
+
 ```yaml
 task: wave-<n>-integration
 status: done | blocked
 summary: <2-3 cümle>
 merged: [{ branch, sha, conflicts_resolved: n }]
 reverted: [...]
-gates: { typecheck: pass, lint: pass, coverage: "%", knip: pass }
+gates: { typecheck: pass, lint: pass, coverage: '%', knip: pass }
 tag: good/wave-<n>
 blocked_reason: <varsa>
 ```
-```
+
+````
 
 - [ ] **Step 3: `.claude/agents/xox-memory-curator.md`**
 
@@ -4385,7 +4624,7 @@ Sen XOX'un hafıza küratörüsün. Her 3 dalgada bir çalışırsın. İşin: *
 ```bash
 tail -n 300 docs/board/journal.ndjson
 ls -t docs/board/reports/*.md | head -20
-```
+````
 
 ## Damıtma kuralları
 
@@ -4403,14 +4642,17 @@ tercih konvansiyon değildir.
 işaret et; tabloyu güncelle.
 
 ## Budama — eklemek kadar önemli
+
 - Artık geçerli olmayan tuzağı **sil** ve yerine ne olduğunu yaz (yanlış hafıza, hafızasızlıktan kötüdür)
 - Aynı şeyi söyleyen iki kaydı birleştir
 - `CLAUDE.md` 200 satırı aşarsa detayı `docs/memory/`'ye taşı, `CLAUDE.md`'de tek satır işaret bırak
 
 ## Yapmadığın şey
+
 Kod okuyup "şöyle olmalı" diye kural uydurmak. Yalnızca **gerçekten olan** olaylardan damıt.
 
 ## Rapor
+
 ```yaml
 task: memory-curation-wave-<n>
 status: done
@@ -4419,7 +4661,8 @@ added: { gotchas: n, decisions: n, conventions: n }
 pruned: n
 claude_md_lines: n
 ```
-```
+
+````
 
 - [ ] **Step 4: `.claude/agents/xox-reporter.md`**
 
@@ -4441,7 +4684,7 @@ ls docs/board/reports/
 git log --oneline main --since="12 hours ago"
 git tag -l 'good/wave-*'
 cat docs/board/danger.log 2>/dev/null
-```
+````
 
 ## Üret: `docs/reports/<tarih>-night-run.md`
 
@@ -4449,7 +4692,7 @@ Bu sırayla — en önemli bilgi en üstte:
 
 1. **Tek cümlelik özet** — gece ne oldu
 2. **Senden beklenen kararlar** ⚠️ — bloklanan her görev: ne denendi, neden takıldı, hangi
-   seçenekler var, ne öneriyorsun. *Bu bölüm en üstte olmalı; Ömer'in tek yapması gereken iş budur.*
+   seçenekler var, ne öneriyorsun. _Bu bölüm en üstte olmalı; Ömer'in tek yapması gereken iş budur._
 3. **Tamamlanma** — P0/P1/P2 yüzdeleri, hangi kabul kriteri karşılandı
 4. **Dalga zaman çizelgesi** — dalga · görevler · süre · sonuç
 5. **Kalite** — kapsam, mutasyon skoru, e2e geçen/kalan, review bulguları
@@ -4459,24 +4702,28 @@ Bu sırayla — en önemli bilgi en üstte:
 9. **Yıkıcı işlem günlüğü** — `danger.log` boş değilse mutlaka göster
 
 ## Sonra: Artifact olarak yayınla
+
 Raporu görsel bir HTML sayfası olarak `Artifact` aracıyla yayınla — Ömer telefondan bakabilsin.
 Başlık: `XOX Gece Raporu`. Favicon: `🌙`.
 
 ## Ton
+
 Dürüst ol. Bitmeyen işi bitmiş gösterme. Bir test kırmızıysa **kırmızı yaz.** Sayıları uydurma —
 ölçemediğin şeyi "ölçülmedi" diye yaz. Ömer'in sana güveni raporun doğruluğuna bağlı.
 
 ## Rapor
+
 ```yaml
 task: night-report
 status: done
 summary: <2-3 cümle>
 report_path: docs/reports/<tarih>-night-run.md
 artifact_url: <yayınlanan URL>
-completion: { P0: "%", P1: "%", P2: "%" }
+completion: { P0: '%', P1: '%', P2: '%' }
 decisions_needed: n
 ```
-```
+
+````
 
 - [ ] **Step 5: 18 agent'ı doğrula ve commit**
 
@@ -4485,13 +4732,14 @@ ls .claude/agents/*.md | wc -l    # 18 olmalı
 grep -L '^name:' .claude/agents/*.md   # çıktı boş olmalı (hepsinde frontmatter var)
 git add .claude/agents
 git commit -m "feat(claude): operasyon katmanı agentları — devops, integrator, memory-curator, reporter"
-```
+````
 
 ---
 
 ### Task 32: Slash komutları
 
 **Files:**
+
 - Create: `.claude/commands/{xox-night,xox-wave,xox-status,xox-report,xox-unblock}.md`
 
 - [ ] **Step 1: `.claude/commands/xox-night.md`**
@@ -4562,6 +4810,7 @@ Otonom gece koşusunu başlat. Argümanlar: $ARGUMENTS
 ## BİTİŞ
 
 Deadline · board boş · veya devre kesici:
+
 1. `docs/board/.night-run-active` dosyasını sil
 2. `xox-reporter`'ı dispatch et
 3. Orphan worktree'leri temizle: `git worktree prune`
@@ -4617,6 +4866,7 @@ allowed-tools: Task, Bash, Read
 ---
 
 `xox-reporter` agentını dispatch et. Ona şunları ver:
+
 - `docs/board/board.json` yolu
 - Kapsanacak zaman aralığı (varsayılan: son 12 saat)
 - Raporun yazılacağı yol: `docs/reports/<bugünün tarihi>-night-run.md`
@@ -4661,6 +4911,7 @@ git commit -m "feat(claude): slash komutları — night, wave, status, report, u
 ### Task 33: GitHub Actions
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`, `.github/workflows/e2e-preview.yml`
 
 - [ ] **Step 1: `.github/workflows/ci.yml`**
@@ -4792,6 +5043,7 @@ jobs:
 ```bash
 grep -rl '"@playwright/test"' --include=package.json . | grep -v '^./apps/e2e/package.json$' || echo "✅ temiz"
 ```
+
 Expected: `✅ temiz`
 
 - [ ] **Step 4: Commit ve push**
@@ -4807,6 +5059,7 @@ git push origin main
 ```bash
 gh run watch --exit-status
 ```
+
 Expected: tüm job'lar yeşil. Kırmızıysa `gh run view --log-failed` ile incele ve düzelt.
 
 ---
@@ -4814,6 +5067,7 @@ Expected: tüm job'lar yeşil. Kırmızıysa `gh run view --log-failed` ile ince
 ### Task 34: Vercel projesi, ortam değişkenleri, domain
 
 **Files:**
+
 - Create: `vercel.json`
 
 - [ ] **Step 1: Vercel CLI'ı güncelle**
@@ -4822,6 +5076,7 @@ Expected: tüm job'lar yeşil. Kırmızıysa `gh run view --log-failed` ile ince
 pnpm add -g vercel@latest
 vercel --version
 ```
+
 Expected: `59.x` veya üzeri.
 
 - [ ] **Step 2: `vercel.json` — monorepo kökünden web'i derle**
@@ -4878,6 +5133,7 @@ ENVEOF
 
 git check-ignore -v .env.local
 ```
+
 Expected: `.gitignore:3:.env.*	.env.local` — dosya yok sayılıyor. **Bu çıktı gelmiyorsa dur
 ve `.gitignore`'ı düzelt.**
 
@@ -4887,6 +5143,7 @@ ve `.gitignore`'ı düzelt.**
 vercel domains add xox.omerdursun.com
 vercel alias set <production-deployment-url> xox.omerdursun.com
 ```
+
 `omerdursun.com` nameserver'ları zaten Vercel DNS'te olduğu için DNS kaydı otomatik oluşur.
 
 - [ ] **Step 7: Preview deploy ve doğrula**
@@ -4894,11 +5151,13 @@ vercel alias set <production-deployment-url> xox.omerdursun.com
 ```bash
 vercel deploy
 ```
+
 Dönen URL'i not al — Task 35'te kullanılacak.
 
 ```bash
 curl -sS "<preview-url>/api/health" | node -e "process.stdin.on('data',d=>console.log(d.toString()))"
 ```
+
 Expected: `{"ok":true,"db":"xox_test",...}`
 
 `ok:false` dönerse: Atlas Network Access listesinde `0.0.0.0/0` (veya Vercel IP aralıkları)
@@ -4924,6 +5183,7 @@ Projenin en büyük varsayımı burada test edilir. Başarısız olursa gece ko�
 önce mimari karar yenilenir.
 
 **Files:**
+
 - Modify: `docs/memory/gotchas.md`, `docs/memory/decisions.md`
 
 - [ ] **Step 1: Preview URL'i al**
@@ -4938,6 +5198,7 @@ echo "Preview: $PREVIEW"
 ```bash
 curl -sS "$PREVIEW/api/health"
 ```
+
 Expected: `{"ok":true,"db":"xox_test","at":"..."}`
 
 - [ ] **Step 3: WebSocket'i doğrula — kritik adım**
@@ -4953,6 +5214,7 @@ ws.on('message', (d) => { clearTimeout(t); console.log('YANIT:', d.toString()); 
 ws.on('error', (e) => { clearTimeout(t); console.error('BAŞARISIZ:', e.message); process.exit(1) })
 " PREVIEW="$PREVIEW"
 ```
+
 Expected: `YANIT: echo:merhaba` ve exit code 0.
 
 - [ ] **Step 4: Sonucu hafızaya yaz — hangi sonuç çıkarsa çıksın**
@@ -4961,6 +5223,7 @@ Expected: `YANIT: echo:merhaba` ve exit code 0.
 
 ```markdown
 ## 2026-08-24 · Vercel Fluid Compute WebSocket doğrulandı
+
 `experimental_upgradeWebSocket` gerçek preview deploy'unda çalışıyor; echo turu başarılı.
 Gerçek zamanlı katman WS üzerine kurulacak. Change stream fan-out'u Dalga 0'da ayrıca kanıtlanacak.
 ```
@@ -4969,6 +5232,7 @@ Gerçek zamanlı katman WS üzerine kurulacak. Change stream fan-out'u Dalga 0'd
 
 ```markdown
 ## 2026-08-24 · Vercel WebSocket echo turu başarısız
+
 Belirti: <hata mesajı>. Denenen: <ne denendi>.
 **Yapılacak:** Gerçek zamanlı katman için `decisions.md`'deki Upstash Redis pub/sub yedeğine geç.
 Bu karar verilmeden Dalga 0 başlatılmaz.
@@ -4979,6 +5243,7 @@ Bu karar verilmeden Dalga 0 başlatılmaz.
 ```bash
 E2E_BASE_URL="$PREVIEW" pnpm --filter @xox/e2e test
 ```
+
 Expected: `4 passed` (ana sayfa · sağlık · iki oyuncu fixture · WS echo)
 
 - [ ] **Step 6: QA raporunun lead'in okuyabileceği yere düştüğünü doğrula**
@@ -4986,6 +5251,7 @@ Expected: `4 passed` (ana sayfa · sağlık · iki oyuncu fixture · WS echo)
 ```bash
 ls -la docs/board/reports/qa-latest.json && head -5 docs/board/reports/qa-latest.json
 ```
+
 Expected: dosya var ve geçerli JSON.
 
 - [ ] **Step 7: Commit**
@@ -5003,6 +5269,7 @@ Tek sahte görevle **dispatch → rapor → review → merge → deploy → e2e 
 zincirinin çalıştığını kanıtla. Gerçek ürün işi yapmadan.
 
 **Files:**
+
 - Modify: `docs/board/board.json`
 
 - [ ] **Step 1: Sahte görevi board'a ekle**
@@ -5073,6 +5340,7 @@ FLAGEOF
 
 echo '{}' | .claude/hooks/night-continue.sh
 ```
+
 Expected: `"decision":"block"` içeren JSON (board'da işlenebilir görev varsa) veya
 `systemMessage` (görev kalmadıysa).
 
@@ -5104,6 +5372,7 @@ Not: `boardToString` yardımcısı **kalır** — hata ayıklamada gerçekten i�
 ```bash
 pnpm gates && pnpm mutation && pnpm build && pnpm --filter @xox/mobile build
 ```
+
 Expected: hepsi exit code 0.
 
 - [ ] **Step 2: Harness envanterini doğrula**
@@ -5128,6 +5397,7 @@ Run: `/xox-status`
 git push origin main
 gh run watch --exit-status
 ```
+
 Expected: CI tüm job'larda yeşil.
 
 - [ ] **Step 5: Gece koşusuna hazırlık notu**
@@ -5136,6 +5406,7 @@ Expected: CI tüm job'larda yeşil.
 
 ```markdown
 ## Harness durumu — 2026-08-24
+
 ✅ Monorepo · kalite kapıları · 18 agent · 7 hook · 5 komut · CI · Vercel + domain
 ✅ WebSocket gerçek preview'da kanıtlandı
 ✅ Boru hattı kuru koşuyla uçtan uca doğrulandı
@@ -5153,24 +5424,24 @@ git add docs/memory/state.md && git commit -m "docs(memory): harness hazır, gec
 
 ## Doğrulama özeti — spec kapsaması
 
-| Spec bölümü | Karşılayan görev |
-|---|---|
-| §3 Repo topolojisi + bağımlılık yönü | Task 1, 5 (boundaries kuralı) |
-| §4 Teknoloji yığını | Sürüm matrisi, Task 1–23 |
-| §5 P0/P1/P2 kabul kriterleri | Task 25 (board tiers), `/xox-night` üretir |
-| §6.1 Change stream fan-out | Task 25 (decisions.md), Dalga 0'da kanıtlanır |
-| §6.2 WS protokolü | Task 16 |
-| §6.3 Mobil auth köprüsü | Task 22 (iskelet), `xox-dev-mobile` promptu |
-| §6.4 Veri modeli | Task 17 |
-| §7 18 agent + rapor formatı | Task 28–31 |
-| §8 Hafıza mimarisi + hook'lar | Task 24–27 |
-| §9 Gece koşusu protokolü | Task 32 (`/xox-night`), Task 27 (`night-continue.sh`) |
-| §10 Kalite kapıları + DoD | Task 5–9, 15, 33; DoD `CLAUDE.md`'de |
-| §11 E2E stratejisi + fixture'lar | Task 23, 30 (`xox-qa-e2e`), 33 |
-| §12 Güvenlik ve secret | Task 7, 30 (`xox-security`), 33, 34 |
-| §13 Gözlemlenebilirlik + rapor | Task 31 (`xox-reporter`), 32 |
-| §14 Ön koşullar | Task 34 |
-| §16 Riskler | Task 21, 35 (WS kanıtı), 36 (kuru koşu) |
+| Spec bölümü                          | Karşılayan görev                                      |
+| ------------------------------------ | ----------------------------------------------------- |
+| §3 Repo topolojisi + bağımlılık yönü | Task 1, 5 (boundaries kuralı)                         |
+| §4 Teknoloji yığını                  | Sürüm matrisi, Task 1–23                              |
+| §5 P0/P1/P2 kabul kriterleri         | Task 25 (board tiers), `/xox-night` üretir            |
+| §6.1 Change stream fan-out           | Task 25 (decisions.md), Dalga 0'da kanıtlanır         |
+| §6.2 WS protokolü                    | Task 16                                               |
+| §6.3 Mobil auth köprüsü              | Task 22 (iskelet), `xox-dev-mobile` promptu           |
+| §6.4 Veri modeli                     | Task 17                                               |
+| §7 18 agent + rapor formatı          | Task 28–31                                            |
+| §8 Hafıza mimarisi + hook'lar        | Task 24–27                                            |
+| §9 Gece koşusu protokolü             | Task 32 (`/xox-night`), Task 27 (`night-continue.sh`) |
+| §10 Kalite kapıları + DoD            | Task 5–9, 15, 33; DoD `CLAUDE.md`'de                  |
+| §11 E2E stratejisi + fixture'lar     | Task 23, 30 (`xox-qa-e2e`), 33                        |
+| §12 Güvenlik ve secret               | Task 7, 30 (`xox-security`), 33, 34                   |
+| §13 Gözlemlenebilirlik + rapor       | Task 31 (`xox-reporter`), 32                          |
+| §14 Ön koşullar                      | Task 34                                               |
+| §16 Riskler                          | Task 21, 35 (WS kanıtı), 36 (kuru koşu)               |
 
 ## Bilinçli olarak bu plana dahil EDİLMEYENLER
 

@@ -16,27 +16,27 @@ Sistemin karşılaması gereken dört sert gereksinim:
 
 1. **Otonomi** — Gece boyunca insan müdahalesi gerekmez. İzin istemi = duran oturum.
 2. **Context dayanıklılığı** — 6–8 saatlik koşuda context defalarca sıkışır; lead'in hafızası diskte olmalı.
-3. **Playwright izolasyonu** — Ana uygulama paketleri Playwright'a *asla* dokunmaz. Ayrı proje, ayrı agent, lead'e raporlar.
+3. **Playwright izolasyonu** — Ana uygulama paketleri Playwright'a _asla_ dokunmaz. Ayrı proje, ayrı agent, lead'e raporlar.
 4. **Best practice zorlaması** — Kalite prompt'la değil, derleyici ve CI ile garanti edilir.
 
 ---
 
 ## 2. Alınan kararlar
 
-| Konu | Karar | Gerekçe |
-|---|---|---|
-| Repo topolojisi | Tek monorepo, pnpm workspaces + Turborepo | Tek git = tek worktree kökü, lead tüm raporları görür, oyun mantığı web+mobil ortak |
-| Otonomi seviyesi | Tam yetki (administrator) | Kullanıcı kararı. Yasak listesi yok; yıkıcı işlemler *engellenmez*, **geri alınabilir** kılınır. **Tek istisna:** public repoya secret commit'i engellenir — bu bir yetki kısıtı değil, geri dönüşü olmayan bir kaza koruması (sızan anahtar dakikalar içinde taranıp bulunur) |
-| Agent kadrosu | 18 agent, 4 katman | Maksimum uzmanlaşma; her agent dar prompt + kısıtlı tool seti |
-| Lead'in yeri | Ana oturum (subagent değil) | İç içe dispatch kırılgan; lead worktree/dalga/board state'ini kaybetmemeli |
-| Realtime | Vercel native WebSocket (Fluid Compute) | Üçüncü parti yok, RN'de yerleşik WebSocket API'si var, ekstra maliyet yok |
-| Instance-arası yayın | MongoDB Change Streams (`rooms` koleksiyonu, oda koduna filtreli) | İki oyuncu farklı Fluid instance'ına düşebilir; change stream instance-agnostik. **Reddedilen alternatif:** Upstash Redis pub/sub (ek vendor), sticky routing (garanti değil) |
-| Auth | Auth.js v5 (NextAuth), MongoDB adapter, JWT session | Kullanıcı kararı. Expo resmi desteklenmiyor → açık mobil köprü tasarlandı (§6.3) |
-| Veritabanı | MongoDB Atlas (`xox_dev`, `xox_test`, `xox_prod`) | Kullanıcı kararı |
-| Mobil doğrulama | Expo Web (react-native-web) hedefi + `apps/e2e` duman testi | Expo Go ajan tarafından sürülemez; web hedefi mantık hatalarının çoğunu ucuza yakalar |
-| Dil | Yalnızca Türkçe, metinler `messages/tr.ts`'de merkezî | i18n kütüphanesi yok; merkezîlik ileride EN eklemeyi ucuzlatır |
-| v1 kapsamı | Geniş v1 (sosyal özellikler dahil), P0/P1/P2 katmanlı | İki geceye yayılabilir; katmanlama ilerlemeyi ölçülebilir kılar |
-| Repo görünürlüğü | Public (mevcut) | GitHub secret scanning + push protection zaten aktif |
+| Konu                 | Karar                                                             | Gerekçe                                                                                                                                                                                                                                                                        |
+| -------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Repo topolojisi      | Tek monorepo, pnpm workspaces + Turborepo                         | Tek git = tek worktree kökü, lead tüm raporları görür, oyun mantığı web+mobil ortak                                                                                                                                                                                            |
+| Otonomi seviyesi     | Tam yetki (administrator)                                         | Kullanıcı kararı. Yasak listesi yok; yıkıcı işlemler _engellenmez_, **geri alınabilir** kılınır. **Tek istisna:** public repoya secret commit'i engellenir — bu bir yetki kısıtı değil, geri dönüşü olmayan bir kaza koruması (sızan anahtar dakikalar içinde taranıp bulunur) |
+| Agent kadrosu        | 18 agent, 4 katman                                                | Maksimum uzmanlaşma; her agent dar prompt + kısıtlı tool seti                                                                                                                                                                                                                  |
+| Lead'in yeri         | Ana oturum (subagent değil)                                       | İç içe dispatch kırılgan; lead worktree/dalga/board state'ini kaybetmemeli                                                                                                                                                                                                     |
+| Realtime             | Vercel native WebSocket (Fluid Compute)                           | Üçüncü parti yok, RN'de yerleşik WebSocket API'si var, ekstra maliyet yok                                                                                                                                                                                                      |
+| Instance-arası yayın | MongoDB Change Streams (`rooms` koleksiyonu, oda koduna filtreli) | İki oyuncu farklı Fluid instance'ına düşebilir; change stream instance-agnostik. **Reddedilen alternatif:** Upstash Redis pub/sub (ek vendor), sticky routing (garanti değil)                                                                                                  |
+| Auth                 | Auth.js v5 (NextAuth), MongoDB adapter, JWT session               | Kullanıcı kararı. Expo resmi desteklenmiyor → açık mobil köprü tasarlandı (§6.3)                                                                                                                                                                                               |
+| Veritabanı           | MongoDB Atlas (`xox_dev`, `xox_test`, `xox_prod`)                 | Kullanıcı kararı                                                                                                                                                                                                                                                               |
+| Mobil doğrulama      | Expo Web (react-native-web) hedefi + `apps/e2e` duman testi       | Expo Go ajan tarafından sürülemez; web hedefi mantık hatalarının çoğunu ucuza yakalar                                                                                                                                                                                          |
+| Dil                  | Yalnızca Türkçe, metinler `messages/tr.ts`'de merkezî             | i18n kütüphanesi yok; merkezîlik ileride EN eklemeyi ucuzlatır                                                                                                                                                                                                                 |
+| v1 kapsamı           | Geniş v1 (sosyal özellikler dahil), P0/P1/P2 katmanlı             | İki geceye yayılabilir; katmanlama ilerlemeyi ölçülebilir kılar                                                                                                                                                                                                                |
+| Repo görünürlüğü     | Public (mevcut)                                                   | GitHub secret scanning + push protection zaten aktif                                                                                                                                                                                                                           |
 
 ---
 
@@ -85,26 +85,27 @@ e2e        ──►  shared            (uygulama koduna dokunamaz)
 
 ## 4. Teknoloji yığını
 
-| Katman | Seçim |
-|---|---|
-| Web | Next.js 16 App Router, React 19, TypeScript strict, Tailwind + shadcn/ui |
-| Mobil | Expo SDK (Expo Go uyumlu), React Native, `react-native-web` web hedefi |
-| Ortak mantık | Saf TypeScript (`game-core`), zod (`shared`) |
-| Veri | MongoDB Atlas + Mongoose, Change Streams ile fan-out |
-| Realtime | Vercel Functions WebSocket (`experimental_upgradeWebSocket`, Fluid Compute, Node 24) |
-| Auth | Auth.js v5 + MongoDB adapter, JWT strategy; mobilde `expo-auth-session` köprüsü |
-| Birim/entegrasyon test | Vitest + Testing Library; `mongodb-memory-server`; mobilde `jest-expo` + RNTL |
-| E2E | Playwright (yalnız `apps/e2e`) |
-| Mutasyon testi | Stryker (yalnız `game-core`) |
-| CI | GitHub Actions |
-| Deploy | Vercel — `xox.omerdursun.com` (DNS zaten Vercel nameserver'larında) |
-| Gözlemlenebilirlik | Sentry + Vercel Analytics + Speed Insights |
+| Katman                 | Seçim                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| Web                    | Next.js 16 App Router, React 19, TypeScript strict, Tailwind + shadcn/ui             |
+| Mobil                  | Expo SDK (Expo Go uyumlu), React Native, `react-native-web` web hedefi               |
+| Ortak mantık           | Saf TypeScript (`game-core`), zod (`shared`)                                         |
+| Veri                   | MongoDB Atlas + Mongoose, Change Streams ile fan-out                                 |
+| Realtime               | Vercel Functions WebSocket (`experimental_upgradeWebSocket`, Fluid Compute, Node 24) |
+| Auth                   | Auth.js v5 + MongoDB adapter, JWT strategy; mobilde `expo-auth-session` köprüsü      |
+| Birim/entegrasyon test | Vitest + Testing Library; `mongodb-memory-server`; mobilde `jest-expo` + RNTL        |
+| E2E                    | Playwright (yalnız `apps/e2e`)                                                       |
+| Mutasyon testi         | Stryker (yalnız `game-core`)                                                         |
+| CI                     | GitHub Actions                                                                       |
+| Deploy                 | Vercel — `xox.omerdursun.com` (DNS zaten Vercel nameserver'larında)                  |
+| Gözlemlenebilirlik     | Sentry + Vercel Analytics + Speed Insights                                           |
 
 ---
 
 ## 5. Ürün kapsamı — v1 kabul kriterleri
 
 ### P0 — Yürüyen iskelet ve çekirdek (Dalga 0–3)
+
 - [ ] **Dalga 0 dikey dilim:** giriş → oda kur → ikinci istemci katıl → hamle → karşı tarafta görün, **gerçek Vercel preview + gerçek Atlas üzerinde kanıtlanmış**
 - [ ] Auth.js kayıt/giriş (web) + mobil köprü
 - [ ] `game-core`: kural motoru, kazanma/beraberlik tespiti, minimax AI (kolay/orta/yenilmez)
@@ -115,6 +116,7 @@ e2e        ──►  shared            (uygulama koduna dokunamaz)
 - [ ] Kopma sonrası yeniden bağlanma + state resync
 
 ### P1 — Tam döngü (Dalga 4–7)
+
 - [ ] Profil sayfası + galibiyet/mağlubiyet/beraberlik sayaçları
 - [ ] Mobil: tüm ekranlar Expo Go'da açılıyor, web hedefi duman testinden geçiyor
 - [ ] `xox.omerdursun.com` production'da canlı
@@ -122,6 +124,7 @@ e2e        ──►  shared            (uygulama koduna dokunamaz)
 - [ ] Terk etme/zaman aşımı yönetimi (oda TTL, hamle süresi)
 
 ### P2 — Sosyal (Dalga 8+, ikinci geceye taşabilir)
+
 - [ ] Leaderboard
 - [ ] ELO derecelendirme
 - [ ] Maç geçmişi
@@ -155,9 +158,9 @@ Oyuncu B ◄──ws── Instance 2 ◄─────────────
 
 ### 6.2 WebSocket protokolü (`packages/shared`)
 
-| Yön | Mesajlar |
-|---|---|
-| istemci → sunucu | `join`, `move`, `resign`, `rematch:offer`, `rematch:accept`, `chat:emoji`, `ping` |
+| Yön              | Mesajlar                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| istemci → sunucu | `join`, `move`, `resign`, `rematch:offer`, `rematch:accept`, `chat:emoji`, `ping`                                                           |
 | sunucu → istemci | `state`, `move:applied`, `move:rejected`, `opponent:joined`, `opponent:left`, `game:over`, `rematch:offered`, `chat:emoji`, `error`, `pong` |
 
 Tüm mesajlar zod ile şemalıdır; şema `shared` içinde tek kaynaktır, hem sunucu hem iki istemci onu kullanır.
@@ -194,26 +197,26 @@ Bu köprü **açıkça tasarlanmıştır** çünkü keşfe bırakılırsa mobil 
 Her agent dosyası `.claude/agents/<ad>.md`: kendi system prompt'u, **kısıtlı tool seti**, kendi modeli,
 ve **zorunlu yapılandırılmış rapor formatı**.
 
-| Katman | Agent | Sorumluluk | Model | Yazma yetkisi |
-|---|---|---|---|---|
-| **Analiz** | `xox-analyst` | Kullanıcı hikayeleri, kabul kriterleri, edge case'ler | opus | `docs/` |
-| | `xox-architect` | Teknik tasarım, ADR, bağımlılık grafiği, dalga bölümlemesi | opus | `docs/` |
-| | `xox-planner` | Atomik + paralel-güvenli görev kartları, çakışma kümeleri | opus | `docs/`, `board.json` |
-| **Geliştirme** | `xox-dev-core` | `game-core` kural motoru + minimax — TDD zorunlu | opus | `packages/game-core` |
-| | `xox-dev-backend` | API routes, oda yaşam döngüsü, mongoose, Auth.js sunucu | sonnet | `apps/web/app/api`, `packages/db` |
-| | `xox-dev-realtime` | WS protokolü, change stream fan-out, reconnect, resync | opus | WS katmanı, `packages/shared` |
-| | `xox-dev-web` | Next.js UI, RSC/client sınırı, Tailwind + shadcn | sonnet | `apps/web` (api hariç) |
-| | `xox-dev-mobile` | Expo ekranları, auth köprüsü istemcisi, WS istemcisi, web hedefi | sonnet | `apps/mobile` |
-| **Kalite** | `xox-test-writer` | Vitest birim/entegrasyon, kapsam açıklarını kapatır | sonnet | `**/*.test.ts` |
-| | `xox-qa-e2e` | 🎭 Playwright senaryoları — **yalnız `apps/e2e`** | sonnet | `apps/e2e`, `docs/board/reports` |
-| | `xox-reviewer` | Düşmanca kod incelemesi — bulur, **düzeltmez** | opus | yalnız rapor (Edit/Write yok) |
-| | `xox-security` | Auth akışı, WS yetkilendirme, NoSQL injection, secret sızıntısı | opus | yalnız rapor |
-| | `xox-perf` | Web Vitals, bundle bütçesi, Mongo indeksleri, WS mesaj hacmi | sonnet | yalnız rapor |
-| | `xox-designer` | Tasarım tokenları, tahta animasyonları, web↔mobil tutarlılık, dark mode | sonnet | `packages/ui-tokens`, stil dosyaları |
-| **Operasyon** | `xox-devops` | Vercel projesi, env senkronu, domain, Actions, rollback | sonnet | CI/config |
-| | `xox-integrator` | Dalga sonu merge, çakışma çözümü, merge-sonrası smoke | opus | tüm repo (merge bağlamında) |
-| | `xox-memory-curator` | `journal` → `decisions/gotchas/conventions` damıtma, `CLAUDE.md` bütçesi | sonnet | `docs/memory`, `CLAUDE.md` |
-| | `xox-reporter` | Sabah raporu: board + git + QA + deploy → Markdown + Artifact | sonnet | `docs/reports` |
+| Katman         | Agent                | Sorumluluk                                                               | Model  | Yazma yetkisi                        |
+| -------------- | -------------------- | ------------------------------------------------------------------------ | ------ | ------------------------------------ |
+| **Analiz**     | `xox-analyst`        | Kullanıcı hikayeleri, kabul kriterleri, edge case'ler                    | opus   | `docs/`                              |
+|                | `xox-architect`      | Teknik tasarım, ADR, bağımlılık grafiği, dalga bölümlemesi               | opus   | `docs/`                              |
+|                | `xox-planner`        | Atomik + paralel-güvenli görev kartları, çakışma kümeleri                | opus   | `docs/`, `board.json`                |
+| **Geliştirme** | `xox-dev-core`       | `game-core` kural motoru + minimax — TDD zorunlu                         | opus   | `packages/game-core`                 |
+|                | `xox-dev-backend`    | API routes, oda yaşam döngüsü, mongoose, Auth.js sunucu                  | sonnet | `apps/web/app/api`, `packages/db`    |
+|                | `xox-dev-realtime`   | WS protokolü, change stream fan-out, reconnect, resync                   | opus   | WS katmanı, `packages/shared`        |
+|                | `xox-dev-web`        | Next.js UI, RSC/client sınırı, Tailwind + shadcn                         | sonnet | `apps/web` (api hariç)               |
+|                | `xox-dev-mobile`     | Expo ekranları, auth köprüsü istemcisi, WS istemcisi, web hedefi         | sonnet | `apps/mobile`                        |
+| **Kalite**     | `xox-test-writer`    | Vitest birim/entegrasyon, kapsam açıklarını kapatır                      | sonnet | `**/*.test.ts`                       |
+|                | `xox-qa-e2e`         | 🎭 Playwright senaryoları — **yalnız `apps/e2e`**                        | sonnet | `apps/e2e`, `docs/board/reports`     |
+|                | `xox-reviewer`       | Düşmanca kod incelemesi — bulur, **düzeltmez**                           | opus   | yalnız rapor (Edit/Write yok)        |
+|                | `xox-security`       | Auth akışı, WS yetkilendirme, NoSQL injection, secret sızıntısı          | opus   | yalnız rapor                         |
+|                | `xox-perf`           | Web Vitals, bundle bütçesi, Mongo indeksleri, WS mesaj hacmi             | sonnet | yalnız rapor                         |
+|                | `xox-designer`       | Tasarım tokenları, tahta animasyonları, web↔mobil tutarlılık, dark mode  | sonnet | `packages/ui-tokens`, stil dosyaları |
+| **Operasyon**  | `xox-devops`         | Vercel projesi, env senkronu, domain, Actions, rollback                  | sonnet | CI/config                            |
+|                | `xox-integrator`     | Dalga sonu merge, çakışma çözümü, merge-sonrası smoke                    | opus   | tüm repo (merge bağlamında)          |
+|                | `xox-memory-curator` | `journal` → `decisions/gotchas/conventions` damıtma, `CLAUDE.md` bütçesi | sonnet | `docs/memory`, `CLAUDE.md`           |
+|                | `xox-reporter`       | Sabah raporu: board + git + QA + deploy → Markdown + Artifact            | sonnet | `docs/reports`                       |
 
 ### Zorunlu rapor formatı (her subagent)
 
@@ -222,7 +225,7 @@ task: <task-id>
 status: done | blocked | failed
 summary: <2-3 cümle>
 files_changed: [...]
-tests: { added: n, passing: n, coverage: "%" }
+tests: { added: n, passing: n, coverage: '%' }
 decisions: [{ karar, gerekçe, reddedilen_alternatif }]
 gotchas: [<sonraki agent'ın bilmesi gerekenler>]
 blocked_reason: <varsa>
@@ -256,14 +259,14 @@ KATMAN 4  Görev bazlı
 
 ### Hook'larla zorunlu kılınan güncelleme
 
-| Hook | Davranış |
-|---|---|
-| `SessionStart` | Açılış/resume/**compact sonrası** board özetini + hafıza indeksini context'e enjekte eder |
-| `PreCompact` | Sıkışmadan önce lead'i çalışma durumunu `state.md`'ye yazmaya zorlar |
-| `SubagentStop` | Rapor dosyası yazılmış mı doğrular; `journal.ndjson`'a olay satırı ekler |
-| `PostToolUse` (Edit/Write) | Dokunulan dosyayı aktif görev kaydına işler (çakışma tespiti + review kapsamı) |
-| `PreToolUse` (Bash/Write/Edit) | Playwright duvarı · yıkıcı işlem snapshot'ı · secret içeren dosyada `git add` engeli |
-| `Stop` | Gece koşusu aktif + iş var + deadline geçmemişse duruşu **bloklar** |
+| Hook                           | Davranış                                                                                  |
+| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| `SessionStart`                 | Açılış/resume/**compact sonrası** board özetini + hafıza indeksini context'e enjekte eder |
+| `PreCompact`                   | Sıkışmadan önce lead'i çalışma durumunu `state.md`'ye yazmaya zorlar                      |
+| `SubagentStop`                 | Rapor dosyası yazılmış mı doğrular; `journal.ndjson`'a olay satırı ekler                  |
+| `PostToolUse` (Edit/Write)     | Dokunulan dosyayı aktif görev kaydına işler (çakışma tespiti + review kapsamı)            |
+| `PreToolUse` (Bash/Write/Edit) | Playwright duvarı · yıkıcı işlem snapshot'ı · secret içeren dosyada `git add` engeli      |
+| `Stop`                         | Gece koşusu aktif + iş var + deadline geçmemişse duruşu **bloklar**                       |
 
 `xox-memory-curator` her 3 dalgada bir çalışır: journal ve raporları damıtır, eskimiş kayıtları budar,
 `CLAUDE.md`'yi satır bütçesinde tutar. Sistem gece boyunca kendi kendini öğretir.
@@ -306,16 +309,16 @@ BİTİŞ  deadline · board boş · kritik durdurucu
 
 ### Dayanıklılık mekanizmaları
 
-| Risk | Mekanizma |
-|---|---|
-| Oturum gece bitiyor | `Stop` hook'u duruşu bloklar. Koruma: deadline, max dalga sayısı, ardışık başarısızlık sayacı |
-| Tek görev geceyi kilitliyor | 3 deneme → `blocked` + sebep → devam. Sabah raporunda "karar bekleyenler" |
-| Kötü merge sonraki dalgaları zehirliyor | Her başarılı dalga `good/wave-N` tag'i. Integrator 2 denemede toparlayamazsa son iyi tag'e otomatik dönüş + işi yeniden kuyruğa |
-| Token/kota tükeniyor | %60 → paralellik düşür · %80 → opus'tan sonnet'e degrade · %95 → temiz checkpoint + kısmi rapor + dur |
-| macOS uyuyor | `caffeinate -dimsu` |
-| Yıkıcı işlem | `PreToolUse` hook'u otomatik `rescue/<timestamp>` tag'i atar + `danger.log`'a yazar, **sonra işlemi geçirir** (yetki kısılmaz, geri alınabilir olur) |
-| Oturum çöküyor | Board + journal diskte ve commit'li → `/xox-night --resume` kaldığı yerden; orphan worktree'ler uzlaştırılır |
-| Felaket sabaha kadar görülmüyor | Devre kesiciler anında bildirim: 3 ardışık dalga hatası · bütçe %80 · `main` 2 dalgadır kırık · yıkıcı işlem |
+| Risk                                    | Mekanizma                                                                                                                                            |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Oturum gece bitiyor                     | `Stop` hook'u duruşu bloklar. Koruma: deadline, max dalga sayısı, ardışık başarısızlık sayacı                                                        |
+| Tek görev geceyi kilitliyor             | 3 deneme → `blocked` + sebep → devam. Sabah raporunda "karar bekleyenler"                                                                            |
+| Kötü merge sonraki dalgaları zehirliyor | Her başarılı dalga `good/wave-N` tag'i. Integrator 2 denemede toparlayamazsa son iyi tag'e otomatik dönüş + işi yeniden kuyruğa                      |
+| Token/kota tükeniyor                    | %60 → paralellik düşür · %80 → opus'tan sonnet'e degrade · %95 → temiz checkpoint + kısmi rapor + dur                                                |
+| macOS uyuyor                            | `caffeinate -dimsu`                                                                                                                                  |
+| Yıkıcı işlem                            | `PreToolUse` hook'u otomatik `rescue/<timestamp>` tag'i atar + `danger.log`'a yazar, **sonra işlemi geçirir** (yetki kısılmaz, geri alınabilir olur) |
+| Oturum çöküyor                          | Board + journal diskte ve commit'li → `/xox-night --resume` kaldığı yerden; orphan worktree'ler uzlaştırılır                                         |
+| Felaket sabaha kadar görülmüyor         | Devre kesiciler anında bildirim: 3 ardışık dalga hatası · bütçe %80 · `main` 2 dalgadır kırık · yıkıcı işlem                                         |
 
 ---
 
@@ -324,6 +327,7 @@ BİTİŞ  deadline · board boş · kritik durdurucu
 Prompt talimatı gece 03:00'te tutmaz. Kalite **mekanik olarak** zorlanır.
 
 ### Statik kapılar (pre-commit + CI, geçemeyen commit olmaz)
+
 - TypeScript `strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`; `tsc --noEmit` sıfır hata
 - ESLint flat config: `@typescript-eslint` **strict-type-checked**, `react-hooks`, `next/core-web-vitals`, `jsx-a11y`, `import`, `security`
 - **Bağımlılık sınır kuralları** (§3) — `playwright` importu `apps/e2e` dışında hata
@@ -335,6 +339,7 @@ Prompt talimatı gece 03:00'te tutmaz. Kalite **mekanik olarak** zorlanır.
 - **Stryker mutasyon testi** `game-core`'da, hayatta kalan mutant eşiği — "yeşil ama yalancı test" savunması
 
 ### Definition of Done — 6 madde, lead **mekanik doğrular**
+
 Subagent'ın "bitti" demesine güvenilmez; lead komutları kendisi çalıştırır.
 
 1. Önce kırmızı test yazıldı (TDD), sonra yeşile döndü
@@ -364,13 +369,15 @@ xox-qa-e2e   (yazma yetkisi: yalnız apps/e2e + docs/board/reports)
 ```
 
 ### Önceden tasarlanan fixture'lar (yoksa QA agent saatlerce tıkanır)
+
 - **`twoPlayers`** — iki eşzamanlı browser context, iki oturum açmış kullanıcı, aynı oda.
-  Online oyunun *tek* anlamlı test biçimi.
+  Online oyunun _tek_ anlamlı test biçimi.
 - **Tohum veri** — deterministik test kullanıcıları, `packages/db` seed scripti
 - **DB reset** — her koşu öncesi `xox_test` sıfırlanır
 - **Expo Web hedefi** — mobil bileşen ağacı tarayıcıda render edilir, duman testi koşar
 
 ### Kritik senaryolar
+
 kayıt/giriş · bilgisayara karşı 3 zorluk · oda kur · kodla katıl · sıra zorlaması ·
 kazanma/beraberlik · rövanş · kopma + reconnect + resync · rakip terk etme · leaderboard/ELO güncellemesi
 
@@ -385,10 +392,10 @@ Playwright üç katmanda ana projeden uzak tutulur: **(1)** PreToolUse hook enge
 - `gitleaks` pre-commit hard gate + `PreToolUse` hook'unda secret'lı `git add` engeli
 - Atlas URI yalnızca `.env.local` ve Vercel env'de; kod ve dokümanda **yalnızca değişken adı** geçer
 - Veritabanı ayrımı ve ortam eşlemesi:
-  - `xox_dev`  → yerel geliştirme (`.env.local`)
+  - `xox_dev` → yerel geliştirme (`.env.local`)
   - `xox_test` → **Vercel Preview** ortamı — `xox-qa-e2e` buraya karşı koşar, her koşu öncesi sıfırlanır
   - `xox_prod` → Vercel Production (`xox.omerdursun.com`)
-  Preview deploy'ların `xox_test`'e bakması `xox-devops`'un kurduğu ortam-kapsamlı env değişkenleriyle sağlanır.
+    Preview deploy'ların `xox_test`'e bakması `xox-devops`'un kurduğu ortam-kapsamlı env değişkenleriyle sağlanır.
 - `xox-security` agent'ı auth/WS/DB'ye dokunan her görevi inceler
 - **İş sonrası öneri:** Atlas şifresi bir kez rotate edilmeli (bu oturumda düz metin paylaşıldı)
 
@@ -410,14 +417,14 @@ deploy/preview URL'leri · token harcaması · riskler.
 
 ## 14. Ön koşul durumu
 
-| Ön koşul | Durum |
-|---|---|
+| Ön koşul            | Durum                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------- |
 | GitHub `A1640A/XOX` | ✅ mevcut, boş, public; push+workflow yetkisi var; secret scanning + push protection açık |
-| Vercel CLI | ✅ `omeerdursunn` girişli — **54.14.2 → 59.5.0 güncellenecek** |
-| Domain | ✅ `omerdursun.com` Vercel nameserver'larında; `xox.` alt alanı çözülüyor |
-| MongoDB Atlas | ✅ URI sağlandı → `.env.local` + Vercel env'e yazılacak |
-| `gitleaks` | ⬜ kurulacak (`brew install gitleaks`) |
-| Xcode/Simulator | ⬜ gerekmiyor (Expo Web hedefi seçildi) |
+| Vercel CLI          | ✅ `omeerdursunn` girişli — **54.14.2 → 59.5.0 güncellenecek**                            |
+| Domain              | ✅ `omerdursun.com` Vercel nameserver'larında; `xox.` alt alanı çözülüyor                 |
+| MongoDB Atlas       | ✅ URI sağlandı → `.env.local` + Vercel env'e yazılacak                                   |
+| `gitleaks`          | ⬜ kurulacak (`brew install gitleaks`)                                                    |
+| Xcode/Simulator     | ⬜ gerekmiyor (Expo Web hedefi seçildi)                                                   |
 
 ---
 
@@ -431,11 +438,11 @@ Redis pub/sub (change stream yetersiz kalırsa değerlendirilecek yedek)
 
 ## 16. Riskler
 
-| Risk | Etki | Azaltma |
-|---|---|---|
-| Vercel WS + change stream fan-out beklendiği gibi çalışmıyor | Gecenin tamamı boşa gider | **Dalga 0 dikey dilimi** — gerçek deploy'da kanıtlanmadan başka iş başlamaz; dokümante edilmiş Redis yedeği |
-| Auth.js Expo köprüsü tıkanıyor | Mobil P1 kayar | Köprü önceden tasarlandı (§6.3); tıkanırsa mobil auth `blocked`, web akmaya devam eder |
-| Ajanlar yeşil ama yalancı test yazıyor | Sahte tamamlanma | Stryker mutasyon testi + gerçek preview'a karşı e2e + reviewer'ın "test implementasyon olmadan kırmızı mı" kontrolü |
-| Token kotası gece yarısı bitiyor | Sessiz ölüm | Kademeli degrade + %95'te temiz checkpoint |
-| Paralel worktree'ler çakışıyor | Merge cehennemi | Planner her göreve **çakışma kümesi** yazar; lead ayrık kümeleri seçer; integrator sıralı merge yapar |
-| Geniş v1 tek geceye sığmıyor | Beklenti uyuşmazlığı | P0/P1/P2 katmanlaması; rapor yüzde verir; ikinci gece `--resume` ile devam |
+| Risk                                                         | Etki                      | Azaltma                                                                                                             |
+| ------------------------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Vercel WS + change stream fan-out beklendiği gibi çalışmıyor | Gecenin tamamı boşa gider | **Dalga 0 dikey dilimi** — gerçek deploy'da kanıtlanmadan başka iş başlamaz; dokümante edilmiş Redis yedeği         |
+| Auth.js Expo köprüsü tıkanıyor                               | Mobil P1 kayar            | Köprü önceden tasarlandı (§6.3); tıkanırsa mobil auth `blocked`, web akmaya devam eder                              |
+| Ajanlar yeşil ama yalancı test yazıyor                       | Sahte tamamlanma          | Stryker mutasyon testi + gerçek preview'a karşı e2e + reviewer'ın "test implementasyon olmadan kırmızı mı" kontrolü |
+| Token kotası gece yarısı bitiyor                             | Sessiz ölüm               | Kademeli degrade + %95'te temiz checkpoint                                                                          |
+| Paralel worktree'ler çakışıyor                               | Merge cehennemi           | Planner her göreve **çakışma kümesi** yazar; lead ayrık kümeleri seçer; integrator sıralı merge yapar               |
+| Geniş v1 tek geceye sığmıyor                                 | Beklenti uyuşmazlığı      | P0/P1/P2 katmanlaması; rapor yüzde verir; ikinci gece `--resume` ile devam                                          |
