@@ -1,0 +1,40 @@
+# ---- Gizli anahtarlar (PUBLIC REPO - asla commit edilmez) ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+*.p12
+*.mobileprovision
+secrets/
+.vercel
+
+# ---- Bagimliliklar / build ----
+node_modules/
+.next/
+out/
+dist/
+build/
+.turbo/
+.expo/
+*.tsbuildinfo
+
+# ---- Test / rapor ciktilari ----
+coverage/
+apps/e2e/test-results/
+apps/e2e/playwright-report/
+apps/e2e/blob-report/
+.stryker-tmp/
+reports/mutation/
+
+# ---- Claude calisma alani ----
+.claude/worktrees/
+.claude/settings.local.json
+docs/board/.night-run-active
+docs/board/danger.log
+
+# ---- Sistem ----
+.DS_Store
+*.log
+npm-debug.log*
