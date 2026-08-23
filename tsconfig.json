@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@xox/game-core": ["./packages/game-core/src/index.ts"],
+      "@xox/shared": ["./packages/shared/src/index.ts"],
+      "@xox/db": ["./packages/db/src/index.ts"],
+      "@xox/ui-tokens": ["./packages/ui-tokens/src/index.ts"]
+    }
+  },
+  "files": []
+}
