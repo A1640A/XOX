@@ -558,3 +558,41 @@ SERT reddediyor (`--staged` ile `gitleaks protect`).
 karşılayan parola sabitlerini KISA tut (`'test-parola1'`, 8-14 karakter, tek rakam) — bir commit
 denemeden önce `gitleaks detect --no-git --source <dosya>` ile sonda at. `.gitleaks.toml`'a
 istisna eklemek (bu kartın çakışma kümesi dışında) yerine tercih edilecek ilk çözüm budur.
+
+## 2026-08-24 · ⚠️ Auth.js `jwt` callback'i oturum OKUMASINDA `user` OLMADAN çağrılır — ölümcül
+
+`@auth/core@0.41.3`'ün `lib/actions/session.js:28` (JWT stratejisi) her oturum okumasında
+`callbacks.jwt({ token, session })` çağırıyor — **`user` anahtarı YOK**. `user` yalnız sign-in
+anında (`callback/index.js`) geçiriliyor. `jwt({ token, user }) { if (user.id !== undefined) ...}`
+yazmak (TypeScript'in `user`i ZORUNLU göstermesine rağmen — tip yalan söylüyor, `pnpm gates`
+yeşil kalır) her oturum okumasında `TypeError: Cannot read properties of undefined` fırlatıyor;
+`session.js:58-62` bunu yakalayıp **`sessionStore.clean()` ile çerezi SİLİYOR**. Sonuç: kullanıcı
+giriş yapar yapmaz İLK `auth()` çağrısında oturum kayboluyor — çerez yolu (KK-006/KK-010) asla
+çalışmıyor, ve hiçbir birim testi bunu yakalamıyor çünkü test edilen dosya (`auth.ts`) `next-auth`
+runtime'ını Vitest'te yüklenemediği için (bkz. yukarıdaki `next/server` maddesi) yalnız METİN
+düzeyinde sondalanıyordu.
+**Yapılacak:** `jwt` callback'ini TANIMLAMA — `@auth/core` sign-in sırasında `token.sub`'ı zaten
+`user.id`'den kuruyor (`callback/index.js`: `sub: user.id?.toString()`), callback GEREKSİZ.
+Gerçekten özel bir `jwt` callback'i gerekiyorsa `user` parametresini HER ZAMAN opsiyonel
+(`user?: User`) varsay, tipin "zorunlu" demesine güvenme. `session` callback'inin mantığını
+next-auth'a bağımlı OLMAYAN ayrı bir dosyaya (`import type` yalnız, `verbatimModuleSyntax`
+altında silinir) taşıyıp orada GERÇEK bir davranış testiyle kilitle — next-auth import eden bir
+dosya Vitest'te asla çalıştırılamayacağı için bu, o mantığı test edilebilir kılmanın TEK yolu.
+
+## 2026-08-24 · `readFileSync` + `toContain` testi bir dizi kısaltmasını YAKALAMAZ
+
+`middleware.ts`'in `config.matcher`'ını `readFileSync` ile okuyup her beklenen rota için
+`toContain(rota)` kontrolü yapan bir test, güvenlik denetiminin `matcher.slice(0, 1)`'e eşdeğer
+bir kısaltma senaryosuyla kırıldı: gerçek çalışma zamanı davranışı yalnız ilk rotayı korurken,
+test hâlâ YEŞİL kalabiliyordu çünkü metodoloji "her rota metinde bir yerde geçiyor mu" sorusuna
+cevap veriyor, "dizi TAM OLARAK bunlardan mı oluşuyor" sorusuna değil (fazladan/silinmiş/yeniden
+sıralı girdiyi ayırt edemiyor). Ayrıca Next.js `matcher`'ın SAF bir literal dizi olmasını build-time
+ZORUNLU kılıyor (`.slice()`/hesaplanmış herhangi bir ifade "matcher needs to be a static string or
+array of static strings" hatasıyla reddediliyor — canlı doğrulandı) ve bu yüzden `middleware.ts`
+`next-auth` import ettiğinden Vitest'te hiç ÇALIŞTIRILAMIYOR (bkz. yukarıdaki `next/server` maddesi).
+**Yapılacak:** (1) `toContain` yerine dizi literalini ayrıştırıp `toStrictEqual` ile TAM eşitlik
+iste; (2) doğruluk kaynağını (kart metniyle test edilen elle-yazılmış liste) next-auth'suz,
+gerçekten import edilebilir bir dosyada (`auth.config.ts`) tut ve `middleware.ts`'ten ayrıştırılan
+literali BUNA karşı karşılaştır — Next'in matcher'ı literal zorunlu kılması, "hesaplanmış matcher"
+sınıfındaki saldırıları zaten build-time'da kapatıyor, geriye yalnız "literal içeriği doğru mu"
+sorusu kalıyor ve bunu `toStrictEqual` çözüyor.

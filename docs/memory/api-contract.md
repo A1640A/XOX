@@ -4,12 +4,12 @@ Kaynak şemalar: `packages/shared/src/ws-protocol.ts`. Bu doküman onu **anlatı
 
 ## REST
 
-| Yöntem | Yol                       | Açıklama                                                                                                                     |
-| ------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/health`             | Veritabanı erişilebilirliği. 200 `{ok:true,db}` / 503 `{ok:false,error}`                                                     |
-| POST   | `/api/auth/register`      | KK-001…004. `registerBodySchema` → 201 `{userId}` / 400 (`INVALID_EMAIL`,`WEAK_PASSWORD`,`INVALID_NAME`) / 409 `EMAIL_TAKEN` |
-| \*     | `/api/auth/[...nextauth]` | Auth.js — Credentials + JWT, adapter yok (ADR-0009)                                                                          |
-| POST   | `/api/ws/ticket`          | KK-010, ADR-0006. Oturumluysa (Bearer/çerez) `{ticket,expiresIn:30}` / 401 `UNAUTHENTICATED`                                 |
+| Yöntem | Yol                       | Açıklama                                                                                                                                      |
+| ------ | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`             | Veritabanı erişilebilirliği. 200 `{ok:true,db}` / 503 `{ok:false,error}`                                                                      |
+| POST   | `/api/auth/register`      | KK-001…004. `registerBodySchema` → 201 `{userId}` / 400 (`INVALID_EMAIL`,`WEAK_PASSWORD`,`INVALID_NAME`) / 409 `EMAIL_TAKEN`                  |
+| \*     | `/api/auth/[...nextauth]` | Auth.js — Credentials + JWT, adapter yok (ADR-0009)                                                                                           |
+| POST   | `/api/ws/ticket`          | KK-010, ADR-0006. Gövde `{roomCode}` ZORUNLU. Oturumluysa (Bearer/çerez) `{ticket,expiresIn:30}` / 400 `INVALID_CODE` / 401 `UNAUTHENTICATED` |
 
 ## WebSocket
 
@@ -25,15 +25,36 @@ Tam tablo, gövde şemaları ve dalga eşlemesi:
 `docs/superpowers/specs/2026-08-24-xox-teknik-tasarim.md` §7.
 Protokol değişikliklerinin gerekçesi: `docs/adr/0001-tasima-oyun-durumu-tipi.md`.
 
-## Kimlik — tek çözücü (AUTH-001, uygulandı)
+## Kimlik — tek çözücü (AUTH-001, uygulandı; güvenlik denetimi sonrası güncellendi)
 
-`apps/web/lib/auth/identity.ts` → `resolveIdentity(req)` SABİT sırayla üç kaynağı dener:
-`Authorization: Bearer` (aud `xox-mobile-access`) → Auth.js çerezi → `?ticket=` (aud `xox-ws`).
-Üçü de `{ userId, name }` döner. `apps/web/lib/auth/tokens.ts` `jose` HS256 ile **üç ayrı
-audience** kullanır (`xox-mobile-access` · `xox-mobile-refresh` · `xox-ws`) — ADR-0006/0005'in
-"mobil access/refresh aynı aud, `typ` ile ayrışır" önerisinden BİLİNÇLİ sapma: kartın kriteri
-üç ayrı izleyici istedi, bu da `typ` claim'i unutulsa bile çapraz kabulü kriptografik olarak
-imkânsız kılıyor. `POST /api/ws/ticket` bu çözücüyü kullanır; WS-001 aynı fonksiyonu import eder.
+`apps/web/lib/auth/identity.ts` → `resolveIdentity(req, options?)` SABİT sırayla en fazla üç
+kaynağı dener: `Authorization: Bearer` (aud `xox-mobile-access`) → Auth.js çerezi → `?ticket=`
+(aud `xox-ws`). Üçü de `{ userId, name, room? }` döner.
+
+**⚠️ `?ticket=` VARSAYILAN OLARAK KAPALI.** `resolveIdentity(req)` (ikinci argüman yok) ticket
+kaynağını hiç denemez — `options.allowTicket === true` AÇIKÇA geçilmeden `?ticket=` YOK SAYILIR.
+İlk sürüm bunu her çağrıda kabul ediyordu; `POST /api/ws/ticket`'ın KENDİSİ bir bileti kabul
+ediyor olması, saldırganın aynı bileti 25 sn'de bir bu uca tekrar POST ederek 30 saniyelik
+sızıntıyı SÜRESİZ hesap devralmaya çevirmesine izin veriyordu (güvenlik denetimi BLOCKER-2).
+**`allowTicket:true`'yu YALNIZ WS upgrade route'u (WS-001) geçmeli.**
+
+`apps/web/lib/auth/tokens.ts` `jose` HS256 ile **üç ayrı audience** kullanır
+(`xox-mobile-access` · `xox-mobile-refresh` · `xox-ws`) — ADR-0006/0005'in "mobil access/refresh
+aynı aud, `typ` ile ayrışır" önerisinden BİLİNÇLİ sapma: kartın kriteri üç ayrı izleyici istedi,
+bu da `typ` claim'i unutulsa bile çapraz kabulü kriptografik olarak imkânsız kılıyor.
+`AUTH_SECRET` en az 32 karakter olmak ZORUNDA (`getSecretKey()` kısa sırrı REDDEDER — aynı sır
+Auth.js oturum JWT'sini de imzalıyor, kısa bir sır tüm kimlik katmanını çökertir).
+
+**Bilet oda koduna BAĞLIDIR (`room` claim, yatay yetki).** `POST /api/ws/ticket` gövdesi
+`{roomCode}` İSTER (zod `roomCodeSchema`, route içinde yerel şema — `packages/shared`
+DONDUĞU için oraya eklenmedi); dönen bilet `room` claim'ini taşır. **WS-001'in upgrade
+handler'ı `identity.room`'u URL'deki oda koduyla KARŞILAŞTIRMAK ZORUNDADIR** — eşleşmezse
+bağlantı reddedilmeli (öneri: `4403`). Aksi halde A odası için kesilmiş bir bilet B odasında
+"aynı kullanıcı" olarak kabul edilir.
+
+`POST /api/ws/ticket` bu çözücüyü `allowTicket` GEÇMEDEN kullanır (kendisi bir bilet ÜRETİR,
+KABUL ETMEZ); WS-001'in WS upgrade route'u `resolveIdentity(req, { allowTicket: true })`
+çağırmalı ve `identity.room`'u doğrulamalı.
 
 Özet: `POST /api/auth/register` · `/api/auth/[...nextauth]` · `/api/auth/mobile/{authorize,callback,refresh}` ·
 `POST /api/ws/ticket` · `POST /api/rooms` · `GET /api/rooms/[code]` · `GET /api/rooms/[code]/ws` ·
