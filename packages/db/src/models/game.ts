@@ -99,6 +99,26 @@ const gameSchema = new Schema<GameDoc>(
   { timestamps: true, collection: 'games', _id: false },
 )
 
+/**
+ * Bitiş alanları çapraz tutarlı olmak zorunda — reviewer canlıda kanıtladı:
+ * `winner:'X'` + `isDraw:true` kabul ediliyordu, `winner:null` +
+ * `endReason:'line'` + `winLine:null` de kabul ediliyordu. Üç kural:
+ * - `isDraw` ⇒ `winner === null`
+ * - `endReason === 'line'` ⇒ `winner !== null && winLine !== null`
+ * - `finishedAt === null` ⇒ `winner === null && !isDraw` (oyun sürüyorsa sonuç yok)
+ */
+gameSchema.pre('validate', function preValidate(): void {
+  if (this.isDraw && this.winner !== null) {
+    throw new Error('isDraw=true iken winner null olmalıdır')
+  }
+  if (this.endReason === 'line' && (this.winner === null || this.winLine === null)) {
+    throw new Error("endReason='line' iken winner ve winLine dolu olmalıdır")
+  }
+  if (this.finishedAt === null && (this.winner !== null || this.isDraw)) {
+    throw new Error('finishedAt=null iken winner/isDraw atanamaz (oyun sürüyor)')
+  }
+})
+
 // `participants`/`pairKey` üzerindeki bileşik indeksler KK-116/117/113/126'yı karşılar (§3.6).
 gameSchema.index({ participants: 1, finishedAt: -1 })
 gameSchema.index({ pairKey: 1, finishedAt: -1 })

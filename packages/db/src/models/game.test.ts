@@ -27,6 +27,16 @@ describe('Game modeli', () => {
     return id
   }
 
+  function basePayload(id: string, roomCode: string): Record<string, unknown> {
+    return {
+      _id: id,
+      roomCode,
+      players: { X: 'u1', O: 'u2' },
+      participants: ['u1', 'u2'],
+      pairKey: 'u1|u2',
+    }
+  }
+
   it('_id kendiliğinden randomUUID ile üretilir', async () => {
     const roomCode = `RC${randomUUID().slice(0, 6)}`
     const game = await Game.create({
@@ -139,6 +149,44 @@ describe('Game modeli', () => {
         pairKey: 'u1|u2',
         moves: extra,
       }),
+    ).rejects.toThrow()
+  })
+
+  it('çapraz tutarsızlık: isDraw=true iken bir kazanan atanamaz', async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({ ...basePayload(id, 'RCBAD04'), isDraw: true, winner: 'X' }),
+    ).rejects.toThrow()
+  })
+
+  it("çapraz tutarsızlık: endReason='line' iken winner null olamaz", async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({
+        ...basePayload(id, 'RCBAD05'),
+        endReason: 'line',
+        winner: null,
+        winLine: [0, 1, 2],
+      }),
+    ).rejects.toThrow()
+  })
+
+  it("çapraz tutarsızlık: endReason='line' iken winLine null olamaz", async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({
+        ...basePayload(id, 'RCBAD06'),
+        endReason: 'line',
+        winner: 'X',
+        winLine: null,
+      }),
+    ).rejects.toThrow()
+  })
+
+  it('çapraz tutarsızlık: finishedAt=null iken bir kazanan atanamaz (oyun sürüyor)', async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({ ...basePayload(id, 'RCBAD07'), winner: 'X', finishedAt: null }),
     ).rejects.toThrow()
   })
 })
