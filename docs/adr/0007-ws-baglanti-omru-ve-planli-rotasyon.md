@@ -60,6 +60,14 @@ istemci hemen yeniden bağlanacağı için `disconnected` en fazla bir saniye ya
 **5. `maxDuration` `vercel.json`'da açıkça yazılır** ama kodda **hiçbir yere gömülmez** —
 `rotate.ts` yalnız `getDeadline()` kullanır. Plan Hobby'den Pro'ya geçtiğinde kod değişmez.
 
+`vercel.json`'daki değer **sayı değil, `"max"` string'idir.** Vercel'in `validateFunctions`
+doğrulaması `maxDuration !== "max" && maxDuration > maxDurationLimit` olduğunda
+`invalid_function_duration` ile deploy'u reddediyor. Sabit bir sayı (ör. Pro tavanı 800)
+yazmak, takım Pro'dan Hobby'ye düşerse (tavan 300) **her deploy'u kırar** — WS bağlantısının
+erken kesilmesi değil, boru hattının tamamen durması. `"max"` her plan için o planın kendi
+tavanına çözülür; `getDeadline()` zaten çalışma anında gerçek değeri okuduğu için bu, madde
+5'in "kodda hiçbir yere gömülmez" ilkesinin `vercel.json` tarafındaki aynası.
+
 ## Gerekçe
 
 - **Rotasyon planlı olmazsa** istemci bağlantının 1006 ile ölmesini bekler, heartbeat kaybını

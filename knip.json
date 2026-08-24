@@ -12,7 +12,20 @@
         "middleware.ts",
         "next.config.ts"
       ],
-      "project": ["**/*.{ts,tsx}"]
+      "project": ["**/*.{ts,tsx}"],
+      "ignoreDependencies": [
+        "@node-rs/argon2",
+        "@testing-library/user-event",
+        "@vercel/analytics",
+        "@vercel/speed-insights",
+        "@xox/game-core",
+        "@xox/shared",
+        "@xox/ui-tokens",
+        "jose",
+        "mongodb",
+        "next-auth",
+        "zod"
+      ]
     },
     "apps/mobile": {
       "entry": ["app/**/*.tsx", "app.config.ts"],
