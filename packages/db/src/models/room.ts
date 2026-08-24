@@ -1,4 +1,4 @@
-import type { Player, SeatOccupant } from '@xox/shared'
+import type { Cell, Player, SeatOccupant } from '@xox/shared'
 import { ROOM_TTL_SECONDS } from '@xox/shared'
 import { Schema, model, models, type Model } from 'mongoose'
 import { hasAtMostLength, hasExactLength } from './validators'
@@ -6,7 +6,6 @@ import { hasAtMostLength, hasExactLength } from './validators'
 const BOARD_SIZE = 9
 
 export type RoomState = 'waiting' | 'playing' | 'finished'
-export type Cell = Player | null
 
 /** Odanın canlı hamle listesindeki tek kayıt (tasarım §3.2). */
 export interface RoomMove {

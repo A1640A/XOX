@@ -6,7 +6,6 @@ export { EXPECTED_INDEXES, ensureIndexes, type ExpectedIndex } from './indexes'
 export { User, type Theme, type UserDoc } from './models/user'
 export {
   Room,
-  type Cell,
   type RoomDisconnected,
   type RoomDoc,
   type RoomEmoji,
