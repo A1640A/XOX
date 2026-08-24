@@ -69,8 +69,8 @@
       "agent": "xox-designer",
       "deps": [],
       "conflictSet": ["packages/ui-tokens/**", "eslint.config.mjs"],
-      "status": "reviewing",
-      "attempts": 0,
+      "status": "in_wave",
+      "attempts": 1,
       "branch": "feat/UI-001",
       "report": "docs/board/reports/UI-001.md",
       "acceptance": [

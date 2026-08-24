@@ -120,3 +120,10 @@
 {"ts":"2026-08-24T17:08:28Z","event":"subagent.stop"}
 {"ts":"2026-08-24T17:11:11Z","event":"subagent.stop"}
 {"ts":"2026-08-24T16:30:00Z","wave":1,"event":"review.finding","task":"OPS-002","agent":"xox-reviewer","findings":8,"major":2,"summary":"jose iki kopya (instanceof kirilir), dev:ws hic kosulmamis ve temiz worktree-de calismaz"}
+{"ts":"2026-08-24T17:11:32Z","event":"file.touched","path":".claude/worktrees/OPS-002/apps/web/package.json"}
+{"ts":"2026-08-24T17:11:39Z","event":"file.touched","path":".claude/worktrees/OPS-002/apps/web/package.json"}
+{"ts":"2026-08-24T17:11:49Z","event":"file.touched","path":".claude/worktrees/OPS-002/apps/web/package.json"}
+{"ts":"2026-08-24T17:12:19Z","event":"file.touched","path":".claude/worktrees/OPS-002/knip.json"}
+{"ts":"2026-08-24T17:12:26Z","event":"file.touched","path":".claude/worktrees/OPS-002/apps/web/vercel.json"}
+{"ts":"2026-08-24T17:12:59Z","event":"file.touched","path":".claude/worktrees/OPS-002/docs/adr/0007-ws-baglanti-omru-ve-planli-rotasyon.md"}
+{"ts":"2026-08-24T17:00:00Z","wave":1,"event":"review.finding","task":"UI-001","agent":"xox-reviewer","findings":10,"major":3,"summary":"globals.css kaymis + hex yasagi .css gormuyor; win testi implementasyonsuz da yesil; Tailwind keyfi-deger yasagi atliyor"}
