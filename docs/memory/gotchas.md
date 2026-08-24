@@ -2,6 +2,33 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · ⚠️ mongoose CommonJS: tsx-in ESM yukleyicisi named export goremez
+
+`import { Schema, model, models } from 'mongoose'` VITEST-TE CALISIR ama `tsx` ile kosulan
+CLI betiginde `SyntaxError: The requested module 'mongoose' does not provide an export named
+'models'` verir. Vite CJS interop-u farkli yaptigi icin birim testler bu kirikligi TAMAMEN GIZLER.
+Belirti: `pnpm --filter @xox/db seed` duser ama testler yesildir — ve `e2e-preview.yml` seed
+adimini cagirdigi icin her preview e2e kosusu bu adimda olur.
+**Yapilacak:** `import mongoose from 'mongoose'` + `const { Schema, model, models } = mongoose`.
+Tipler icin ayrica `import type { Model } from 'mongoose'`.
+
+## 2026-08-24 · Test setup-i ile CLI ayni ortami yuklemeli
+
+`.env.local` yuklemesi yalniz `vitest.setup.ts`-teydi; `seed`/`reset` CLI betikleri
+`MONGODB_URI tanimli degil` ile dusuyordu. CI-da ortam degiskeni disaridan geldigi icin orada
+calisiyor, yerelde kirik — yani kirikligi yalniz insan fark ediyor.
+**Yapilacak:** Yukleyiciyi ayri bir modulde topla (`load-env.ts`) ve hem setup hem CLI ondan
+cagirsin. Setup-taki `process.env['MONGODB_DB'] = 'xox_test'` zorlamasini SILME — indeks testi
+guard-i onu bekliyor.
+
+## 2026-08-24 · Python `split`/`index` fonksiyon ADINI ararken TANIMI bulur
+
+Kod cikarirken `src.split("loadEnvLocal()")` ya da `s.index("loadEnvLocal()")` yazarsan ilk
+eslesme `function loadEnvLocal(): void {` satiridir, CAGRI degil — govde ortadan kesilir ve
+sessizce bozuk dosya uretilir. Bu gece iki kez oldu.
+**Yapilacak:** Kod bloklarini regex ile sinir belirterek cikar (`re.search(r"function X.*?\n\}\n", s, re.S)`)
+ya da dosyayi dogrudan yaz. Cikarim sonrasi `bash -n` / `tsc` ile MUTLAKA dogrula.
+
 ## 2026-08-24 · Merge sonrasi lockfile yeniden uretimi TIP HATASI dogurabilir
 
 Uc branch tek tek yesildi; birlesip `pnpm install --lockfile-only` kosulunca `@xox/db`

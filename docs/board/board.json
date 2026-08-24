@@ -1001,10 +1001,10 @@
         "packages/db/src/indexes.ts",
         ".github/workflows/**"
       ],
-      "status": "in_wave",
+      "status": "review",
       "attempts": 0,
       "branch": "feat/OPS-003",
-      "report": null,
+      "report": "docs/board/reports/OPS-003.md",
       "acceptance": [
         "ensureIndexes() gercek bir cagirana baglanir (deploy sonrasi migration adimi ya da korumali bir route). Su an REPO GENELINDE tek cagiran indexes.test.ts — yani indeksler canlida HIC olusmuyor.",
         "IndexOptionsConflict ele alinir: mevcut ayni isimli ama farkli secenekli indeks varsa once dusurulup yeniden olusturulur. Kanit: xox_dev-de email_1 benzersiz-olmayan halde varken cagri kosulur ve sonunda unique:true oldugu collection.indexes() ile gosterilir.",

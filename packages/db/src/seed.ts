@@ -2,6 +2,7 @@ import { hash } from '@node-rs/argon2'
 import { ELO_START } from '@xox/shared'
 import { connectDb, disconnectDb } from './client'
 import { User } from './models/user'
+import { loadEnvLocal } from './load-env'
 
 /** E2E testleri bu kullanıcılarla giriş yapar. Kimlikler sabittir — testler tahmin etmez. */
 export const TEST_USERS = [
@@ -37,6 +38,8 @@ export async function seedTestUsers(): Promise<void> {
 }
 
 if (process.argv[1]?.endsWith('seed.ts') === true) {
+  // CLI olarak kosarken .env.local yuklenmeli; vitest.setup.ts yalniz testlerde calisir.
+  loadEnvLocal()
   await seedTestUsers()
   await disconnectDb()
   console.warn(`${String(TEST_USERS.length)} test kullanıcısı hazır`)

@@ -1,5 +1,11 @@
 import { DISPLAY_NAME_MAX, ELO_START, LEADERBOARD_MIN_RATED_GAMES } from '@xox/shared'
-import { Schema, model, models, type Model } from 'mongoose'
+import type { Model } from 'mongoose'
+import mongoose from 'mongoose'
+
+// mongoose CommonJS: tsx-in ESM yukleyicisi named export-lari goremez
+// (`does not provide an export named 'models'`). Vitest calisir cunku Vite
+// CJS interop-u farkli yapar — yani birim testler bu kirikligi GIZLER.
+const { Schema, model, models } = mongoose
 
 export type Theme = 'acik' | 'koyu'
 

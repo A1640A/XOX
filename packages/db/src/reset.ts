@@ -1,4 +1,5 @@
 import { connectDb, disconnectDb, getDbName } from './client'
+import { loadEnvLocal } from './load-env'
 
 const RESETTABLE = new Set(['xox_test'])
 
@@ -13,6 +14,8 @@ export async function resetDatabase(): Promise<void> {
 }
 
 if (process.argv[1]?.endsWith('reset.ts') === true) {
+  // CLI olarak kosarken .env.local yuklenmeli; vitest.setup.ts yalniz testlerde calisir.
+  loadEnvLocal()
   await resetDatabase()
   await disconnectDb()
   console.warn(`Sıfırlandı: ${getDbName()}`)

@@ -1,4 +1,10 @@
-import { Schema, model, models, type Model } from 'mongoose'
+import type { Model } from 'mongoose'
+import mongoose from 'mongoose'
+
+// mongoose CommonJS: tsx-in ESM yukleyicisi named export-lari goremez
+// (`does not provide an export named 'models'`). Vitest calisir cunku Vite
+// CJS interop-u farkli yapar — yani birim testler bu kirikligi GIZLER.
+const { Schema, model, models } = mongoose
 
 /** ADR-0005 döndürmeli (rotating) mobil refresh token kaydı. */
 export interface MobileRefreshTokenDoc {
