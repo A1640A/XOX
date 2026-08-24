@@ -15,6 +15,7 @@
       "project": ["**/*.{ts,tsx}"],
       "ignoreDependencies": [
         "@node-rs/argon2",
+        "@testing-library/user-event",
         "@vercel/analytics",
         "@vercel/speed-insights",
         "@xox/game-core",
