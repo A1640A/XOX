@@ -7,8 +7,11 @@ import { ErrorBanner } from '@/components/ErrorBanner'
 import { useRoom } from '@/lib/client/use-room'
 import { tr } from '@/messages/tr'
 import { ConnectionBadge } from './ConnectionBadge'
+import { CopyButton } from './CopyButton'
 import { EmojiTray } from './EmojiTray'
 import { FriendAddButton } from './FriendAddButton'
+import { InviteLink } from './InviteLink'
+import { OpponentLeftBanner } from './OpponentLeftBanner'
 import { ResultPanel } from './ResultPanel'
 import { statusText, turnAttr } from './status-text'
 import { TurnTimer } from './TurnTimer'
@@ -31,26 +34,46 @@ export interface RoomScreenProps {
 export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
   const { state, actions } = useRoom(roomCode)
 
-  const opponent = state.you === 'X' ? state.players.O : state.players.X
+  // İnceleme minor bulgusu: `you === null` iken (ilk `state` mesajından ÖNCE
+  // düşen bir `opponent:joined` gibi durumlarda) eski kod sessizce
+  // `players.X`'i "rakip" sayıyordu — `you` henüz bilinmezken rakip de
+  // BİLİNEMEZ, `null` kalmalı.
+  const opponent = state.you === null ? null : state.you === 'X' ? state.players.O : state.players.X
   const interactive =
     state.connection === 'bagli' &&
     state.status.kind === 'playing' &&
     state.status.turn === state.you
   const winningLine = state.status.kind === 'won' ? state.status.line : null
 
+  function handleResignClick(): void {
+    // KK-054: pes etme ONAYLANMADAN uygulanmaz — mobilde tahtayla düğme
+    // arası dar boşlukta yanlışlıkla dokunma kalıcı (ELO'lu) bir kayba
+    // dönüşmesin (inceleme MAJOR bulgusu).
+    if (window.confirm(tr.room.resignConfirm)) {
+      actions.resign()
+    }
+  }
+
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-6">
       <header className="flex items-center justify-between">
-        <p data-testid={TESTID.odaKodu}>{roomCode}</p>
-        <ConnectionBadge status={state.connection} />
+        <div className="flex items-center gap-2">
+          <p data-testid={TESTID.odaKodu}>{roomCode}</p>
+          <CopyButton label={tr.room.copyCode} getValue={() => roomCode} />
+        </div>
+        <ConnectionBadge status={state.connection} onRetry={actions.reconnect} />
       </header>
 
       <p data-testid={TESTID.rakipAdi}>{opponent?.name ?? tr.room.waitingOpponent}</p>
 
       {/* Spec §2.0: iki AYRI kimlik — `sira-gostergesi` yalnız `data-sira`
-          taşır, gösterilen metin `durum-metni`dedir. */}
+          taşır, gösterilen metin `durum-metni`dedir. `aria-live="polite"` +
+          `role="status"`: sıra değişimi ve oyun sonucu ekran okuyucuya
+          duyurulsun (inceleme minor bulgusu — önceden HİÇ duyurulmuyordu). */}
       <p data-testid={TESTID.siraGostergesi} data-sira={turnAttr(state.status)} />
-      <p data-testid={TESTID.durumMetni}>{statusText(state.status, state.you)}</p>
+      <p data-testid={TESTID.durumMetni} role="status" aria-live="polite">
+        {statusText(state.status, state.you)}
+      </p>
 
       <Board
         cells={state.board}
@@ -61,12 +84,13 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
       />
 
       <TurnTimer deadline={state.turnDeadline} serverOffsetMs={state.serverOffsetMs} />
+      <OpponentLeftBanner graceEndsAt={state.graceEndsAt} serverOffsetMs={state.serverOffsetMs} />
 
       <button
         type="button"
         data-testid={TESTID.btnPesEt}
         disabled={state.status.kind !== 'playing'}
-        onClick={actions.resign}
+        onClick={handleResignClick}
       >
         {tr.room.resign}
       </button>
@@ -84,6 +108,7 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
         opponentId={opponent?.userId ?? null}
         visible={state.status.kind !== 'playing'}
       />
+      <InviteLink roomCode={roomCode} />
 
       <ErrorBanner code={state.lastError} />
     </main>
