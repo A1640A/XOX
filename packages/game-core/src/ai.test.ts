@@ -25,8 +25,11 @@ describe('bestMove', () => {
   })
 
   it('kazanmayı engellemeye tercih eder', () => {
-    // X hem 2'de kazanabilir hem O 3-4-5'te kazanmak üzere — kazanmayı seçmeli
-    expect(bestMove(b('XX.OO....'), 'X')).toBe(2)
+    // O 0-1-2'de kazanmak üzere (engelleme hücresi 2), X ise 3-4-5 ile hemen
+    // kazanabilir (kazanma hücresi 5). Kazanma hücresi engelleme hücresinden
+    // BÜYÜK indeksli seçildi: "önce engelle" ya da "en küçük indeksi seç"
+    // davranışı bu tahtada 2 döner ve testi düşürür.
+    expect(bestMove(b('OO.XX....'), 'X')).toBe(5)
   })
 
   it('hamle kalmamışsa InvalidMoveError atar', () => {
@@ -72,37 +75,56 @@ describe('bestMove', () => {
 })
 
 describe('unbeatable zorluk', () => {
-  const playFullGame = (aiPlayer: Player, humanPicks: (board: Board) => number): Board => {
-    let board = EMPTY_BOARD
-    while (evaluateStatus(board).kind === 'playing') {
-      const status = evaluateStatus(board)
-      if (status.kind !== 'playing') break
-      const move =
-        status.turn === aiPlayer ? chooseMove(board, aiPlayer, 'unbeatable') : humanPicks(board)
-      board = applyMove(board, move, status.turn)
-    }
-    return board
+  interface Tally {
+    games: number
+    losses: number
+    illegal: number
   }
 
-  it('ilk sırayı alan mükemmel AI asla kaybetmez (rakip ilk boşluğu oynar)', () => {
-    const final = playFullGame('X', (board) => availableMoves(board)[0] ?? 0)
-    const status = evaluateStatus(final)
-    expect(status.kind === 'draw' || (status.kind === 'won' && status.winner === 'X')).toBe(true)
+  /**
+   * Tümevarımsal kanıt: insanın oynadığı her düğümde BÜTÜN hamleler denenir,
+   * AI'nın düğümünde tek dal (motorun seçtiği hamle) izlenir. Böylece mükemmel
+   * AI'nın karşılaşabileceği bütün oyunlar taranır — senaryo örneklemesi değil.
+   */
+  const explore = (board: Board, aiPlayer: Player, tally: Tally): void => {
+    const status = evaluateStatus(board)
+    if (status.kind !== 'playing') {
+      tally.games += 1
+      if (status.kind === 'won' && status.winner !== aiPlayer) tally.losses += 1
+      return
+    }
+    if (status.turn === aiPlayer) {
+      const move = chooseMove(board, aiPlayer, 'unbeatable')
+      if (!availableMoves(board).includes(move)) {
+        tally.illegal += 1
+        return
+      }
+      explore(applyMove(board, move, aiPlayer), aiPlayer, tally)
+      return
+    }
+    for (const move of availableMoves(board)) {
+      explore(applyMove(board, move, status.turn), aiPlayer, tally)
+    }
+  }
+
+  const playAll = (aiPlayer: Player): Tally => {
+    const tally: Tally = { games: 0, losses: 0, illegal: 0 }
+    explore(EMPTY_BOARD, aiPlayer, tally)
+    return tally
+  }
+
+  it('X olarak oynayan AI, rakibin bütün oyunlarında kaybetmez ve kural dışı hamle yapmaz', () => {
+    const tally = playAll('X')
+    expect({ losses: tally.losses, illegal: tally.illegal }).toEqual({ losses: 0, illegal: 0 })
+    // Oyun sayısı, eşitlik bozma kuralının deterministik olduğunu da sabitler:
+    // AI başka bir eşdeğer hamle seçseydi ağaç başka sayıda yaprak verirdi.
+    expect(tally.games).toBe(73)
   })
 
-  it('ikinci oynayan mükemmel AI asla kaybetmez (rakip son boşluğu oynar)', () => {
-    const final = playFullGame('O', (board) => {
-      const moves = availableMoves(board)
-      return moves[moves.length - 1] ?? 0
-    })
-    const status = evaluateStatus(final)
-    expect(status.kind === 'draw' || (status.kind === 'won' && status.winner === 'O')).toBe(true)
-  })
-
-  it('ikinci oynayan mükemmel AI, ilk boşluğu oynayan rakibe karşı da kaybetmez', () => {
-    const final = playFullGame('O', (board) => availableMoves(board)[0] ?? 0)
-    const status = evaluateStatus(final)
-    expect(status.kind === 'draw' || (status.kind === 'won' && status.winner === 'O')).toBe(true)
+  it('O olarak oynayan AI, rakibin bütün oyunlarında kaybetmez ve kural dışı hamle yapmaz', () => {
+    const tally = playAll('O')
+    expect({ losses: tally.losses, illegal: tally.illegal }).toEqual({ losses: 0, illegal: 0 })
+    expect(tally.games).toBe(569)
   })
 
   it('iki mükemmel AI karşılaşırsa beraberlik olur', () => {
@@ -121,25 +143,23 @@ describe('chooseMove', () => {
     expect(chooseMove(EMPTY_BOARD, 'X', 'easy', seededRng([0.5]))).toBe(4)
   })
 
-  it('medium zorlukta rng < 0.5 ise en iyi hamleyi oynar', () => {
-    expect(chooseMove(b('XX.OO....'), 'X', 'medium', seededRng([0.1]))).toBe(2)
-  })
-
-  it('medium zorlukta rng >= 0.5 ise rastgele oynar', () => {
-    expect(chooseMove(b('XX.OO....'), 'X', 'medium', seededRng([0.9, 0]))).toBe(2)
-  })
-
   // Aşağıdaki tahtada en iyi hamle 2 (O'nun 0-1-2 tehdidini bloklar); boş
   // hücreler [2, 4, 5, 7, 8] olduğundan rng=0.9 rastgele seçiciyi 8'e götürür.
   // Böylece "en iyi" ile "rastgele" birbirinden ayırt edilebilir.
   const forkBoard = 'OO.X..X..'
 
   it('easy zorlukta en iyi hamleyi değil rastgele hamleyi oynar', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'easy', seededRng([0.9, 0]))).toBe(8)
+    expect(chooseMove(b(forkBoard), 'X', 'easy', seededRng([0.9]))).toBe(8)
   })
 
   it('easy zorlukta rng 1 dönse bile son geçerli hamleyi seçer', () => {
     expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => 1)).toBe(8)
+  })
+
+  it('easy zorlukta rng < 0.5 olsa bile en iyi hamleye sapmaz', () => {
+    // medium dalına düşen bir uygulama burada 0.3 < 0.5 diye en iyi hamleyi (2)
+    // oynardı; easy her zaman rastgeledir.
+    expect(chooseMove(b(forkBoard), 'X', 'easy', seededRng([0.3]))).toBe(4)
   })
 
   it('easy zorlukta rng negatif dönse bile ilk geçerli hamleyi seçer', () => {
@@ -150,20 +170,26 @@ describe('chooseMove', () => {
     expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => Number.NaN)).toBe(0)
   })
 
+  // Aşağıdaki üç test tek değerli (sabit) bir üreteç kullanır: ternary'nin
+  // koşulu kaldırılırsa `rng()` çağrısı da kaybolur, dizi tabanlı bir üreteçte
+  // sıra kayar ve rastgele seçici tesadüfen en iyi hamleyi bulabilirdi. Sabit
+  // üreteçte hangi dalın çalıştığı sonuçtan tek anlamlı okunur.
   it('medium zorlukta rng < 0.5 ise rastgeleyi değil en iyiyi oynar', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.1, 0.9]))).toBe(2)
+    // 0.3 rastgele seçiciye gitseydi indeks 1, yani 4 hamlesi seçilirdi.
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.3]))).toBe(2)
   })
 
   it('medium zorlukta rng >= 0.5 ise en iyiyi değil rastgeleyi oynar', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.9, 0.9]))).toBe(8)
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.9]))).toBe(8)
   })
 
   it('medium zorlukta rng tam 0.5 ise rastgele oynar — sınır dahil değil', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.5, 0.9]))).toBe(8)
+    // 0.5 en iyi hamleye (2) değil, listenin ortasındaki 5'e götürür.
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.5]))).toBe(5)
   })
 
   it('unbeatable zorlukta rastgeleliği yok sayar', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'unbeatable', seededRng([0.9, 0.9]))).toBe(2)
+    expect(chooseMove(b(forkBoard), 'X', 'unbeatable', seededRng([0.9]))).toBe(2)
   })
 
   it('geçerli bir hamle indeksi döndürür', () => {
