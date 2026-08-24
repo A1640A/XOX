@@ -475,6 +475,9 @@ export default tseslint.config(
       '**/coverage/**',
       '**/.turbo/**',
       'reports/**',
+      // Worktree'ler repo'nun tam kopyasıdır. Lint'lenirlerse aynı kod N kez taranır ve
+      // çapraz-worktree hataları çıkar — gece 4 paralel dalga = 5 kopya.
+      '.claude/worktrees/**',
     ],
   },
 
@@ -539,7 +542,18 @@ export default tseslint.config(
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'error',
       'security/detect-object-injection': 'off',
-      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-console': [
+        'error',
+        {
+          allow: [
+            'warn',
+            'error',
+            // Worktree'ler repo'nun tam kopyasıdır; lint'lenirlerse aynı kod N kez taranır
+            // ve çapraz-worktree hataları çıkar (gece 4 paralel dalga = 5 kopya).
+            '.claude/worktrees/**',
+          ],
+        },
+      ],
       'import-x/no-cycle': 'error',
       // v7 API: kural adı 'element-types' -> 'dependencies', seçenek 'rules' -> 'policies'.
       // game-core ve ui-tokens için politika tanımlanmadı: default: 'disallow' zaten
@@ -549,6 +563,13 @@ export default tseslint.config(
         {
           default: 'disallow',
           policies: [
+            // Bir paketin kendi dosyalarının birbirini import etmesi normaldir.
+            // Bunlar olmadan apps/web/app/page.tsx -> apps/web/messages/tr.ts bile
+            // "web -> web izinli değil" hatası verir ve UI yazıldığı an her dalga kırılır.
+            ...['game-core', 'shared', 'db', 'ui-tokens', 'web', 'mobile', 'e2e'].map((t) => ({
+              from: { element: { type: t } },
+              allow: { to: { element: { type: t } } },
+            })),
             {
               from: { element: { type: 'shared' } },
               allow: { to: { element: { type: 'game-core' } } },
@@ -4231,6 +4252,24 @@ o satırı silme. Elle temizlik: `rm -rf packages/*/.stryker-tmp`.
 `moves[index] as number` yazınca birincisi `!` kullan der, ikincisi `!`'i yasaklar. Çıkış yolu
 tek satırlık gerekçeli `eslint-disable-next-line`. Kök konfigürasyonu bunun için değiştirme.
 
+## 2026-08-24 · `merge(...)` commitlint'ten geçmez — her dalga birleştirmesi bloke olur
+
+`merge` Conventional Commits tipi değildir. `git merge -m "merge(X): ..."` commitlint tarafından
+reddedilir ve integrator hiçbir dalgayı kapatamaz. Git'in varsayılan `Merge branch 'feat/X'`
+mesajı `defaultIgnores` sayesinde geçer. `--no-edit` ile kullan, `-m` yazma.
+
+## 2026-08-24 · ESLint worktree kopyalarını da lint'ler
+
+`.claude/worktrees/<id>` repo'nun tam kopyasıdır; `eslint .` içine girer. Gece 4 paralel dalgada
+aynı kod 5 kez taranır ve bir worktree'deki hata kök lint'i kırar. `eslint.config.mjs`
+`ignores` listesinde `.claude/worktrees/**` olmalı.
+
+## 2026-08-24 · boundaries: aynı-tip bağımlılık da açıkça izinli olmalı
+
+`default: 'disallow'` ile `apps/web/app/page.tsx -> apps/web/messages/tr.ts` bile
+"web -> web izinli değil" hatası verir. Her element için `from: X, allow: to X` policy'si şart.
+Bu, boundaries kuralı çalışmaya başlayana kadar görünmez — kural ölüyken hiçbir şey hata vermiyordu.
+
 ## 2026-08-24 · ⚠️ ESLint çözümleyicisi yanlışsa KURALLAR SESSİZCE ÖLÜR — en pahalı ders
 
 `eslint-import-resolver-node` ne `.ts` uzantısını ne de `package.json`'daki `exports` alanını
@@ -5831,10 +5870,15 @@ Sen XOX'un birleştirme uzmanısın. Dalga bittiğinde paralel worktree'lerdeki 
 Her branch için, teker teker:
 ```bash
 git checkout main && git pull --ff-only
-git merge --no-ff feat/<task-id> -m "merge(<task-id>): <başlık>"
+git merge --no-ff --no-edit feat/<task-id>   # -m KULLANMA, aşağıyı oku
 pnpm install                      # workspace bağımlılığı değişmiş olabilir
 pnpm gates                        # typecheck + lint + format + coverage + knip
 ````
+
+⚠️ **`-m "merge(...)"` YAZMA.** `merge` geçerli bir Conventional Commit tipi değildir ve
+commitlint her birleştirmeyi reddeder. Git'in ürettiği varsayılan `Merge branch 'feat/<id>'`
+mesajı commitlint'in `defaultIgnores` listesindedir ve sorunsuz geçer; görev kimliği zaten
+branch adında taşınır.
 
 `gates` yeşilse sonraki branch'e geç. Kırmızıysa **aynı merge içinde** düzelt ve tekrar koş.
 

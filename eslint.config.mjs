@@ -52,6 +52,9 @@ export default tseslint.config(
       '**/coverage/**',
       '**/.turbo/**',
       'reports/**',
+      // Worktree'ler repo'nun tam kopyasıdır. Lint'lenirlerse aynı kod N kez taranır ve
+      // çapraz-worktree hataları çıkar — gece 4 paralel dalga = 5 kopya.
+      '.claude/worktrees/**',
     ],
   },
 
@@ -116,7 +119,18 @@ export default tseslint.config(
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'error',
       'security/detect-object-injection': 'off',
-      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-console': [
+        'error',
+        {
+          allow: [
+            'warn',
+            'error',
+            // Worktree'ler repo'nun tam kopyasıdır; lint'lenirlerse aynı kod N kez taranır
+            // ve çapraz-worktree hataları çıkar (gece 4 paralel dalga = 5 kopya).
+            '.claude/worktrees/**',
+          ],
+        },
+      ],
       'import-x/no-cycle': 'error',
       // v7 API: kural adı 'element-types' -> 'dependencies', seçenek 'rules' -> 'policies'.
       // game-core ve ui-tokens için politika tanımlanmadı: default: 'disallow' zaten
@@ -126,6 +140,13 @@ export default tseslint.config(
         {
           default: 'disallow',
           policies: [
+            // Bir paketin kendi dosyalarının birbirini import etmesi normaldir.
+            // Bunlar olmadan apps/web/app/page.tsx -> apps/web/messages/tr.ts bile
+            // "web -> web izinli değil" hatası verir ve UI yazıldığı an her dalga kırılır.
+            ...['game-core', 'shared', 'db', 'ui-tokens', 'web', 'mobile', 'e2e'].map((t) => ({
+              from: { element: { type: t } },
+              allow: { to: { element: { type: t } } },
+            })),
             {
               from: { element: { type: 'shared' } },
               allow: { to: { element: { type: 'game-core' } } },

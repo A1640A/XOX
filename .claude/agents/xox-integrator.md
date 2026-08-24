@@ -13,10 +13,15 @@ Her branch için, teker teker:
 
 ```bash
 git checkout main && git pull --ff-only
-git merge --no-ff feat/<task-id> -m "merge(<task-id>): <başlık>"
+git merge --no-ff --no-edit feat/<task-id>   # -m KULLANMA, aşağıyı oku
 pnpm install                      # workspace bağımlılığı değişmiş olabilir
 pnpm gates                        # typecheck + lint + format + coverage + knip
 ```
+
+⚠️ **`-m "merge(...)"` YAZMA.** `merge` geçerli bir Conventional Commit tipi değildir ve
+commitlint her birleştirmeyi reddeder. Git'in ürettiği varsayılan `Merge branch 'feat/<id>'`
+mesajı commitlint'in `defaultIgnores` listesindedir ve sorunsuz geçer; görev kimliği zaten
+branch adında taşınır.
 
 `gates` yeşilse sonraki branch'e geç. Kırmızıysa **aynı merge içinde** düzelt ve tekrar koş.
 
