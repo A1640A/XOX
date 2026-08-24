@@ -4,6 +4,21 @@ import { placeStone } from './moves'
 import { evaluateStatus } from './status'
 import type { Board, Difficulty, Player } from './types'
 
+/**
+ * DEĞİŞMEZ: WIN_SCORE > BOARD_SIZE (yani > 9, `board.ts`).
+ *
+ * Minimax kazancı `WIN_SCORE - depth`, kaybı `depth - WIN_SCORE` diye puanlar;
+ * derinlik en fazla BOARD_SIZE (dokuz yarım hamle) olur. WIN_SCORE bu sınıra
+ * eşit ya da altında kalsaydı geç bir kazanç 0'a (beraberlik) düşer, altına
+ * inince de işaret değiştirip kayıp gibi görünürdü. Şu anki pay tam olarak 1.
+ *
+ * Sabit bilerek `BOARD_SIZE + 1` diye türetilmedi: 9040 ulaşılabilir
+ * (konum × oyuncu) çiftinde WIN_SCORE=8 ile WIN_SCORE=10 aynı hamleyi seçiyor,
+ * yani türetmenin doğuracağı `BOARD_SIZE - 1` mutantı hiçbir testle
+ * öldürülemeyen eşdeğer bir mutant olurdu. Değişmez bu yüzden burada yazıyla
+ * korunuyor; ihlali `ai.test.ts`'teki tümevarımsal yenilmezlik kanıtı
+ * yakalar (örneğin WIN_SCORE=5 ile AI 48 farklı oyunu kaybeder).
+ */
 const WIN_SCORE = 10
 
 /** Kökten oynanan hamlenin derinliği — tek yerde yazılır, bkz. `bestMove`. */
@@ -22,7 +37,11 @@ function opponentOf(player: Player): Player {
  * sağlanamadığı için stil kuralı tek satırda susturulur.
  */
 function pickRandom(moves: readonly number[], rng: () => number): number {
-  const index = Math.min(Math.floor(rng() * moves.length), moves.length - 1)
+  const raw = Math.floor(rng() * moves.length)
+  // rng dışarıdan enjekte edilebilir (tohumlu üreteç, sahte üreteç): sözleşmeye
+  // uymayan bir değer indeksi listenin dışına taşımasın diye iki uç da
+  // kelepçelenir. NaN her karşılaştırmada false döndüğü için ayrıca ele alınır.
+  const index = Number.isNaN(raw) ? 0 : Math.min(Math.max(raw, 0), moves.length - 1)
   // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- `!` yasak
   return moves[index] as number
 }
@@ -88,5 +107,9 @@ export function chooseMove(
       return rng() < 0.5 ? bestMove(board, player) : pickRandom(moves, rng)
     case 'unbeatable':
       return bestMove(board, player)
+    // Zorluk tip sisteminin dışından (istek gövdesi, veritabanı) gelebilir;
+    // sessizce `undefined` döndürmek yerine yüksek sesle reddedilir.
+    default:
+      throw new RangeError(`Bilinmeyen zorluk: ${String(difficulty)}`)
   }
 }

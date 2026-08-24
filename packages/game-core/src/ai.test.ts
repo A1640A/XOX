@@ -4,7 +4,7 @@ import { applyMove } from './moves'
 import { evaluateStatus } from './status'
 import { bestMove, chooseMove } from './ai'
 import { InvalidMoveError } from './errors'
-import type { Board, Player } from './types'
+import type { Board, Difficulty, Player } from './types'
 
 const b = (s: string): Board =>
   boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
@@ -142,6 +142,14 @@ describe('chooseMove', () => {
     expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => 1)).toBe(8)
   })
 
+  it('easy zorlukta rng negatif dönse bile ilk geçerli hamleyi seçer', () => {
+    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => -0.1)).toBe(0)
+  })
+
+  it('easy zorlukta rng NaN dönse bile geçerli bir hamle seçer', () => {
+    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => Number.NaN)).toBe(0)
+  })
+
   it('medium zorlukta rng < 0.5 ise rastgeleyi değil en iyiyi oynar', () => {
     expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.1, 0.9]))).toBe(2)
   })
@@ -178,5 +186,11 @@ describe('chooseMove', () => {
 
   it('kolay zorlukta bile biten oyunda hamle üretmez', () => {
     expect(() => chooseMove(b('XXXOO....'), 'O', 'easy', () => 0)).toThrow(InvalidMoveError)
+  })
+
+  it('tip sisteminin dışından gelen zorluğu sessizce kabul etmez', () => {
+    expect(() => chooseMove(EMPTY_BOARD, 'X', 'imkansiz' as Difficulty)).toThrow(
+      new RangeError('Bilinmeyen zorluk: imkansiz'),
+    )
   })
 })

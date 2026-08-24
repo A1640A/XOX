@@ -24,6 +24,10 @@ export const EMPTY_BOARD: Board = Object.freeze<Board>([
  * `availableMoves` ve `WIN_LINES` tarafından garanti edilir. Bu yüzden burada
  * savunmacı bir dal yerine tek bir daraltma yapılır — böylece kural motorunda
  * test edilemeyen dal kalmaz.
+ *
+ * Pakete özeldir, `index.ts` dışa aktarmaz: `Board` bir tuple olduğu için
+ * tüketiciler `board[4]` yazarak aynı hücreyi tam tip güvenliğiyle okur,
+ * `cellAt(board, 9)` ise `Cell` tipiyle `undefined` döndürürdü.
  */
 export function cellAt(board: Board, index: number): Cell {
   return board[index] as Cell
@@ -61,6 +65,18 @@ export function availableMoves(board: Board): number[] {
   return moves
 }
 
+/**
+ * Sırası gelen oyuncuyu taş paritesinden türetir: X başlar, oyuncular sırayla
+ * oynar; taş sayısı çiftse sıra X'te, tekse O'dadır.
+ *
+ * Sözleşme yalnızca kurallı oyunla üretilebilen tahtalar için anlamlıdır
+ * (X sayısı O sayısına eşit ya da bir fazla). Beş X ve dört boş hücreden oluşan
+ * gibi hiçbir oyunda oluşamayacak bir tahtada da kendinden emin bir cevap
+ * ('O') döner: girdinin geçerliliğini doğrulamak çağıranın işidir.
+ *
+ * Sunucu "sıra kimde?" sorusunu bununla yanıtlar; `evaluateStatus(board)`
+ * oyun sürüyorsa aynı değeri `turn` alanında verir.
+ */
 export function nextPlayer(board: Board): Player {
   let placed = 0
   for (const cell of board) {
