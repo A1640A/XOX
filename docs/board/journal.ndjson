@@ -489,3 +489,25 @@
 {"ts":"2026-08-24T18:30:00Z","wave":0,"event":"task.done","task":"ARCH-001","agent":"xox-architect","note":"geriye donuk kayit - teknik tasarim + 9 ADR"}
 {"ts":"2026-08-24T19:00:00Z","wave":0,"event":"task.done","task":"PLAN-001","agent":"xox-planner","note":"geriye donuk kayit - 33 kart, 12 dalga"}
 {"ts":"2026-08-25T01:00:00Z","wave":5,"event":"gotcha","summary":"LEAD KUSURU: xox-integrator hic kullanilmadi, merge-leri lead yapti. xox-memory-curator 3 dalga gecikti. xox-perf-e board-da hic kart atanmamis."}
+{"ts":"2026-08-24T22:08:13Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/next.config.ts"}
+{"ts":"2026-08-24T22:08:34Z","event":"subagent.stop"}
+{"ts":"2026-08-24T22:08:46Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/lib/theme.ts"}
+{"ts":"2026-08-24T22:08:55Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/lib/theme.test.ts"}
+{"ts":"2026-08-24T22:09:10Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/lib/generate-globals-css.ts"}
+{"ts":"2026-08-24T22:10:20Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/app/globals.css.test.ts"}
+{"ts":"2026-08-24T22:10:35Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/app/globals.css.test.ts"}
+{"ts":"2026-08-24T22:10:46Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/components/ErrorBanner.tsx"}
+{"ts":"2026-08-24T22:10:50Z","event":"file.touched","path":"docs/memory/gotchas.md"}
+{"ts":"2026-08-24T22:10:56Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/components/ErrorBanner.test.tsx"}
+{"ts":"2026-08-24T22:11:08Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/components/board/Marks.tsx"}
+{"ts":"2026-08-24T22:11:10Z","event":"file.touched","path":"docs/memory/gotchas.md"}
+{"ts":"2026-08-24T22:11:20Z","event":"file.touched","path":"docs/memory/gotchas.md"}
+{"ts":"2026-08-24T22:11:26Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/components/board/Board.tsx"}
+{"ts":"2026-08-24T22:11:31Z","event":"file.touched","path":"docs/memory/gotchas.md"}
+{"ts":"2026-08-24T22:11:36Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/components/board/Board.tsx"}
+{"ts":"2026-08-24T22:11:54Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/components/board/Board.test.tsx"}
+{"ts":"2026-08-24T22:12:19Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/lib/client/use-room.ts"}
+{"ts":"2026-08-24T22:12:25Z","event":"file.touched","path":"docs/memory/gotchas.md"}
+{"ts":"2026-08-25T01:20:00Z","wave":5,"event":"task.done","task":"DB-002","agent":"xox-dev-backend","tests":"125","note":"eszamanlilik gercek Atlas-ta kanitlandi; cas.ts tek darbogaz dogrulandi"}
+{"ts":"2026-08-24T22:12:47Z","event":"file.touched","path":"docs/memory/gotchas.md"}
+{"ts":"2026-08-24T22:12:48Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/apps/web/lib/client/use-room.test.tsx"}

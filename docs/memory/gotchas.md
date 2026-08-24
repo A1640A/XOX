@@ -69,16 +69,6 @@ checkout-unda da uretildi, yani bir dalin diffi degil ortam farki.
 daraltmasi `@types/node` surumune bagli olan yerlerde savunmaci yaz — `import.meta.dirname`
 bu gece ayni sebeple iki kez kirildi.
 
-## 2026-08-25 · Auth.js `jwt` callback-inde `user` OTURUM OKUMASINDA undefined
-
-Tipte zorunlu, calisma zamaninda opsiyonel — TypeScript yakalamaz, `pnpm gates` yesil kalir.
-`@auth/core/lib/actions/session.js` callback-i `user` anahtari OLMADAN cagirir; `user` yalniz
-signIn yolunda verilir. Hata firlatilirsa @auth/core yakalayip **oturum cerezini SILER**
-(`sessionStore.clean()`), yani cerez kimligi hic calismaz ve belirti "kullanici surekli
-cikis yapiyor" olur.
-**Yapilacak:** `jwt` callback-ini yazma — @auth/core zaten `sub: user.id` yaziyor. Yazacaksan
-`user?.id` kullan.
-
 ## 2026-08-25 · Kisa omurlu bilet, KENDI YENILEME UCUNDA kabul edilirse sinirsiz olur
 
 30 saniyelik WS bileti `resolveIdentity`-de her cagrida kabul ediliyordu — `/api/ws/ticket`-in
@@ -708,20 +698,28 @@ next-auth'a bağımlı OLMAYAN ayrı bir dosyaya (`import type` yalnız, `verbat
 altında silinir) taşıyıp orada GERÇEK bir davranış testiyle kilitle — next-auth import eden bir
 dosya Vitest'te asla çalıştırılamayacağı için bu, o mantığı test edilebilir kılmanın TEK yolu.
 
-## 2026-08-24 · `readFileSync` + `toContain` testi bir dizi kısaltmasını YAKALAMAZ
+## 2026-08-24 · ⚠️ Kaynak METNİ okuyan test, test DEĞİLDİR — `readFileSync`+`toContain` bir dizi kısaltmasını YAKALAMAZ
 
-`middleware.ts`'in `config.matcher`'ını `readFileSync` ile okuyup her beklenen rota için
-`toContain(rota)` kontrolü yapan bir test, güvenlik denetiminin `matcher.slice(0, 1)`'e eşdeğer
-bir kısaltma senaryosuyla kırıldı: gerçek çalışma zamanı davranışı yalnız ilk rotayı korurken,
-test hâlâ YEŞİL kalabiliyordu çünkü metodoloji "her rota metinde bir yerde geçiyor mu" sorusuna
-cevap veriyor, "dizi TAM OLARAK bunlardan mı oluşuyor" sorusuna değil (fazladan/silinmiş/yeniden
-sıralı girdiyi ayırt edemiyor). Ayrıca Next.js `matcher`'ın SAF bir literal dizi olmasını build-time
-ZORUNLU kılıyor (`.slice()`/hesaplanmış herhangi bir ifade "matcher needs to be a static string or
-array of static strings" hatasıyla reddediliyor — canlı doğrulandı) ve bu yüzden `middleware.ts`
-`next-auth` import ettiğinden Vitest'te hiç ÇALIŞTIRILAMIYOR (bkz. yukarıdaki `next/server` maddesi).
-**Yapılacak:** (1) `toContain` yerine dizi literalini ayrıştırıp `toStrictEqual` ile TAM eşitlik
-iste; (2) doğruluk kaynağını (kart metniyle test edilen elle-yazılmış liste) next-auth'suz,
-gerçekten import edilebilir bir dosyada (`auth.config.ts`) tut ve `middleware.ts`'ten ayrıştırılan
-literali BUNA karşı karşılaştır — Next'in matcher'ı literal zorunlu kılması, "hesaplanmış matcher"
-sınıfındaki saldırıları zaten build-time'da kapatıyor, geriye yalnız "literal içeriği doğru mu"
-sorusu kalıyor ve bunu `toStrictEqual` çözüyor.
+AUTH-001'de iki test dosyası `readFileSync` + regex/`toContain` ile kaynağı okuyup desen
+arıyordu. Denetçi iki mutasyon koşturdu, İKİSİ DE 100 testin tamamını yeşil bıraktı:
+
+- `token.sub = user.id` → `token.sub = 'sabit-yonetici'`: her kullanıcı AYNI kimliğe çözülüyor,
+  kaynak metin hâlâ "doğru görünüyordu".
+- `middleware.ts`'in `config.matcher`'ını `readFileSync` ile okuyup her beklenen rota için
+  `toContain(rota)` kontrolü yapan test, `matcher: [6 desen]` → `.slice(0, 1)` mutasyonuyla
+  kırıldı: çalışma zamanında yalnız `/oyna` korunuyor, 5 rota TAMAMEN açık kalıyor — ama
+  `toContain(rota)` "her rota metinde bir yerde geçiyor mu" sorusuna cevap verdiği için, "dizi TAM
+  OLARAK bunlardan mı oluşuyor" sorusunu hiç sormuyor (fazladan/silinmiş/yeniden sıralı girdiyi
+  ayırt edemiyor) ve YEŞİL kaldı.
+
+Ayrıca Next.js `matcher`'ın SAF bir literal dizi olmasını build-time ZORUNLU kılıyor
+(`.slice()`/hesaplanmış herhangi bir ifade "matcher needs to be a static string or array of
+static strings" hatasıyla reddediliyor — canlı doğrulandı) ve `middleware.ts` `next-auth` import
+ettiğinden Vitest'te hiç ÇALIŞTIRILAMIYOR (bkz. yukarıdaki `next/server` maddesi), yani metin
+düzeyi sonda tek seçenek gibi görünüyordu — ama tek kanıt olmamalıydı.
+**Yapılacak:** (1) Middleware/config gibi şeyleri gerçek `NextRequest` ile davranış olarak test
+et; `toContain('/profil')` bir şey kanıtlamaz. (2) Dizi bekleniyorsa ayrıştırıp `toStrictEqual`
+ile TAM eşitlik iste. (3) Doğruluk kaynağını (elle yazılmış liste) next-auth'suz, gerçekten
+import edilebilir bir dosyada (`auth.config.ts`) tut ve `middleware.ts`'ten ayrıştırılan literali
+BUNA karşı karşılaştır. **Aynı sınıf:** bir bağımlılığı TAMAMEN mock'layıp rotayı test ettiğini
+sanmak — o zaman test rotayı değil kendi mock'unu doğrular.

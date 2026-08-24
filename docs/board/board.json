@@ -238,10 +238,10 @@
         "packages/db/src/elo.ts",
         "packages/db/src/index.ts"
       ],
-      "status": "in_wave",
+      "status": "review",
       "attempts": 0,
       "branch": "feat/DB-002",
-      "report": null,
+      "report": "docs/board/reports/DB-002.md",
       "acceptance": [
         "TransitionResult birliği (tasarım §3.7): `{ok:true,room,events} | {ok:false,code}`. Hiçbir geçiş istisna FIRLATMAZ",
         "createRoom: randomInt tabanlı kod, duplicate key 11000'de en fazla ROOM_CREATE_MAX_ATTEMPTS (5) deneme, hepsi çakışırsa CODE_GENERATION_FAILED. Test ilk üretilen kodu önceden ekleyerek çakışmayı ZORLAR ve farklı bir kod döndüğünü doğrular (KK-035/036)",
