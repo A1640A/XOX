@@ -2,6 +2,31 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Mongo indeks catismasi kodu 86, 85 DEGIL
+
+Dokumanlar `IndexOptionsConflict` (85) der; canli Atlas mevcut ayni isimli farkli secenekli
+indekste **86 `IndexKeySpecsConflict`** donduruyor. Yalniz 85 yakalanirsa hata disari sizar,
+`ensureIndexes()` dongusu kirilir ve kalan indeksler hic kurulmaz.
+**Yapilacak:** Ikisini de yakala. Ve bu tur kodlari dokumandan degil CANLI denemeden ogren.
+
+## 2026-08-24 · `deployment_status` workflow-u guvenilmeyen HEDEFE sir gonderebilir
+
+Bu olayda workflow dosyasi DEFAULT BRANCH-ten okunur ama deploy edilen KOD PR head-idir.
+`environment_url` olay yukunden gelir. Yani bir PR, cagrilan uc noktanin kodunu yazar; workflow
+ona gercek secret-i tasir. Fork PR-lari icin Vercel `gitForkProtection` bunu azaltir ama
+collaborator/entegrasyon yolu acik kalir.
+**Yapilacak:** CI-dan bir uc noktaya SIR GONDERME. Is zaten `MONGODB_URI`-ye sahipse islemi
+runner-dan dogrudan kosur. Sir agdan hic gecmezse sinif tamamen yok olur.
+
+## 2026-08-24 · Dusur-sonra-kur penceresi geri alinamaz
+
+`createIndex` catismada -> `dropIndex` -> `createIndex` deseni, ikinci adim basarisiz olursa
+koleksiyonu INDEKSSIZ birakir; baslangictan DAHA KOTU. Somut: `users.email_1` benzersiz degil
+ve koleksiyonda mukerrer e-posta varsa, dusurulur ama unique olarak yeniden KURULAMAZ (E11000).
+Sonuc: login lookup COLLSCAN, benzersizlik hala yok, ve tekrar cagirmak ayni yerde patlar.
+**Yapilacak:** Bosluksuz takas — yeni indeksi FARKLI adla kur, basarili olursa eskisini dusur.
+Hicbir anda indekssiz kalinmaz.
+
 ## 2026-08-24 · ⚠️ mongoose CommonJS: tsx-in ESM yukleyicisi named export goremez
 
 `import { Schema, model, models } from 'mongoose'` VITEST-TE CALISIR ama `tsx` ile kosulan
