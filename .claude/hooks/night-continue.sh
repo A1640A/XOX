@@ -64,18 +64,18 @@ const decide = () => {
   if ((nr.tokenBudgetUsedPct ?? 0) >= 95) return stop("token bütçesi %95");
 
   const isDone = (id) => b.tasks.find((x) => x.id === id)?.status === "done";
-  // SADECE lead'in ŞU AN dispatch edebileceği işler sayılır.
-  // `in_wave` = zaten dispatch edilmiş, arka planda bir agent çalışıyor.
-  // Onu "işlenebilir" saymak CANLI KİLİT yaratır: lead yield edemez ama
-  // yapabileceği bir iş de yoktur — sonucu beklemesi gerekir ve bildirim
-  // onu zaten geri çağıracaktır.
+  // SADECE su an dispatch edilebilecek isler sayilir. in_wave = zaten
+  // dispatch edilmis, arka planda bir agent calisiyor. Onu islenebilir
+  // saymak CANLI KILIT yaratir: lead yield edemez ama yapabilecegi is de
+  // yoktur; sonucu beklemesi gerekir ve bildirim onu geri cagiracaktir.
+  // NOT: bu node -e govdesi tek tirnak icinde. Yorumlarda kesme isareti YASAK.
   const actionable = b.tasks.filter(
     (t) => ["todo", "review"].includes(t.status) && (t.deps ?? []).every(isDone),
   );
   const running = b.tasks.filter((t) => t.status === "in_wave");
 
-  // Dalga uçuşta: bayrağı KORU, duruşa izin ver. Agent bitince bildirim
-  // lead'i geri çağırır, döngü kaldığı yerden devam eder.
+  // Dalga ucusta: bayragi KORU, durusa izin ver. Agent bitince bildirim
+  // lead-i geri cagirir, dongu kaldigi yerden devam eder.
   if (actionable.length === 0 && running.length > 0) return null;
 
   if (actionable.length === 0) return stop("işlenebilir görev kalmadı");

@@ -2,6 +2,15 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Hook scriptlerinde `node -e` govdesine kesme isareti yazma
+
+Hook scriptleri JS govdesini tek tirnakli `node -e '...'` icinde tasiyor. Turkce metinde kesme
+isareti her yerde ("lead'in", "bayragi") ve tek bir tanesi tirnagi kapatip scripti bozuyor —
+`bash -n` bunu yakalar ama sessizce kirik bir hook commit edilebilir.
+**Yapilacak:** `node -e` govdesindeki yorum ve string'lerde apostrof kullanma; Turkce yazacaksan
+kesme isaretsiz kur ("lead-in", "bayragi KORU"). Degisiklikten sonra MUTLAKA `bash -n` calistir
+ve hook-u gercek stdin ile bir kez kosur.
+
 ## 2026-08-24 · `Stop` hook'u `in_wave` görevleri "yapılacak iş" sayarsa CANLI KİLİT olur
 
 Lead dalgayı arka plan agent'larına dispatch edip yield eder; bildirim onu geri çağırır.

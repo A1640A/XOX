@@ -4252,6 +4252,15 @@ o satırı silme. Elle temizlik: `rm -rf packages/*/.stryker-tmp`.
 `moves[index] as number` yazınca birincisi `!` kullan der, ikincisi `!`'i yasaklar. Çıkış yolu
 tek satırlık gerekçeli `eslint-disable-next-line`. Kök konfigürasyonu bunun için değiştirme.
 
+## 2026-08-24 · Hook scriptlerinde `node -e` govdesine kesme isareti yazma
+
+Hook scriptleri JS govdesini tek tirnakli `node -e '...'` icinde tasiyor. Turkce metinde kesme
+isareti her yerde ("lead'in", "bayragi") ve tek bir tanesi tirnagi kapatip scripti bozuyor —
+`bash -n` bunu yakalar ama sessizce kirik bir hook commit edilebilir.
+**Yapilacak:** `node -e` govdesindeki yorum ve string'lerde apostrof kullanma; Turkce yazacaksan
+kesme isaretsiz kur ("lead-in", "bayragi KORU"). Degisiklikten sonra MUTLAKA `bash -n` calistir
+ve hook-u gercek stdin ile bir kez kosur.
+
 ## 2026-08-24 · `Stop` hook'u `in_wave` görevleri "yapılacak iş" sayarsa CANLI KİLİT olur
 
 Lead dalgayı arka plan agent'larına dispatch edip yield eder; bildirim onu geri çağırır.
@@ -4958,18 +4967,18 @@ const decide = () => {
   if ((nr.tokenBudgetUsedPct ?? 0) >= 95) return stop("token bütçesi %95");
 
   const isDone = (id) => b.tasks.find((x) => x.id === id)?.status === "done";
-  // SADECE lead'in ŞU AN dispatch edebileceği işler sayılır.
-  // `in_wave` = zaten dispatch edilmiş, arka planda bir agent çalışıyor.
-  // Onu "işlenebilir" saymak CANLI KİLİT yaratır: lead yield edemez ama
-  // yapabileceği bir iş de yoktur — sonucu beklemesi gerekir ve bildirim
-  // onu zaten geri çağıracaktır.
+  // SADECE su an dispatch edilebilecek isler sayilir. in_wave = zaten
+  // dispatch edilmis, arka planda bir agent calisiyor. Onu islenebilir
+  // saymak CANLI KILIT yaratir: lead yield edemez ama yapabilecegi is de
+  // yoktur; sonucu beklemesi gerekir ve bildirim onu geri cagiracaktir.
+  // NOT: bu node -e govdesi tek tirnak icinde. Yorumlarda kesme isareti YASAK.
   const actionable = b.tasks.filter(
     (t) => ["todo", "review"].includes(t.status) && (t.deps ?? []).every(isDone),
   );
   const running = b.tasks.filter((t) => t.status === "in_wave");
 
-  // Dalga uçuşta: bayrağı KORU, duruşa izin ver. Agent bitince bildirim
-  // lead'i geri çağırır, döngü kaldığı yerden devam eder.
+  // Dalga ucusta: bayragi KORU, durusa izin ver. Agent bitince bildirim
+  // lead-i geri cagirir, dongu kaldigi yerden devam eder.
   if (actionable.length === 0 && running.length > 0) return null;
 
   if (actionable.length === 0) return stop("işlenebilir görev kalmadı");
