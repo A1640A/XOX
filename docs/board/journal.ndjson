@@ -145,3 +145,5 @@
 {"ts":"2026-08-24T17:20:37Z","event":"file.touched","path":".claude/worktrees/OPS-002/docs/board/reports/OPS-002.md"}
 {"ts":"2026-08-24T17:22:40Z","event":"subagent.stop"}
 {"ts":"2026-08-24T18:00:00Z","wave":1,"event":"task.done","task":"OPS-002","agent":"xox-devops","attempts":1,"note":"5 bulgu duzeltildi; jose tek fiziksel kopya dogrulandi (@auth/core ve apps/web ayni dizin)"}
+{"ts":"2026-08-24T17:26:10Z","event":"file.touched","path":".claude/worktrees/UI-001/docs/board/reports/UI-001.md"}
+{"ts":"2026-08-24T18:10:00Z","wave":1,"event":"review.finding","task":"CTR-001","agent":"xox-reviewer","findings":7,"major":1,"summary":"alan-zorunlulugu testi yalniz state icin; kapanis kodu siniflandirmasi sonsuz reconnect dongusune aciyor"}

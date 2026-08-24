@@ -41,8 +41,8 @@
       "agent": "xox-dev-core",
       "deps": [],
       "conflictSet": ["packages/shared/**"],
-      "status": "reviewing",
-      "attempts": 0,
+      "status": "in_wave",
+      "attempts": 1,
       "branch": "feat/CTR-001",
       "report": "docs/board/reports/CTR-001.md",
       "acceptance": [
