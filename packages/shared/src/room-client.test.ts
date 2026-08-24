@@ -709,6 +709,93 @@ describe('kullanıcı eylemleri — kapı hep aynı: bağlıyım ve koltuğum va
   })
 })
 
+// ─── tek uçuş: çift tık ikinci çerçeveyi üretmez ──────────────────────────
+
+describe('tek uçuş bayrağı (inFlight)', () => {
+  const bitmis = (patch: Partial<RoomClientState> = {}): RoomClientState =>
+    bagliDurum({ status: { kind: 'draw' }, ...patch })
+
+  it.each([
+    ['pes etme', bagliDurum(), { type: 'ui:resign' } as const, 'resign'],
+    ['rövanş teklifi', bitmis(), { type: 'ui:rematch-offer' } as const, 'rematch'],
+    [
+      'rövanş kabulü',
+      bitmis({ rematch: { by: 'O', expiresAt: 9 } }),
+      { type: 'ui:rematch-accept' } as const,
+      'rematch',
+    ],
+    ['emoji', bagliDurum(), { type: 'ui:emoji', emoji: '🔥' } as const, 'emoji'],
+  ])('%s: ilk tık gönderir, ikinci tık HİÇBİR ŞEY göndermez', (_ad, baslangic, olay, isaret) => {
+    const ilk = roomClientReducer(baslangic, olay)
+    expect(ilk.effects).toHaveLength(1)
+    expect(ilk.state.inFlight).toBe(isaret)
+
+    const ikinci = roomClientReducer(ilk.state, olay)
+    expect(ikinci.effects).toEqual([])
+  })
+
+  it('uçuşta olan eylem tam durumla temizlenir', () => {
+    const { state } = roomClientReducer(
+      bagliDurum({ inFlight: 'rematch' }),
+      sunucudan(tamDurumMesaji()),
+    )
+
+    expect(state.inFlight).toBeNull()
+  })
+
+  it.each([
+    [
+      'game:over',
+      {
+        type: 'game:over',
+        status: { kind: 'won', winner: 'O', line: null, reason: 'resign' },
+        endedAt: 1,
+      } as const,
+    ],
+    ['rematch:offered', { type: 'rematch:offered', by: 'X', expiresAt: 9 } as const],
+    ['rematch:cancelled', { type: 'rematch:cancelled', reason: 'expired' } as const],
+    ['error', { type: 'error', code: 'SERVER_ERROR', message: 'hata' } as const],
+  ])('%s uçuşu serbest bırakır', (_ad, message) => {
+    const { state } = roomClientReducer(bagliDurum({ inFlight: 'resign' }), sunucudan(message))
+
+    expect(state.inFlight).toBeNull()
+  })
+
+  it('kendi emoji yankım uçuşu serbest bırakır, rakibinki bırakmaz', () => {
+    const durum = bagliDurum({ inFlight: 'emoji', you: 'X' })
+
+    const kendi = roomClientReducer(
+      durum,
+      sunucudan({ type: 'chat:emoji', from: 'X', emoji: '🔥', at: 1 }),
+    )
+    expect(kendi.state.inFlight).toBeNull()
+
+    const rakip = roomClientReducer(
+      durum,
+      sunucudan({ type: 'chat:emoji', from: 'O', emoji: '👏', at: 1 }),
+    )
+    expect(rakip.state.inFlight).toBe('emoji')
+  })
+
+  it('bağlantı kopunca uçuş bayrağı düşer', () => {
+    const { state } = roomClientReducer(bagliDurum({ inFlight: 'resign' }), {
+      type: 'socket:closed',
+      code: 1006,
+    })
+
+    expect(state.inFlight).toBeNull()
+  })
+
+  it('uçuştaki emoji hamleyi engellemez — ayrı kapılar', () => {
+    const { effects } = roomClientReducer(bagliDurum({ inFlight: 'emoji' }), {
+      type: 'ui:cell',
+      index: 4,
+    })
+
+    expect(effects).toEqual([{ type: 'send', message: { type: 'move', index: 4 } }])
+  })
+})
+
 // ─── ADR-0007: rotasyon sahte "rakip koptu" göstermesin ───────────────────
 
 describe('opponentLeftVisible — 2 saniyelik gösterim eşiği (ADR-0007)', () => {

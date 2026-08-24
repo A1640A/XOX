@@ -24,6 +24,15 @@ export interface PendingMove {
   readonly by: Player
 }
 
+/**
+ * Uçuşta olan tek kullanıcı eylemi. `pending` hamleyi korur; bu bayrak hamle
+ * DIŞINDAKİ eylemleri korur: çift tıklanan "pes et" iki `resign` çerçevesi
+ * gönderir ve sunucu ikincisine `GAME_OVER` dönünce sonuç ekranında sahte hata
+ * rozeti yanar. Emojide ikinci çerçeve KK-124 bütçesinden ikinci krediyi yakar.
+ * Debounce arayüze bırakılmıyor: iki platform aynı deliği ayrı ayrı keşfeder.
+ */
+export type InFlightAction = 'resign' | 'rematch' | 'emoji'
+
 export interface ReceivedEmoji {
   readonly from: Player
   readonly emoji: Emoji
@@ -45,6 +54,8 @@ export interface RoomClientState {
   readonly graceEndsAt: number | null
   readonly rematch: RematchOffer | null
   readonly lastEmoji: ReceivedEmoji | null
+  /** Yanıtı beklenen kullanıcı eylemi — `null` değilse yeni eylem gönderilmez. */
+  readonly inFlight: InFlightAction | null
   readonly lastError: ErrorCode | null
   /** Üstel geri çekilmenin sayacı; başarılı bağlantı ve 4499 bunu sıfırlar. */
   readonly reconnectAttempt: number
@@ -105,6 +116,7 @@ export function initialRoomClientState(): RoomClientState {
     graceEndsAt: null,
     rematch: null,
     lastEmoji: null,
+    inFlight: null,
     lastError: null,
     reconnectAttempt: 0,
   }
@@ -118,19 +130,21 @@ export function roomClientReducer(
     case 'ui:cell':
       return pressCell(state, event.index)
     case 'ui:resign':
-      return canAct(state) && state.status.kind === 'playing'
-        ? sends(state, { type: 'resign' })
+      return canSendAction(state) && state.status.kind === 'playing'
+        ? acts(state, 'resign', { type: 'resign' })
         : idle(state)
     case 'ui:rematch-offer':
-      return canAct(state) && state.status.kind !== 'playing'
-        ? sends(state, { type: 'rematch:offer' })
+      return canSendAction(state) && state.status.kind !== 'playing'
+        ? acts(state, 'rematch', { type: 'rematch:offer' })
         : idle(state)
     case 'ui:rematch-accept':
-      return canAct(state) && state.rematch !== null && state.rematch.by !== state.you
-        ? sends(state, { type: 'rematch:accept' })
+      return canSendAction(state) && state.rematch !== null && state.rematch.by !== state.you
+        ? acts(state, 'rematch', { type: 'rematch:accept' })
         : idle(state)
     case 'ui:emoji':
-      return canAct(state) ? sends(state, { type: 'chat:emoji', emoji: event.emoji }) : idle(state)
+      return canSendAction(state)
+        ? acts(state, 'emoji', { type: 'chat:emoji', emoji: event.emoji })
+        : idle(state)
     case 'socket:connecting':
       return idle({ ...state, connection: 'baglaniyor' })
     // Sayaç BİLEREK sıfırlanmıyor: 4000-4999 kapanışlarının tamamı başarılı el
@@ -185,13 +199,26 @@ function idle(state: RoomClientState): RoomClientResult {
   return { state, effects: EMPTY_EFFECTS }
 }
 
-function sends(state: RoomClientState, message: ClientMessage): RoomClientResult {
-  return { state, effects: [{ type: 'send', message }] }
+/** Eylemi gönderir ve yanıtı gelene kadar ikinci bir eylemi kilitler. */
+function acts(
+  state: RoomClientState,
+  inFlight: InFlightAction,
+  message: ClientMessage,
+): RoomClientResult {
+  return { state: { ...state, inFlight }, effects: [{ type: 'send', message }] }
 }
 
 /** Bağlıyım ve bir koltuğum var — her kullanıcı eyleminin ortak kapısı. */
 function canAct(state: RoomClientState): boolean {
   return state.connection === 'bagli' && state.you !== null
+}
+
+/**
+ * Hamle bilerek DIŞARIDA: hamlenin kendi kapısı `pending`. Uçuştaki bir emoji
+ * tahtayı kilitlemez.
+ */
+function canSendAction(state: RoomClientState): boolean {
+  return canAct(state) && state.inFlight === null
 }
 
 /**
@@ -213,7 +240,7 @@ function pressCell(state: RoomClientState, index: number): RoomClientResult {
 function closed(state: RoomClientState, code: number): RoomClientResult {
   // Kapanan bağlantının bekleyen hamlesi artık yankılanamaz; tam durum gelince
   // gerçek zaten öğrenilecek.
-  const base = { ...state, pending: null }
+  const base = { ...state, pending: null, inFlight: null }
 
   // §3.2 — sonsuz takeover savaşı olmasın: 4409'da yeniden bağlanılmaz.
   if (code === WS_CLOSE.SESSION_TAKEOVER) {
@@ -278,20 +305,29 @@ function fromServer(state: RoomClientState, message: ServerMessage, now: number)
         ...state,
         status: message.status,
         pending: null,
+        inFlight: null,
         turnDeadline: null,
         graceEndsAt: null,
       })
     case 'rematch:offered':
-      return idle({ ...state, rematch: { by: message.by, expiresAt: message.expiresAt } })
+      return idle({
+        ...state,
+        rematch: { by: message.by, expiresAt: message.expiresAt },
+        inFlight: null,
+      })
     case 'rematch:cancelled':
-      return idle({ ...state, rematch: null })
+      return idle({ ...state, rematch: null, inFlight: null })
     case 'chat:emoji':
       return idle({
         ...state,
         lastEmoji: { from: message.from, emoji: message.emoji, at: message.at },
+        // Yalnız KENDİ yankım kilidi açar; rakibin emojisi benim uçuşumu
+        // erken serbest bırakırsa çift tık koruması delinir.
+        inFlight: message.from === state.you ? null : state.inFlight,
       })
     case 'error':
-      return idle({ ...state, lastError: message.code })
+      // Eylem başarısız oldu — kullanıcı yeniden deneyebilmeli.
+      return idle({ ...state, lastError: message.code, inFlight: null })
     // Nabız muhasebesi taşıma katmanındadır; durum değişmez (KK-060).
     case 'pong':
       return idle(state)
@@ -317,6 +353,7 @@ function fromStateMessage(
     you: message.you,
     version: message.version,
     pending: null,
+    inFlight: null,
     turnDeadline: message.turnDeadline,
     graceEndsAt: message.graceEndsAt,
     rematch: message.rematch,
