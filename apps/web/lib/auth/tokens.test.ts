@@ -70,7 +70,7 @@ describe('tokens', () => {
 
   it('imzalanan userId ve ek iddialar (örn. name) doğrulamadan geri gelir', async () => {
     const { signToken, verifyToken } = await import('./tokens')
-    const { token } = await signToken('ws-ticket', 'user-42', { name: 'Ayşe' })
+    const { token } = await signToken('ws-ticket', 'user-42', { name: 'Ayşe', room: 'ABC234' })
     const verified = await verifyToken(token, 'ws-ticket')
     expect(verified?.userId).toBe('user-42')
     expect(verified?.claims['name']).toBe('Ayşe')
@@ -80,7 +80,7 @@ describe('tokens', () => {
     const { signToken, verifyToken } = await import('./tokens')
     const { token: accessToken } = await signToken('mobile-access', 'user-7')
     const { token: refreshToken } = await signToken('mobile-refresh', 'user-7')
-    const { token: ticket } = await signToken('ws-ticket', 'user-7')
+    const { token: ticket } = await signToken('ws-ticket', 'user-7', { room: 'ABC234' })
 
     // Üç kombinasyonun HİÇBİRİ çapraz kabul edilmez.
     await expect(verifyToken(accessToken, 'mobile-refresh')).resolves.toBeNull()
@@ -110,7 +110,9 @@ describe('tokens', () => {
     const secret = process.env['AUTH_SECRET']
     if (secret === undefined) throw new Error('test kurulum hatası')
     const key = new TextEncoder().encode(secret)
-    const hs384Token = await new SignJWT({})
+    // `room` bilerek DOLU: bu test SADECE algoritma allowlist'ini yalıtsın,
+    // eksik kapsam yüzünden yanlış nedenle yeşil kalmasın.
+    const hs384Token = await new SignJWT({ room: 'ABC234' })
       .setProtectedHeader({ alg: 'HS384' })
       .setSubject('user-1')
       .setAudience('xox-ws')
@@ -122,10 +124,46 @@ describe('tokens', () => {
     await expect(verifyToken(hs384Token, 'ws-ticket')).resolves.toBeNull()
   })
 
+  describe("ws-ticket KAPSAM ZORUNLU — `room` claim'i (fail-open kapatıldı)", () => {
+    it("`room` claim'i OLMAYAN bir ws-ticket REDDEDİLİR", async () => {
+      const { signToken, verifyToken } = await import('./tokens')
+      const { token } = await signToken('ws-ticket', 'user-1', { name: 'Kapsamsiz' })
+      await expect(verifyToken(token, 'ws-ticket')).resolves.toBeNull()
+    })
+
+    it("`room` claim'i geçersiz biçimdeyse REDDEDİLİR (roomCodeSchema)", async () => {
+      const { signToken, verifyToken } = await import('./tokens')
+      for (const room of ['abc234', 'ABC23', 'ABC2341', 'ABCI34', '', 42, null]) {
+        const { token } = await signToken('ws-ticket', 'user-1', { room })
+        await expect(verifyToken(token, 'ws-ticket'), JSON.stringify(room)).resolves.toBeNull()
+      }
+    })
+
+    it("geçerli `room` claim'i olan ws-ticket KABUL edilir ve claim geri gelir", async () => {
+      const { signToken, verifyToken } = await import('./tokens')
+      const { token } = await signToken('ws-ticket', 'user-1', { room: 'ABC234' })
+      const verified = await verifyToken(token, 'ws-ticket')
+      expect(verified?.userId).toBe('user-1')
+      expect(verified?.claims['room']).toBe('ABC234')
+    })
+
+    it("kapsam zorunluluğu YALNIZ ws-ticket'a özgüdür — mobil tokenlar etkilenmez", async () => {
+      const { signToken, verifyToken } = await import('./tokens')
+      const { token: access } = await signToken('mobile-access', 'user-1')
+      const { token: refresh } = await signToken('mobile-refresh', 'user-1')
+      await expect(verifyToken(access, 'mobile-access')).resolves.toMatchObject({
+        userId: 'user-1',
+      })
+      await expect(verifyToken(refresh, 'mobile-refresh')).resolves.toMatchObject({
+        userId: 'user-1',
+      })
+    })
+  })
+
   it('süresi dolmuş token reddedilir', async () => {
     vi.useFakeTimers()
     const { signToken, verifyToken } = await import('./tokens')
-    const { token } = await signToken('ws-ticket', 'user-1')
+    const { token } = await signToken('ws-ticket', 'user-1', { room: 'ABC234' })
     vi.advanceTimersByTime(31_000)
     await expect(verifyToken(token, 'ws-ticket')).resolves.toBeNull()
   })
