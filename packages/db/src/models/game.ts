@@ -7,6 +7,7 @@ import mongoose from 'mongoose'
 // (`does not provide an export named 'models'`). Vitest calisir cunku Vite
 // CJS interop-u farkli yapar — yani birim testler bu kirikligi GIZLER.
 const { Schema, model, models } = mongoose
+import { buildPairKey, deriveParticipants } from '../pair'
 import { hasAtMostLength, hasExactLength, isNullOrExactLength } from './validators'
 
 const BOARD_SIZE = 9
@@ -112,6 +113,10 @@ const gameSchema = new Schema<GameDoc>(
  * - `isDraw` ⇒ `winner === null`
  * - `endReason === 'line'` ⇒ `winner !== null && winLine !== null`
  * - `finishedAt === null` ⇒ `winner === null && !isDraw` (oyun sürüyorsa sonuç yok)
+ * - `participants`/`pairKey` **`players`'tan türetilenle eşleşir** (DB-002/AC12):
+ *   ikisi de yalnız oyun oluşturulurken yazılan türetilmiş alanlardır
+ *   (§3.3/§3.6); `buildPairKey`/`deriveParticipants` TEK üretim noktasıdır —
+ *   burada elle tekrar hesaplanmaz, o iki fonksiyon çağrılır.
  */
 gameSchema.pre('validate', function preValidate(): void {
   if (this.isDraw && this.winner !== null) {
@@ -122,6 +127,19 @@ gameSchema.pre('validate', function preValidate(): void {
   }
   if (this.finishedAt === null && (this.winner !== null || this.isDraw)) {
     throw new Error('finishedAt=null iken winner/isDraw atanamaz (oyun sürüyor)')
+  }
+
+  const expectedParticipants = deriveParticipants(this.players)
+  const participantsMatch =
+    this.participants.length === expectedParticipants.length &&
+    this.participants.every((value, i) => value === expectedParticipants[i])
+  if (!participantsMatch) {
+    throw new Error('participants players alanından türetilenle eşleşmiyor (§3.3/DB-002 AC12)')
+  }
+
+  const expectedPairKey = buildPairKey(this.players.X, this.players.O)
+  if (this.pairKey !== expectedPairKey) {
+    throw new Error('pairKey players alanından türetilenle eşleşmiyor (§3.3/DB-002 AC12)')
   }
 })
 

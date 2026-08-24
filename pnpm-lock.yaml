@@ -260,6 +260,9 @@ importers:
       '@node-rs/argon2':
         specifier: 2.1.0
         version: 2.1.0
+      '@xox/game-core':
+        specifier: workspace:*
+        version: link:../game-core
       '@xox/shared':
         specifier: workspace:*
         version: link:../shared
