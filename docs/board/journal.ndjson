@@ -85,3 +85,8 @@
 {"ts":"2026-08-24T15:10:00Z","wave":1,"event":"task.done","task":"OPS-002","agent":"xox-devops","note":"apps/web package.json donduruldu, 10 bagimlilik eklendi"}
 {"ts":"2026-08-24T15:10:30Z","wave":1,"event":"decision","task":"OPS-002","summary":"Vercel plani Pro dogrulandi: WS maxDuration 800s (300 degil), ADR-0007 rotasyon araligi genisliyor"}
 {"ts":"2026-08-24T16:56:30Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.ts"}
+{"ts":"2026-08-24T16:57:04Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.ts"}
+{"ts":"2026-08-24T16:57:06Z","event":"file.touched","path":".claude/worktrees/RT-PROBE-001/apps/web/app/api/health/realtime/route.test.ts"}
+{"ts":"2026-08-24T16:57:25Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.ts"}
+{"ts":"2026-08-24T16:57:49Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/message-keys.ts"}
+{"ts":"2026-08-24T16:57:55Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/index.ts"}

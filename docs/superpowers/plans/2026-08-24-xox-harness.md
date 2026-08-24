@@ -4975,7 +4975,7 @@ const decide = () => {
   const actionable = b.tasks.filter(
     (t) => ["todo", "review"].includes(t.status) && (t.deps ?? []).every(isDone),
   );
-  const running = b.tasks.filter((t) => t.status === "in_wave");
+  const running = b.tasks.filter((t) => ["in_wave", "reviewing"].includes(t.status));
 
   // Dalga ucusta: bayragi KORU, durusa izin ver. Agent bitince bildirim
   // lead-i geri cagirir, dongu kaldigi yerden devam eder.
