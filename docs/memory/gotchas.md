@@ -2,15 +2,63 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
-## 2026-08-25 · Mongo AYNI key pattern-ine ikinci indeksi ADA BAKMAKSIZIN reddeder
+## 2026-08-25 · LEAD DISIPLINI: mutasyon sondasi UYGULANDI MI diye kontrol et
 
-"Bosluksuz takas" fikri — yeni indeksi farkli adla kur, sonra eskisini dusur — CALISMAZ:
-`code 85, "Index already exists with a different name"`. Canli Atlas-ta dogrulandi.
-**Yapilacak:** Dusurmeden ONCE guvenli ol. unique indeks icin once mukerrer deger kontrolu yap
-(ihlal varsa hic dusurme, anlasilir hata don); dusurdukten sonraki yeniden kurma yine de
-basarisiz olursa eski indeksi ORIJINAL secenekleriyle geri kur, sonra hatayi firlat.
-Not: Bu, lead-in yanlis talimatiydi; agent korlemesine uygulamak yerine canlida sinadi.
-Talimat da olsa, gercege karsi dogrulanmali.
+Bu gece uc kez `perl -0pi` / `grep` kalibi tutmadi ve sonda SESSIZCE hicbir sey degistirmedi.
+Sonuc yaniltici: "testler yesil kaldi" cikarimi yaptim, oysa mutasyon hic olusmamisti.
+Bir kez de grep YORUM satirlarini eslestirip "tek darbogaz degil" diye yanlis bulgu urettim.
+**Yapilacak:** Sondadan sonra `diff -q` ile dosyanin GERCEKTEN degistigini dogrula; degismediyse
+"kalip tutmadi" de, "test yesil kaldi" DEME. Kod ararken yorumlari ele:
+`grep -vE '^\s*(\*|//|/\*)' dosya | grep -c desen`.
+
+## Tekrar eden örüntüler
+
+Aşağıdaki beş örüntü, alttaki maddelerin çoğunu kapsar. Yeni bir sınıfta tuzağa düşmeden önce
+önce burayı tara, sonra başlığı eşleşen maddeye in — 70+ maddeyi baştan sona okumak zorunda kalma.
+
+**1. Kural yazılmış ama ateşlenmiyor** — statik kural (lint/boundary/hook) kodda duruyor, "yeşil"
+görünüyor, ama gerçek bir ihlalde hiç çalışmıyor:
+ESLint çözümleyicisi yanlışsa kurallar sessizce ölür · pnpm sembolik bağlantıları `boundaries`'i
+öldürür · `boundaries` çözülemeyen import'ta sessiz kalır · `projectService: true` + kapsam dışı
+dosya = kural hiç çalışmaz · ESLint `.css` dosyalarını hiç ayrıştırmaz · Vercel `functions`
+anahtarı `app/` ile başlıyorsa hiç doğrulanmaz · Claude Code hook'larına mutlak `file_path`
+verilir (göreli karşılaştırma sessizce ölür — aynı hastalık, hook için) · `Stop` hook'u "iş var
+mı" değil "ŞİMDİ dispatch edilebilir mi" sormalı.
+
+**2. Test yeşil ama hiçbir şey doğrulamıyor** — kaynak metni okuyan test · kendine-referanslı
+beklenti (şemadan türetilmiş "doğru" listesi kendi silinmesini göremez) · özdeşlik iddiası
+(`toStrictEqual(kendisiyle)`) · beklentiyi sabitten türetmek · eşiğin, değerin seçilme
+gerekçesiyle aynı sayı olmaması · zod'un mutlu-yol `safeParse` testinin alan kaybını yakalamaması
+· bağımlılığı TAMAMEN mock'layıp kendi mock'unu doğrulamak · bir testin hatalı davranışı
+kilitlemesi (düzeltmeyle birlikte testin de değişmesi gerekip gerekmediğini sor).
+
+**3. Tip doğru ama çalışma zamanı yalan söylüyor** — `Model.watch()` tipte `resumeToken` vaat
+eder, çalışma zamanında yok · Auth.js `jwt` callback'i tipte `user`'ı zorunlu gösterir, çalışma
+zamanında opsiyonel · `import.meta.dirname` daralması `@types/node` sürümüne bağlı · Mongoose
+model cast'i `as X | undefined` yazılmazsa `?? fallback` ölü kod olur.
+
+**4. Mekanizma var ama kimse çağırmıyor** — `ensureIndexes()` yalnız testten çağrılıyordu, gerçek
+bir deploy adımı yoktu · `lefthook`/`unrs-resolver` postinstall'u onaylanmazsa git hook'ları hiç
+kurulmaz, pre-commit kapıları sessizce devre dışı kalır.
+
+**5. Vitest gizliyor, üretim kırık (ve tersi de olur)** — mongoose CJS + tsx ESM: testler yeşil,
+gerçek CLI kırık · `next-auth`'un derlenmiş çıktısı Vitest'in native ESM yükleyicisinde hiç
+import edilemez (environment fark etmez) · `jose` jsdom'un ayrı `Uint8Array` realm'inde patlar
+ama gerçek Node çalışma zamanında sorun yok — iki yönde de "test ortamı = üretim" varsayımı yanlış.
+
+## 2026-08-25 · ⚠️ Mongo aynı anahtara ikinci indeksi ADA BAKMAKSIZIN reddeder — "boşluksuz takas" ÇALIŞMAZ
+
+Önce önerilen ("yeni indeksi farklı adla kur, başarılıysa eskisini düşür") fikir canlı Atlas'ta
+DENENDİ ve reddedildi: `code 85, "Index already exists with a different name: email_1"`. Mongo
+aynı anahtar üzerinde ikinci bir indeksi isim farkı gözetmeksizin reddediyor — bu bir öneriydi,
+agent körlemesine uygulamak yerine canlıda sınadı ve yanlış çıktığını kanıtladı.
+**Bunun yerine kurulu tasarım (SEC-003, `packages/db/src/indexes.ts` `createIndexSafely`):**
+`unique` istenirken ÖNCE mükerrer değer taranır (ihlal varsa eski indekse hiç dokunulmaz,
+anlaşılır hata döner); temizse düşür + kur; ikinci kurma da patlarsa eski indeks ORİJİNAL
+seçenekleriyle geri kurulur — hiçbir an koleksiyon indekssiz kalmaz. Somut risk: `users.email_1`
+benzersiz değilken ve mükerrer e-posta varken düşürülüp unique olarak yeniden KURULAMAZSA
+(E11000), sonuç login lookup'ın COLLSCAN'e düşmesi VE benzersizliğin hâlâ olmamasıdır.
+**Genel ders:** Talimat/öneri olsa bile canlıya karşı doğrulanmadan "doğru" sayılmaz.
 
 ## 2026-08-25 · Temiz `pnpm install` ile bayat kurulum FARKLI `@types/node` cozebilir
 
@@ -20,18 +68,6 @@ checkout-unda da uretildi, yani bir dalin diffi degil ortam farki.
 **Yapilacak:** Merge sonrasi `pnpm install` + kapilari yeniden kos (zaten kural). Tip
 daraltmasi `@types/node` surumune bagli olan yerlerde savunmaci yaz — `import.meta.dirname`
 bu gece ayni sebeple iki kez kirildi.
-
-## 2026-08-25 · ⚠️ Kaynak METNI okuyan test, test DEGILDIR
-
-AUTH-001-de iki test dosyayi `readFileSync` + regex ile okuyup desen ariyordu. Denetci iki
-mutasyon kosturdu, IKISI DE 100 testin tamamini yesil biraktı:
-
-- `token.sub = user.id` -> `token.sub = 'sabit-yonetici'` : her kullanici AYNI kimlige cozuluyor
-- `matcher: [6 desen]` -> `.slice(0,1)` : runtime-da yalniz /oyna korunuyor, 5 rota TAMAMEN acik
-  Kaynak metin her iki mutasyonda da hala "dogru gorunuyordu".
-  **Yapilacak:** Middleware/config gibi seyleri gercek `NextRequest` ile davranis olarak test et.
-  `toContain('/profil')` bir sey kanitlamaz. Ayni sinif: rotanin bagimliligini TAMAMEN mock-layip
-  rotayi test ettigini sanmak — o zaman test rotayi degil kendi mock-unu dogrular.
 
 ## 2026-08-25 · Auth.js `jwt` callback-inde `user` OTURUM OKUMASINDA undefined
 
@@ -67,15 +103,6 @@ ona gercek secret-i tasir. Fork PR-lari icin Vercel `gitForkProtection` bunu aza
 collaborator/entegrasyon yolu acik kalir.
 **Yapilacak:** CI-dan bir uc noktaya SIR GONDERME. Is zaten `MONGODB_URI`-ye sahipse islemi
 runner-dan dogrudan kosur. Sir agdan hic gecmezse sinif tamamen yok olur.
-
-## 2026-08-24 · Dusur-sonra-kur penceresi geri alinamaz
-
-`createIndex` catismada -> `dropIndex` -> `createIndex` deseni, ikinci adim basarisiz olursa
-koleksiyonu INDEKSSIZ birakir; baslangictan DAHA KOTU. Somut: `users.email_1` benzersiz degil
-ve koleksiyonda mukerrer e-posta varsa, dusurulur ama unique olarak yeniden KURULAMAZ (E11000).
-Sonuc: login lookup COLLSCAN, benzersizlik hala yok, ve tekrar cagirmak ayni yerde patlar.
-**Yapilacak:** Bosluksuz takas — yeni indeksi FARKLI adla kur, basarili olursa eskisini dusur.
-Hicbir anda indekssiz kalinmaz.
 
 ## 2026-08-24 · ⚠️ mongoose CommonJS: tsx-in ESM yukleyicisi named export goremez
 
