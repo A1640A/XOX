@@ -604,3 +604,97 @@ başarısızlık biçimi).
 **Yapılacak:** yolu önce `CLAUDE_PROJECT_DIR`e göre indirge (`path.relative`), `..` parçalarını
 ve sembolik bağları çöz, sonra karşılaştır. Sondayı MUTLAK yolla çalıştır; hem engelleyen hem
 izin veren yönü ayrı ayrı kanıtla.
+
+## 2026-08-24 · ⚠️ `next-auth`'un derlenmiş çıktısı Vitest'in native ESM yükleyicisinde İMPORT EDİLEMEZ
+
+`next-auth@5.0.0-beta.32`'nin `lib/env.js`'i `next/server`'ı UZANTISIZ import ediyor —
+kaynakta bizzat `// @ts-expect-error Next.js does not yet correctly use the package.json#exports
+field` yorumuyla bunu kabul ediyor. `next`'in `package.json`'ında `exports` alanı YOK (legacy
+çözümleme, `server.js` dosyası kökte duruyor); bu webpack/Turbopack'te sorunsuz çalışır ama
+Vitest'in vite-node'u bu importu native Node ESM loader'ına devrettiğinde **strict ESM**
+kullanılıyor ve extensionless bare specifier reddediliyor:
+`Cannot find module '.../next/server' ... Did you mean to import "next/server.js"?`.
+Canlı doğrulandı: hem `node` hem varsayılan `jsdom` test ortamında, `next-auth`'u (default
+export ya da `next-auth/providers/credentials` fark etmez) DOĞRUDAN import eden HERHANGİ bir
+test dosyası bu hatayla çöküyor — environment seçimi sorunu ÇÖZMÜYOR.
+**Yapılacak:** `next-auth`/`Credentials(...)` çağrısını yapan dosyayı (`auth.ts`) ince bir tel
+dosyası olarak bırak; gerçek iş mantığını (`authorizeCredentials`, zod doğrulama, DB erişimi)
+`next-auth`'a HİÇBİR bağımlılığı olmayan ayrı bir dosyada (`lib/auth/authorize.ts`) yaz ve
+testleri ORADAN çalıştır. `auth.ts`/`middleware.ts` gibi gerçekten `next-auth` import eden
+dosyalar için mekanik kanıt `pnpm --filter @xox/web build` olsun; metin-düzeyi (kaynak okuyup
+regex) sonda ikinci savunma hattı olarak eklenebilir ama TEK kanıt olmamalı.
+
+## 2026-08-24 · `jose`'nin webapi derlemesi jsdom'un AYRI `Uint8Array` realm'inde patlar
+
+Vitest'in `jsdom` ortamı (varsayılan) ayrı bir `vm` realm'i kullanıyor; o realm'in
+`Uint8Array`'i Node'un dış realm'indekiyle FARKLI bir yapıcı fonksiyon oluyor. `jose@6.2.3`'ün
+`SignJWT`/`jwtVerify`'ı dahili olarak `instanceof Uint8Array` kontrolü yapıyor
+(`FlattenedSign` constructor'ı) ve bu, jsdom altında **tek kopya jose'ye rağmen**
+`TypeError: payload must be an instance of Uint8Array` ile sessizce patlıyor — `pnpm why jose`
+tek kopya gösterse bile bu hata oluşabiliyor, çünkü sorun paket kopyası değil REALM farkı.
+**Yapılacak:** `jose` (ya da onu saran `lib/auth/tokens.ts` gibi bir modül) kullanan test
+dosyalarının başına `// @vitest-environment node` direktifi ekle. Bu saf sunucu mantığı zaten
+DOM'a ihtiyaç duymuyor.
+
+## 2026-08-24 · Next 16 `middleware.ts`'te destructured/computed export'u TANIMAZ
+
+`export const { auth: middleware } = NextAuth(authConfig)` — Auth.js'in kendi dokümantasyonunda
+sık görülen bir kalıp — Next 16'nın build-time middleware algılayıcısını GEÇMİYOR:
+`Error: The file "./middleware.ts" must export a function, either as a default export or as a
+named "middleware" export.` Algılayıcı statik/sözdizimsel çalışıyor, gerçek çalışma zamanı
+değerine bakmıyor. Ayrıca Next 16 `middleware.ts` dosya kuralını KALDIRIYOR, yerine `proxy.ts`
+öneriyor (`npx @next/codemod@canary middleware-to-proxy`) — henüz sert hata değil, uyarı.
+**Yapılacak:** `const { auth } = NextAuth(authConfig); export default auth` kalıbını kullan —
+build bunu tanıyor. `middleware.ts` → `proxy.ts` geçişi ayrı bir görev olarak planlanmalı,
+Auth.js'in kendi dokümantasyonu bu değişikliğe henüz uymuyor.
+
+## 2026-08-24 · gitleaks `generic-api-key` kuralı UYDURMA test parolalarını yakalıyor
+
+`password: '...'` anahtarına yakın, ~18+ karakter VE en az bir rakam bloğu içeren herhangi bir
+string (`'gecerli-parola-2026'`, `'gercek-kullanici-parolasi-2026'`) entropy eşiğini aşıp
+`generic-api-key` kuralını tetikliyor — içerik gerçek bir secret olmasa bile. Canlı doğrulandı:
+`'dogru-parola-2026'` (17 karakter) TEMİZ, `'gecerli-parola-2026'` (19 karakter) YAKALANDI;
+uzunluk/rakam kombinasyonu eşiği aşıyor, kelime seçimi önemli değil. Pre-commit hook'u commit'i
+SERT reddediyor (`--staged` ile `gitleaks protect`).
+**Yapılacak:** Testte gerçek bir sır olmayan ama kısıtları (KK-003: `MIN_PASSWORD_LENGTH=8`)
+karşılayan parola sabitlerini KISA tut (`'test-parola1'`, 8-14 karakter, tek rakam) — bir commit
+denemeden önce `gitleaks detect --no-git --source <dosya>` ile sonda at. `.gitleaks.toml`'a
+istisna eklemek (bu kartın çakışma kümesi dışında) yerine tercih edilecek ilk çözüm budur.
+
+## 2026-08-24 · ⚠️ Auth.js `jwt` callback'i oturum OKUMASINDA `user` OLMADAN çağrılır — ölümcül
+
+`@auth/core@0.41.3`'ün `lib/actions/session.js:28` (JWT stratejisi) her oturum okumasında
+`callbacks.jwt({ token, session })` çağırıyor — **`user` anahtarı YOK**. `user` yalnız sign-in
+anında (`callback/index.js`) geçiriliyor. `jwt({ token, user }) { if (user.id !== undefined) ...}`
+yazmak (TypeScript'in `user`i ZORUNLU göstermesine rağmen — tip yalan söylüyor, `pnpm gates`
+yeşil kalır) her oturum okumasında `TypeError: Cannot read properties of undefined` fırlatıyor;
+`session.js:58-62` bunu yakalayıp **`sessionStore.clean()` ile çerezi SİLİYOR**. Sonuç: kullanıcı
+giriş yapar yapmaz İLK `auth()` çağrısında oturum kayboluyor — çerez yolu (KK-006/KK-010) asla
+çalışmıyor, ve hiçbir birim testi bunu yakalamıyor çünkü test edilen dosya (`auth.ts`) `next-auth`
+runtime'ını Vitest'te yüklenemediği için (bkz. yukarıdaki `next/server` maddesi) yalnız METİN
+düzeyinde sondalanıyordu.
+**Yapılacak:** `jwt` callback'ini TANIMLAMA — `@auth/core` sign-in sırasında `token.sub`'ı zaten
+`user.id`'den kuruyor (`callback/index.js`: `sub: user.id?.toString()`), callback GEREKSİZ.
+Gerçekten özel bir `jwt` callback'i gerekiyorsa `user` parametresini HER ZAMAN opsiyonel
+(`user?: User`) varsay, tipin "zorunlu" demesine güvenme. `session` callback'inin mantığını
+next-auth'a bağımlı OLMAYAN ayrı bir dosyaya (`import type` yalnız, `verbatimModuleSyntax`
+altında silinir) taşıyıp orada GERÇEK bir davranış testiyle kilitle — next-auth import eden bir
+dosya Vitest'te asla çalıştırılamayacağı için bu, o mantığı test edilebilir kılmanın TEK yolu.
+
+## 2026-08-24 · `readFileSync` + `toContain` testi bir dizi kısaltmasını YAKALAMAZ
+
+`middleware.ts`'in `config.matcher`'ını `readFileSync` ile okuyup her beklenen rota için
+`toContain(rota)` kontrolü yapan bir test, güvenlik denetiminin `matcher.slice(0, 1)`'e eşdeğer
+bir kısaltma senaryosuyla kırıldı: gerçek çalışma zamanı davranışı yalnız ilk rotayı korurken,
+test hâlâ YEŞİL kalabiliyordu çünkü metodoloji "her rota metinde bir yerde geçiyor mu" sorusuna
+cevap veriyor, "dizi TAM OLARAK bunlardan mı oluşuyor" sorusuna değil (fazladan/silinmiş/yeniden
+sıralı girdiyi ayırt edemiyor). Ayrıca Next.js `matcher`'ın SAF bir literal dizi olmasını build-time
+ZORUNLU kılıyor (`.slice()`/hesaplanmış herhangi bir ifade "matcher needs to be a static string or
+array of static strings" hatasıyla reddediliyor — canlı doğrulandı) ve bu yüzden `middleware.ts`
+`next-auth` import ettiğinden Vitest'te hiç ÇALIŞTIRILAMIYOR (bkz. yukarıdaki `next/server` maddesi).
+**Yapılacak:** (1) `toContain` yerine dizi literalini ayrıştırıp `toStrictEqual` ile TAM eşitlik
+iste; (2) doğruluk kaynağını (kart metniyle test edilen elle-yazılmış liste) next-auth'suz,
+gerçekten import edilebilir bir dosyada (`auth.config.ts`) tut ve `middleware.ts`'ten ayrıştırılan
+literali BUNA karşı karşılaştır — Next'in matcher'ı literal zorunlu kılması, "hesaplanmış matcher"
+sınıfındaki saldırıları zaten build-time'da kapatıyor, geriye yalnız "literal içeriği doğru mu"
+sorusu kalıyor ve bunu `toStrictEqual` çözüyor.

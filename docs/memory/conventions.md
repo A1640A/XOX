@@ -22,3 +22,20 @@
 
 - Alan hataları için isimli sınıf (`InvalidMoveError`), string throw yok.
 - API route'ları hatayı yakalayıp yapılandırılmış JSON döner, stack sızdırmaz.
+
+## Güvenlik — `/giris?donus=` sözleşmesi (AUTH-001 güvenlik denetimi)
+
+`middleware.ts`/`auth.config.ts`'in ürettiği `donus` değeri BUGÜN yalnız sunucu tarafında
+`request.nextUrl.pathname + search`'ten türetiliyor (kullanıcı girdisi DEĞİL) — açık yönlendirme
+riski şu an YOK. Ama `/giris` sayfası bu parametreyi OKUYUP giriş sonrası yönlendirme yapacağı
+için (henüz yazılmadı) şu kural bağlayıcıdır:
+
+**`/giris` sayfası `donus`u kullanmadan önce DOĞRULAMALI:**
+
+- `donus.startsWith('/')` — göreli bir yol olmalı.
+- `!donus.startsWith('//')` — protokol-göreli URL'ler (`//evil.com`) tarayıcıda MUTLAK URL'e
+  çözülür, bu açık yönlendirme yüzeyidir.
+
+Doğrulama başarısızsa `/` gibi güvenli bir varsayılana düş. Bu iki kontrol olmadan, `donus`
+gelecekte bir yerde kullanıcı girdisinden türetilirse (örn. bir deep-link/e-posta bağlantısı)
+sessizce açık yönlendirmeye dönüşür.
