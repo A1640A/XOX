@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-24T09:40:00.000Z",
+  "updatedAt": "2026-08-24T22:55:18.706Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -389,14 +389,14 @@
       "deps": ["AUTH-001", "DB-002"],
       "conflictSet": ["apps/web/app/api/rooms/route.ts", "apps/web/app/api/rooms/[code]/route.ts"],
       "status": "reviewing",
-      "attempts": 0,
+      "attempts": 1,
       "branch": "feat/ROOM-API-001",
       "report": null,
       "acceptance": [
         "POST /api/rooms oturumlu istekte 201 + { code } döner; kod roomCodeSchema'ya uyar (6 karakter, [A-HJ-NP-Z2-9]) ve kurucu X koltuğuna oturur (KK-030/031 sunucu tarafı)",
         "Kimlik resolveIdentity ile çözülür: çerez VE Authorization: Bearer aynı userId'yi verir; kimliksiz istek 401 + UNAUTHENTICATED (KK-010)",
         "createRoom 5 denemede de çakışırsa 503 + CODE_GENERATION_FAILED döner; packages/db'nin zorlanmış çakışma sondasıyla test edilir (KK-035)",
-        "GET /api/rooms/[code] { code, state, seats, canJoin } döner; var olmayan ya da TTL ile silinmiş kod 404 + ROOM_NOT_FOUND (KK-033 sunucu tarafı)",
+        "GET /api/rooms/[code] { code, state, seats, canJoin } döner; var olmayan ya da TTL ile silinmiş kod 404 + ROOM_NOT_FOUND (KK-033 sunucu tarafı). Uç nokta KİMLİK İSTER: kimliksiz istek 401 + UNAUTHENTICATED, kimlik kontrolü kod doğrulamasından ÖNCE koşar (decisions.md 2026-08-25)",
         "Kod sunucu tarafında normalleştirilir: ' abc234 ' -> ABC234; roomCodeSchema dışı karakter 400 + INVALID_CODE (KK-034 sunucu tarafı — istemci doğrulaması tek savunma değildir)",
         "Route dosyaları İNCE: kural ve koşullu yazma yok, yalnız zarf açma + packages/db çağrısı + sonucu yanıta çevirme; dosya başına < 120 satır (tasarım §1)",
         "pnpm gates temiz"
@@ -1098,6 +1098,83 @@
       "report": null,
       "acceptance": [],
       "blockedReason": null
+    },
+    {
+      "id": "DRY-002",
+      "title": "errorJson tek kaynağa: apps/web/lib/http/error-json.ts",
+      "tier": "P2",
+      "wave": "1",
+      "agent": "xox-dev-backend",
+      "deps": ["ROOM-API-001", "WS-001"],
+      "conflictSet": [
+        "apps/web/lib/http/error-json.ts",
+        "apps/web/app/api/rooms/route.ts",
+        "apps/web/app/api/rooms/[code]/route.ts",
+        "apps/web/app/api/auth/register/route.ts",
+        "apps/web/app/api/ws/ticket/route.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "errorJson dört route dosyasından kaldırılıp apps/web/lib/http/error-json.ts içinde tek export olur",
+        "Dört ucun hata gövdesi ErrorResponse sözleşmesine uyar, davranış değişmez (mevcut testler dokunulmadan yeşil kalır)",
+        "Yarın gövdeye requestId eklenmesi tek dosyada mümkün olur — DRY görevinin var oluş sebebi budur",
+        "knip ölü export bildirmez",
+        "pnpm gates temiz"
+      ]
+    },
+    {
+      "id": "DB-003",
+      "title": "getRoomSummary: apps/web'in doğrudan Mongoose erişimini kaldır",
+      "tier": "P2",
+      "wave": "1",
+      "agent": "xox-dev-backend",
+      "deps": ["ROOM-API-001"],
+      "conflictSet": [
+        "packages/db/src/rooms/summary.ts",
+        "packages/db/src/index.ts",
+        "apps/web/app/api/rooms/[code]/route.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "packages/db/src/rooms/summary.ts içinde getRoomSummary(code) — projeksiyon dizesi ve koltuk şekli bilgisi packages/db içinde kalır",
+        "DONMUŞ rooms/index.ts barreline DOKUNULMAZ; export donmamış olan üst barrel packages/db/src/index.ts üzerinden yapılır",
+        "GET /api/rooms/[code] artık Room modelini doğrudan import etmez; apps/web içinde mongoose modeline uzanan tek yer kapanır",
+        "Projeksiyon daraltması packages/db testinde yakalanır — sonda: select daraltılınca kırmızı döner (bugün route testi bunu göremiyordu)",
+        "pnpm gates temiz"
+      ]
+    },
+    {
+      "id": "CTR-003",
+      "title": "canJoin türetmesini packages/shared'a tekilleştir (CTR-001 unfreeze)",
+      "tier": "P2",
+      "wave": "1",
+      "agent": "xox-dev-backend",
+      "deps": ["ROOM-API-001"],
+      "conflictSet": [
+        "packages/shared/src/rest-contract.ts",
+        "apps/web/app/api/rooms/[code]/route.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "packages/shared canJoinRoom(state, seats): boolean export eder",
+        "roomStateResponseSchema superRefine ve route AYNI fonksiyonu çağırır; route içinde türetme kalmaz",
+        "Böylece superRefine iki kopya arasındaki sapma dedektörü olmaktan çıkıp gerçek bir tüketici doğrulamasına döner — bugün o çağrı noktasında hiç ateşlenemiyor",
+        "canJoinRoom için iki operandı tek tek öldüren iki mutasyon: playing + boş koltuk, waiting + iki koltuk dolu",
+        "CTR-001 dondurması bilinçli açılıyor — değişiklik yalnız bu fonksiyonun eklenmesi ve superRefine gövdesiyle sınırlı",
+        "pnpm gates temiz"
+      ]
     }
   ]
 }

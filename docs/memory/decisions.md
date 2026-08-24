@@ -155,3 +155,21 @@ DENER (API çağrısı, `.vercel/project.json` oluşturma) — ağ erişimi yoks
 belirsizse gece koşusunda kırılgan kalır. `-L/--local` hiçbir Vercel API çağrısı yapmadan,
 proje bağlı olsun olmasın deterministik çalışır.
 **Reddedilen:** `-y/--yes` — hâlâ ağ bağımlı, hâlâ proje eşleştirme belirsizliği taşıyor.
+
+## 2026-08-25 · `GET /api/rooms/[code]` kimlik ister — anonim değildir (ROOM-API-001)
+
+**Karar:** Oda özeti uç noktası `resolveIdentity` ile kapatıldı; kimliksiz istek 401
+`UNAUTHENTICATED` alır. Kimlik kontrolü **kod doğrulamasından ÖNCE** koşar, böylece kimliksiz
+çağıran "bu kod geçerli formatta mı" bilgisini bile öğrenmez. Bilet (`allowTicket`) burada da
+geçmez — yalnız WS upgrade'inde geçerli.
+**Gerekçe:** Yanıttaki `seats` iç `userId` + görünen ad taşıyor ve o `userId`,
+`friendRequestBodySchema`'nın birebir kabul ettiği değer. Sızmış tek bir oda kodu, anonim bir
+tarafa hedeflenebilir kimlik veriyordu. Kapatmanın davet akışına maliyeti sıfır: hesap zaten
+zorunlu, davet linkini açan kişi katılmadan önce nasılsa giriş yapıyor. Tasarım §7 tablosu bu
+uç için kimlik şartı belirtmiyordu — boşluk lead kararıyla dolduruldu.
+**Reddedilen:** `userId`'yi anonim projeksiyondan düşürmek — `roomStateResponseSchema`'yı
+değiştirmeyi gerektiriyor, `packages/shared` CTR-001'de DONDU, ayrı görev + unfreeze demekti;
+üstelik görünen adı yine sızdırıyordu.
+**Not:** Uç noktayı bugün hiçbir istemci çağırmıyor (tüketici sondası: `JoinCodeField` doğrudan
+`/oda/[kod]`e push ediyor, `use-room` doğrudan WS'e bağlanıyor) — yani kapatmanın kırdığı bir
+akış yok.
