@@ -27,10 +27,14 @@ if grep -qE '(rm +-[a-z]*[rf]|dropDatabase|git +reset +--hard|git +clean +-[a-z]
     tag="rescue/$ts-$$-$n"
   done
   git tag "$tag" >/dev/null 2>&1 || true
-  git stash create >/dev/null 2>&1 || true
+  # `git tag` yalnız HEAD'i sabitler; commit'lenmemiş çalışma ağacı tag'de yok.
+  # `git stash create` onu bir dangling commit'e yazar ama SHA'yı SADECE stdout'a basar —
+  # atarsak nesne kimsenin bulamayacağı bir yerde kalır. SHA'yı yakala ve log'a yaz.
+  stash=$(git stash create 2>/dev/null || true)
+  [ -n "$stash" ] || stash='stash-yok'
   mkdir -p docs/board
-  printf '%s\t%s\t%s\n' "$ts" "$tag" "$cmd" >> docs/board/danger.log
-  echo "⚠️  Yıkıcı komut tespit edildi. Kurtarma noktası: $tag (danger.log'a yazıldı)." >&2
+  printf '%s\t%s\t%s\t%s\n' "$ts" "$tag" "$stash" "$cmd" >> docs/board/danger.log
+  echo "⚠️  Yıkıcı komut tespit edildi. Kurtarma noktası: $tag · stash: $stash (danger.log'a yazıldı)." >&2
 fi
 
 exit 0
