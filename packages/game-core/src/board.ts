@@ -1,4 +1,3 @@
-import { InvalidMoveError } from './errors'
 import type { Board, Cell, Player } from './types'
 
 export const BOARD_SIZE = 9
@@ -20,23 +19,6 @@ export function boardFromCells(cells: readonly Cell[]): Board {
     throw new RangeError(`Tahta ${String(BOARD_SIZE)} hücre olmalı, ${String(cells.length)} geldi`)
   }
   return cells as Board
-}
-
-export function isValidMove(board: Board, index: number): boolean {
-  if (!Number.isInteger(index) || index < 0 || index >= BOARD_SIZE) return false
-  return cellAt(board, index) === null
-}
-
-export function applyMove(board: Board, index: number, player: Player): Board {
-  if (!Number.isInteger(index) || index < 0 || index >= BOARD_SIZE) {
-    throw new InvalidMoveError(index, 'out-of-range')
-  }
-  if (cellAt(board, index) !== null) {
-    throw new InvalidMoveError(index, 'occupied')
-  }
-  const next: Cell[] = [...board]
-  next[index] = player
-  return boardFromCells(next)
 }
 
 export function availableMoves(board: Board): number[] {

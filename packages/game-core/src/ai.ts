@@ -1,4 +1,5 @@
-import { applyMove, availableMoves } from './board'
+import { availableMoves } from './board'
+import { applyMove } from './moves'
 import { InvalidMoveError } from './errors'
 import { evaluateStatus } from './status'
 import type { Board, Difficulty, Player } from './types'

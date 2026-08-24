@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_BOARD, applyMove, availableMoves, boardFromCells } from './board'
+import { EMPTY_BOARD, availableMoves, boardFromCells } from './board'
+import { applyMove } from './moves'
 import { evaluateStatus } from './status'
 import { bestMove, chooseMove } from './ai'
 import { InvalidMoveError } from './errors'
