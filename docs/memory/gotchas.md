@@ -2,6 +2,22 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Bir TEST hatayi kilitleyebilir — yesil, davranisin dogru oldugunu gostermez
+
+CTR-002-de `socket:open` reconnect sayacini sifirliyordu; bu, uygulama-seviyesi (4000-4999)
+kapanislarin TAMAMI icin ustel geri cekilmeyi olduruyordu — cunku o kodlar tanim geregi
+basarili el sikismadan SONRA gelir. Hatayi bir test acikca kilitliyordu:
+"basarili baglanti sayaci sifirlar". Test yesildi, davranis yanlisti.
+**Yapilacak:** Bir inceleme bulgusu duzeltilirken "hangi test bu yanlis davranisi bekliyordu?"
+diye sor. Duzeltmeyle birlikte o testin de degismesi gerekiyorsa, bulgu gercektir.
+
+## 2026-08-24 · Beklentiyi sabitten turetmek sabit degisikligine KOR yapar
+
+`expect(delay).toBe(WS_RECONNECT_BASE_MS)` yarin sabit 60_000 olsa yine yesil kalir.
+Test, degeri degil ILISKIYI dogruluyor — oysa amac degerin dogru olmasi.
+**Yapilacak:** En az bir testte ciplak sayi yaz (400/500/600). Turetilmis testler ilave olsun,
+tek kanit olmasin. Ayni sinif: enum uzunlugunu enum-un kendisinden saymak.
+
 ## 2026-08-24 · `select: false` `aggregate()`-i KAPSAMAZ — passwordHash sizar
 
 Mongoose `select: false` yalniz query middleware yolunda calisir. Canli dogrulandi:

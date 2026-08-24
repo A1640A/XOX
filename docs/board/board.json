@@ -187,8 +187,8 @@
         "packages/shared/src/ws-client.test.ts",
         "packages/shared/src/index.ts"
       ],
-      "status": "reviewing",
-      "attempts": 0,
+      "status": "in_wave",
+      "attempts": 1,
       "branch": "feat/CTR-002",
       "report": "docs/board/reports/CTR-002.md",
       "acceptance": [
@@ -927,7 +927,8 @@
         "packages/db/vitest.config.ts",
         "apps/web/vitest.config.ts",
         "vitest.shared.ts",
-        "packages/game-core/package.json"
+        "packages/game-core/package.json",
+        "packages/shared/stryker.config.mjs"
       ],
       "status": "todo",
       "attempts": 0,
@@ -940,7 +941,8 @@
         "Koşu sonunda .stryker-tmp artığı KALMAZ (gotcha: çöken koşu test sayısını ikiye katlar); `rm -rf packages/*/.stryker-tmp` doğrulandı",
         "game-core'a DOKUNULMAZ (bitti ve sertleştirildi)",
         "pnpm gates temiz",
-        "packages/game-core/package.json-a `\"sideEffects\": false` eklenir. Gerekce: @xox/shared game-core-dan tip import ediyor; sideEffects bayragi olmadan game-core (minimax dahil) @xox/shared-i import eden HER bundle-a girer. Metro tree-shaking yapmaz, yani mobil yalnizca roomCodeSchema icin shared import etse bile AI kodunu tasir."
+        "packages/game-core/package.json-a `\"sideEffects\": false` eklenir. Gerekce: @xox/shared game-core-dan tip import ediyor; sideEffects bayragi olmadan game-core (minimax dahil) @xox/shared-i import eden HER bundle-a girer. Metro tree-shaking yapmaz, yani mobil yalnizca roomCodeSchema icin shared import etse bile AI kodunu tasir.",
+        "packages/shared icin Stryker mutasyon testi acilir (esik >= 90). Gerekce: CTR-002 incelemesinde %100 kapsamin EN AZ IKI mutasyonu kacirdigi kanitlandi — `fromStateMessage`-teki reconnectAttempt sifirlamasi silinse ve olu soketten gelen state islense hicbir test kirmizi olmuyor. Kapsam yeterli degil, mutasyon gerekli."
       ],
       "blockedReason": null
     },

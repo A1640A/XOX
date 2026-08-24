@@ -239,3 +239,18 @@
 {"ts":"2026-08-24T22:15:00Z","wave":2,"event":"task.done","task":"CTR-002","agent":"xox-dev-core","tests":"315","coverage":"100%","note":"11/11 tablo satiri testli; R1 7 sonda ile kanitlandi"}
 {"ts":"2026-08-24T19:13:58Z","event":"subagent.stop"}
 {"ts":"2026-08-24T22:35:00Z","wave":2,"event":"review.finding","task":"DB-001","agent":"xox-reviewer","findings":9,"major":4,"summary":"board uzunluk kisiti yok; friendship hook updateOne ile atlaniyor; passwordHash aggregate-ten siziyor; ensureIndexes uretimde hic cagrilmiyor (OPS-003 acildi)"}
+{"ts":"2026-08-24T19:17:24Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.test.ts"}
+{"ts":"2026-08-24T19:17:46Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/validators.ts"}
+{"ts":"2026-08-24T19:18:04Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.ts"}
+{"ts":"2026-08-24T19:18:25Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.ts"}
+{"ts":"2026-08-24T19:18:41Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.ts"}
+{"ts":"2026-08-24T19:18:57Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.ts"}
+{"ts":"2026-08-24T19:19:05Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.ts"}
+{"ts":"2026-08-24T19:19:12Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.ts"}
+{"ts":"2026-08-24T19:19:27Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.test.ts"}
+{"ts":"2026-08-24T19:20:06Z","event":"subagent.stop"}
+{"ts":"2026-08-24T19:20:12Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.test.ts"}
+{"ts":"2026-08-24T19:20:19Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.test.ts"}
+{"ts":"2026-08-24T19:20:31Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.test.ts"}
+{"ts":"2026-08-24T19:20:38Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.test.ts"}
+{"ts":"2026-08-24T22:50:00Z","wave":2,"event":"review.finding","task":"CTR-002","agent":"xox-reviewer","findings":8,"major":3,"summary":"backoff uygulama-seviyesi kapanislarda olu (test hatayi kilitliyordu); connect terk edilen soketi kapatmiyor; opponentLeftVisible saat sapmasini yok sayiyor"}
