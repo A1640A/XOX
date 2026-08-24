@@ -31,11 +31,16 @@ export const MOBILE_ACCESS_TTL_SECONDS = 900
 /** Mobil refresh token ömrü: 30 gün — KK-009. */
 export const MOBILE_REFRESH_TTL_SECONDS = 2_592_000
 export const MIN_PASSWORD_LENGTH = 8
+/**
+ * Üst sınır bir güvenlik kuralıdır, karmaşıklık kuralı değil: sınırsız parola
+ * argon2id'ye megabaytlık girdi taşır (DoS yüzeyi). NIST uzunluk-temelli
+ * yaklaşımı öneriyor; zorunlu karakter sınıfı EKLENMEZ.
+ */
+export const MAX_PASSWORD_LENGTH = 128
 export const DISPLAY_NAME_MIN = 2
 export const DISPLAY_NAME_MAX = 40
 
 // ─── Emoji (P2) ───────────────────────────────────────────────────────────
-export const MAX_EMOJI_LENGTH = 8
 /** Sabit ve beyaz listeli palet — KK-122/123. Sıra `emoji-<n>` kancasıdır. */
 export const EMOJI_PALETTE = ['👋', '😀', '😂', '😮', '😢', '👏', '🔥', '🤝'] as const
 /** KK-124 — 10 saniyede en fazla 5 emoji. */

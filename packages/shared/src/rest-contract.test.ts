@@ -34,6 +34,15 @@ describe('POST /api/auth/register', () => {
     expect(registerBodySchema.safeParse({ ...gecerli, password: 'kisa12' }).success).toBe(false)
   })
 
+  it('128 karakteri kabul eder, 129 karakteri reddeder — argon2id DoS yüzeyi', () => {
+    expect(registerBodySchema.safeParse({ ...gecerli, password: 'p'.repeat(128) }).success).toBe(
+      true,
+    )
+    expect(registerBodySchema.safeParse({ ...gecerli, password: 'p'.repeat(129) }).success).toBe(
+      false,
+    )
+  })
+
   it('2–40 aralığı dışındaki görünen adı reddeder (KK-082)', () => {
     expect(registerBodySchema.safeParse({ ...gecerli, displayName: 'A' }).success).toBe(false)
     expect(registerBodySchema.safeParse({ ...gecerli, displayName: 'A'.repeat(41) }).success).toBe(
@@ -78,6 +87,37 @@ describe('oda uç noktaları', () => {
       canJoin: true,
     })
     expect(result.success).toBe(true)
+  })
+
+  it('canJoin değişmezi: yalnız waiting + boş koltuk varsa true', () => {
+    const dolu = { X: { userId: 'u1', name: 'Ömer' }, O: { userId: 'u2', name: 'Ayşe' } }
+    // Bitmiş + iki koltuk dolu ama canJoin:true — reviewer'ın gösterdiği açık.
+    expect(
+      roomStateResponseSchema.safeParse({
+        code: 'AB2C3D',
+        state: 'finished',
+        seats: dolu,
+        canJoin: true,
+      }).success,
+    ).toBe(false)
+    // Ters yön: katılınabilir oda canJoin:false diyemez.
+    expect(
+      roomStateResponseSchema.safeParse({
+        code: 'AB2C3D',
+        state: 'waiting',
+        seats: { X: { userId: 'u1', name: 'Ömer' }, O: null },
+        canJoin: false,
+      }).success,
+    ).toBe(false)
+    // Oynanan oda: koltuklar dolu, katılınamaz.
+    expect(
+      roomStateResponseSchema.safeParse({
+        code: 'AB2C3D',
+        state: 'playing',
+        seats: dolu,
+        canJoin: false,
+      }).success,
+    ).toBe(true)
   })
 
   it('bilinmeyen oda durumunu reddeder', () => {
@@ -182,6 +222,28 @@ describe('/api/matches', () => {
     expect(
       matchesResponseSchema.safeParse({ matches: [{ ...mac, rated: false, eloDelta: null }] })
         .success,
+    ).toBe(true)
+  })
+
+  it('puanlı oyunda eloDelta null OLAMAZ (KK-116 "—" yanılgısı)', () => {
+    expect(
+      matchesResponseSchema.safeParse({ matches: [{ ...mac, rated: true, eloDelta: null }] })
+        .success,
+    ).toBe(false)
+  })
+
+  it('puansız oyunda eloDelta dolu OLAMAZ', () => {
+    expect(
+      matchesResponseSchema.safeParse({ matches: [{ ...mac, rated: false, eloDelta: 12 }] })
+        .success,
+    ).toBe(false)
+  })
+
+  it('beraberlikte sıfır delta puanlı kalır (KK-111)', () => {
+    expect(
+      matchesResponseSchema.safeParse({
+        matches: [{ ...mac, result: 'draw', rated: true, eloDelta: 0 }],
+      }).success,
     ).toBe(true)
   })
 

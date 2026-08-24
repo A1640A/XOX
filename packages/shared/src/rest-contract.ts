@@ -4,6 +4,7 @@ import {
   DISPLAY_NAME_MIN,
   HISTORY_PAGE_SIZE,
   LEADERBOARD_SIZE,
+  MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
 } from './constants'
 import { errorCodeSchema } from './errors'
@@ -24,7 +25,7 @@ export const errorResponseSchema = z.object({ code: errorCodeSchema, message: z.
 
 export const displayNameSchema = z.string().trim().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX)
 export const emailSchema = z.email().toLowerCase()
-export const passwordSchema = z.string().min(MIN_PASSWORD_LENGTH)
+export const passwordSchema = z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH)
 export const themeSchema = z.enum(['acik', 'koyu'])
 export const statsSchema = z.object({
   wins: z.number().int().nonnegative(),
@@ -44,12 +45,28 @@ export const registerResponseSchema = z.object({ userId: z.string().min(1) })
 // ─── POST /api/rooms · GET /api/rooms/[code] ──────────────────────────────
 export const roomStateSchema = z.enum(['waiting', 'playing', 'finished'])
 export const roomCreateResponseSchema = z.object({ code: roomCodeSchema })
-export const roomStateResponseSchema = z.object({
-  code: roomCodeSchema,
-  state: roomStateSchema,
-  seats: playersSchema,
-  canJoin: z.boolean(),
-})
+/**
+ * `canJoin` türetilmiş bir alandır, bağımsız bir bayrak değil: **yalnız**
+ * `waiting` odada ve boş koltuk varsa doğrudur (§4 yaşam döngüsü). Değişmez
+ * dayatılmazsa "bitmiş + iki koltuk dolu + canJoin:true" gibi bir yanıt
+ * sözleşmeye uyar, istemci katıl düğmesini açar ve WS 4403 ile kapanır.
+ */
+export const roomStateResponseSchema = z
+  .object({
+    code: roomCodeSchema,
+    state: roomStateSchema,
+    seats: playersSchema,
+    canJoin: z.boolean(),
+  })
+  .superRefine((room, ctx) => {
+    const bosKoltukVar = room.seats.X === null || room.seats.O === null
+    if (room.canJoin !== (room.state === 'waiting' && bosKoltukVar)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'canJoin yalnız bekleyen ve boş koltuğu olan odada true olabilir',
+      })
+    }
+  })
 
 // ─── POST /api/ws/ticket ──────────────────────────────────────────────────
 export const wsTicketResponseSchema = z.object({
@@ -92,16 +109,29 @@ export const leaderboardResponseSchema = z.object({
 
 // ─── GET /api/matches ─────────────────────────────────────────────────────
 export const matchResultSchema = z.enum(['win', 'loss', 'draw'])
-export const matchSchema = z.object({
-  gameId: z.string().min(1),
-  finishedAt: epochMsSchema,
-  opponent: userRefSchema,
-  result: matchResultSchema,
-  endReason: endReasonSchema.nullable(),
-  rated: z.boolean(),
-  /** Puansız oyunda null — listede "—" gösterilir (KK-116). */
-  eloDelta: z.number().int().nullable(),
-})
+/**
+ * Değişmez: **puanlıysa delta vardır, puansızsa yoktur** —
+ * `rated === (eloDelta !== null)`. `transportStatusSchema`'daki kalıbın aynısı.
+ * Dayatılmazsa `{rated:true, eloDelta:null}` satırı geçmişte puanlı görünür ama
+ * ELO sütununda "—" çizilir; kullanıcı puanının nereye gittiğini göremez ve
+ * E2E bunu yakalayamaz, çünkü sözleşme izin veriyordur.
+ */
+export const matchSchema = z
+  .object({
+    gameId: z.string().min(1),
+    finishedAt: epochMsSchema,
+    opponent: userRefSchema,
+    result: matchResultSchema,
+    endReason: endReasonSchema.nullable(),
+    rated: z.boolean(),
+    /** Puansız oyunda null — listede "—" gösterilir (KK-116). */
+    eloDelta: z.number().int().nullable(),
+  })
+  .superRefine((match, ctx) => {
+    if (match.rated !== (match.eloDelta !== null)) {
+      ctx.addIssue({ code: 'custom', message: 'rated ile eloDelta tutarsız' })
+    }
+  })
 export const matchesResponseSchema = z.object({
   matches: z.array(matchSchema).max(HISTORY_PAGE_SIZE),
 })

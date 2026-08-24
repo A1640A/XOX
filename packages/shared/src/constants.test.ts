@@ -14,7 +14,7 @@ import {
   HISTORY_PAGE_SIZE,
   LEADERBOARD_MIN_RATED_GAMES,
   LEADERBOARD_SIZE,
-  MAX_EMOJI_LENGTH,
+  MAX_PASSWORD_LENGTH,
   MAX_PROTOCOL_VIOLATIONS,
   MIN_PASSWORD_LENGTH,
   MOBILE_ACCESS_TTL_SECONDS,
@@ -45,7 +45,6 @@ describe('mevcut sabitler korunur', () => {
     expect(WS_HEARTBEAT_MS).toBe(25_000)
     expect(WS_RECONNECT_BASE_MS).toBe(500)
     expect(WS_RECONNECT_MAX_MS).toBe(10_000)
-    expect(MAX_EMOJI_LENGTH).toBe(8)
   })
 })
 
@@ -83,8 +82,9 @@ describe('tasarım §2.7 yeni sabitleri', () => {
     expect(MOBILE_REFRESH_TTL_SECONDS).toBe(2_592_000)
   })
 
-  it('MIN_PASSWORD_LENGTH 8', () => {
+  it('MIN_PASSWORD_LENGTH 8 · MAX_PASSWORD_LENGTH 128', () => {
     expect(MIN_PASSWORD_LENGTH).toBe(8)
+    expect(MAX_PASSWORD_LENGTH).toBe(128)
   })
 
   it('DISPLAY_NAME_MIN 2 · DISPLAY_NAME_MAX 40', () => {
