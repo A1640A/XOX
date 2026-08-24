@@ -15,14 +15,12 @@
     "reset": "tsx src/reset.ts"
   },
   "dependencies": {
-    "@xox/game-core": "workspace:*",
     "@xox/shared": "workspace:*",
     "mongodb": "7.5.0",
     "mongoose": "9.9.3"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.1.11",
-    "mongodb-memory-server": "11.2.0",
     "tsx": "^4.23.12",
     "vitest": "4.1.11"
   }
