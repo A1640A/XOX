@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { NextRequest } from 'next/server'
-import { authConfig, PROTECTED_ROUTE_PREFIXES } from './auth.config'
+import { authConfig, MIDDLEWARE_MATCHER, PROTECTED_ROUTE_PREFIXES } from './auth.config'
 
 function requestFor(pathname: string, search = ''): NextRequest {
   return new NextRequest(`https://xox.test${pathname}${search}`)
@@ -64,5 +64,20 @@ describe('authorized callback — KK-007 korunan rota yönlendirmesi', () => {
     expect([...PROTECTED_ROUTE_PREFIXES].sort()).toStrictEqual(
       ['/oyna', '/oda', '/profil', '/siralama', '/gecmis', '/arkadaslar'].sort(),
     )
+  })
+
+  it('MIDDLEWARE_MATCHER kart metnindeki middleware matcher’ıyla BİREBİR aynıdır (sıra dahil)', () => {
+    // Elle yazılmış, bağımsız bir liste — MIDDLEWARE_MATCHER'ın kendisinden
+    // TÜRETİLMEDİ. `middleware.test.ts` bunu middleware.ts'in gerçek literal
+    // dizisiyle ayrıca karşılaştırır (parity zinciri: kart → burası →
+    // middleware.ts).
+    expect([...MIDDLEWARE_MATCHER]).toStrictEqual([
+      '/oyna/:path*',
+      '/oda/:path*',
+      '/profil',
+      '/siralama',
+      '/gecmis',
+      '/arkadaslar',
+    ])
   })
 })
