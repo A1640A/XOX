@@ -1,8 +1,50 @@
 import { describe, expect, it } from 'vitest'
+import { type z } from 'zod'
 import { EMOJI_PALETTE } from './constants'
 import { clientMessageSchema, serverMessageSchema, stateMessageSchema } from './ws-protocol'
 
 const bosTahta = Array.from({ length: 9 }, () => null)
+
+type Sekil = Record<string, z.ZodType>
+
+/** Birliğin seçeneklerini `{ tip, shape }` olarak açar — liste elle yazılmaz. */
+function secenekler(union: { options: readonly unknown[] }): { tip: string; shape: Sekil }[] {
+  return union.options.map((secenek) => {
+    const shape = (secenek as { shape: Sekil }).shape
+    return { tip: (shape['type'] as unknown as z.ZodLiteral<string>).value, shape }
+  })
+}
+
+/**
+ * Her seçeneğin ZORUNLU alanlarını şemadan türetir: `[tip, alan]` çiftleri.
+ * İsteğe bağlı alanlar (undefined'ı kabul edenler) elenir, böylece ileride
+ * eklenecek opsiyonel bir alan testi yanlışlıkla kırmızıya döndürmez.
+ * Yeni bir mesaj ya da alan eklendiğinde kapsam kendiliğinden gelir.
+ */
+function zorunluAlanCiftleri(union: { options: readonly unknown[] }): [string, string][] {
+  return secenekler(union).flatMap(({ tip, shape }) =>
+    Object.entries(shape)
+      .filter(([alan, sema]) => alan !== 'type' && !sema.safeParse(undefined).success)
+      .map(([alan]): [string, string] => [tip, alan]),
+  )
+}
+
+function alanSil(ornek: Record<string, unknown>, alan: string): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(ornek).filter(([k]) => k !== alan))
+}
+
+/** Tip -> zorunlu alanlar (şemadan türetilmiş, `type` hariç, sıralı). */
+function zorunluAlanHaritasi(union: { options: readonly unknown[] }): Record<string, string[]> {
+  return Object.fromEntries(
+    secenekler(union).map(({ tip, shape }) => [
+      tip,
+      Object.entries(shape)
+        .filter(([alan, sema]) => alan !== 'type' && !sema.safeParse(undefined).success)
+        .map(([alan]) => alan)
+        .sort(),
+    ]),
+  )
+}
 
 const gecerliState = {
   type: 'state',
@@ -16,6 +58,40 @@ const gecerliState = {
   graceEndsAt: null,
   rematch: null,
   serverTime: 1_770_000_000_000,
+}
+
+const gecerliIstemciMesajlari: Record<string, Record<string, unknown>> = {
+  join: { type: 'join', roomCode: 'AB2C3D' },
+  move: { type: 'move', index: 4 },
+  resign: { type: 'resign' },
+  'rematch:offer': { type: 'rematch:offer' },
+  'rematch:accept': { type: 'rematch:accept' },
+  'chat:emoji': { type: 'chat:emoji', emoji: '👋' },
+  ping: { type: 'ping' },
+}
+
+const gecerliMesajlar: Record<string, Record<string, unknown>> = {
+  state: gecerliState,
+  'move:applied': { type: 'move:applied', index: 4, by: 'X', version: 2 },
+  'move:rejected': { type: 'move:rejected', index: 4, reason: 'not-your-turn' },
+  'opponent:joined': { type: 'opponent:joined', userId: 'u2', seat: 'O', name: 'Ayşe' },
+  'opponent:left': {
+    type: 'opponent:left',
+    userId: 'u2',
+    seat: 'O',
+    graceEndsAt: 1_770_000_030_000,
+  },
+  'opponent:returned': { type: 'opponent:returned', seat: 'O' },
+  'game:over': {
+    type: 'game:over',
+    status: { kind: 'won', winner: 'O', line: null, reason: 'resign' },
+    endedAt: 1_770_000_010_000,
+  },
+  'rematch:offered': { type: 'rematch:offered', by: 'X', expiresAt: 1_770_000_060_000 },
+  'rematch:cancelled': { type: 'rematch:cancelled', reason: 'opponent-left' },
+  'chat:emoji': { type: 'chat:emoji', from: 'X', emoji: '👋', at: 1_770_000_005_000 },
+  error: { type: 'error', code: 'ROOM_FULL', message: 'Bu oda dolu.' },
+  pong: { type: 'pong' },
 }
 
 describe('clientMessageSchema', () => {
@@ -60,27 +136,42 @@ describe('clientMessageSchema', () => {
       false,
     )
   })
+
+  it('her istemci mesajının zorunlu alan kümesi sabittir', () => {
+    expect(zorunluAlanHaritasi(clientMessageSchema)).toEqual({
+      join: ['roomCode'],
+      move: ['index'],
+      resign: [],
+      'rematch:offer': [],
+      'rematch:accept': [],
+      'chat:emoji': ['emoji'],
+      ping: [],
+    })
+  })
+
+  it('her istemci mesaj tipi için örnek payload vardır', () => {
+    expect(secenekler(clientMessageSchema).map((s) => s.tip)).toEqual(
+      Object.keys(gecerliIstemciMesajlari),
+    )
+  })
+
+  it.each(Object.keys(gecerliIstemciMesajlari))('%s mesajını çözer', (tip) => {
+    expect(clientMessageSchema.safeParse(gecerliIstemciMesajlari[tip]).success).toBe(true)
+  })
+
+  it.each(zorunluAlanCiftleri(clientMessageSchema))(
+    '%s mesajında %s eksikse reddedilir',
+    (tip, alan) => {
+      const ornek = gecerliIstemciMesajlari[tip] ?? {}
+      expect(alan in ornek).toBe(true)
+      expect(clientMessageSchema.safeParse(alanSil(ornek, alan)).success).toBe(false)
+    },
+  )
 })
 
 describe('stateMessageSchema (tasarım §2.4)', () => {
   it('tüm alanlarıyla geçerli state mesajını çözer', () => {
     expect(stateMessageSchema.safeParse(gecerliState).success).toBe(true)
-  })
-
-  it.each([
-    'roomCode',
-    'board',
-    'status',
-    'players',
-    'you',
-    'version',
-    'turnDeadline',
-    'graceEndsAt',
-    'rematch',
-    'serverTime',
-  ])('%s alanı eksikse reddedilir', (alan) => {
-    const eksik = Object.fromEntries(Object.entries(gecerliState).filter(([k]) => k !== alan))
-    expect(stateMessageSchema.safeParse(eksik).success).toBe(false)
   })
 
   it('koltuk sahibinin adı boş olamaz', () => {
@@ -143,34 +234,63 @@ describe('serverMessageSchema', () => {
     ])
   })
 
-  const gecerliMesajlar: Record<string, unknown> = {
-    state: gecerliState,
-    'move:applied': { type: 'move:applied', index: 4, by: 'X', version: 2 },
-    'move:rejected': { type: 'move:rejected', index: 4, reason: 'not-your-turn' },
-    'opponent:joined': { type: 'opponent:joined', userId: 'u2', seat: 'O', name: 'Ayşe' },
-    'opponent:left': {
-      type: 'opponent:left',
-      userId: 'u2',
-      seat: 'O',
-      graceEndsAt: 1_770_000_030_000,
-    },
-    'opponent:returned': { type: 'opponent:returned', seat: 'O' },
-    'game:over': {
-      type: 'game:over',
-      status: { kind: 'won', winner: 'O', line: null, reason: 'resign' },
-      endedAt: 1_770_000_010_000,
-    },
-    'rematch:offered': { type: 'rematch:offered', by: 'X', expiresAt: 1_770_000_060_000 },
-    'rematch:cancelled': { type: 'rematch:cancelled', reason: 'opponent-left' },
-    'chat:emoji': { type: 'chat:emoji', from: 'X', emoji: '👋', at: 1_770_000_005_000 },
-    error: { type: 'error', code: 'ROOM_FULL', message: 'Bu oda dolu.' },
-    pong: { type: 'pong' },
-  }
+  /**
+   * Türetilmiş silme testleri bir alanın GERÇEKTEN zorunlu olduğunu kanıtlar,
+   * ama alan şemadan silinirse birlikte kaybolur (sonda ile ölçüldü: silme
+   * testi de yok olur, koşu yeşil kalır). Bu tablo o boşluğu kapatır —
+   * tasarım §2.4/§2.5'in alan listesi elle yazılıdır, sapma kırmızıdır.
+   */
+  it('her mesajın zorunlu alan kümesi tasarım §2.4/§2.5 ile birebir', () => {
+    expect(zorunluAlanHaritasi(serverMessageSchema)).toEqual({
+      state: [
+        'board',
+        'graceEndsAt',
+        'players',
+        'rematch',
+        'roomCode',
+        'serverTime',
+        'status',
+        'turnDeadline',
+        'version',
+        'you',
+      ],
+      'move:applied': ['by', 'index', 'version'],
+      'move:rejected': ['index', 'reason'],
+      'opponent:joined': ['name', 'seat', 'userId'],
+      'opponent:left': ['graceEndsAt', 'seat', 'userId'],
+      'opponent:returned': ['seat'],
+      'game:over': ['endedAt', 'status'],
+      'rematch:offered': ['by', 'expiresAt'],
+      'rematch:cancelled': ['reason'],
+      'chat:emoji': ['at', 'emoji', 'from'],
+      error: ['code', 'message'],
+      pong: [],
+    })
+  })
+
+  it('her sunucu mesaj tipi için örnek payload vardır', () => {
+    expect(secenekler(serverMessageSchema).map((s) => s.tip)).toEqual(Object.keys(gecerliMesajlar))
+  })
 
   it.each(Object.keys(gecerliMesajlar))('%s mesajını çözer', (tip) => {
     const result = serverMessageSchema.safeParse(gecerliMesajlar[tip])
     expect(result.success).toBe(true)
   })
+
+  /**
+   * Mutlu yol tek başına yetmez: zod fazla anahtarı sessizce kırptığı için
+   * şemadan bir alan silinse (`move:applied.version` gibi) mutlu-yol testi
+   * yeşil kalırdı. Çiftler şemadan türetildiği için yeni mesaj/alan eklendiğinde
+   * bu kapsam kendiliğinden genişler.
+   */
+  it.each(zorunluAlanCiftleri(serverMessageSchema))(
+    '%s mesajında %s eksikse reddedilir',
+    (tip, alan) => {
+      const ornek = gecerliMesajlar[tip] ?? {}
+      expect(alan in ornek).toBe(true)
+      expect(serverMessageSchema.safeParse(alanSil(ornek, alan)).success).toBe(false)
+    },
+  )
 
   it('move:rejected serbest metin sebebi kabul etmez (B8)', () => {
     expect(
