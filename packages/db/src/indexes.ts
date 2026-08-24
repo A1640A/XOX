@@ -45,7 +45,7 @@ export const EXPECTED_INDEXES: readonly ExpectedIndex[] = [
  * modeller genel tip parametresi zorlamadan (bkz. `@typescript-eslint/no-unnecessary-type-arguments`)
  * doğrudan listelenebilir.
  */
-export interface LiveIndexInfo {
+interface LiveIndexInfo {
   name: string
   unique?: boolean
   expireAfterSeconds?: number
