@@ -25,7 +25,26 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @xox/db reset && pnpm --filter @xox/db seed
+      - run: pnpm --filter @xox/db reset
+      - name: "İndeksleri preview'a kur (OPS-003 — ensureIndexes'in gerçek çağıranı)"
+        # `reset` veritabanını düşürür; indeksler bu YÜZDEN reset SONRASI, seed'den
+        # ÖNCE kurulur — hem koleksiyonlar boşken üretim yoluyla (createIndex)
+        # oluşturulur hem de seed'in eklediği kullanıcılar email_1 unique'e karşı
+        # yazılır (KK-002). Aksi halde KK-117 gibi sondalar preview'da COLLSCAN
+        # yapardı ve WS-001 sorguları yanlış ortamı ölçerdi.
+        env:
+          MIGRATION_SECRET: '${{ secrets.MIGRATION_SECRET }}'
+        run: |
+          status=$(curl -s -o /tmp/migrate-response.json -w '%{http_code}' -X POST \
+            "${E2E_BASE_URL}/api/admin/migrate" \
+            -H "x-migration-secret: ${MIGRATION_SECRET}")
+          cat /tmp/migrate-response.json
+          if [ "$status" != "200" ]; then
+            echo "🔴 /api/admin/migrate beklenmeyen durum kodu döndürdü: $status"
+            exit 1
+          fi
+          echo "✅ İndeksler preview'da kuruldu"
+      - run: pnpm --filter @xox/db seed
       - run: pnpm --filter @xox/e2e exec playwright install --with-deps chromium
       - run: pnpm --filter @xox/e2e e2e
       - uses: actions/upload-artifact@v7
