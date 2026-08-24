@@ -41,34 +41,37 @@ summary: >
 files_changed:
   - apps/web/auth.config.ts # YENİ — kenar-güvenli split config, PROTECTED_ROUTE_PREFIXES + authorized callback
   - apps/web/auth.config.test.ts # YENİ — 16 test, KK-007 6 rota × 307 + geçiş + korunmayan rota
-  - apps/web/auth.ts # YENİ — NextAuth wiring, adapter YOK, Credentials({authorize:authorizeCredentials})
-  - apps/web/auth.static.test.ts # YENİ — metin-düzeyi: adapter yok, session:jwt açık, Credentials şekli
-  - apps/web/middleware.ts # YENİ — export default auth, matcher 6 korunan rota
-  - apps/web/middleware.test.ts # YENİ — metin-düzeyi: yalnız ./auth.config import, mongoose/argon2/@xox/db yok
+  - apps/web/auth.ts # YENİ — NextAuth wiring, adapter YOK, Credentials({authorize:authorizeCredentials}), jwt callback YOK (BLOCKER-1)
+  - apps/web/auth.static.test.ts # YENİ — metin-düzeyi: adapter yok, session:jwt açık, Credentials şekli, jwt callback YOK
+  - apps/web/lib/auth/session-callback.ts # YENİ (güvenlik turu) — applySessionUser, next-auth'suz test edilebilir
+  - apps/web/lib/auth/session-callback.test.ts # YENİ (güvenlik turu) — 4 test, iki-farklı-sub kimlik hijack mutasyonu kanıtı
+  - apps/web/middleware.ts # YENİ — export default auth, matcher 6 korunan rota (literal, build zorunlu kılıyor)
+  - apps/web/middleware.test.ts # YENİ — parseMatcherLiteral + toStrictEqual (MIDDLEWARE_MATCHER'a karşı, güvenlik turu sonrası sıkılaştırıldı)
   - apps/web/types/next-auth.d.ts # YENİ — Session.user.id modül genişletmesi (Auth.js resmi kalıbı)
   - apps/web/lib/auth/password.ts # YENİ — hashPassword/verifyPassword/verifyFakePassword (@node-rs/argon2)
   - apps/web/lib/auth/password.test.ts # YENİ — 5 test, gerçek argon2id
   - apps/web/lib/auth/authorize.ts # YENİ — authorizeCredentials, next-auth'a bağımsız (test edilebilirlik için ayrıştırıldı)
   - apps/web/lib/auth/authorize.test.ts # YENİ — 5 test, KK-005 gerçek ölçüm dahil
-  - apps/web/lib/auth/tokens.ts # YENİ — signToken/verifyToken, 3 audience, jose HS256
-  - apps/web/lib/auth/tokens.test.ts # YENİ — 8 test, çapraz-izleyici reddi dahil
-  - apps/web/lib/auth/identity.ts # YENİ — resolveIdentity, 3 kaynak sabit sıra
-  - apps/web/lib/auth/identity.test.ts # YENİ — 10 test, KK-010 aynı-userId kanıtı dahil
-  - apps/web/app/api/auth/register/route.ts # YENİ — POST, zod doğrulama, argon2id, E11000→409
-  - apps/web/app/api/auth/register/route.test.ts # YENİ — 8 test
+  - apps/web/lib/auth/tokens.ts # YENİ — signToken/verifyToken, 3 audience, jose HS256, AUTH_SECRET≥32, algorithms:['HS256']
+  - apps/web/lib/auth/tokens.test.ts # YENİ — 11 test, çapraz-izleyici reddi + secret uzunluğu + alg allowlist dahil
+  - apps/web/lib/auth/identity.ts # YENİ — resolveIdentity(req,{allowTicket=false}), room claim taşıma (BLOCKER-2)
+  - apps/web/lib/auth/identity.test.ts # YENİ — 14 test, KK-010 + allowTicket varsayılan-kapalı + room claim dahil
+  - apps/web/app/api/auth/register/route.ts # YENİ — POST, zod doğrulama, argon2id (duplicate kontrolünden SONRA), E11000→409, 254 karakter e-posta sınırı
+  - apps/web/app/api/auth/register/route.test.ts # YENİ — 10 test
   - apps/web/app/api/auth/[...nextauth]/route.ts # YENİ — export {GET,POST} from '@/auth'
-  - apps/web/app/api/ws/ticket/route.ts # YENİ — POST, resolveIdentity, signToken('ws-ticket')
-  - apps/web/app/api/ws/ticket/route.test.ts # YENİ — 3 test, çapraz-izleyici reddi dahil
-  - docs/memory/gotchas.md # 4 yeni kayıt (next-auth/next-server ESM, jose/jsdom realm, Next16 middleware export, gitleaks generic-api-key)
-  - docs/memory/api-contract.md # yeni 3 uç nokta + tek-çözücü/3-audience notu
+  - apps/web/app/api/ws/ticket/route.ts # YENİ — POST, resolveIdentity (allowTicket GEÇMEDEN), {roomCode} zorunlu gövde, room claim
+  - apps/web/app/api/ws/ticket/route.test.ts # YENİ — 9 test, YALNIZ auth() mock (BLOCKER-2 regresyon testi dahil)
+  - docs/memory/gotchas.md # 6 yeni kayıt (next-auth/next-server ESM, jose/jsdom realm, Next16 middleware export, gitleaks generic-api-key, Auth.js jwt callback user-yokluğu, readFileSync testinin körlüğü)
+  - docs/memory/api-contract.md # yeni 3 uç nokta + tek-çözücü/3-audience/allowTicket/room-claim sözleşmesi
+  - docs/memory/conventions.md # /giris?donus= açık yönlendirme doğrulama sözleşmesi (UI agent için)
   - docs/board/reports/AUTH-001.md
 
 tests:
   {
-    added: 68,
-    passing: 100,
-    web_coverage: '%94.65 ifade · %86.48 dal · %95.34 fonksiyon · %99.07 satır (eşikler 70/65/70/70 — geçti)',
-    mutation: 'yok — apps/web mutasyon kapsamında değil (yalnız game-core)',
+    added: 90,
+    passing: 122,
+    web_coverage: '%95.11 ifade · %86.71 dal · %95.65 fonksiyon · %99.16 satır (eşikler 70/65/70/70 — geçti; güvenlik denetimi turu sonrası)',
+    mutation: 'yok (araç) — ama 3 elle-uygulanmış mutasyon (aşağıya bkz) canlı koşulup kırmızı olduğu kanıtlandı',
   }
 
 kirmizi_yesil_kanit:
@@ -285,16 +288,174 @@ gotchas:
     UYDURMA test parolalarını secret sanıyor. Test parolalarını KISA tut
     (8-14 karakter) ve commit'ten önce `gitleaks detect --no-git --source
     <dosya>` ile sonda at.
+  - >
+    (güvenlik denetimi) `@auth/core`'un JWT stratejisi `callbacks.jwt`'i
+    OTURUM OKUMASINDA `user` anahtarı OLMADAN çağırır — yalnız sign-in'de
+    gelir. TypeScript `user`i zorunlu gösterir ama çalışma zamanında
+    opsiyoneldir; bunu varsayıp `user.id` erişmek her oturum okumasında
+    `TypeError` fırlatır ve `@auth/core` bunu yakalayıp OTURUM ÇEREZİNİ
+    SİLER. `jwt` callback'ini tanımlama — sign-in'de `token.sub` zaten
+    otomatik kuruluyor.
+  - >
+    (güvenlik denetimi) `readFileSync` + `toContain` ile kaynak metin
+    okuyan bir test, bir dizinin ÇALIŞMA ZAMANINDA kısaltılmasını (aynı
+    metin, farklı gerçek değer) YAKALAMAZ. `toStrictEqual` ile TAM dizi
+    eşitliği + doğruluk kaynağını next-auth'suz gerçekten import edilebilir
+    bir dosyada tutmak gerekir. Next.js'in `matcher` gibi bazı alanları SAF
+    literal olmaya build-time zorlaması, "hesaplanmış" sınıfı saldırıları
+    zaten kapatır — geriye yalnız "literal içerik doğru mu" sorusu kalır.
+    (Altısı da docs/memory/gotchas.md'ye eklendi — bu satırlar oradan birebir.)
 
-  Dördü de `docs/memory/gotchas.md`'ye eklendi (bu satırlar oradan birebir).
+security_audit_round:
+  status: '2 BLOCKER + 3 test bulgusu + 2 küçük bulgu — TÜMÜ kapatıldı, sırayla'
+  commits:
+    - '2fe276d fix(web): BLOCKER — jwt callback kaldırıldı, oturum okumasında çerez silinmiyor'
+    - '6328cde fix(web): BLOCKER — WS bileti aklanamaz artık; bilet oda koduna bağlanır'
+    - 'c55edd8 test(web): middleware matcher testi toStrictEqual ile sıkılaştırıldı'
+    - 'cc45006 fix(web): AUTH_SECRET uzunluk doğrulaması + jose algorithms allowlist'
+    - '2794b80 perf(web): register — argon2id hash duplicate kontrolünden SONRA değil ÖNCE atlanır'
+    - 'fa82364 docs(memory): güvenlik denetimi sonrası kimlik sözleşmesi + 2 yeni gotcha'
+
+  blocker_1_jwt_callback:
+    bulgu: >
+      `auth.ts`teki `jwt({token,user}){ if(user.id!==undefined){token.sub=user.id} }` her
+      OTURUM OKUMASINDA (sign-in değil) `@auth/core`'un `lib/actions/session.js:28`'i
+      `callbacks.jwt`'i `user` ANAHTARI OLMADAN çağırması yüzünden `TypeError` fırlatıyordu;
+      `session.js:58-62` bunu yakalayıp `sessionStore.clean()` ile çerezi SİLİYORDU. Kullanıcı
+      giriş yapar yapmaz ilk `auth()` çağrısında oturumu kaybediyordu — KK-006/KK-010 çerez
+      dalı FİİLEN ASLA çalışmıyordu, `pnpm gates` yeşildi çünkü tip `user`i zorunlu
+      göstermesine rağmen çalışma zamanında opsiyoneldi.
+    dogrulama_yontemi: >
+      `@auth/core@0.41.3`'ün gerçek kaynağı `node_modules/.pnpm/@auth+core@.../lib/actions/
+      session.js` okunarak doğrulandı: `const token = await callbacks.jwt({token:payload,
+      ...(isUpdate&&{trigger:'update'}), session:newSession})` — `user` YOK. `callback/
+      index.js:76`: `sub: user.id?.toString()` sign-in'de zaten atanıyor, callback GEREKSİZ.
+    duzeltme: >
+      `jwt` callback'i TAMAMEN SİLİNDİ. `session` callback'in mantığı next-auth'a bağımlı
+      OLMAYAN `lib/auth/session-callback.ts`'e taşındı (`import type` yalnız —
+      `verbatimModuleSyntax` altında silinir, çalışma zamanı bağımlılığı sıfır).
+    mutasyon_kaniti: >
+      `applySessionUser`de `session.user.id = token.sub` satırı `session.user.id =
+      'sabit-yonetici'` ile değiştirilip canlı koşuldu: `session-callback.test.ts`in iki-farklı-
+      sub testi (`user-alpha-1`/`user-beta-2`) İKİSİ DE kırmızı oldu
+      (`expected 'sabit-yonetici' to be 'user-alpha-1'`). Mutasyon geri alındı, testler yeşile
+      döndü. Auditor'ın orijinal mutasyonu (`jwt` callback içindeki `token.sub`) artık o kod
+      SİLİNDİĞİ için birebir uygulanamaz; bu, aynı zafiyet sınıfının (kimlik hijack) EŞDEĞER
+      yerdeki (yeni tek gerçek mantık noktası) kanıtıdır.
+
+  blocker_2_ticket_aklama:
+    bulgu: >
+      `resolveIdentity(req)` `?ticket=`'i HER çağrıda (POST /api/ws/ticket'ın KENDİSİ dahil)
+      kabul ediyordu. Denetçinin canlı sondası: `POST /api/ws/ticket?ticket=<T0>` → 200
+      `{ticket:T1}` (çerez/Bearer YOK), sonra `T1` ile `PATCH /api/profile?ticket=<T1>` başka
+      bir uçta kullanıcı olarak kabul ediliyordu. 25 sn'de bir tekrarla 30 saniyelik bir bilet
+      SÜRESİZ hesap devralmaya dönüşüyordu — spec §6.3 ("yalnız WS upgrade'inde") ve ADR-0006
+      ("başka hiçbir uçta kabul edilmeyen bir bilet") ikisi de fiilen ihlal ediliyordu.
+    duzeltme: >
+      `resolveIdentity(req, options: {allowTicket?:boolean}={})` — `allowTicket` VARSAYILAN
+      `false`. `?ticket=` YALNIZ `allowTicket:true` AÇIKÇA geçilince denenir. `POST
+      /api/ws/ticket` `allowTicket` GEÇMEDEN çağırıyor (bir bilet ÜRETİR, KABUL ETMEZ).
+      **WS-001'in WS upgrade route'u `resolveIdentity(req,{allowTicket:true})` çağırmak
+      ZORUNDA** — bu, docs/memory/api-contract.md'ye YAZILI bir sözleşme.
+    test_kaniti: >
+      `app/api/ws/ticket/route.test.ts`teki "GÜVENLİK REGRESYONU (BLOCKER-2)" testi denetçinin
+      SONDASINI birebir uyguluyor: gerçek bir bilet üretilip aynı uca `?ticket=` ile tekrar
+      POST ediliyor (oturum/Bearer YOK) — artık 401 UNAUTHENTICATED. Test `@/lib/auth/identity`
+      DEĞİL yalnız `@/auth`'un `auth()`unu mock'luyor; `resolveIdentity`/`verifyToken`/
+      `signToken` GERÇEK kodla çalışıyor (önceki sürümün tam tersi — bkz. test_bulgulari).
+
+  yatay_yetki_karari:
+    soru: "Bilete `room` claim'i bağlanmalı mı? (WS-001 başlamadan karar verilmesi istendi)"
+    karar: 'EVET — bağlandı, uygulandı.'
+    uygulama: >
+      `POST /api/ws/ticket` gövdesi artık `{roomCode}` İSTİYOR (zod `roomCodeSchema` — route
+      İÇİNDE yerel şema, `packages/shared` DONDUĞU için orada TANIMLANMADI). Dönen bilet
+      `room` claim'ini taşıyor. `resolveIdentity`in `Identity` tipi opsiyonel `room?: string`
+      alanı kazandı (yalnız ticket kaynağında dolar). Test: "YATAY YETKİ" senaryosu A odası
+      için kesilen biletin `room` claim'inin B odasıyla EŞLEŞMEDİĞİNİ kanıtlıyor.
+    ws001_zorunlulugu: >
+      **WS-001'in upgrade handler'ı `identity.room`'u URL'deki oda koduyla KARŞILAŞTIRMAK
+      ZORUNDA** — eşleşmezse bağlantı reddedilmeli (öneri: `4403`, ADR-0006'nın kapanış kodu
+      tablosuyla tutarlı). Bu görev bu karşılaştırmayı YAPMADI (WS route henüz yok); yalnız
+      claim'i üretip taşıdı ve sözleşmeyi docs/memory/api-contract.md'ye yazdı.
+    gerekce: >
+      Ticket'ın TEK amacı kimlik ispatıdır (ADR-0006); oda-seviyesi yetki (koltuk sahipliği)
+      zaten WS-001'in ayrı bir kontrolü olacaktı, yani `room` claim'i olmadan da bugün bilinen
+      bir sömürü YOK. Ama (a) least-privilege ilkesi — bir bilet yalnız istendiği amaç için
+      geçerli olmalı, (b) savunma derinliği — WS-001'in oda-yetki kontrolünde ileride bir hata
+      olursa `room` claim'i ikinci bir bariyer olur, (c) maliyet düşük — istemci zaten
+      bileti istediği anda hangi odaya bağlanacağını biliyor (`/oda/[kod]` sayfasında).
+      Bu üçü YOK'a göre daha güçlü bir sözleşme sunuyor.
+
+  test_bulgulari:
+    - dosya: 'auth.static.test.ts'
+      bulgu: >
+        `readFileSync` + regex ile `auth.ts`'i METİN olarak okuyordu, dosya HİÇ ÇALIŞMIYORDU.
+        Denetçinin `token.sub='sabit-yonetici'` mutasyonu (eski `jwt` callback içinde) 100
+        testin TAMAMINI yeşil bırakıyordu.
+      duzeltme: >
+        Gerçek mantık (`session` callback'in davranışı) `lib/auth/session-callback.ts`'e
+        taşınıp `session-callback.test.ts`de GERÇEK bir davranış testiyle kilitlendi (yukarıya
+        bkz, blocker_1). `auth.static.test.ts` artık yalnız GERÇEKTEN test edilemeyen
+        yapısal iddiaları (adapter yokluğu, next-auth wiring şekli) taşıyor VE bunu açıkça
+        belgeliyor — "bu test bir kanıt DEĞİL, ikincil sinyal" yorumuyla.
+    - dosya: 'middleware.test.ts'
+      bulgu: >
+        `toContain` ile alt-dize arıyordu; `matcher.slice(0,1)`e eşdeğer bir çalışma-zamanı
+        kısaltması metinde tüm 6 rotayı bırakıp gerçek diziyi 1 öğeye indirebiliyordu, test
+        bunu GÖRMÜYORDU.
+      duzeltme: >
+        Next.js'in `matcher`ı SAF literal olmaya build-time ZORLADIĞI kanıtlandı (`.slice()`
+        denendi, build SERT reddetti — "matcher needs to be a static string or array of static
+        strings"). Geriye kalan risk (literal içerik) `parseMatcherLiteral` + `toStrictEqual`
+        ile `auth.config.ts`teki (next-auth'suz, GERÇEKTEN import edilebilir, kart metniyle
+        ayrı testte kilitli) `MIDDLEWARE_MATCHER`'a karşı kapatıldı.
+      mutasyon_kaniti: >
+        `middleware.ts`teki literal `['/oyna/:path*']`e kısaltıldı, canlı koşuldu:
+        `middleware.test.ts` KIRMIZI oldu (`expected ['/oyna/:path*'] to strictly equal
+        [6 öge]`). Mutasyon geri alındı, test yeşile döndü.
+    - dosya: 'app/api/ws/ticket/route.test.ts'
+      bulgu: >
+        `@/lib/auth/identity`'nin TAMAMINI mock'luyordu — rotanın gerçek kimlik kararı
+        (dolayısıyla BLOCKER-2) HİÇBİR testte sınanmıyordu.
+      duzeltme: >
+        Dosya baştan yazıldı: artık YALNIZ `@/auth`'un `auth()` fonksiyonu mock'lanıyor
+        (denetçinin canlı sondasıyla AYNI sınır); `resolveIdentity`/`verifyToken`/`signToken`
+        GERÇEK kodla çalışıyor. "GÜVENLİK REGRESYONU (BLOCKER-2)" testi denetçinin bilet-replay
+        senaryosunu birebir uyguluyor.
+
+  auth_secret_uzunluk:
+    bulgu: "`getSecretKey()` yalnız boş/undefined reddediyordu; `AUTH_SECRET='x'` ile imzalama+doğrulama KABUL EDİLDİ (canlı sondayla kanıtlandı)."
+    duzeltme: "32 karakter (256 bit, HS256 asgarisi) altı reddediliyor. Sınır değeri (`'a'.repeat(32)`→kabul, `'x'`→red) testle kanıtlandı."
+
+  kucuk_bulgular:
+    - "`verifyToken`'a `algorithms:['HS256']` allowlist'i eklendi (savunma derinliği); HS384 ile imzalanmış (aynı sırla) bir token'ın reddedildiği testle kanıtlandı."
+    - "Register route'ta 254 karakterden uzun e-posta artık route seviyesinde 400 INVALID_EMAIL — Mongo'nun indeks anahtarı sınırını aşıp 500'e dönüşme riski kapatıldı (`emailSchema.max(254)` kalıcı çözüm, packages/shared dondu, buraya eklenmedi)."
+    - "Register route'ta argon2id hash artık ucuz bir `findOne` ön kontrolünden SONRA çalışıyor — zaten kayıtlı e-postaya yağdırılan istekler tam maliyeti ödemiyor. hashPassword'ün çağrılmadığı testle kanıtlandı."
+
+  spec_adr_celiskisi_tavsiyesi: >
+    Denetçi spec §6.3'ün "tek kullanımlık bilet" dediğini, ADR-0006'nın tek kullanımlığı
+    AÇIKÇA reddettiğini, uygulamanın ADR'ı izlediğini not etti ve hangisinin güncellenmesi
+    gerektiğini sordu. TAVSİYE: **spec §6.3 güncellensin, ADR-0006 olduğu gibi kalsın.**
+    Gerekçe: ADR-0006 tek-kullanımlık-olmama kararını ayrıntılı gerekçelendiriyor (30 sn içinde
+    tekrar kullanım zaten aynı kullanıcının kendi bağlantısını devralması, DB yazma maliyeti
+    Z2'nin sık rotasyonuyla çarpınca gereksiz) ve BLOCKER-2 düzeltmesiyle (ticket artık yalnız
+    WS upgrade'inde, `allowTicket` ile açıkça izinli) bu karar hâlâ güvenli. Spec'in "tek
+    kullanımlık" ifadesi muhtemelen ADR'dan ÖNCE yazılmış, ADR'ın revize ettiği erken bir
+    varsayım. Koordinatörün "ben yaparım" dediği güncelleme budur.
 
 blocked_reason: null
 
 next_suggestions:
   - >
-    WS-001 `lib/auth/identity.ts`'teki `resolveIdentity`'i DOĞRUDAN import
-    edip WS upgrade route'unda kullanmalı — kimlik çözme mantığını
-    yeniden yazmasın (tek çözücü ilkesi, KK-010).
+    **WS-001 ZORUNLU:** `lib/auth/identity.ts`'teki `resolveIdentity`'i
+    DOĞRUDAN import edip `resolveIdentity(req, {allowTicket:true})` ile
+    çağırmalı (yalnız burada `allowTicket:true` — başka HİÇBİR yerde değil,
+    BLOCKER-2) VE dönen `identity.room`'u URL'deki oda koduyla
+    KARŞILAŞTIRMALI (eşleşmezse bağlantıyı reddet, öneri `4403` — yatay
+    yetki kararı, bu raporun `security_audit_round.yatay_yetki_karari`
+    bölümüne bkz). Kimlik çözme mantığını yeniden yazmasın (tek çözücü
+    ilkesi, KK-010).
   - >
     Mobil köprü rotaları (`/api/auth/mobile/{authorize,callback,refresh}`,
     dalga 2) `lib/auth/tokens.ts`teki `signToken('mobile-access'|
@@ -314,4 +475,19 @@ next_suggestions:
     `middleware.ts` → `proxy.ts` geçişi (Next 16 deprecation uyarısı)
     ayrı, küçük bir görev olarak planlanabilir; şu an sert hata değil,
     Auth.js'in kendi dokümantasyonu da bu değişikliğe henüz uymuyor.
+  - >
+    Koordinatör spec §6.3'ü ADR-0006 ile uyumlu hâle getirmeli — "tek
+    kullanımlık bilet" ifadesi kaldırılıp ADR-0006'nın tekrar-kullanılabilir
+    (30 sn, tek amaçlı) kararına referans verilmeli. Detaylı gerekçe
+    `security_audit_round.spec_adr_celiskisi_tavsiyesi`de.
+  - >
+    `emailSchema`ya (`packages/shared/src/rest-contract.ts`) `.max(254)`
+    eklenmesi kalıcı çözüm — bu görev `packages/shared` DONDUĞU için yalnız
+    `register/route.ts` seviyesinde savunma amaçlı bir kontrol ekledi.
+    packages/shared açıldığında bu satır oraya taşınmalı.
+  - >
+    `/giris` sayfasını yazacak agent `docs/memory/conventions.md`teki
+    "`/giris?donus=` sözleşmesi"ni okumalı: `donus` kullanılmadan önce
+    `startsWith('/')` VE `!startsWith('//')` doğrulanmalı (açık yönlendirme
+    savunması, bugün risk yok ama sözleşme yazılı olmalı).
 ```
