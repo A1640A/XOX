@@ -2,6 +2,31 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Ayni paketin iki kopyasi `instanceof` kontrollerini sessizce bozar
+
+`jose@6.2.10` dogrudan bagimlilik olarak eklendi ama `@auth/core` kendi icinde `jose@6.2.3`
+cozuyor -> node_modules-te iki kopya. `err instanceof JWTExpired` kopyalar arasinda **false**
+doner: Auth.js-in firlattigi hata 6.2.3 sinifidir, senin import ettigin 6.2.10 sinifidir.
+Sonuc: 401 yerine 500, ve "gecersiz token reddedildi" testi yanlis nedenle yesil kalir.
+**Yapilacak:** Bir kutuphaneyi hem dogrudan hem transitif kullaniyorsan `pnpm why <paket>` ile
+TEK kopya oldugunu dogrula; degilse ust paketin cozdugu surume sabitle ya da pnpm `overrides`
+kullan. Ayni tuzak `mongodb` icin de vardi (mongoose ile ayni surume sabitlendi).
+
+## 2026-08-24 · Vercel `functions` anahtari `app/` ile basliyorsa HIC dogrulanmaz
+
+Next runtime-inda Vercel CLI `checkUnusedFunctions` icinde `app/`, `src/app/`, `pages/`,
+`middleware` ile baslayan anahtarlari `unusedFunctions` kumesinden sessizce siler. Yani var
+olmayan bir route icin `maxDuration` yazsan bile deploy YESIL gecer ve ayar hicbir seye
+uygulanmaz. Root Directory yanlissa `vercel.json` komple yok sayilir, `regions` da bosa gider.
+**Yapilacak:** `vc build` sonrasi `.vercel/output/functions/**/.vc-config.json` icinden degeri
+oku - uygulandiginin tek mekanik kaniti budur.
+
+## 2026-08-24 · `maxDuration`-a sabit sayi yazmak plan degisince HER deploy-u kirar
+
+CLI `validateFunctions`: `maxDuration !== "max" && maxDuration > maxDurationLimit` ->
+`invalid_function_duration`. Pro tavani 800, Hobby 300. Plan duserse WS kisalmaz, **boru hatti
+komple olur**. CLI `"max"` degerini destekliyor ve plan-agnostiktir.
+
 ## 2026-08-24 · `boundaries` cozulemeyen import-ta SESSIZ kalir — lint yesili kanit degil
 
 Var olmayan bir pakete yapilan import `boundaries/dependencies` tarafindan "unknown" sayilir ve

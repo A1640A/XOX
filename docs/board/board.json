@@ -330,7 +330,8 @@
         "`@/auth` IMPORT EDİLMEZ — oturum kapısı middleware'dedir. Bu kural AUTH-001 ile paralelliği koruyan tek şeydir ve ihlali dalgayı kırar",
         "Renkler yalnız @xox/ui-tokens'tan; hex literal yok (UI-001'in lint kuralı bunu zorlar)",
         "Vitest + Testing Library birim testleri: Board girdi kapısı (interactive=false iken tıklama olay üretmez), ErrorBanner kod->metin eşlemesi, useRoom'un reducer'a doğru olay yolladığı. apps/web içinde playwright importu YOK",
-        "pnpm gates temiz"
+        "pnpm gates temiz",
+        "Etkilesim testlerinde `fireEvent` kullanilir, `@testing-library/user-event` DEGIL - o paket apps/web bagimliliklarinda yok ve package.json donmus durumda (OPS-002). Paket gerekiyorsa dondurmayi kirma, blocked isaretle."
       ],
       "blockedReason": null
     },
@@ -367,7 +368,8 @@
         "lib/game/deadlines.ts dueSettlement saf fonksiyonu §5.7 kurallarıyla test edilir: state!=='playing' -> null, turnDeadline geçmiş -> timeout+nextPlayer, graceEndsAt geçmiş -> abandon+seat, ikisi de geçmişse önce dolan, EŞİTLİKTE timeout",
         "V1 SONDASI: ws.close(4401) özel kapanış kodunun istemciye ULAŞTIĞI preview'da doğrulanır ve rapora yazılır. Ulaşmıyorsa upgrade öncesi HTTP 401 yoluna geçilir ve bu durum rapora 'KK-008 metni güncellenmeli' notuyla eklenir (R4)",
         "DoD mimari maddeleri: apps/web içinde evaluateStatus/applyMove yeniden implementasyonu YOK (KK-022); koşulsuz Room.updateOne YOK — her yazma packages/db/src/rooms/'dan geçer",
-        "pnpm gates temiz"
+        "pnpm gates temiz",
+        "vercel.json GERCEKTEN okunuyor mu mekanik kanit: route yazildiktan sonra `vc build` cikisindaki .vercel/output/functions/**/.vc-config.json icinde maxDuration beklenen deger olarak okunur. Gerekce: Vercel, next runtime-inda `app/` ile baslayan functions anahtarlarini HIC dogrulamaz (checkUnusedFunctions onlari sessizce atar) - yani deploy yesili ayarin uygulandiginin kaniti degildir. Root Directory yanlissa dosya komple yok sayilir."
       ],
       "blockedReason": null
     },
@@ -416,7 +418,8 @@
         "KK-041: sıra karşı taraftayken tahtaya tıklamak hiçbir hücreyi değiştirmez VE sunucuya move mesajı gitmez (WS çerçeveleri izlenerek ya da data-bekliyor'un hiç oluşmadığı gösterilerek kanıtlanır)",
         "Testler PREVIEW URL'ine karşı koşar (yerel değil), xox_test veritabanını kullanır ve koşu sonunda seed dışı veriyi temizler",
         "Playwright yalnız apps/e2e içinde; apps/web, apps/mobile ve packages/** içinde playwright importu ya da bağımlılığı YOK (üç katmanlı duvar yeşil)",
-        "ÇIKIŞ KRİTERİ: yukarıdaki 7 kriterin TAMAMI yeşil olmadan Dalga 1 BAŞLAMAZ. Kırmızı kalan varsa rapor hangi kartın düzeltmesi gerektiğini kart id'siyle söyler"
+        "ÇIKIŞ KRİTERİ: yukarıdaki 7 kriterin TAMAMI yeşil olmadan Dalga 1 BAŞLAMAZ. Kırmızı kalan varsa rapor hangi kartın düzeltmesi gerektiğini kart id'siyle söyler",
+        "BLOKE EDICI ON KONTROL: herhangi bir yazmadan ONCE preview /api/health cagrilir ve db === 'xox_test' assert edilir. Yanlissa test hicbir sey yazmadan durur. Gerekce: preview yanlislikla xox_prod-a bakiyorsa e2e temizligi production verisini siler."
       ],
       "blockedReason": null
     },
@@ -959,7 +962,7 @@
       "wave": "4",
       "agent": "xox-qa-e2e",
       "deps": ["E2E-006"],
-      "conflictSet": ["apps/e2e/**"],
+      "conflictSet": ["apps/e2e/**", "knip.json"],
       "status": "todo",
       "attempts": 0,
       "branch": null,
@@ -969,7 +972,8 @@
         "88 kriterin nihai durum tablosu: geçen / iptal (KK-102, KK-103) / insan doğrulaması bekleyen (KK-093) / OPS-001'e bağlı (KK-100)",
         "Toplam E2E süresi ve en yavaş 5 test raporda; 10 dakikayı aşan koşu için hızlandırma önerisi yazılır",
         "En az bir duman testi yerel `pnpm --filter @xox/web dev:ws` (vc dev) sunucusuna karşı da koşar ve geçer — WS'in yerelde çalıştığı kanıtlanır (gotcha: next dev WS'i desteklemez)",
-        "Playwright duvarı yeşil: apps/web, apps/mobile, packages/** içinde playwright importu ya da bağımlılığı yok"
+        "Playwright duvarı yeşil: apps/web, apps/mobile, packages/** içinde playwright importu ya da bağımlılığı yok",
+        "apps/web.ignoreDependencies BOSALTILIR: OPS-002-de dondurma icin eklenen 10 girdi, o bagimliliklar gercekten kullanilmaya baslandigi icin kaldirilir ve `pnpm knip` exit 0 kalir. Gerekce: knip kullanilmayan bir ignore girdisi icin yalniz 'Configuration hint' basar, kapiyi KIRMAZ - yani liste kalici bir kor nokta olur ve ileride gercekten olu bir bagimlilik gizlenir."
       ],
       "blockedReason": null
     }
