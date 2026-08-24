@@ -10,7 +10,12 @@ import {
   opponentLeftVisible,
   roomClientReducer,
 } from './room-client'
-import { WS_CLOSE } from './ws-close'
+import {
+  WS_CLOSE,
+  isPermanentCloseCode,
+  isReconnectableCloseCode,
+  requiresReauth,
+} from './ws-close'
 import type { ServerMessage, StateMessage } from './ws-protocol'
 
 // ─── yardımcılar ──────────────────────────────────────────────────────────
@@ -460,6 +465,36 @@ describe('§5.6/10 — diğer kapanışlar', () => {
     expect(state.connection).toBe('baglaniyor')
     expect(state.lastError).toBe('UNAUTHENTICATED')
     expect(effects).toEqual([{ type: 'reauth' }])
+  })
+
+  // Beklenti CTR-001'in dondurulmuş sınıflandırıcılarından okunuyor; bu üçlü bu
+  // dosyanın DIŞINDA yaşıyor. Yarın listeye yeni bir kalıcı kod eklenirse bu
+  // test indirgeyiciyi ona uymaya zorlar.
+  it.each([
+    ['PROTOCOL_VIOLATION', WS_CLOSE.PROTOCOL_VIOLATION],
+    ['UNAUTHENTICATED', WS_CLOSE.UNAUTHENTICATED],
+    ['FORBIDDEN', WS_CLOSE.FORBIDDEN],
+    ['NOT_FOUND', WS_CLOSE.NOT_FOUND],
+    ['IDLE_TIMEOUT', WS_CLOSE.IDLE_TIMEOUT],
+    ['SESSION_TAKEOVER', WS_CLOSE.SESSION_TAKEOVER],
+    ['ROTATE', WS_CLOSE.ROTATE],
+    ['sınıflandırılmamış 1006', 1006],
+  ])('%s davranışı ws-close sınıflandırmasıyla örtüşür', (_ad, code) => {
+    const { state, effects } = roomClientReducer(bagliDurum(), { type: 'socket:closed', code })
+    const tipler = effects.map((effect) => effect.type)
+
+    if (code === WS_CLOSE.SESSION_TAKEOVER) {
+      // §3.2 — devralma bağlanabilir sayılsaydı sonsuz takeover savaşı olurdu.
+      expect(state.connection).toBe('devredildi')
+      expect(tipler).toEqual([])
+      return
+    }
+    if (!isReconnectableCloseCode(code)) {
+      expect(tipler).toEqual([])
+      return
+    }
+    expect(tipler).toEqual(requiresReauth(code) ? ['reauth'] : ['reconnect'])
+    expect(isPermanentCloseCode(code)).toBe(false)
   })
 
   it('yeniden bağlanma denemesi başlarken connection baglaniyor olur', () => {
