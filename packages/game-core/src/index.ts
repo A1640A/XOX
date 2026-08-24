@@ -17,7 +17,14 @@
  * Çevrimiçi oyunu yöneten katman her hamlede şunu doğrulamalıdır:
  *   nextPlayer(board) === istegiGonderenOyuncununTasi
  */
-export { BOARD_SIZE, EMPTY_BOARD, availableMoves, boardFromCells, nextPlayer } from './board'
+export {
+  BOARD_SIZE,
+  EMPTY_BOARD,
+  availableMoves,
+  boardFromCells,
+  boardToString,
+  nextPlayer,
+} from './board'
 export { applyMove, isValidMove } from './moves'
 export { WIN_LINES, evaluateStatus } from './status'
 export { bestMove, chooseMove } from './ai'
