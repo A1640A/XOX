@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { connectDb, disconnectDb } from '../client'
 import { generateRoomCode } from '../room-code'
-import { Room } from './room'
+import { Room, type RoomMove } from './room'
 
 /**
  * Gerçek `xox_test` Atlas veritabanına karşı koşar (tasarım §1: "packages/db
@@ -102,5 +102,27 @@ describe('Room modeli', () => {
     await Room.create({ code })
 
     await expect(Room.create({ code })).rejects.toMatchObject({ code: 11000 })
+  })
+
+  it('board tam olarak 9 hücreden farklı bir uzunlukta ise reddedilir', async () => {
+    const code = freshCode()
+    await expect(
+      Room.create({ code, board: Array.from({ length: 12 }, () => null) }),
+    ).rejects.toThrow()
+  })
+
+  it('boş board dizisi reddedilir — nextPlayer(board) tanımsız davranmasın', async () => {
+    const code = freshCode()
+    await expect(Room.create({ code, board: [] })).rejects.toThrow()
+  })
+
+  it('9 hücreden fazla hamle reddedilir', async () => {
+    const code = freshCode()
+    const extra: RoomMove[] = Array.from({ length: 10 }, (_, i) => ({
+      index: i % 9,
+      by: i % 2 === 0 ? 'X' : 'O',
+      at: new Date(),
+    }))
+    await expect(Room.create({ code, moves: extra })).rejects.toThrow()
   })
 })

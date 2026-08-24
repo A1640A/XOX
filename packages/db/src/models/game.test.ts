@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { connectDb, disconnectDb } from '../client'
-import { Game } from './game'
+import { Game, type MoveDoc } from './game'
 
 describe('Game modeli', () => {
   const createdIds: string[] = []
@@ -105,6 +105,39 @@ describe('Game modeli', () => {
         participants: ['u1', 'u2'],
         pairKey: 'u1|u2',
         winLine: [0, 1],
+      }),
+    ).rejects.toThrow()
+  })
+
+  it('board tam olarak 9 hücreden farklı bir uzunlukta ise reddedilir', async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({
+        _id: id,
+        roomCode: 'RCBAD02',
+        players: { X: 'u1', O: 'u2' },
+        participants: ['u1', 'u2'],
+        pairKey: 'u1|u2',
+        board: Array.from({ length: 5 }, () => null),
+      }),
+    ).rejects.toThrow()
+  })
+
+  it('9 hücreden fazla hamle reddedilir', async () => {
+    const id = track(randomUUID())
+    const extra: MoveDoc[] = Array.from({ length: 10 }, (_, i) => ({
+      index: i % 9,
+      by: i % 2 === 0 ? 'X' : 'O',
+      at: new Date(),
+    }))
+    await expect(
+      Game.create({
+        _id: id,
+        roomCode: 'RCBAD03',
+        players: { X: 'u1', O: 'u2' },
+        participants: ['u1', 'u2'],
+        pairKey: 'u1|u2',
+        moves: extra,
       }),
     ).rejects.toThrow()
   })

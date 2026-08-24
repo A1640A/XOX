@@ -1,6 +1,9 @@
 import type { Player, SeatOccupant } from '@xox/shared'
 import { ROOM_TTL_SECONDS } from '@xox/shared'
 import { Schema, model, models, type Model } from 'mongoose'
+import { hasAtMostLength, hasExactLength } from './validators'
+
+const BOARD_SIZE = 9
 
 export type RoomState = 'waiting' | 'playing' | 'finished'
 export type Cell = Player | null
@@ -133,9 +136,20 @@ const roomSchema = new Schema<RoomDoc>(
     },
     board: {
       type: [{ type: String, enum: ['X', 'O', null] }],
-      default: (): null[] => Array.from({ length: 9 }, () => null),
+      default: (): null[] => Array.from({ length: BOARD_SIZE }, () => null),
+      validate: {
+        validator: hasExactLength(BOARD_SIZE),
+        message: `board tam olarak ${String(BOARD_SIZE)} hücre içermelidir`,
+      },
     },
-    moves: { type: [moveSchema], default: (): RoomMove[] => [] },
+    moves: {
+      type: [moveSchema],
+      default: (): RoomMove[] => [],
+      validate: {
+        validator: hasAtMostLength(BOARD_SIZE),
+        message: `moves en fazla ${String(BOARD_SIZE)} kayıt içerebilir`,
+      },
+    },
     turnDeadline: { type: Date, default: null },
     disconnected: { type: disconnectedSchema, default: null },
     rematch: { type: rematchSchema, default: null },

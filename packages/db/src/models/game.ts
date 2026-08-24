@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto'
 import type { Cell, EndReason, Player, WinLineCells } from '@xox/shared'
 import { Schema, model, models, type Model } from 'mongoose'
+import { hasAtMostLength, hasExactLength, isNullOrExactLength } from './validators'
+
+const BOARD_SIZE = 9
 
 export interface MoveDoc {
   index: number
@@ -44,10 +47,6 @@ const moveSchema = new Schema<MoveDoc>(
   { _id: false },
 )
 
-function isThreeIndexTuple(value: number[] | null): boolean {
-  return value === null || value.length === 3
-}
-
 const gameSchema = new Schema<GameDoc>(
   {
     _id: { type: String, default: (): string => randomUUID() },
@@ -60,9 +59,20 @@ const gameSchema = new Schema<GameDoc>(
     pairKey: { type: String, required: true },
     board: {
       type: [{ type: String, enum: ['X', 'O', null] }],
-      default: (): null[] => Array.from({ length: 9 }, () => null),
+      default: (): null[] => Array.from({ length: BOARD_SIZE }, () => null),
+      validate: {
+        validator: hasExactLength(BOARD_SIZE),
+        message: `board tam olarak ${String(BOARD_SIZE)} hücre içermelidir`,
+      },
     },
-    moves: { type: [moveSchema], default: (): MoveDoc[] => [] },
+    moves: {
+      type: [moveSchema],
+      default: (): MoveDoc[] => [],
+      validate: {
+        validator: hasAtMostLength(BOARD_SIZE),
+        message: `moves en fazla ${String(BOARD_SIZE)} kayıt içerebilir`,
+      },
+    },
     winner: { type: String, enum: ['X', 'O', null], default: null },
     isDraw: { type: Boolean, default: false },
     endReason: {
@@ -74,7 +84,7 @@ const gameSchema = new Schema<GameDoc>(
       type: [Number],
       default: null,
       validate: {
-        validator: isThreeIndexTuple,
+        validator: isNullOrExactLength(3),
         message: 'winLine tam olarak 3 indeks içermelidir',
       },
     },
