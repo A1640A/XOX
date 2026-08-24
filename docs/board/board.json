@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-24T23:09:20.437Z",
+  "updatedAt": "2026-08-24T23:10:48.874Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1040,9 +1040,9 @@
       "agent": "xox-devops",
       "deps": ["AUTH-001"],
       "conflictSet": ["apps/web/vercel.json", ".github/workflows/**"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/SEC-002",
       "report": null,
       "acceptance": [
         "POST /api/auth/* icin IP basina hiz siniri kurulur (Vercel WAF kurali ya da uygulama ici sayac).",
