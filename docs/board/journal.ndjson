@@ -1,0 +1,2 @@
+{"ts":"2026-08-24T03:05:00Z","wave":0,"event":"task.blocked","task":"OPS-001","agent":"xox-devops","reason":"domain başka Vercel hesabında, DNS yetkisi yok"}
+{"ts":"2026-08-24T03:03:00Z","wave":0,"event":"decision","task":"harness","summary":"Vercel Fluid WebSocket gerçek deploy'da doğrulandı, Redis yedeğine gerek yok"}
