@@ -47,5 +47,18 @@ userSchema.index(
   { partialFilterExpression: { ratedGames: { $gte: LEADERBOARD_MIN_RATED_GAMES } } },
 )
 
+/**
+ * `select: false` yalnız `find*` sorgu ara katmanını kapsar (KK-004). `aggregate()`
+ * o katmanın dışındadır ve gerçek `xox_test`e karşı kanıtlandığı gibi
+ * `passwordHash`i olduğu gibi döndürür — liderlik tablosu/profil gibi bir
+ * `$lookup`/`aggregate` ucu bir gün eklenirse hash doğrudan JSON yanıtına
+ * düşer, hiçbir mevcut test bunu yakalamaz. Varsayılan olarak her pipeline'ın
+ * BAŞINA `$unset` eklenir; hash'e gerçekten ihtiyaç duyan bir kullanım
+ * bugün yok — çıkarsa açıkça `.pipeline()`'ına kendi `$project`'ini ekler.
+ */
+userSchema.pre('aggregate', function preAggregate(): void {
+  this.pipeline().unshift({ $unset: 'passwordHash' })
+})
+
 export const User: Model<UserDoc> =
   (models['User'] as Model<UserDoc> | undefined) ?? model<UserDoc>('User', userSchema)

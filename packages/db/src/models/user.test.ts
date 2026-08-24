@@ -80,6 +80,19 @@ describe('User modeli', () => {
     ).rejects.toMatchObject({ code: 11000 })
   })
 
+  it('KK-004: aggregate() çıktısında passwordHash GELMEZ — select:false yalnız find yolunu kapsamaz', async () => {
+    const id = track(randomUUID())
+    await User.create({
+      _id: id,
+      name: 'Test Kullanıcı',
+      email: `${id}@xox.test`,
+      passwordHash: 'gizli-ozet',
+    })
+
+    const [user] = await User.aggregate([{ $match: { _id: id } }])
+    expect(user).not.toHaveProperty('passwordHash')
+  })
+
   it('theme yalnızca acik|koyu kabul eder', async () => {
     const id = track(randomUUID())
     await expect(
