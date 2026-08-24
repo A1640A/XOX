@@ -275,7 +275,7 @@
         "apps/web/app/api/ws/**",
         "apps/web/types/**"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/AUTH-001",
       "report": "docs/board/reports/AUTH-001.md",
@@ -375,7 +375,8 @@
         "V1 SONDASI: ws.close(4401) özel kapanış kodunun istemciye ULAŞTIĞI preview'da doğrulanır ve rapora yazılır. Ulaşmıyorsa upgrade öncesi HTTP 401 yoluna geçilir ve bu durum rapora 'KK-008 metni güncellenmeli' notuyla eklenir (R4)",
         "DoD mimari maddeleri: apps/web içinde evaluateStatus/applyMove yeniden implementasyonu YOK (KK-022); koşulsuz Room.updateOne YOK — her yazma packages/db/src/rooms/'dan geçer",
         "pnpm gates temiz",
-        "vercel.json GERCEKTEN okunuyor mu mekanik kanit: route yazildiktan sonra `vc build` cikisindaki .vercel/output/functions/**/.vc-config.json icinde maxDuration beklenen deger olarak okunur. Gerekce: Vercel, next runtime-inda `app/` ile baslayan functions anahtarlarini HIC dogrulamaz (checkUnusedFunctions onlari sessizce atar) - yani deploy yesili ayarin uygulandiginin kaniti degildir. Root Directory yanlissa dosya komple yok sayilir."
+        "vercel.json GERCEKTEN okunuyor mu mekanik kanit: route yazildiktan sonra `vc build` cikisindaki .vercel/output/functions/**/.vc-config.json icinde maxDuration beklenen deger olarak okunur. Gerekce: Vercel, next runtime-inda `app/` ile baslayan functions anahtarlarini HIC dogrulamaz (checkUnusedFunctions onlari sessizce atar) - yani deploy yesili ayarin uygulandiginin kaniti degildir. Root Directory yanlissa dosya komple yok sayilir.",
+        "BILET ODA DOGRULAMASI ZORUNLU: WS upgrade-inde `resolveIdentity(req, {allowTicket:true})` cagrilir VE donen `identity.room` URL-deki oda koduyla KARSILASTIRILIR. Eslesmiyorsa 4403 ile kapatilir. AUTH-001 bileti `room` claim-ine bagladi (yatay yetki karari) ama dogrulamayi yapacak taraf BURASI — yapilmazsa A odasinin bileti B odasinda calisir."
       ],
       "blockedReason": null
     },
