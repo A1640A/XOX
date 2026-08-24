@@ -187,10 +187,10 @@
         "packages/shared/src/ws-client.test.ts",
         "packages/shared/src/index.ts"
       ],
-      "status": "in_wave",
+      "status": "review",
       "attempts": 0,
       "branch": "feat/CTR-002",
-      "report": null,
+      "report": "docs/board/reports/CTR-002.md",
       "acceptance": [
         "roomClientReducer(state, event) => { state, effects } SAF: DOM, soket, timer, Date.now() doğrudan kullanımı yok (zaman girdi olarak verilir). Testler jsdom olmadan koşar",
         "Tasarım §5.6 tablosunun HER SATIRI için en az bir test: hücreye basma kapısı (sıra bende değilse / hücre doluysa / bağlantı yoksa mesaj bile üretilmez — KK-041), move:applied version+1 uygulanır (KK-046), version boşluğunda UYGULANMAZ ve resync effect'i üretilir (KK-047), version<=mevcut yankı yoksayılır, move:rejected pending'i temizler + hücreyi boşaltır + lastError kurar, state tahtayı TÜMÜYLE değiştirir (diff/merge yok) ve pending'i onaylar ya da sessizce siler (KK-065), status.kind!=='playing' gelince doğrudan sonuç ekranı (game:over beklenmez)",
@@ -665,7 +665,8 @@
         "KK-083: tema değiştirici <html data-tema=\"koyu\"> yapar; seçim users.theme'e yazıldığı için sayfa yenilemesinden VE cihaz değişiminden sonra korunur",
         "app/layout.tsx AÇILMAZ — tema altyapısı ve data-tema yazımı UI-SKEL-001'de hazır; bu kart yalnız components/profile/ThemeToggle.tsx ve PATCH çağrısını ekler",
         "KK-084: renkler yalnız @xox/ui-tokens'tan gelir, dosyalarda hex literal yok (UI-001'in lint kuralı yeşil)",
-        "pnpm gates temiz"
+        "pnpm gates temiz",
+        "`move:applied` ince yolu yeni `turnDeadline` TASIMIYOR (CTR-002 kararı). Süre açılırken karar ver: ya mesaja alan ekle, ya her hamlede tam `state` yayınla. P0'da turnDeadline hep null oldugu icin etkisizdi; burada etkili hale geliyor."
       ],
       "blockedReason": null
     },

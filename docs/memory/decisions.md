@@ -2,6 +2,15 @@
 
 > Format: tarih · karar · bağlam · gerekçe · reddedilen alternatifler
 
+## 2026-08-24 · `move:rejected` tahtaya DOKUNMAZ (spec'ten bilinçli sapma)
+
+**Bağlam:** Spec §5.6 `move:rejected` gelince "hücreyi boşalt" diyordu.
+**Karar:** Reducer tahtaya dokunmaz, yalnız `pending`'i temizler.
+**Gerekçe:** R1 değişmezi gereği istemci kendi hamlesini sunucu yankısı olmadan tahtaya
+**kalıcı yazmıyor** — taş oraya hiç konmadı. `board[index] = null` yazmak, `occupied`
+reddinde (yani hücreyi RAKİBİN doldurduğu durumda) rakibin gerçek taşını silerdi.
+**Reddedilen:** Spec'in literal okuması. Testle kilitlendi.
+
 ## 2026-08-24 · ✅ KARAR KAPISI GEÇİLDİ — change stream fan-out onaylandı (RT-PROBE-001)
 
 Gerçek Vercel preview + gerçek Atlas, 5 koşu, 200 örnek, hiçbiri atılmadı:
