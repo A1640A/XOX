@@ -275,9 +275,9 @@
         "apps/web/app/api/ws/**",
         "apps/web/types/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/AUTH-001",
       "report": null,
       "acceptance": [
         "SPLIT CONFIG (gotcha, R6): auth.config.ts yalnız pages + callbacks.authorized içerir ve kenar-güvenlidir; middleware.ts YALNIZ onu import eder, auth.ts'i ETMEZ. Kanıt: `pnpm --filter @xox/web build` başarılı ve middleware çıktısında mongoose/@node-rs/argon2 geçmiyor (grep çıktısı rapora yapıştırılır)",
