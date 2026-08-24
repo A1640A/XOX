@@ -403,6 +403,7 @@ pnpm add -Dw eslint@10.9.0 @eslint/js@10.0.1 typescript-eslint@8.67.0 \
   eslint-config-prettier@10.1.8 eslint-plugin-react-hooks@7.1.1 \
   eslint-plugin-jsx-a11y@6.10.2 eslint-plugin-security@4.0.1 \
   eslint-plugin-import-x@4.17.1 eslint-plugin-boundaries@7.2.0 \
+  eslint-import-resolver-typescript@4.4.5 \
   @next/eslint-plugin-next@16.3.2
 ```
 
@@ -447,6 +448,23 @@ const PLAYWRIGHT_WALL = {
   ],
 }
 
+/**
+ * Hem eslint-plugin-boundaries (import/resolver) hem eslint-plugin-import-x
+ * (import-x/resolver) aynı çözümleyiciyi kullanır: ikisi de bir import'un
+ * NEREYE gittiğini yalnız çözümlenmiş dosya yolundan bilir.
+ * `project` listesi kök tsconfig'i de kapsar; böylece bir paket bağımlılığı
+ * package.json'a eklenmemiş olsa bile '@xox/...' hedefi çözülür.
+ */
+const TS_RESOLVER = {
+  typescript: {
+    alwaysTryTypes: true,
+    project: ['tsconfig.json', 'apps/*/tsconfig.json', 'packages/*/tsconfig.json'],
+    // Birden fazla tsconfig bilerek veriliyor; resolver'ın her çalıştırmada
+    // bastığı "Multiple projects found" uyarısı gürültüden ibaret.
+    noWarnOnMultipleProjects: true,
+  },
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -470,12 +488,39 @@ export default tseslint.config(
     },
     plugins: { 'import-x': importX, security, boundaries },
     settings: {
-      // pnpm workspace paketleri (@xox/*) node_modules altında symlink olarak durur.
-      // preserveSymlinks:false olmadan çözümleyici gerçek yolu değil symlink yolunu
-      // döndürür; bu da eslint-plugin-boundaries'in yerel paketleri "external" sanıp
-      // sınır kontrolünü sessizce atlamasına yol açar. Bu ayar olmadan boundaries
-      // kuralı paket-adı importlarında (gerçek kullanım şekli) asla tetiklenmez.
-      'import/resolver': { node: { preserveSymlinks: false } },
+      // eslint-plugin-boundaries bir import'un HANGİ elemana gittiğini yalnızca
+      // çözümlenmiş DOSYA YOLUNDAN bilir (Elements/Elements.js -> eslint-module-utils/resolve).
+      // Çözümleme başarısızsa hedef `isUnknown: true` olur ve boundaries/dependencies
+      // sessizce hiçbir şey söylemez — yani kural "varmış gibi" görünüp aslında çalışmaz.
+      //
+      // Eski ayar (`node` resolver) iki yerden birden kırılıyordu:
+      //   1. eslint-import-resolver-node varsayılan uzantıları ['.mjs','.js','.json','.node'];
+      //      '.ts' YOK. Bu yüzden GÖRELİ importlar ('../../shared/src/constants') çözülemiyordu.
+      //   2. Altında yatan `resolve` paketi package.json `exports` alanını bilmez; @xox/*
+      //      paketlerinde yalnız `exports` var (`main` yok), bu yüzden PAKET-ADI importları
+      //      ('@xox/shared') da çözülemiyor, "external" sanılıyordu.
+      // Sonuç: boundaries/dependencies HER İKİ import biçiminde de tamamen atıl durumdaydı.
+      //
+      // TypeScript resolver hem '.ts' uzantısını, hem `exports` alanını, hem tsconfig
+      // `paths` eşlemesini bilir ve pnpm symlink'lerini gerçek yola (realpath) çözer —
+      // eleman desenleri (packages/shared/**) ancak gerçek yolla eşleşir.
+      'import/resolver': TS_RESOLVER,
+
+      // --- import-x tarafı: no-cycle'ın gerçekten çalışması + stderr sessizliği ---
+      // import-x kendi çözümleyicisini 'import-x/resolver' anahtarından okur;
+      // 'import/resolver' onu ETKİLEMEZ. Varsayılan node çözümleyicisinin uzantı
+      // listesinde '.ts' yoktu, bu yüzden göreli TS importları hiç çözülmüyordu.
+      'import-x/resolver': TS_RESOLVER,
+      // ExportMap yalnız bu uzantılara sahip dosyaları ayrıştırır
+      // (utils/export-map.js -> hasValidExtension). Varsayılan ['.js','.mjs','.cjs']
+      // ile birinci-parti TS hiç okunmuyor, buna karşılık node_modules içindeki
+      // .js dosyaları okunuyordu: no-cycle atıl kalırken react-native/index.js'in
+      // Flow sözdizimi her lint çalıştırmasında stderr'e yığın döküyordu.
+      'import-x/extensions': ['.ts', '.tsx', '.mts', '.cts'],
+      // İkinci savunma: node_modules ASLA ayrıştırılmaz. @xox/* paketleri gerçek
+      // yollarına (packages/...) çözüldüğü için bu desen onları kapsamaz —
+      // paketler arası döngüler yakalanmaya devam eder.
+      'import-x/ignore': ['node_modules'],
       'boundaries/elements': [
         { type: 'game-core', pattern: 'packages/game-core/**' },
         { type: 'shared', pattern: 'packages/shared/**' },
@@ -534,6 +579,10 @@ export default tseslint.config(
   {
     files: ['apps/web/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks, 'jsx-a11y': jsxA11y, '@next/next': nextPlugin },
+    // Monorepo: Next uygulaması kökte değil. Bu ayar olmadan no-html-link-for-pages
+    // kuralı repo kökünde pages/ arar, bulamaz ve her lint çalıştırmasında
+    // stderr'e "Pages directory cannot be found" satırı basar.
+    settings: { next: { rootDir: 'apps/web' } },
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...jsxA11y.flatConfigs.recommended.rules,
@@ -3578,19 +3627,21 @@ Vercel preview deploy'una karşı yapılır. Yerelde başarısız olması işi d
     "lint": "eslint ."
   },
   "dependencies": {
+    "@expo/metro-runtime": "~57.0.12",
     "@xox/game-core": "workspace:*",
     "@xox/shared": "workspace:*",
     "@xox/ui-tokens": "workspace:*",
     "expo": "57.0.15",
+    "expo-auth-session": "57.0.8",
     "expo-router": "57.0.15",
     "expo-secure-store": "57.0.1",
-    "expo-auth-session": "57.0.8",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "react-native": "0.87.0",
-    "react-native-web": "0.21.2",
-    "react-native-safe-area-context": "5.9.1",
-    "react-native-screens": "4.27.0"
+    "expo-system-ui": "~57.0.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "5.7.0",
+    "react-native-screens": "4.26.2",
+    "react-native-web": "0.21.2"
   },
   "devDependencies": {
     "@types/react": "19.2.8",
@@ -3611,8 +3662,17 @@ Expected: Expo, SDK 57 ile uyumlu olmayan sürümleri düzeltir. `package.json` 
 - [ ] **Step 3: `apps/mobile/metro.config.js` — pnpm monorepo çözümlemesi**
 
 ```js
+/* eslint-disable no-undef, @typescript-eslint/no-require-imports -- Metro bu dosyayı CommonJS olarak require eder. */
 // pnpm sembolik bağlantı kullanır; Metro varsayılan olarak workspace kökünü
-// izlemez. Bu ayarlar olmadan @xox/* paketleri "module not found" verir.
+// izlemez. `watchFolders` + `nodeModulesPaths` olmadan @xox/* paketleri
+// "module not found" verir.
+//
+// NOT: Expo'nun monorepo rehberindeki üçüncü ayar (`disableHierarchicalLookup`)
+// yalnızca hoisted (npm/yarn) kurulumlar içindir. pnpm'in izole node_modules
+// düzeninde geçişli bağımlılıklar `.pnpm/<paket>/node_modules` altında durur;
+// hiyerarşik arama kapatılırsa Metro bunları göremez ve web derlemesi
+// "Unable to resolve module expo-font/build/server" ile ölür. Bu yüzden AÇIK
+// bırakıldı — bkz. Task 22 doğrulaması.
 const { getDefaultConfig } = require('expo/metro-config')
 const path = require('node:path')
 
@@ -3626,7 +3686,6 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
 ]
-config.resolver.disableHierarchicalLookup = true
 
 module.exports = config
 ```
@@ -3652,6 +3711,7 @@ module.exports = function babelConfig(api) {
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "updates": { "enabled": false },
     "web": { "bundler": "metro", "output": "static" },
     "plugins": ["expo-router", "expo-secure-store"],
     "ios": { "supportsTablet": true, "bundleIdentifier": "com.omerdursun.xox" },
@@ -3669,8 +3729,7 @@ module.exports = function babelConfig(api) {
     "lib": ["DOM", "ES2023"],
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
-    "paths": { "@/*": ["./*"] },
-    "baseUrl": "."
+    "paths": { "@/*": ["./*"] }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }
@@ -3752,8 +3811,15 @@ git commit -m "feat(mobile): Expo 57 iskeleti, monorepo Metro çözümlemesi, we
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint ."
   },
-  "dependencies": { "@xox/shared": "workspace:*" },
-  "devDependencies": { "@playwright/test": "1.62.1", "ws": "8.21.3", "@types/ws": "8.18.1" }
+  "dependencies": {
+    "@xox/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "@types/ws": "8.18.1",
+    "ws": "8.21.3"
+  }
 }
 ```
 
@@ -3786,7 +3852,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: process.env['CI'] === '1',
   retries: process.env['CI'] === '1' ? 2 : 0,
-  workers: process.env['CI'] === '1' ? 2 : undefined,
+  // `exactOptionalPropertyTypes` açık: `workers: undefined` yazılamaz. CI dışında
+  // anahtarı hiç koymayıp Playwright'ın varsayılanına (yerel çekirdek sayısı) bırakıyoruz.
+  ...(process.env['CI'] === '1' ? { workers: 2 } : {}),
   timeout: 30_000,
   expect: { timeout: 8_000 },
   reporter: [
@@ -3850,7 +3918,7 @@ export { expect } from '@playwright/test'
 - [ ] **Step 6: `apps/e2e/tests/smoke.spec.ts` — harness doğrulama testleri**
 
 ```ts
-import { WebSocket } from 'ws'
+import { WebSocket, type RawData } from 'ws'
 import { expect, test } from '../fixtures/two-players'
 
 test.describe('harness duman testleri', () => {
@@ -3872,6 +3940,13 @@ test.describe('harness duman testleri', () => {
   })
 })
 
+/** ws `RawData` üç biçimde gelebilir (Buffer | ArrayBuffer | Buffer[]); hepsini UTF-8 metne çevir. */
+function toText(data: RawData): string {
+  if (Array.isArray(data)) return Buffer.concat(data).toString('utf8')
+  if (data instanceof ArrayBuffer) return Buffer.from(data).toString('utf8')
+  return data.toString('utf8')
+}
+
 test.describe('WebSocket kanıtı', () => {
   test('echo uç noktası mesajı geri gönderir', async ({ baseURL }) => {
     const wsUrl = `${String(baseURL).replace(/^http/, 'ws')}/api/ws/echo`
@@ -3889,7 +3964,7 @@ test.describe('WebSocket kanıtı', () => {
       socket.on('message', (data) => {
         clearTimeout(timer)
         socket.close()
-        resolve(data.toString())
+        resolve(toText(data))
       })
       socket.on('error', (error) => {
         clearTimeout(timer)
@@ -4155,6 +4230,32 @@ o satırı silme. Elle temizlik: `rm -rf packages/*/.stryker-tmp`.
 
 `moves[index] as number` yazınca birincisi `!` kullan der, ikincisi `!`'i yasaklar. Çıkış yolu
 tek satırlık gerekçeli `eslint-disable-next-line`. Kök konfigürasyonu bunun için değiştirme.
+
+## 2026-08-24 · ⚠️ ESLint çözümleyicisi yanlışsa KURALLAR SESSİZCE ÖLÜR — en pahalı ders
+
+`eslint-import-resolver-node` ne `.ts` uzantısını ne de `package.json`'daki `exports` alanını
+bilir. Bu repoda tüm paketler yalnızca `"exports": { ".": "./src/index.ts" }` tanımlar ve
+`main` yoktur — sonuç: **her `@xox/*` importu çözülemez sayıldı**, `isUnknown: true` olarak
+sınıflandı ve `boundaries/dependencies` hiçbir ihlali raporlamadı. Aynı sebeple
+`import-x/no-cycle` da `import-x/extensions` varsayılanı `['.js','.mjs','.cjs']` olduğu için
+**tek bir TypeScript dosyası okumadı**; yaptığı tek iş `node_modules` içindeki react-native'i
+ayrıştırmaya çalışıp stderr'e hata basmaktı.
+
+Yani iki mimari koruma da aylarca "yeşil" görünüp hiçbir şey korumayabilirdi.
+
+**Yapılacak:** `eslint-import-resolver-typescript` kullan; hem `boundaries` hem `import-x` için
+ayrı ayrı ayarla (`import/resolver` ve `import-x/resolver` **farklı anahtarlardır**),
+`import-x/extensions`'a TS uzantılarını yaz, `import-x/ignore: ['node_modules']` ekle.
+
+**Genel ders:** Bir lint kuralının yazılmış olması çalıştığı anlamına gelmez. Her mimari kural
+için hem **ihlal eden** hem **izinli** bir sonda yaz ve ikisini de gör. Bir agent "kanıtladım"
+dediğinde de bunu yap — bu kuralın çalıştığı bir kez "kanıtlanmış", kanıt tutmamıştı.
+
+## 2026-08-24 · Expo monorepo rehberi pnpm'de yanlış
+
+`disableHierarchicalLookup = true` hoisted düzen içindir. pnpm'de web build
+`Unable to resolve module @expo/metro-runtime` ile ölür. `watchFolders` + `nodeModulesPaths`
+yeterli, üçüncü satırı ekleme.
 
 ## 2026-08-24 · pnpm sembolik bağlantıları boundaries kuralını sessizce öldürür
 
