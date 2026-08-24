@@ -175,6 +175,8 @@ allowBuilds:
   esbuild: true
   lefthook: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@types/react-dom@19.2.5'
 ```
 
 Not: lefthook'un postinstall'ı örnek içerikli bir `lefthook.yml` üretir. Onu commit etme —
@@ -366,6 +368,7 @@ docs/board/journal.ndjson
 apps/e2e/test-results
 apps/e2e/playwright-report
 reports/mutation
+apps/web/next-env.d.ts
 ```
 
 - [ ] **Step 3: Mevcut dosyaları biçimlendir ve doğrula**
@@ -1292,7 +1295,7 @@ export function nextPlayer(board: Board): Player {
 - [ ] **Step 4: Testi çalıştır — GEÇMELİ**
 
 Run: `pnpm --filter @xox/game-core test`
-Expected: `Test Files  1 passed (1)` · `Tests  17 passed (17)`
+Expected: `Test Files  1 passed (1)` · `Tests  21 passed (21)`
 
 - [ ] **Step 5: Commit**
 
@@ -1404,7 +1407,7 @@ export function evaluateStatus(board: Board): GameStatus {
 - [ ] **Step 4: Testi çalıştır — GEÇMELİ**
 
 Run: `pnpm --filter @xox/game-core test`
-Expected: `Tests  31 passed (31)`
+Expected: `Tests  35 passed (35)`
 
 - [ ] **Step 5: Commit**
 
@@ -1668,7 +1671,7 @@ export function chooseMove(
 - [ ] **Step 4: Testi çalıştır — GEÇMELİ**
 
 Run: `pnpm --filter @xox/game-core test`
-Expected: `Tests  43 passed (43)` — boş tahtadan minimax birkaç saniye sürebilir, normaldir.
+Expected: `Tests  56 passed (56)` — boş tahtadan minimax birkaç saniye sürebilir, normaldir.
 
 - [ ] **Step 5: Kapsamı doğrula — %100 olmalı**
 
@@ -2789,21 +2792,24 @@ git commit -m "feat(ui): web ve mobil için paylaşılan tasarım tokenları"
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@xox/db": "workspace:*",
-    "@xox/game-core": "workspace:*",
-    "@xox/shared": "workspace:*",
-    "@xox/ui-tokens": "workspace:*",
     "@vercel/functions": "3.9.5",
+    "@xox/db": "workspace:*",
     "next": "16.3.2",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "ws": "8.21.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
-    "tailwindcss": "4.3.3",
+    "@testing-library/jest-dom": "7.0.1",
+    "@types/node": "24.13.3",
     "@types/react": "19.2.8",
-    "@types/react-dom": "19.2.8",
-    "@types/node": "24.13.3"
+    "@types/react-dom": "19.2.5",
+    "@types/ws": "8.18.1",
+    "@vitejs/plugin-react": "6.1.0",
+    "@vitest/coverage-v8": "4.1.11",
+    "jsdom": "30.0.1",
+    "vitest": "4.1.11"
   }
 }
 ```
@@ -2823,8 +2829,7 @@ pnpm install
     "lib": ["DOM", "DOM.Iterable", "ES2023"],
     "jsx": "preserve",
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./*"] },
-    "baseUrl": "."
+    "paths": { "@/*": ["./*"] }
   },
   "include": ["**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next-env.d.ts"],
   "exclude": ["node_modules", ".next"]
@@ -2841,7 +2846,8 @@ const config: NextConfig = {
   // Workspace paketleri kaynak olarak dışa verilir; Next onları kendisi derler.
   transpilePackages: ['@xox/game-core', '@xox/shared', '@xox/db', '@xox/ui-tokens'],
   typedRoutes: true,
-  eslint: { ignoreDuringBuilds: true },
+  // Lint kök `eslint.config.mjs` üzerinden ayrı bir kapı; Next 16 zaten build
+  // sırasında ESLint çalıştırmıyor (`eslint` anahtarı da artık geçersiz).
   typescript: { ignoreBuildErrors: false },
 }
 
@@ -3010,7 +3016,6 @@ import '@testing-library/jest-dom/vitest'
 - [ ] **Step 2: Başarısız testi yaz**
 
 ```ts
-// apps/web/app/api/health/route.test.ts
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@xox/db', () => ({
@@ -3022,7 +3027,7 @@ describe('GET /api/health', () => {
   it('veritabanı erişilebilirken 200 ve ok:true döner', async () => {
     const { connectDb } = await import('@xox/db')
     vi.mocked(connectDb).mockResolvedValue({
-      connection: { db: { admin: () => ({ ping: async (): Promise<void> => undefined }) } },
+      connection: { db: { admin: () => ({ ping: (): Promise<void> => Promise.resolve() }) } },
     } as never)
 
     const { GET } = await import('./route')
@@ -3041,6 +3046,17 @@ describe('GET /api/health', () => {
 
     expect(response.status).toBe(503)
     expect(await response.json()).toMatchObject({ ok: false })
+  })
+
+  it('Error olmayan bir hata fırlatıldığında da 503 döner', async () => {
+    const { connectDb } = await import('@xox/db')
+    vi.mocked(connectDb).mockRejectedValue('dize hata')
+
+    const { GET } = await import('./route')
+    const response = await GET()
+
+    expect(response.status).toBe(503)
+    expect(await response.json()).toMatchObject({ ok: false, error: 'bilinmeyen hata' })
   })
 })
 ```
@@ -3101,6 +3117,16 @@ import { connection } from 'next/server'
 import { experimental_upgradeWebSocket, type WebSocketData } from '@vercel/functions'
 
 /**
+ * `ws` mesaj yükü Buffer, Buffer[] ya da ArrayBuffer olabilir. Düz `String(data)`
+ * ArrayBuffer için `[object ArrayBuffer]` üretirdi; hepsini utf8 metne indirgiyoruz.
+ */
+function toText(data: WebSocketData): string {
+  if (Array.isArray(data)) return Buffer.concat(data).toString('utf8')
+  if (Buffer.isBuffer(data)) return data.toString('utf8')
+  return Buffer.from(data).toString('utf8')
+}
+
+/**
  * Salt kanıt uç noktası: gelen mesajı `echo:` ön ekiyle geri gönderir.
  * Gerçek oyun WS'i buna değil `/api/rooms/[code]/ws` yoluna kurulacak;
  * bu uç nokta harness doğrulaması için kalıcı olarak durur.
@@ -3110,11 +3136,31 @@ export async function GET(): Promise<Response> {
 
   return experimental_upgradeWebSocket((ws) => {
     ws.on('message', (data: WebSocketData) => {
-      ws.send(`echo:${String(data)}`)
+      ws.send(`echo:${toText(data)}`)
     })
   })
 }
 ```
+
+⚠️ **`ws` paketi ZORUNLU.** `@vercel/functions` onu _opsiyonel peer_ olarak tanımlar, yani
+kendiliğinden kurulmaz. Kurulmazsa `experimental_upgradeWebSocket` çalışma anında
+`The "ws" package is required...` fırlatır — ve bu, Task 35'te "Vercel WebSocket çalışmıyor"
+diye **yanlış** okunup gereksiz bir Redis pivotunu tetikler. Ayrıca `@types/ws` olmadan
+`skipLibCheck` yüzünden `WebSocket` ve `WebSocketData` sessizce `any`'ye düşer; tip kontrolü
+sahte olur. Task 19'un `apps/web` bağımlılıklarında `ws@8.21.3` ve `@types/ws@8.18.1` var.
+
+Kurulu `@vercel/functions@3.9.5` imzası (doğrulandı):
+
+```ts
+export declare function experimental_upgradeWebSocket(
+  handler: (ws: WebSocket) => void | Promise<void>,
+  options?: { maxPayload?: number },
+): Promise<Response>
+export type { WebSocket, RawData as WebSocketData } from 'ws'
+```
+
+`RawData` = `Buffer | ArrayBuffer | Buffer[]`, dolayısıyla `String(data)` ikili çerçevede
+`[object ArrayBuffer]` verir — `no-base-to-string` bunu yakalar. `toText()` yardımcısı bunun için var.
 
 - [ ] **Step 2: Tip kontrolü**
 
@@ -3776,6 +3822,27 @@ devre dışı kalır) ve `unrs-resolver` (`eslint-plugin-import-x`'in native res
 
 expo-router artık Expo SDK ile hizalı sürümleniyor: SDK 57 için doğru sürüm `57.0.15`.
 npm'de duran `7.0.0-canary-*` sürümleri kararsızdır. `~7.0.0` yazmak canary çeker.
+
+## 2026-08-24 · `ws` kurulmazsa Vercel WebSocket'i yanlışlıkla "bozuk" sanırsın
+
+`@vercel/functions` `ws`'i opsiyonel peer yapar → kurulmaz → `experimental_upgradeWebSocket`
+çalışma anında `The "ws" package is required` fırlatır. Bu hata kolayca "Fluid Compute WS
+desteklenmiyor" diye okunur ve gereksiz mimari pivotu tetikler.
+**Yapılacak:** `apps/web`'e `ws` + `@types/ws` doğrudan bağımlılık olarak ekli kalsın.
+
+## 2026-08-24 · TypeScript 6: `baseUrl` hata veriyor
+
+`TS5101: Option 'baseUrl' is deprecated`. Kaldır; `paths` tsconfig'in kendi konumuna göre çözülür.
+
+## 2026-08-24 · Next 16 `next.config` içinde `eslint` anahtarını reddediyor
+
+`Unrecognized key(s) in object: 'eslint'`. Next 16 build sırasında ESLint'i zaten koşturmuyor,
+anahtar gereksiz. `typescript.ignoreBuildErrors` hâlâ geçerli.
+
+## 2026-08-24 · `next-env.d.ts` format kapısını kalıcı kırar
+
+Next onu her build'de çift tırnak + noktalı virgülle yeniden yazar; `prettier --check` hep
+kırmızı olur. `.prettierignore`'da — o satırı silme.
 
 ## 2026-08-24 · `--filter=!@paket` var olmayan pakette turbo'yu öldürür
 
