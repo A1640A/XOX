@@ -64,4 +64,47 @@ describe('Friendship modeli', () => {
     const found = await Friendship.findOne({ userA, userB }).lean()
     expect(found?.status).toBe('accepted')
   })
+
+  it('updateOne+upsert ile ters sıralı çift yazmak reddedilir — pre("validate") atlanamaz', async () => {
+    const [small, big] = sortedPair()
+    createdPairs.push({ userA: small, userB: big }, { userA: big, userB: small })
+
+    await expect(
+      Friendship.updateOne(
+        { userA: big, userB: small },
+        { $setOnInsert: { requestedBy: big } },
+        { upsert: true },
+      ),
+    ).rejects.toThrow(/küçük olmalıdır/)
+
+    const reversed = await Friendship.countDocuments({ userA: big, userB: small })
+    expect(reversed).toBe(0)
+  })
+
+  it('findOneAndUpdate+upsert ile ters sıralı çift yazmak reddedilir', async () => {
+    const [small, big] = sortedPair()
+    createdPairs.push({ userA: small, userB: big }, { userA: big, userB: small })
+
+    await expect(
+      Friendship.findOneAndUpdate(
+        { userA: big, userB: small },
+        { $setOnInsert: { requestedBy: big } },
+        { upsert: true },
+      ),
+    ).rejects.toThrow(/küçük olmalıdır/)
+  })
+
+  it('doğru sıralı çift updateOne+upsert ile sorunsuz oluşturulur — aşırı-geniş red yok', async () => {
+    const [userA, userB] = sortedPair()
+    createdPairs.push({ userA, userB })
+
+    await Friendship.updateOne(
+      { userA, userB },
+      { $setOnInsert: { requestedBy: userA } },
+      { upsert: true },
+    )
+
+    const found = await Friendship.findOne({ userA, userB }).lean()
+    expect(found?.requestedBy).toBe(userA)
+  })
 })
