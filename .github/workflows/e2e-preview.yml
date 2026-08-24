@@ -6,7 +6,12 @@ on:
 
 jobs:
   e2e:
-    if: github.event.deployment_status.state == 'success'
+    # Yalnızca PREVIEW deploy'ları. deployment_status production için de tetiklenir;
+    # e2e paketi veritabanını sıfırlıyor ve canlı URL'e karşı koşmanın anlamı yok.
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment_status.environment != 'Production' &&
+      github.event.deployment_status.environment != 'production'
     runs-on: ubuntu-latest
     env:
       CI: '1'
