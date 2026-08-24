@@ -155,8 +155,8 @@
         "packages/db/src/indexes.ts",
         "packages/db/package.json"
       ],
-      "status": "reviewing",
-      "attempts": 0,
+      "status": "in_wave",
+      "attempts": 1,
       "branch": "feat/DB-001",
       "report": "docs/board/reports/DB-001.md",
       "acceptance": [
@@ -231,7 +231,7 @@
       "tier": "P0",
       "wave": "0c",
       "agent": "xox-dev-backend",
-      "deps": ["DB-001"],
+      "deps": ["DB-001", "OPS-003"],
       "conflictSet": [
         "packages/db/src/rooms/**",
         "packages/db/src/queries/**",
@@ -254,7 +254,8 @@
         "Eşzamanlılık sondası: applyMove çağrısı arasına elle version artışı enjekte edilir; ikinci yazma 0 doküman günceller ve reddedilir (KK-045)",
         "SICAK DOSYA DONDURMA: packages/db/src/index.ts bu görevden sonra DEĞİŞMEZ. rooms/ barrel'ı resign, offerRematch, acceptRematch, settleDeadlines, pushEmoji, finishGame fonksiyonlarını; ayrıca elo.ts ve queries/{leaderboard,matches,friends}.ts modüllerini TİPLİ İSKELET olarak şimdi oluşturur ve dışa verir (gövde: `{ok:false, code:'SERVER_ERROR'}` ya da notImplemented()). Dalga 1-3 yalnız kendi dosyasının gövdesini doldurur",
         "Kural mantığı yeniden yazılmaz: applyMove/evaluateStatus/isValidMove/nextPlayer yalnız @xox/game-core'dan çağrılır",
-        "Tüm testler gerçek xox_test Atlas veritabanına karşı koşar; pnpm gates temiz"
+        "Tüm testler gerçek xox_test Atlas veritabanına karşı koşar; pnpm gates temiz",
+        "buildPairKey(a,b) ve deriveParticipants(players) yardimcilari BURADA yazilir ve Game pre('validate') icinde pairKey/participants-in players-tan turetilenle eslestigi dogrulanir. DB-001 bu seam-i bilerek bosta biraktı — iki yerde yazilirsa ELO ciftleme korumasi sessizce delinir (ayni cift iki ayri anahtar altinda sayilir)."
       ],
       "blockedReason": null
     },
@@ -984,6 +985,29 @@
         "En az bir duman testi yerel `pnpm --filter @xox/web dev:ws` (vc dev) sunucusuna karşı da koşar ve geçer — WS'in yerelde çalıştığı kanıtlanır (gotcha: next dev WS'i desteklemez)",
         "Playwright duvarı yeşil: apps/web, apps/mobile, packages/** içinde playwright importu ya da bağımlılığı yok",
         "apps/web.ignoreDependencies BOSALTILIR: OPS-002-de dondurma icin eklenen 10 girdi, o bagimliliklar gercekten kullanilmaya baslandigi icin kaldirilir ve `pnpm knip` exit 0 kalir. Gerekce: knip kullanilmayan bir ignore girdisi icin yalniz 'Configuration hint' basar, kapiyi KIRMAZ - yani liste kalici bir kor nokta olur ve ileride gercekten olu bir bagimlilik gizlenir."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "OPS-003",
+      "title": "ensureIndexes() üretim yoluna bağlanır — indeksler canlıda gerçekten oluşsun",
+      "tier": "P0",
+      "agent": "xox-devops",
+      "deps": ["DB-001"],
+      "conflictSet": [
+        "apps/web/app/api/admin/**",
+        "packages/db/src/indexes.ts",
+        ".github/workflows/**"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "ensureIndexes() gercek bir cagirana baglanir (deploy sonrasi migration adimi ya da korumali bir route). Su an REPO GENELINDE tek cagiran indexes.test.ts — yani indeksler canlida HIC olusmuyor.",
+        "IndexOptionsConflict ele alinir: mevcut ayni isimli ama farkli secenekli indeks varsa once dusurulup yeniden olusturulur. Kanit: xox_dev-de email_1 benzersiz-olmayan halde varken cagri kosulur ve sonunda unique:true oldugu collection.indexes() ile gosterilir.",
+        "Test syncIndexes() DEGIL uretim yolunu (autoIndex/createIndex) taklit eder — syncIndexes drop+create yaptigi icin secenek catismasini maskeliyor.",
+        "DB-002 MERGE EDILMEDEN once tamamlanir; yoksa WS-001 sorgulari preview-da COLLSCAN yapar ve KK-117 performans sondasi yanlis ortami olcer."
       ],
       "blockedReason": null
     }

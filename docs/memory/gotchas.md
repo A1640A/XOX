@@ -2,6 +2,33 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · `select: false` `aggregate()`-i KAPSAMAZ — passwordHash sizar
+
+Mongoose `select: false` yalniz query middleware yolunda calisir. Canli dogrulandi:
+`User.aggregate([{$match:{_id}}])` ve `User.collection.findOne()` `passwordHash`-i DONDURUYOR.
+`findById`/`findOneAndUpdate`/`JSON.stringify` temiz — yani tek yollu test yaniltici.
+**Yapilacak:** `aggregate` kullanan her sorguya acik `$unset: 'passwordHash'` (ya da
+`pre('aggregate')` hook-u ile varsayilan). Test `aggregate` yolunu da kapsamali.
+
+## 2026-08-24 · `syncIndexes()` uretimdeki indeks catismasini MASKELER
+
+Test `syncIndexes()` (drop + create) kullanirsa her zaman temiz sonuc verir. Uretim yolu
+`createIndex`-tir ve ayni isimli farkli secenekli bir indeks varsa `IndexOptionsConflict`
+atar; indeks ESKI haliyle kalir. Canli dogrulandi: `email_1` benzersiz-olmayan halde varken
+`unique:true` eklemek sessizce basarisiz oluyor -> ayni e-postayla ikinci kayit acilabiliyor.
+**Yapilacak:** Indeks testinde uretim yolunu taklit et; ayrica `ensureIndexes()`-i gercekten
+cagiran bir deploy adimi olsun — repo genelinde tek cagiran test dosyasiysa indeksler
+canlida HIC olusmuyor demektir.
+
+## 2026-08-24 · Mongoose dokuman hook-u `updateOne`/`bulkWrite` ile ATLANIR
+
+`pre('validate')` yalniz `doc.save()` ve `insertMany` yolunda calisir. `updateOne`,
+`findOneAndUpdate`, `bulkWrite` onu tetiklemez. Canli dogrulandi: friendship-in `userA < userB`
+sirali cift degismezi `updateOne(..., {upsert:true})` ile atlandi ve ayni cift icin iki
+dokuman olustu.
+**Yapilacak:** Degismezi yazma yoluna degil VERIYE bagla (tek giris kapisi yardimcisi) ya da
+query hook-larini da ekle. Ve degismezi `updateOne` ile ihlal etmeyi DENEYEN bir test yaz.
+
 ## 2026-08-24 · `Stop` hook-u "su an harekete gecemem" durumlarini modellemeli
 
 Hook-un tek sorusu "yapilacak is var mi" olmamali; "LEAD SU AN bu isi dispatch edebilir mi"
