@@ -9,6 +9,40 @@ import importX from 'eslint-plugin-import-x'
 import boundaries from 'eslint-plugin-boundaries'
 import nextPlugin from '@next/eslint-plugin-next'
 
+/**
+ * KK-084: web ve mobil aynı renk değerlerini `@xox/ui-tokens`'tan alır; ikisinde de literal
+ * hex renk kodu bulunmaz. `no-restricted-syntax` AST düzeyinde çalışır ve ÜÇ ayrı kalıbı
+ * yakalar — hepsi hem sıradan string literal'de (`Literal`) hem template literal'in sabit
+ * parçasında (`TemplateElement`) test edilir:
+ *
+ *   1. HEX_COLOR_LITERAL — bütün string TAM OLARAK bir hex kod: `'#2563eb'`, `` `#2563eb` ``,
+ *      `'#abc'`, `'#2563eb80'` (3/6/8 haneli, 8. haneli alfa kanalı içindir).
+ *   2. TAILWIND_ARBITRARY_HEX — Tailwind v4 keyfi-değer sözdizimi: `'bg-[#2563eb]'`,
+ *      `'text-[#fff]/50'`. Bu repo Tailwind v4 CSS-first (config'siz) kullanıyor; ham renk
+ *      yazmanın en olası yolu budur, JSX `style={{...}}`'den değil `className`'den girer.
+ *   3. CSS_DECLARATION_HEX — bir template literal İÇİNDE gömülü CSS bildirimi:
+ *      `` `color: #2563eb` ``. `:` + boşluk + `#hex` dizisi arandığı için "içinde hex geçen
+ *      HERHANGİ bir string" gibi genel bir kalıp DEĞİL — git SHA'sı ya da `#anchor` gibi
+ *      kimliklerde `:` hemen önünde `#hex` dizisi olağan değildir, yanlış pozitif riski düşük.
+ *
+ * `packages/ui-tokens/**` bu kuralın MUAF olduğu tek yer — tokenlar zaten orada tanımlanır.
+ */
+const HEX_COLOR_LITERAL = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+const TAILWIND_ARBITRARY_HEX = /-\[#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\]/
+const CSS_DECLARATION_HEX = /:\s*#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/
+const HEX_BAN_MESSAGE =
+  'Literal hex renk kodu yasak (KK-084). Rengi @xox/ui-tokens içindeki themes.acik/themes.koyu üzerinden al.'
+const HEX_BAN_PATTERNS = [HEX_COLOR_LITERAL, TAILWIND_ARBITRARY_HEX, CSS_DECLARATION_HEX]
+const NO_HEX_COLOR_LITERAL = {
+  'no-restricted-syntax': [
+    'error',
+    ...HEX_BAN_PATTERNS.flatMap((pattern) => [
+      { selector: `Literal[value=${pattern.toString()}]`, message: HEX_BAN_MESSAGE },
+      { selector: `TemplateElement[value.raw=${pattern.toString()}]`, message: HEX_BAN_MESSAGE },
+    ]),
+  ],
+}
+
 /** Playwright yalnız apps/e2e içinde yaşar. Bu kural üç katmanlı savunmanın ikincisi. */
 const PLAYWRIGHT_WALL = {
   'no-restricted-imports': [
@@ -186,6 +220,7 @@ export default tseslint.config(
       ...jsxA11y.flatConfigs.recommended.rules,
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
+      ...NO_HEX_COLOR_LITERAL,
     },
   },
 
@@ -193,7 +228,7 @@ export default tseslint.config(
   {
     files: ['apps/mobile/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
-    rules: { ...reactHooks.configs.recommended.rules },
+    rules: { ...reactHooks.configs.recommended.rules, ...NO_HEX_COLOR_LITERAL },
   },
 
   // apps/e2e — Playwright duvarının TEK istisnası
