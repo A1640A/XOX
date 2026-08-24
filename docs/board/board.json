@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "project": "XOX",
+  "updatedAt": "2026-08-24T00:00:00.000Z",
+  "nightRun": {
+    "active": false,
+    "deadline": null,
+    "wave": 0,
+    "consecutiveFailures": 0,
+    "tokenBudgetUsedPct": 0
+  },
+  "tiers": { "P0": "Yürüyen iskelet ve çekirdek", "P1": "Tam döngü", "P2": "Sosyal" },
+  "tasks": []
+}
