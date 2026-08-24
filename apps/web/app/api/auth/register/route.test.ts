@@ -9,6 +9,21 @@ vi.mock('@/lib/auth/password', () => ({
   hashPassword: vi.fn().mockResolvedValue('$argon2id$mock-hash'),
 }))
 
+/**
+ * SEC-002 — bu dosya `checkIpRateLimit`'i (gerçek Mongo'ya dokunan) mock'lar;
+ * IP hız sınırının kendi davranışı `lib/rate-limit/ip-limit.test.ts`te ayrı
+ * test edilir. Burada yalnız route'un sınıra UYDUĞU (aşılınca 429, aşılmayınca
+ * normal akışa devam) doğrulanır.
+ */
+vi.mock('@/lib/rate-limit/ip-limit', () => ({
+  checkIpRateLimit: vi.fn().mockResolvedValue({
+    allowed: true,
+    limit: 20,
+    remaining: 19,
+    retryAfterSeconds: 60,
+  }),
+}))
+
 function makeRequest(body: unknown): Request {
   return new Request('https://xox.test/api/auth/register', {
     method: 'POST',
@@ -160,6 +175,52 @@ describe('POST /api/auth/register', () => {
       expect(await response.json()).toMatchObject({ code: 'EMAIL_TAKEN' })
     },
   )
+
+  it(
+    'SEC-002: IP hız sınırı AŞILMIŞSA 429 RATE_LIMITED döner, retry-after/' +
+      'x-ratelimit-* başlıkları set edilir ve User.findOne HİÇ ÇAĞRILMAZ ' +
+      '(argon2/DB maliyeti ödenmeden kısa devre)',
+    async () => {
+      const { checkIpRateLimit } = await import('@/lib/rate-limit/ip-limit')
+      vi.mocked(checkIpRateLimit).mockResolvedValueOnce({
+        allowed: false,
+        limit: 20,
+        remaining: 0,
+        retryAfterSeconds: 42,
+      })
+      const { User } = await import('@xox/db')
+
+      const { POST } = await import('./route')
+      const response = await POST(
+        makeRequest({ email: 'sinir@xox.test', password: 'test-parola1', displayName: 'Ayşe' }),
+      )
+
+      expect(response.status).toBe(429)
+      expect(await response.json()).toMatchObject({ code: 'RATE_LIMITED' })
+      expect(response.headers.get('retry-after')).toBe('42')
+      expect(response.headers.get('x-ratelimit-limit')).toBe('20')
+      expect(response.headers.get('x-ratelimit-remaining')).toBe('0')
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- yalnız çağrı kaydı okunuyor
+      expect(User.findOne).not.toHaveBeenCalled()
+    },
+  )
+
+  it('SEC-002: IP hız sınırı eşiğin ALTINDAYSA normal akış devam eder (201)', async () => {
+    const { User } = await import('@xox/db')
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- yalnız mock kurulumu/çağrı kaydı okunuyor
+    vi.mocked(User.create).mockResolvedValue({ _id: 'x', email: 'sinir-altinda@xox.test' } as never)
+
+    const { POST } = await import('./route')
+    const response = await POST(
+      makeRequest({
+        email: 'sinir-altinda@xox.test',
+        password: 'test-parola1',
+        displayName: 'Ayşe',
+      }),
+    )
+
+    expect(response.status).toBe(201)
+  })
 
   it('beklenmeyen DB hatası 500 SERVER_ERROR döner ve mesajı sızdırmaz', async () => {
     const { User } = await import('@xox/db')
