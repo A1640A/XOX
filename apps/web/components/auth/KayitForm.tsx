@@ -31,28 +31,40 @@ export function KayitForm(): React.ReactElement {
     setPending(true)
     setError(null)
 
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, displayName }),
-    })
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, displayName }),
+      })
 
-    if (!response.ok) {
-      const body: unknown = await response.json().catch(() => null)
-      const bodyRecord = body as { code?: unknown } | null
-      const parsedCode = errorCodeSchema.safeParse(bodyRecord?.code)
-      setError(parsedCode.success ? parsedCode.data : 'SERVER_ERROR')
+      if (!response.ok) {
+        const body: unknown = await response.json().catch(() => null)
+        const bodyRecord = body as { code?: unknown } | null
+        const parsedCode = errorCodeSchema.safeParse(bodyRecord?.code)
+        setError(parsedCode.success ? parsedCode.data : 'SERVER_ERROR')
+        return
+      }
+
+      // İnceleme MAJOR #7: `signIn` tipte `SignInResponse` vaat eder ama
+      // `next-auth@5.0.0-beta.32`'nin kaynağında `getProviders()` `null`
+      // dönerse `undefined` de dönebilir (kaynağın kendi notu: "TODO: Return
+      // error if redirect:false") — doğrudan `.error` okumak TypeError fırlatır
+      // ve `catch` olmadan bu sessizce yutulup düğme sonsuza dek kilitlenirdi.
+      // `as` ile tipi çalışma zamanı DAVRANIŞINA göre genişletiyoruz.
+      const signInResult = (await signIn('credentials', { email, password, redirect: false })) as
+        Awaited<ReturnType<typeof signIn>> | undefined
+      if (signInResult === undefined || signInResult.error !== undefined) {
+        setError('SERVER_ERROR')
+        return
+      }
+      router.push('/')
+    } catch {
+      // Ağ kesikse `fetch`/`signIn` reddedilir — aynı sessiz kilitlenme sınıfı.
+      setError('NETWORK')
+    } finally {
       setPending(false)
-      return
     }
-
-    const signInResult = await signIn('credentials', { email, password, redirect: false })
-    setPending(false)
-    if (signInResult.error !== undefined) {
-      setError('SERVER_ERROR')
-      return
-    }
-    router.push('/')
   }
 
   return (

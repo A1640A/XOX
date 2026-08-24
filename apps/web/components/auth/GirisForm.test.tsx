@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { GirisForm } from './GirisForm'
 
 const push = vi.fn()
-const signIn = vi.fn<(...args: unknown[]) => Promise<{ error?: string }>>()
+const signIn = vi.fn<(...args: unknown[]) => Promise<{ error?: string } | undefined>>()
 let searchParamsValue = ''
 
 vi.mock('next/navigation', () => ({
@@ -60,5 +60,40 @@ describe('GirisForm', () => {
 
     expect(push).not.toHaveBeenCalled()
     expect(screen.getByTestId('hata-mesaji')).toHaveAttribute('data-kod', 'INVALID_CREDENTIALS')
+  })
+
+  it('İNCELEME MAJOR #7: signIn undefined dönerse hata gösterir ve düğme KİLİTLİ KALMAZ', async () => {
+    // next-auth@5.0.0-beta.32'nin belgelenmemiş çalışma zamanı davranışı:
+    // `getProviders()` null dönerse `signIn` `undefined` döner (tip
+    // `SignInResponse` vaat etse de). Önceki kod `result.error` okuyunca
+    // TypeError fırlatıyordu, `catch` olmadığı için `setPending(false)` HİÇ
+    // çalışmıyordu — düğme sonsuza dek `disabled` kalıyordu.
+    searchParamsValue = ''
+    signIn.mockResolvedValue(undefined)
+    const user = userEvent.setup()
+    render(<GirisForm />)
+
+    await user.type(screen.getByTestId('giris-eposta'), 'ayse@example.com')
+    await user.type(screen.getByTestId('giris-parola'), 'gecerli-sifre1')
+    await user.click(screen.getByTestId('btn-giris'))
+
+    expect(push).not.toHaveBeenCalled()
+    expect(screen.getByTestId('hata-mesaji')).toHaveAttribute('data-kod', 'INVALID_CREDENTIALS')
+    expect(screen.getByTestId('btn-giris')).not.toBeDisabled()
+  })
+
+  it('İNCELEME MAJOR #7: signIn reddedilirse (ağ kesik) NETWORK hatası gösterir ve düğme KİLİTLİ KALMAZ', async () => {
+    searchParamsValue = ''
+    signIn.mockRejectedValue(new TypeError('Failed to fetch'))
+    const user = userEvent.setup()
+    render(<GirisForm />)
+
+    await user.type(screen.getByTestId('giris-eposta'), 'ayse@example.com')
+    await user.type(screen.getByTestId('giris-parola'), 'gecerli-sifre1')
+    await user.click(screen.getByTestId('btn-giris'))
+
+    expect(push).not.toHaveBeenCalled()
+    expect(screen.getByTestId('hata-mesaji')).toHaveAttribute('data-kod', 'NETWORK')
+    expect(screen.getByTestId('btn-giris')).not.toBeDisabled()
   })
 })

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { roomCreateResponseSchema, TESTID, type ErrorCode, type ErrorResponse } from '@xox/shared'
+import { errorResponseSchema, roomCreateResponseSchema, TESTID, type ErrorCode } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
 import { JoinCodeField } from '@/components/JoinCodeField'
 import { tr } from '@/messages/tr'
@@ -44,9 +44,13 @@ function SignedInActions({ displayName }: { displayName: string }): React.ReactE
     try {
       const response = await fetch('/api/rooms', { method: 'POST' })
       if (!response.ok) {
+        // İnceleme MAJOR #6: gövde ham `as` ile CAST edilmiyor — sunucu enum
+        // dışı bir kod ya da Vercel'in kendi 504 gövdesini dönerse (ROOM-API-001
+        // henüz paralel yazılıyor) `errorResponseSchema` bunu YAKALAR;
+        // `KayitForm.tsx` zaten aynı deseni kullanıyordu, burası atlamıştı.
         const body: unknown = await response.json().catch(() => null)
-        const parsedError = body as Partial<ErrorResponse> | null
-        setError(parsedError?.code ?? 'SERVER_ERROR')
+        const parsedError = errorResponseSchema.safeParse(body)
+        setError(parsedError.success ? parsedError.data.code : 'SERVER_ERROR')
         return
       }
       const body: unknown = await response.json()

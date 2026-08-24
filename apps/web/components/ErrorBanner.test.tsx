@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { TESTID } from '@xox/shared'
+import { TESTID, type ErrorCode } from '@xox/shared'
 import { tr } from '@/messages/tr'
 import { ErrorBanner } from './ErrorBanner'
 
@@ -24,5 +24,17 @@ describe('ErrorBanner', () => {
     // İki kod farklı metin üretmeli — sabit/hardcode edilmiş tek bir metne
     // dönen bir mutasyonu bu karşılaştırma yakalar.
     expect(tr.errors.ROOM_NOT_FOUND).not.toBe(tr.errors.INVALID_CREDENTIALS)
+  })
+
+  it('tr.errors içinde karşılığı olmayan bir kodda BOŞ render etmez, SERVER_ERROR metnine düşer (inceleme MAJOR #6)', () => {
+    // Tip sistemi bunu engeller ama çalışma zamanı verisi (ör. sunucudan gelen
+    // doğrulanmamış bir gövde) ihlal edebilir — bu yüzden `as` ile bilerek
+    // simüle ediyoruz. Amaç: "boş şerit" regresyonunu kilitlemek.
+    const unknownCode = 'TOTALLY_UNKNOWN_CODE' as ErrorCode
+    render(<ErrorBanner code={unknownCode} />)
+
+    const banner = screen.getByTestId(TESTID.hataMesaji)
+    expect(banner).not.toBeEmptyDOMElement()
+    expect(banner).toHaveTextContent(tr.errors.SERVER_ERROR)
   })
 })

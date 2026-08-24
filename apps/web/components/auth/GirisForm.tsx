@@ -34,13 +34,30 @@ export function GirisForm(): React.ReactElement {
     event.preventDefault()
     setPending(true)
     setError(null)
-    const result = await signIn('credentials', { email, password, redirect: false })
-    setPending(false)
-    if (result.error !== undefined) {
-      setError('INVALID_CREDENTIALS')
-      return
+    try {
+      // İnceleme MAJOR #7: `next-auth@5.0.0-beta.32`'nin `signIn`'i tipte
+      // `SignInResponse` vaat eder ama kaynağında (`react.js`, `getProviders()`
+      // `null` dönerse `return;`) `undefined` da dönebilir — kaynak kodun kendi
+      // yorumu: "TODO: Return error if redirect:false". Tip yalan söylüyor;
+      // `result` doğrudan `.error` ile okunursa bu durumda TypeError fırlatır,
+      // `catch` olmadığı için `void handleSubmit(event)` sessizce yutar ve
+      // düğme SONSUZA DEK `disabled` kalır (`setPending(false)` hiç çalışmaz).
+      // `as` ile tipi GERÇEĞE (çalışma zamanı davranışına) göre genişletiyoruz —
+      // `no-unnecessary-condition` deklare edilen (yanlış) tipe güvenip bu
+      // savunmayı "gereksiz" sayardı.
+      const result = (await signIn('credentials', { email, password, redirect: false })) as
+        Awaited<ReturnType<typeof signIn>> | undefined
+      if (result === undefined || result.error !== undefined) {
+        setError('INVALID_CREDENTIALS')
+        return
+      }
+      router.push(donus)
+    } catch {
+      // Ağ kesikse `signIn` reddedilir — aynı sessiz kilitlenme sınıfı.
+      setError('NETWORK')
+    } finally {
+      setPending(false)
     }
-    router.push(donus)
   }
 
   return (
