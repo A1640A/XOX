@@ -155,9 +155,9 @@
         "packages/db/src/indexes.ts",
         "packages/db/package.json"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/DB-001",
       "report": null,
       "acceptance": [
         "RoomDoc tasarım §3.2'deki TÜM alanları taşır: state, seats (SeatOccupant subdoc: userId+name), presence (connId+since), board (9 hücre), moves[], turnDeadline, disconnected{seat,at,graceEndsAt}, rematch{by,expiresAt}, lastEmoji, gameId, version, startedAt",
@@ -187,9 +187,9 @@
         "packages/shared/src/ws-client.test.ts",
         "packages/shared/src/index.ts"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/CTR-002",
       "report": null,
       "acceptance": [
         "roomClientReducer(state, event) => { state, effects } SAF: DOM, soket, timer, Date.now() doğrudan kullanımı yok (zaman girdi olarak verilir). Testler jsdom olmadan koşar",

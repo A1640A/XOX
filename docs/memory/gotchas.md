@@ -2,6 +2,14 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Worktree `.env.local`-i ALMAZ — Atlas-a kosan testler orada patlar
+
+`git worktree add` yalnizca izlenen dosyalari getirir; `.env.local` gitignore-da oldugu icin
+yeni worktree-de YOKTUR. Gercek Atlas-a kosan testler (packages/db) `MONGODB_URI tanimli degil`
+ile duser ve agent bunu "veritabani erisilemez" diye yanlis teshis eder.
+**Yapilacak:** Worktree acar acmaz `cp .env.local <worktree>/.env.local`. Lead-in dalga
+kurulum adiminin parcasi olmali.
+
 ## 2026-08-24 · ⚠️ Kendine-referansli test SILMEYI goremez — beklenti disaridan gelmeli
 
 Bir semanin alanlarini `schema.shape`-ten turetip "her alan zorunlu" testi yazarsan, o alan
