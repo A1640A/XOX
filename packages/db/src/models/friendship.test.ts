@@ -107,4 +107,38 @@ describe('Friendship modeli', () => {
     const found = await Friendship.findOne({ userA, userB }).lean()
     expect(found?.requestedBy).toBe(userA)
   })
+
+  it('$set içindeki ters sıralı userA/userB de reddedilir (filtre değil $set kontrol ediliyor)', async () => {
+    const [small, big] = sortedPair()
+    createdPairs.push({ userA: small, userB: big }, { userA: big, userB: small })
+    await Friendship.create({ userA: small, userB: big, requestedBy: small })
+
+    await expect(
+      Friendship.updateOne({ userA: small, userB: big }, { $set: { userA: big, userB: small } }),
+    ).rejects.toThrow(/küçük olmalıdır/)
+  })
+
+  it("userA/userB'ye dokunmayan bir updateOne (yalnız status) aşırı-geniş şekilde reddedilmez", async () => {
+    const [userA, userB] = sortedPair()
+    createdPairs.push({ userA, userB })
+    const doc = await Friendship.create({ userA, userB, requestedBy: userA })
+
+    await Friendship.updateOne({ _id: doc._id }, { $set: { status: 'accepted' } })
+
+    const found = await Friendship.findOne({ userA, userB }).lean()
+    expect(found?.status).toBe('accepted')
+  })
+
+  it('replaceOne ile ters sıralı bir dokümanla değiştirmek reddedilir', async () => {
+    const [small, big] = sortedPair()
+    createdPairs.push({ userA: small, userB: big }, { userA: big, userB: small })
+    await Friendship.create({ userA: small, userB: big, requestedBy: small })
+
+    await expect(
+      Friendship.replaceOne(
+        { userA: small, userB: big },
+        { userA: big, userB: small, requestedBy: big, status: 'pending' },
+      ),
+    ).rejects.toThrow(/küçük olmalıdır/)
+  })
 })

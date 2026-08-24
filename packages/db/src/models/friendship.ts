@@ -44,11 +44,14 @@ function readOrderCandidate(
   query: Query<unknown, FriendshipDoc>,
   field: 'userA' | 'userB',
 ): string | undefined {
-  const update = query.getUpdate() as Record<string, unknown> | null
-  const setPart =
-    update !== null && '$set' in update
-      ? (update['$set'] as Record<string, unknown> | undefined)
-      : (update ?? undefined)
+  // Bu hook yalnız updateOne/findOneAndUpdate/replaceOne'a bağlı — üçü de
+  // çağrıya bir güncelleme/yerine koyma gövdesi VERMEK ZORUNDADIR, `getUpdate()`
+  // tipin izin verdiği `null`ü pratikte asla döndürmez. `updateOne`/
+  // `findOneAndUpdate` operatörlü ($set) günceller; `replaceOne` tüm dokümanı
+  // operatörsüz verir — ikisi de burada tek yoldan geçer.
+  const update = query.getUpdate() as Record<string, unknown>
+  const setPart = ('$set' in update ? update['$set'] : update) as
+    Record<string, unknown> | undefined
   const fromUpdate = setPart?.[field]
   if (typeof fromUpdate === 'string') return fromUpdate
 

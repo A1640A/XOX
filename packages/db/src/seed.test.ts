@@ -1,5 +1,5 @@
 import { verify } from '@node-rs/argon2'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { connectDb, disconnectDb } from './client'
 import { User } from './models/user'
 import { TEST_USERS, TEST_USER_PASSWORD, seedTestUsers } from './seed'
@@ -44,5 +44,27 @@ describe('seedTestUsers', () => {
       expect(found?.theme).toBe('acik')
       expect(found?.stats).toStrictEqual({ wins: 0, losses: 0, draws: 0 })
     }
+  })
+
+  // Son test: bu CLI dalı disconnectDb() çağırır. resetModules ile taze bir
+  // içe aktarma tetiklenmezse ES modülü zaten yüklü sayılır ve üst seviye
+  // gövde ikinci kez ÇALIŞMAZ (reset.test.ts'teki kalıpla aynı).
+  it('doğrudan çalıştırıldığında CLI girişi seedTestUsers çalıştırır ve bağlantıyı kapatır', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const originalArgv = [...process.argv]
+    process.argv = ['node', '/repo/packages/db/src/seed.ts']
+    try {
+      vi.resetModules()
+      await import('./seed')
+    } finally {
+      process.argv = originalArgv
+    }
+
+    expect(warn).toHaveBeenCalledWith(`${String(TEST_USERS.length)} test kullanıcısı hazır`)
+
+    // Sonraki test dosyaları için bağlantıyı geri kur — bu dosyanın kendi
+    // afterAll'u zaten no-op disconnectDb çağırır, burada yeniden bağlanmak
+    // dosyanın geri kalanının varsayımını bozmaz (bu son test).
+    await connectDb()
   })
 })

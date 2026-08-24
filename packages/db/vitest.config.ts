@@ -17,7 +17,11 @@ export default mergeConfig(
       fileParallelism: false,
       coverage: {
         thresholds: { lines: 90, branches: 85, functions: 90, statements: 90 },
-        exclude: ['src/seed.ts', 'src/models/**', 'src/vitest.setup.ts'],
+        // Artık gerçek xox_test testleri var — models/** ve seed.ts'i dışlamanın
+        // gerekçesi kalmadı. Dışlanırsa presence gibi bir alan silinse bile eşik
+        // yeşil kalır (bkz. gotcha: kendine-referanslı test silmeyi göremez —
+        // aynı sınıf risk kapsam dışlamada da var).
+        exclude: ['src/vitest.setup.ts'],
       },
     },
   }),
