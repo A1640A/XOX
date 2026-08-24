@@ -4,6 +4,7 @@ import {
   EMPTY_BOARD,
   availableMoves,
   boardFromCells,
+  boardToString,
   cellAt,
   nextPlayer,
 } from './board'
@@ -75,6 +76,21 @@ describe('boardFromCells', () => {
     expect(() =>
       boardFromCells(asCells([null, null, null, null, null, null, null, null, 0])),
     ).toThrow('Tahta hücresi 8 geçersiz')
+  })
+})
+
+describe('boardToString', () => {
+  it('boş tahtayı dokuz nokta olarak döndürür', () => {
+    expect(boardToString(EMPTY_BOARD)).toBe('.........')
+  })
+
+  it('her hücreyi X, O ya da nokta olarak yazar', () => {
+    expect(boardToString(b('XO.XO.XO.'))).toBe('XO.XO.XO.')
+  })
+
+  it('gidiş-dönüş: metne çevrilip boardFromCells ile geri okunan tahta birebir eşittir', () => {
+    const board = b('XXO.O.X..')
+    expect(b(boardToString(board))).toEqual(board)
   })
 })
 

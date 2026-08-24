@@ -1,11 +1,11 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-24T03:05:00.000Z",
+  "updatedAt": "2026-08-24T03:12:00.000Z",
   "nightRun": {
     "active": false,
     "deadline": null,
-    "wave": 0,
+    "wave": 1,
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0
   },
@@ -31,6 +31,25 @@
         "https://xox.omerdursun.com production deploy'a çözülüyor"
       ],
       "blockedReason": "omerdursun.com, CLI oturumunun eriştiği izrandevu takımında DEĞİL. Nameserver'lar Vercel'i gösteriyor ama DNS kaydı oluşturma yetkisi yok (API: forbidden). Alan adı projeye eklendi fakat doğrulanmadı; _vercel.omerdursun.com TXT kaydı gerekiyor: vc-domain-verify=xox.omerdursun.com,ffba88a9a4221f5940e2 — ÖMER'DEN GEREKEN: (a) omerdursun.com'u izrandevu takımına taşı/paylaş, VEYA (b) bu TXT kaydını sahibi olduğun Vercel hesabından ekle, VEYA (c) hangi hesabın sahip olduğunu söyle. Bu blocker yalnızca production domainini etkiler; preview deploy'lar ve tüm e2e doğrulaması çalışıyor."
+    },
+    {
+      "id": "DRY-001",
+      "title": "Kuru koşu: game-core'a boardToString yardımcısı ekle",
+      "tier": "P0",
+      "agent": "xox-dev-core",
+      "deps": [],
+      "conflictSet": ["packages/game-core/src/board.ts", "packages/game-core/src/board.test.ts"],
+      "status": "done",
+      "attempts": 0,
+      "branch": "feat/DRY-001",
+      "report": "docs/board/reports/DRY-001.md",
+      "acceptance": [
+        "boardToString(EMPTY_BOARD) '.........' döner",
+        "boardToString her hücreyi X, O veya . olarak yazar",
+        "boardFromCells(boardToString çıktısını parse eden) round-trip çalışır",
+        "game-core kapsamı %100 kalır, mutasyon skoru >= 90"
+      ],
+      "blockedReason": null
     }
   ]
 }

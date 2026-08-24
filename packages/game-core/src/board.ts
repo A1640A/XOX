@@ -57,6 +57,25 @@ export function boardFromCells(cells: readonly Cell[]): Board {
   return cells as Board
 }
 
+/**
+ * `boardFromCells`'in tersini yapar: tahtayı hata ayıklama çıktısı ve testler
+ * için okunabilir tek satır metne çevirir. Her hücre `X`, `O` ya da boşsa `.`
+ * olur — `EMPTY_BOARD` için sonuç dokuz nokta içeren bir dizedir.
+ *
+ * Round-trip sözleşmesi: bu çıktı `Array.from` ile karakterlere bölünüp
+ * `boardFromCells`'e geri verildiğinde aynı tahtayı üretir. Paket içindeki her
+ * test dosyası bunu elle yazan bir `b(s)` yardımcısıyla tekrarlıyordu; bu
+ * fonksiyon tersini yaparak o dizeyi üretir.
+ */
+export function boardToString(board: Board): string {
+  const chars: string[] = []
+  for (let index = 0; index < BOARD_SIZE; index += 1) {
+    const cell = cellAt(board, index)
+    chars.push(cell ?? '.')
+  }
+  return chars.join('')
+}
+
 export function availableMoves(board: Board): number[] {
   const moves: number[] = []
   for (let i = 0; i < BOARD_SIZE; i += 1) {
