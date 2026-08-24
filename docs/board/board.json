@@ -100,10 +100,10 @@
         "knip.json",
         "turbo.json"
       ],
-      "status": "in_wave",
+      "status": "review",
       "attempts": 0,
       "branch": "feat/OPS-002",
-      "report": null,
+      "report": "docs/board/reports/OPS-002.md",
       "acceptance": [
         "apps/web/package.json'a `\"dev:ws\": \"vc dev --listen 3000\"` script'i eklenir; raporda `vc --version` çıktısı >= 54.14.2 yazılı (gotcha: next dev WS'i desteklemez)",
         "SICAK DOSYA DONDURMA: apps/web'in TÜM proje boyu ihtiyacı olan bağımlılıklar ŞİMDİ eklenir — @xox/shared, @xox/ui-tokens, @xox/game-core, mongodb (mongoose'un çözdüğü sürümle aynı; gotcha: `import type` bile doğrudan bağımlılık ister), next-auth@beta (5.x), @node-rs/argon2, jose, zod@4.4.3, @vercel/analytics, @vercel/speed-insights ve devDependency @testing-library/react. Böylece Dalga 0c'de iki agent aynı package.json'a dokunmak zorunda kalmaz",
@@ -288,7 +288,8 @@
         "lib/auth/identity.ts resolveIdentity(req) üç kaynağı SABİT SIRAYLA dener: Authorization: Bearer -> Auth.js çerezi -> ?ticket=. Üçü de AYNI userId'ye çözülür (KK-010 birim testi tam olarak budur). Kimlik yoksa null döner",
         "POST /api/ws/ticket oturumlu istekte { ticket, expiresIn } döner, oturumsuzda 401 UNAUTHENTICATED (ADR-0006)",
         "apps/web/package.json'a ve knip.json'a DOKUNULMAZ — bağımlılıklar OPS-002'de eklendi",
-        "pnpm gates temiz"
+        "pnpm gates temiz",
+        "Vercel env tamamlanir: AUTH_SECRET development ortamina, AUTH_TRUST_HOST=true preview ortamina eklenir (preview URL her deploy degistigi icin sabit AUTH_URL yanlis olur; Auth.js v5 host-u istekten cikarir). OPS-002 raporunda tespit edildi."
       ],
       "blockedReason": null
     },

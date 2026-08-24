@@ -108,3 +108,13 @@ istemci hemen yeniden bağlanacağı için `disconnected` en fazla bir saniye ya
 - 📌 Ölçüm: Dalga 0e'nin E2E raporu bir rotasyon turunu **kasıtlı olarak** tetiklemez
   (300 sn'lik test kabul edilemez) — bunun yerine `WS_ROTATE_MARGIN_MS`'i test ortamında
   ezerek 5 saniyede rotasyon yaptıran bir birim/entegrasyon testi yazılır.
+
+## Güncelleme — 2026-08-24 (OPS-002)
+
+Takımın Vercel planı **Pro** olarak doğrulandı (`billing.plan: "pro"`, API'den okundu).
+Fonksiyon süre tavanı bu yüzden 300s değil **800s**; `apps/web/vercel.json` içinde
+`functions["app/api/rooms/[code]/ws/route.ts"].maxDuration = 800` olarak ayarlandı.
+
+Sonuç: planlı bağlantı rotasyonu ~5 dakikada bir değil **~13 dakikada bir** olacak.
+Karar değişmiyor — rotasyon hâlâ ana akış, sadece daha seyrek. `getDeadline()` değeri
+koddan değil `vercel.json`'dan okumaya devam etsin ki plan değişirse tek yerden ayarlansın.
