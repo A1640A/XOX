@@ -4,12 +4,40 @@ import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'r
 import {
   createRoomWsClient,
   initialRoomClientState,
+  nextReconnectDelay,
   type Emoji,
   type RoomClientState,
   type RoomCode,
   type RoomWsClient,
   type SocketLike,
 } from '@xox/shared'
+
+/**
+ * ADR-0006 "attempt taşınır: bileti tazeleyen taraf bozuk bilet döngüsünde
+ * pes edebilmeli" — 4401 (kimlik reddi) art arda gelirse bu kadar denemeden
+ * sonra vazgeçilir. Aşılırsa `client.close()` çağrılır: reducer'ın kendi
+ * `client:closed` yolundan `connection: 'kopuk'` olur, `lastError` bir önceki
+ * `requiresReauth` geçişinden zaten `'UNAUTHENTICATED'`dir — kullanıcı donmuş
+ * "Bağlanıyor…" yerine gerçek bir hata görür ve `ConnectionBadge`nin
+ * `onRetry`ı (`actions.reconnect`) ile MANUEL yeniden dener.
+ */
+const MAX_REAUTH_ATTEMPTS = 5
+
+/**
+ * MAJOR düzeltmesi: `useSyncExternalStore`'un üçüncü argümanı (`getServerSnapshot`)
+ * her çağrıda AYNI referansı döndürmek ZORUNDADIR. Önceki sürüm
+ * `() => initialRoomClientState()` yazıyordu — bu fonksiyon her çağrıda YENİ
+ * bir nesne üretiyor, `useCallback` yalnız fonksiyon KİMLİĞİNİ sabitliyordu,
+ * DÖNEN DEĞERİ değil. Canlı kanıt: `hydrateRoot` altında React
+ * "The result of getServerSnapshot should be cached to avoid an infinite
+ * loop" uyarısı basıyordu (bkz. `use-room.test.tsx`, `renderToString` +
+ * `hydrateRoot` sondası) — `/oda/[kod]` bir istemci bileşeni olarak SSR
+ * edildiği için bu HER sayfa yüklemesinde tetikleniyordu. RTL'in `render()`'ı
+ * hidrasyon yapmadığı için önceki 8 test de bunu görmüyordu.
+ * Tek modül-düzeyi dondurulmuş örnek — hiçbir yerde MUTATE edilmez
+ * (`RoomClientState`in tüm alanları zaten `readonly`).
+ */
+const SERVER_SNAPSHOT: RoomClientState = initialRoomClientState()
 
 // knip: dışarıda kimse bu tipi doğrudan import etmiyor (yalnız `UseRoomResult.actions`
 // alanı üzerinden erişiliyor) — export edilirse "kullanılmayan export" sayılır.
@@ -95,7 +123,7 @@ function defaultDeps(): UseRoomDeps {
  */
 export function useRoom(roomCode: RoomCode, deps?: Partial<UseRoomDeps>): UseRoomResult {
   const listenersRef = useRef(new Set<() => void>())
-  const stateRef = useRef<RoomClientState>(initialRoomClientState())
+  const stateRef = useRef<RoomClientState>(SERVER_SNAPSHOT)
   const clientRef = useRef<RoomWsClient | null>(null)
   // Yalnız İLK render'da okunur (lazy `useRef` başlangıç değeri) — testin
   // enjekte ettiği sahte `createSocket`/`now`/`rng` budur. `deps` normalde
@@ -110,7 +138,43 @@ export function useRoom(roomCode: RoomCode, deps?: Partial<UseRoomDeps>): UseRoo
     // render sırasında ref'in değerini okuyabilir" uyarısı. Efekt render
     // DIŞINDA çalıştığı için `clientRef`i burada güvenle okuyup yazabiliriz.
     const resolved = { ...defaultDeps(), ...depsRef.current }
-    const client = createRoomWsClient({
+    let reauthTimer: ReturnType<typeof setTimeout> | null = null
+    // `let` + sonradan atama BİLEREK: `handleReauth` `client`i kapanış olarak
+    // yakalar ama yalnızca SOKET OLAYINDAN sonra (asenkron) çağrılır — bu satır
+    // hiçbir zaman `client` atanmadan ÇALIŞTIRILMAZ. İnceleme bulgusu: bunu
+    // ayrı bir `let` ile açık yazmak (tek bir iç içe nesne yerine, ki o zaman
+    // `createRoomWsClient({ onReauth: () => client.connect() })` kendi
+    // initializer'ı İÇİNDE `client`e referans verirdi) niyeti netleştiriyor.
+    // `prefer-const` bunun TEK atama olduğunu görüp `const`a zorlar ama `const`
+    // ile yazmanın TEK yolu tam olarak kaçınmak istediğimiz iç içe kalıptır.
+    // eslint-disable-next-line prefer-const
+    let client: RoomWsClient
+
+    /**
+     * BLOKER düzeltmesi: 4401 (kimlik reddi) art arda geldiğinde önceki sürüm
+     * `attempt`i yok sayıp anında `connect()` çağırıyordu — sunucu her seferinde
+     * 4401 ile kapatırsa bu, aralarında gecikme OLMAYAN sonsuz bir yeniden
+     * bağlanma fırtınasıydı (canlı ölçüm: 21 kapanış → 22 soket, 0 ms). Şimdi:
+     * eşik altında `nextReconnectDelay(attempt, rng)` kadar bekleyip TEK bir
+     * `setTimeout` ile yeniden dener; eşik (`MAX_REAUTH_ATTEMPTS`) aşılırsa
+     * `client.close()` ile TEMİZ pes eder (`connection: 'kopuk'`,
+     * `lastError` zaten `'UNAUTHENTICATED'`), bir daha KENDİLİĞİNDEN denemez.
+     */
+    function handleReauth(attempt: number): void {
+      if (attempt >= MAX_REAUTH_ATTEMPTS) {
+        client.close()
+        return
+      }
+      reauthTimer = setTimeout(
+        () => {
+          reauthTimer = null
+          client.connect()
+        },
+        nextReconnectDelay(attempt, resolved.rng),
+      )
+    }
+
+    client = createRoomWsClient({
       url: browserWsUrl(roomCode),
       roomCode,
       createSocket: resolved.createSocket,
@@ -127,20 +191,24 @@ export function useRoom(roomCode: RoomCode, deps?: Partial<UseRoomDeps>): UseRoo
       // ADR-0006: bilet önce tazelenir, sonra bağlanılır. Bu iskelette taze
       // bilet almadan doğrudan yeniden bağlanmayı dener — gerçek `POST
       // /api/ws/ticket` çağrısı W1-03'te eklenir (kopma/yeniden bağlanma görevi).
-      onReauth: () => {
-        client.connect()
-      },
+      onReauth: handleReauth,
     })
     clientRef.current = client
     client.connect()
 
     return () => {
+      // Bekleyen bir reauth zamanlayıcısı varsa temizle — aksi hâlde unmount
+      // SONRASI `connect()` çağrılır (yetim bir soket açılır, hiçbir dinleyici
+      // güncellemeyi göremez ama bağlantı sızar).
+      if (reauthTimer !== null) clearTimeout(reauthTimer)
       client.close()
       clientRef.current = null
     }
-    // roomCode değişmez (rota parametresi) — bu efekt yalnız mount/unmount'ta çalışır.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // roomCode DEĞİŞEBİLİR (bulgu #3: aynı dinamik segment içinde istemci-taraflı
+    // gezinme bileşeni remount etmeyebilir) — efekt bunu bağımlılık olarak alır,
+    // böylece kod değişince eski soket kapanır ve YENİ roomCode'a bağlı bir
+    // soket açılır. Yanlış odaya hamle gitmesini önleyen tek mekanizma budur.
+  }, [roomCode])
 
   const subscribe = useCallback((onStoreChange: () => void) => {
     listenersRef.current.add(onStoreChange)
@@ -150,7 +218,7 @@ export function useRoom(roomCode: RoomCode, deps?: Partial<UseRoomDeps>): UseRoo
   }, [])
 
   const getSnapshot = useCallback(() => stateRef.current, [])
-  const getServerSnapshot = useCallback(() => initialRoomClientState(), [])
+  const getServerSnapshot = useCallback(() => SERVER_SNAPSHOT, [])
 
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
