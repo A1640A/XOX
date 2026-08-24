@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "seed": "tsx src/seed.ts",
-    "reset": "tsx src/reset.ts"
+    "reset": "tsx src/reset.ts",
+    "migrate": "tsx src/migrate.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "2.1.0",

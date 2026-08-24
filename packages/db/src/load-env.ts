@@ -9,8 +9,13 @@ import { fileURLToPath } from 'node:url'
  */
 export function loadEnvLocal(): void {
   if (process.env['MONGODB_URI'] !== undefined) return
-  // `import.meta.dirname` tipte `string | undefined` (Node 20.11+ runtime-inda hep dolu,
-  // ama @types/node surumune gore daraltilmiyor). fileURLToPath geri donusu her surumde calisir.
+  // `import.meta.dirname` bazı @types/node sürümlerinde `string | undefined`,
+  // bazılarında (bu lockfile'da OPS-003 sırasında CANLI doğrulandı — aynı
+  // pnpm-lock.yaml'a karşı iki ayrı temiz `pnpm install` farklı @types/node
+  // çözümü verdi) `string` daralıyor ve `no-unnecessary-condition` bu ikinci
+  // durumda tetikleniyor. Savunma AMA olarak kalsın (runtime'da her ikisi de
+  // güvenli) — kural burada bilerek susturuluyor.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- @types/node sürüm kararsızlığı, yukarı bak
   const here = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url))
   const envPath = resolve(here, '../../../.env.local')
   if (!existsSync(envPath)) return
