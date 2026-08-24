@@ -187,3 +187,51 @@
 {"ts":"2026-08-24T18:50:00Z","wave":1,"event":"task.done","task":"CTR-001","agent":"xox-dev-core","tests":"214","coverage":"100%","note":"8 bulgu kapandi; kendine-referansli test tuzagi bulundu ve iki katmanla cozuldu"}
 {"ts":"2026-08-24T18:52:00Z","wave":1,"event":"merge.ok","tasks":["CTR-001","OPS-002","UI-001","RT-PROBE-001"],"note":"cakisma yok, 5 kapi yesil"}
 {"ts":"2026-08-24T18:55:00Z","wave":2,"event":"decision","summary":"fra1 bolge duzeltmesi sonrasi change stream p95 98.6ms -> 8.7ms (11x). Butcenin %0.58i."}
+{"ts":"2026-08-24T18:39:09Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/package.json"}
+{"ts":"2026-08-24T18:46:54Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.ts"}
+{"ts":"2026-08-24T18:47:12Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.ts"}
+{"ts":"2026-08-24T18:47:25Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/user.ts"}
+{"ts":"2026-08-24T18:47:34Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.ts"}
+{"ts":"2026-08-24T18:47:44Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/mobile-refresh-token.ts"}
+{"ts":"2026-08-24T18:48:01Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/indexes.ts"}
+{"ts":"2026-08-24T18:48:06Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.test.ts"}
+{"ts":"2026-08-24T18:48:12Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/seed.ts"}
+{"ts":"2026-08-24T18:48:19Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/index.ts"}
+{"ts":"2026-08-24T18:48:31Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/vitest.setup.ts"}
+{"ts":"2026-08-24T18:48:52Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/vitest.config.ts"}
+{"ts":"2026-08-24T18:49:04Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/vitest.config.ts"}
+{"ts":"2026-08-24T18:49:33Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.ts"}
+{"ts":"2026-08-24T18:49:46Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.ts"}
+{"ts":"2026-08-24T18:50:15Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.test.ts"}
+{"ts":"2026-08-24T18:50:16Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.ts"}
+{"ts":"2026-08-24T18:50:24Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.test.ts"}
+{"ts":"2026-08-24T18:50:25Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.test.ts"}
+{"ts":"2026-08-24T18:51:00Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/vitest.setup.ts"}
+{"ts":"2026-08-24T18:51:02Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.ts"}
+{"ts":"2026-08-24T18:51:23Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.test.ts"}
+{"ts":"2026-08-24T18:51:30Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.ts"}
+{"ts":"2026-08-24T18:51:48Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.test.ts"}
+{"ts":"2026-08-24T18:52:05Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/user.test.ts"}
+{"ts":"2026-08-24T18:52:08Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/index.ts"}
+{"ts":"2026-08-24T18:52:17Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.test.ts"}
+{"ts":"2026-08-24T18:52:26Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/mobile-refresh-token.test.ts"}
+{"ts":"2026-08-24T18:52:42Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/indexes.test.ts"}
+{"ts":"2026-08-24T18:52:53Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/seed.test.ts"}
+{"ts":"2026-08-24T18:53:40Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/user.test.ts"}
+{"ts":"2026-08-24T18:54:34Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/indexes.test.ts"}
+{"ts":"2026-08-24T18:54:42Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/ws-client.test.ts"}
+{"ts":"2026-08-24T18:55:25Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/ws-client.ts"}
+{"ts":"2026-08-24T18:55:46Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/ws-client.ts"}
+{"ts":"2026-08-24T18:55:55Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/ws-client.ts"}
+{"ts":"2026-08-24T18:56:40Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.test.ts"}
+{"ts":"2026-08-24T18:58:10Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/index.ts"}
+{"ts":"2026-08-24T18:58:16Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/index.ts"}
+{"ts":"2026-08-24T18:58:26Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/package.json"}
+{"ts":"2026-08-24T19:00:09Z","event":"file.touched","path":"docs/board/reports/DB-001.md"}
+{"ts":"2026-08-24T19:01:01Z","event":"file.touched","path":".claude/worktrees/CTR-002/docs/board/reports/CTR-002.md"}
+{"ts":"2026-08-24T19:01:54Z","event":"file.touched","path":".claude/worktrees/DB-001/docs/board/reports/DB-001.md"}
+{"ts":"2026-08-24T19:01:58Z","event":"file.touched","path":".claude/worktrees/CTR-002/docs/board/reports/CTR-002.md"}
+{"ts":"2026-08-24T19:03:48Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.test.ts"}
+{"ts":"2026-08-24T19:03:49Z","event":"subagent.stop"}
+{"ts":"2026-08-24T19:03:54Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.test.ts"}
+{"ts":"2026-08-24T19:35:00Z","wave":2,"event":"task.done","task":"DB-001","agent":"xox-dev-backend","tests":"49","coverage":"100%","note":"gercek Atlas xox_test; indeks tablosu elle yazildi; passwordHash gizliligi iki yonlu kanitli"}

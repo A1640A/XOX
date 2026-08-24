@@ -155,10 +155,10 @@
         "packages/db/src/indexes.ts",
         "packages/db/package.json"
       ],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/DB-001",
-      "report": null,
+      "report": "docs/board/reports/DB-001.md",
       "acceptance": [
         "RoomDoc tasarım §3.2'deki TÜM alanları taşır: state, seats (SeatOccupant subdoc: userId+name), presence (connId+since), board (9 hücre), moves[], turnDeadline, disconnected{seat,at,graceEndsAt}, rematch{by,expiresAt}, lastEmoji, gameId, version, startedAt",
         "GameDoc §3.3'teki TÜM alanları taşır: players{X,O}, participants[], pairKey (sıralı `a|b`), board, moves[], winner, isDraw, endReason, winLine, rated, eloDelta{X,O}, finishedAt, settledAt",
