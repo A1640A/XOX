@@ -2,6 +2,15 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Dalga uçuştayken lead-in `git add -A` kullanmasi is karistirir
+
+Dort agent paralel worktree-de calisirken biri yanlislikla ana checkout-a dosya yazabilir
+(rapor yolunu mutlak yerine goreli verirse kolayca olur). Lead o sirada `git add -A` ile
+commit atarsa, merge edilmemis bir isin raporu `main`-e girer; sonra o dal merge edilirken
+ayni dosya iki yerde olur ve celisirse cakisir.
+**Yapilacak:** Dalga sirasinda lead yalnizca ACIK YOL stage etsin:
+`git add docs/board/board.json docs/board/journal.ndjson`. Raporlari merge getirir.
+
 ## 2026-08-24 · Hook scriptlerinde `node -e` govdesine kesme isareti yazma
 
 Hook scriptleri JS govdesini tek tirnakli `node -e '...'` icinde tasiyor. Turkce metinde kesme

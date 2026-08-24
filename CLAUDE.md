@@ -10,6 +10,9 @@ Türkçe XOX oyunu. Web (Next.js → Vercel) + mobil (Expo). Online oda, gerçek
 3. **Secret asla commit edilmez.** Repo PUBLIC. `.env.local` ve türevleri `.gitignore`'da.
 4. **Kural mantığı yalnızca `packages/game-core`'da.** `web` ve `mobile` kuralı yeniden yazmaz, delege eder.
 5. **Bir subagent "bitti" dediğinde inanma — doğrula.** Definition of Done'ı sen çalıştırırsın.
+6. **Dalga uçuştayken `git add -A` KULLANMA.** Paralel agentlar yanlışlıkla ana checkout'a
+   dosya yazabilir; kör staging onları merge edilmemiş işin raporu olarak `main`'e sokar.
+   Dalga sırasında yalnızca açık yol stage et: `git add docs/board/board.json docs/board/journal.ndjson`
 
 ## Dizin haritası
 
