@@ -41,10 +41,10 @@
       "agent": "xox-dev-core",
       "deps": [],
       "conflictSet": ["packages/shared/**"],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/CTR-001",
-      "report": null,
+      "report": "docs/board/reports/CTR-001.md",
       "acceptance": [
         "game-status.ts: transportStatusSchema superRefine değişmezi İKİ YÖNLÜ testle kanıtlanır — {kind:'won',reason:'resign',line:[0,1,2]} REDDEDİLİR ve {kind:'won',reason:'line',line:null} REDDEDİLİR (tasarım §2.1)",
         "toTransportStatus(evaluateStatus(<kazanan tahta>)) reason:'line' üretir ve çizgiyi korur; forfeitStatus(winner,'resign'|'timeout'|'abandon') her zaman line:null verir",

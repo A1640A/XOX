@@ -2,6 +2,17 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · `boundaries` cozulemeyen import-ta SESSIZ kalir — lint yesili kanit degil
+
+Var olmayan bir pakete yapilan import `boundaries/dependencies` tarafindan "unknown" sayilir ve
+hicbir politika atesler. Yani bir bagimlilik sinirini "lint yesil, demek ki temiz" diye dogrulamak
+YANLIS: import zaten cozulemiyorsa kural hic bakmamistir.
+**Yapilacak:** Sinir sondasi yazarken hedefin GERCEKTEN var oldugundan emin ol; kanit `tsc`
+(TS2307 vermiyorsa cozuluyor demektir) + boundaries hatasinin birlikte gorulmesidir.
+CTR-001 sondasi dogru yontemle kosuldu: gercek `apps/web/app/api/health/route` import edildi ve
+"There is no policy allowing dependencies from elements of type shared to elements of type web"
+hatasi alindi.
+
 ## 2026-08-24 · Dalga uçuştayken lead-in `git add -A` kullanmasi is karistirir
 
 Dort agent paralel worktree-de calisirken biri yanlislikla ana checkout-a dosya yazabilir
