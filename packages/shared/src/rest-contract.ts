@@ -9,8 +9,7 @@ import {
 } from './constants'
 import { errorCodeSchema } from './errors'
 import { endReasonSchema } from './game-status'
-import { epochMsSchema, roomCodeSchema } from './primitives'
-import { playersSchema } from './ws-protocol'
+import { epochMsSchema, playersSchema, roomCodeSchema } from './primitives'
 
 /**
  * REST yüzeyinin gövde ve yanıt şemaları (tasarım §7).

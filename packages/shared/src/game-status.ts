@@ -1,4 +1,4 @@
-import { type GameStatus } from '@xox/game-core'
+import type { GameStatus } from '@xox/game-core'
 import { z } from 'zod'
 import { cellIndexSchema, type Player, playerSchema } from './primitives'
 

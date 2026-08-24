@@ -4,7 +4,16 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./constants": "./src/constants.ts",
+    "./errors": "./src/errors.ts",
+    "./game-status": "./src/game-status.ts",
+    "./message-keys": "./src/message-keys.ts",
+    "./primitives": "./src/primitives.ts",
+    "./rest-contract": "./src/rest-contract.ts",
+    "./testids": "./src/testids.ts",
+    "./ws-close": "./src/ws-close.ts",
+    "./ws-protocol": "./src/ws-protocol.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

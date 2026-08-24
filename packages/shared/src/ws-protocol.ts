@@ -7,6 +7,7 @@ import {
   cellIndexSchema,
   epochMsSchema,
   playerSchema,
+  playersSchema,
   roomCodeSchema,
 } from './primitives'
 
@@ -26,13 +27,6 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('chat:emoji'), emoji: emojiSchema }),
   z.object({ type: z.literal('ping') }),
 ])
-
-/** Koltuk sahibi: kimlik + **görünen ad** (KK-032 — tek round-trip). */
-export const seatOccupantSchema = z.object({ userId: z.string().min(1), name: z.string().min(1) })
-export const playersSchema = z.object({
-  X: seatOccupantSchema.nullable(),
-  O: seatOccupantSchema.nullable(),
-})
 
 export const rematchOfferSchema = z.object({ by: playerSchema, expiresAt: epochMsSchema })
 
@@ -113,8 +107,6 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
 ])
 
 export type Emoji = z.infer<typeof emojiSchema>
-export type SeatOccupant = z.infer<typeof seatOccupantSchema>
-export type Players = z.infer<typeof playersSchema>
 export type RematchOffer = z.infer<typeof rematchOfferSchema>
 export type StateMessage = z.infer<typeof stateMessageSchema>
 export type ClientMessage = z.infer<typeof clientMessageSchema>
