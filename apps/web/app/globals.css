@@ -1,26 +1,47 @@
-/* apps/web/app/globals.css — Tailwind v4 CSS-first; tailwind.config.js YOK */
+/* apps/web/app/globals.css — ÜRETİLİR, ELLE DÜZENLENMEZ.
+ * Kaynak: @xox/ui-tokens themeCss()/cssVariables(). Yeniden üretmek için
+ * generate-globals-css.ts'teki generateGlobalsCss() çıktısını buraya yapıştır
+ * (globals.css.test.ts ikisinin eşitliğini kilitler). Tailwind v4 CSS-first;
+ * tailwind.config.js YOK. */
 @import 'tailwindcss';
 
 @theme {
   --color-bg: #faf9f7;
   --color-surface: #ffffff;
-  --color-border: #e5e2dd;
+  --color-border: #857f79;
   --color-text: #1c1917;
+  --color-text-muted: #78716c;
   --color-accent: #2563eb;
   --color-player-x: #2563eb;
-  --color-player-o: #e11d48;
+  --color-player-o: #be123c;
+  --color-win: #15803d;
+  --color-danger: #dc2626;
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-bg: #17161a;
-    --color-surface: #211f26;
-    --color-border: #35323c;
-    --color-text: #f5f4f2;
-    --color-accent: #60a5fa;
-    --color-player-x: #60a5fa;
-    --color-player-o: #fb7185;
-  }
+[data-tema='acik'] {
+  --color-bg: #faf9f7;
+  --color-surface: #ffffff;
+  --color-border: #857f79;
+  --color-text: #1c1917;
+  --color-text-muted: #78716c;
+  --color-accent: #2563eb;
+  --color-player-x: #2563eb;
+  --color-player-o: #be123c;
+  --color-win: #15803d;
+  --color-danger: #dc2626;
+}
+
+[data-tema='koyu'] {
+  --color-bg: #17161a;
+  --color-surface: #211f26;
+  --color-border: #78727e;
+  --color-text: #f5f4f2;
+  --color-text-muted: #a8a29e;
+  --color-accent: #60a5fa;
+  --color-player-x: #60a5fa;
+  --color-player-o: #fb7185;
+  --color-win: #4ade80;
+  --color-danger: #f87171;
 }
 
 body {
