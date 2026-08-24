@@ -127,3 +127,16 @@
 {"ts":"2026-08-24T17:12:26Z","event":"file.touched","path":".claude/worktrees/OPS-002/apps/web/vercel.json"}
 {"ts":"2026-08-24T17:12:59Z","event":"file.touched","path":".claude/worktrees/OPS-002/docs/adr/0007-ws-baglanti-omru-ve-planli-rotasyon.md"}
 {"ts":"2026-08-24T17:00:00Z","wave":1,"event":"review.finding","task":"UI-001","agent":"xox-reviewer","findings":10,"major":3,"summary":"globals.css kaymis + hex yasagi .css gormuyor; win testi implementasyonsuz da yesil; Tailwind keyfi-deger yasagi atliyor"}
+{"ts":"2026-08-24T17:14:17Z","event":"file.touched","path":".claude/worktrees/OPS-002/apps/web/package.json"}
+{"ts":"2026-08-24T17:16:19Z","event":"file.touched","path":".claude/worktrees/RT-PROBE-001/docs/board/reports/RT-PROBE-001.md"}
+{"ts":"2026-08-24T17:17:11Z","event":"subagent.stop"}
+{"ts":"2026-08-24T17:17:37Z","event":"file.touched","path":".claude/worktrees/UI-001/eslint.config.mjs"}
+{"ts":"2026-08-24T17:17:55Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/colors.ts"}
+{"ts":"2026-08-24T17:18:12Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/contrast.ts"}
+{"ts":"2026-08-24T17:18:20Z","event":"subagent.stop"}
+{"ts":"2026-08-24T17:18:21Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/contrast.ts"}
+{"ts":"2026-08-24T17:18:38Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/contrast.test.ts"}
+{"ts":"2026-08-24T17:18:53Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/css.ts"}
+{"ts":"2026-08-24T17:19:01Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/css.ts"}
+{"ts":"2026-08-24T17:19:52Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/css.test.ts"}
+{"ts":"2026-08-24T17:20:00Z","wave":1,"event":"decision","task":"RT-PROBE-001","summary":"KARAR KAPISI GECILDI: change stream p95=98.6ms vs 1500ms butce. ADR-0002 onaylandi, Redis yedegi iptal."}

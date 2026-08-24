@@ -2,6 +2,35 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · ⚠️ `Model.watch()` TIPI YALAN SOYLUYOR — `resumeToken` yok
+
+Mongoose `Model.watch()` tipte `mongodb.ChangeStream` doner ama calisma aninda mongoose-un kendi
+sarmalayicisidir ve **`resumeToken` alani YOKTUR**. `stream.resumeToken` DERLENIR, tip hatasi
+vermez, sessizce `undefined` kalir. ADR-0002-nin "kopmada `startAfter: resumeToken` ile yeniden
+ac" maddesi bu haliyle yazilirsa hicbir sey yapmaz: hata yok, tip hatasi yok, test yesil,
+reconnect dayanikliligi sessizce olur.
+Preview kaniti (RT-PROBE-001, her kosuda): `resumeTokenOnWrapper: false`, `resumeTokenOnDriver: true`.
+**Yapilacak:** Token-i `resumeTokenChanged` olayindan sakla. Ayrica stream-in hazir oldugunu
+anlamak icin `resumeToken` yoklamasi YAPMA — gercek Atlas-ta 8 saniye bos bekler; dogru sinyal
+mongoose-un tiplerde gorunmeyen `ready` olayidir.
+
+## 2026-08-24 · `vercel.json` icindeki `regions` Hobby/Pro-da yurumez
+
+Fonksiyon bolgesini projenin `serverlessFunctionRegion` ayari belirler; `vercel.json`-daki
+`regions` cok-bolgeli Enterprise icindir. Varsayilan `iad1` (Virginia) kalir ve kimse fark etmez.
+Belirti: `vercel inspect` tum lambda-lari `iad1` gosterir.
+**Yapilacak:** Bolgeyi proje ayarindan degistir (API: `PATCH /v9/projects/<id>`
+`{"serverlessFunctionRegion":"fra1"}`) ve `vercel inspect` ile DOGRULA.
+Teshis ipucu: RT-PROBE olcumu Istanbul-dan Atlas-a p50 63 ms, iad1-den 96 ms verdi — iad1
+Istanbul-dan YAVAS olmasi Atlas-in Avrupa-da oldugunu ve fonksiyonlarin yanlis kitada
+calistigini gosterdi.
+
+## 2026-08-24 · Next 16 `apps/web/AGENTS.md` ve `CLAUDE.md` uretiyor
+
+`next dev`/`next build` bu iki dosyayi otomatik olusturuyor ve `next-env.d.ts`-i kirletiyor.
+Repo kokunde zaten bir CLAUDE.md var; apps/web altindaki kopya agent-lari yaniltir.
+**Yapilacak:** Ikisini de `.gitignore`-a al.
+
 ## 2026-08-24 · zod fazla anahtari sessizce kirpar — "gecerli payload parse oldu" testi zayiftir
 
 Bir semadan zorunlu alan silinirse, o alani ICEREN test payload-u hala parse olur (zod bilinmeyen

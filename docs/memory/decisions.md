@@ -2,6 +2,22 @@
 
 > Format: tarih · karar · bağlam · gerekçe · reddedilen alternatifler
 
+## 2026-08-24 · ✅ KARAR KAPISI GEÇİLDİ — change stream fan-out onaylandı (RT-PROBE-001)
+
+Gerçek Vercel preview + gerçek Atlas, 5 koşu, 200 örnek, hiçbiri atılmadı:
+**p50 96.2 ms · p95 98.6 ms · maks 633.6 ms** (tek soğuk başlangıç). Bütçe 1500 ms → p95
+bütçenin **%6.6**'sı. Isınmış havuzda (N=175) p95 98.6 ms.
+
+**Karar:** ADR-0002 doğrulandı. Gerçek zamanlı katman MongoDB change stream fan-out üzerine
+kurulacak. **Upstash Redis pub/sub yedeği İPTAL.**
+
+**Kapsam sınırı (dürüstlük notu):** Sonda "yazma → kendi stream-inde olay" ölçer, yani yazan
+oyuncunun gördüğü süre. Karşı instance bacağı ölçülmedi; iki uçlu kanıt Dalga 0 E2E-001-in işi.
+15× marj bu belirsizliği karşılıyor.
+
+**Ölçüm kötümser üst sınırdı:** Fonksiyonlar `iad1`-de koşuyordu (proje varsayılanı), Atlas ise
+Avrupa-da. Bölge `fra1`-e alındı; gerçek sayı bundan daha iyi olmalı.
+
 ## 2026-08-24 · Auth.js sağlayıcısı: Credentials (e-posta + parola)
 
 **Karar:** P0'da tek sağlayıcı — Auth.js Credentials. Parola `argon2id` ile hash'lenir,
