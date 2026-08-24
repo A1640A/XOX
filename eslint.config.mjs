@@ -9,6 +9,31 @@ import importX from 'eslint-plugin-import-x'
 import boundaries from 'eslint-plugin-boundaries'
 import nextPlugin from '@next/eslint-plugin-next'
 
+/**
+ * KK-084: web ve mobil aynı renk değerlerini `@xox/ui-tokens`'tan alır; ikisinde de literal
+ * hex renk kodu bulunmaz. `no-restricted-syntax` AST düzeyinde çalışır — hem sıradan string
+ * literal'i (`Literal`) hem template literal içindeki sabit parçayı (`TemplateElement`)
+ * yakalar, bu yüzden `'#2563eb'`, `` `#2563eb` `` ve JSX `style={{ color: '#2563eb' }}` gibi
+ * kalıpların hepsi tek kuralla yakalanır (JSX attribute string'i de bir `Literal`'dır).
+ * `packages/ui-tokens/**` bu kuralın MUAF olduğu tek yer — tokenlar zaten orada tanımlanır.
+ */
+const HEX_COLOR_LITERAL = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
+const NO_HEX_COLOR_LITERAL = {
+  'no-restricted-syntax': [
+    'error',
+    {
+      selector: `Literal[value=${HEX_COLOR_LITERAL.toString()}]`,
+      message:
+        'Literal hex renk kodu yasak (KK-084). Rengi @xox/ui-tokens içindeki themes.acik/themes.koyu üzerinden al.',
+    },
+    {
+      selector: `TemplateElement[value.raw=${HEX_COLOR_LITERAL.toString()}]`,
+      message:
+        'Literal hex renk kodu yasak (KK-084). Rengi @xox/ui-tokens içindeki themes.acik/themes.koyu üzerinden al.',
+    },
+  ],
+}
+
 /** Playwright yalnız apps/e2e içinde yaşar. Bu kural üç katmanlı savunmanın ikincisi. */
 const PLAYWRIGHT_WALL = {
   'no-restricted-imports': [
@@ -186,6 +211,7 @@ export default tseslint.config(
       ...jsxA11y.flatConfigs.recommended.rules,
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
+      ...NO_HEX_COLOR_LITERAL,
     },
   },
 
@@ -193,7 +219,7 @@ export default tseslint.config(
   {
     files: ['apps/mobile/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
-    rules: { ...reactHooks.configs.recommended.rules },
+    rules: { ...reactHooks.configs.recommended.rules, ...NO_HEX_COLOR_LITERAL },
   },
 
   // apps/e2e — Playwright duvarının TEK istisnası
