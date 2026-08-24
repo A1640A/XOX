@@ -64,9 +64,19 @@ const decide = () => {
   if ((nr.tokenBudgetUsedPct ?? 0) >= 95) return stop("token bütçesi %95");
 
   const isDone = (id) => b.tasks.find((x) => x.id === id)?.status === "done";
+  // SADECE lead'in ŞU AN dispatch edebileceği işler sayılır.
+  // `in_wave` = zaten dispatch edilmiş, arka planda bir agent çalışıyor.
+  // Onu "işlenebilir" saymak CANLI KİLİT yaratır: lead yield edemez ama
+  // yapabileceği bir iş de yoktur — sonucu beklemesi gerekir ve bildirim
+  // onu zaten geri çağıracaktır.
   const actionable = b.tasks.filter(
-    (t) => ["todo", "in_wave", "review"].includes(t.status) && (t.deps ?? []).every(isDone),
+    (t) => ["todo", "review"].includes(t.status) && (t.deps ?? []).every(isDone),
   );
+  const running = b.tasks.filter((t) => t.status === "in_wave");
+
+  // Dalga uçuşta: bayrağı KORU, duruşa izin ver. Agent bitince bildirim
+  // lead'i geri çağırır, döngü kaldığı yerden devam eder.
+  if (actionable.length === 0 && running.length > 0) return null;
 
   if (actionable.length === 0) return stop("işlenebilir görev kalmadı");
 

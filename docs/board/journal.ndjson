@@ -27,3 +27,8 @@
 {"ts":"2026-08-24T16:39:40Z","event":"file.touched","path":"docs/board/reports/PLAN-001.md"}
 {"ts":"2026-08-24T16:40:30Z","event":"subagent.stop"}
 {"ts":"2026-08-24T14:20:00Z","wave":0,"event":"wave.start","tasks":["CTR-001","UI-001","OPS-002","RT-PROBE-001"],"note":"Dalga 0a — yürüyen iskelet başlıyor"}
+{"ts":"2026-08-24T16:47:12Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/colors.ts"}
+{"ts":"2026-08-24T16:47:36Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/css.ts"}
+{"ts":"2026-08-24T16:47:41Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/index.ts"}
+{"ts":"2026-08-24T16:47:58Z","event":"file.touched","path":".claude/worktrees/OPS-002/apps/web/package.json"}
+{"ts":"2026-08-24T16:48:13Z","event":"file.touched","path":".claude/worktrees/UI-001/packages/ui-tokens/src/contrast.ts"}

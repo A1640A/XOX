@@ -2,6 +2,14 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · `Stop` hook'u `in_wave` görevleri "yapılacak iş" sayarsa CANLI KİLİT olur
+
+Lead dalgayı arka plan agent'larına dispatch edip yield eder; bildirim onu geri çağırır.
+Hook `in_wave`'i de "işlenebilir" sayarsa duruşu bloklar — lead yield edemez, dispatch edecek
+iş de yoktur, oturum boşa döner. Yalnızca `todo` ve `review` sayılmalı.
+**Yapılacak:** `in_wave` görev varsa ve dispatch edilebilir iş yoksa bayrağı koru, duruşa izin ver.
+Kuru koşu bunu yakalayamaz — orada agent ön planda çalışır.
+
 ## 2026-08-24 · ⚠️ Her change stream havuzdan BİR bağlantı tutar — bağlantı-başına stream ölümcül
 
 MongoDB resmi dokümanı: "Each change stream holds a connection open with a `getMore` operation

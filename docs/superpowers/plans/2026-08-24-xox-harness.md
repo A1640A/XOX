@@ -4252,6 +4252,14 @@ o satırı silme. Elle temizlik: `rm -rf packages/*/.stryker-tmp`.
 `moves[index] as number` yazınca birincisi `!` kullan der, ikincisi `!`'i yasaklar. Çıkış yolu
 tek satırlık gerekçeli `eslint-disable-next-line`. Kök konfigürasyonu bunun için değiştirme.
 
+## 2026-08-24 · `Stop` hook'u `in_wave` görevleri "yapılacak iş" sayarsa CANLI KİLİT olur
+
+Lead dalgayı arka plan agent'larına dispatch edip yield eder; bildirim onu geri çağırır.
+Ama hook `in_wave`'i de "işlenebilir" sayarsa duruşu bloklar — lead yield edemez, dispatch
+edecek iş de yoktur, oturum boşa döner. Yalnızca `todo` ve `review` sayılmalı; `in_wave` varsa
+ve başka iş yoksa **bayrağı koruyup duruşa izin ver**.
+Kuru koşu bunu yakalayamaz: orada agent ön planda çalışır, hook hiç bu duruma girmez.
+
 ## 2026-08-24 · `merge(...)` commitlint'ten geçmez — her dalga birleştirmesi bloke olur
 
 `merge` Conventional Commits tipi değildir. `git merge -m "merge(X): ..."` commitlint tarafından
@@ -4950,9 +4958,19 @@ const decide = () => {
   if ((nr.tokenBudgetUsedPct ?? 0) >= 95) return stop("token bütçesi %95");
 
   const isDone = (id) => b.tasks.find((x) => x.id === id)?.status === "done";
+  // SADECE lead'in ŞU AN dispatch edebileceği işler sayılır.
+  // `in_wave` = zaten dispatch edilmiş, arka planda bir agent çalışıyor.
+  // Onu "işlenebilir" saymak CANLI KİLİT yaratır: lead yield edemez ama
+  // yapabileceği bir iş de yoktur — sonucu beklemesi gerekir ve bildirim
+  // onu zaten geri çağıracaktır.
   const actionable = b.tasks.filter(
-    (t) => ["todo", "in_wave", "review"].includes(t.status) && (t.deps ?? []).every(isDone),
+    (t) => ["todo", "review"].includes(t.status) && (t.deps ?? []).every(isDone),
   );
+  const running = b.tasks.filter((t) => t.status === "in_wave");
+
+  // Dalga uçuşta: bayrağı KORU, duruşa izin ver. Agent bitince bildirim
+  // lead'i geri çağırır, döngü kaldığı yerden devam eder.
+  if (actionable.length === 0 && running.length > 0) return null;
 
   if (actionable.length === 0) return stop("işlenebilir görev kalmadı");
 
