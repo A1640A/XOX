@@ -2,6 +2,16 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Merge sonrasi lockfile yeniden uretimi TIP HATASI dogurabilir
+
+Uc branch tek tek yesildi; birlesip `pnpm install --lockfile-only` kosulunca `@xox/db`
+typecheck kirildi: `import.meta.dirname` TS-te `string | undefined` ve cozulen `@types/node`
+surumu degisince daralma kayboldu. Branch-lerde gorulmez cunku her biri kendi lockfile
+durumunda kalir.
+**Yapilacak:** Integrator merge sonrasi lockfile-i yeniden uretip kapilari MUTLAKA yeniden
+kossun — merge-in kendisi cakismasiz olsa bile. Ve `import.meta.dirname` yerine
+`import.meta.dirname ?? dirname(fileURLToPath(import.meta.url))` yaz; her surumde calisir.
+
 ## 2026-08-24 · Bir TEST hatayi kilitleyebilir — yesil, davranisin dogru oldugunu gostermez
 
 CTR-002-de `socket:open` reconnect sayacini sifirliyordu; bu, uygulama-seviyesi (4000-4999)

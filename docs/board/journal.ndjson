@@ -293,3 +293,21 @@
 {"ts":"2026-08-24T19:48:51Z","event":"file.touched","path":".claude/worktrees/TXT-001/apps/mobile/messages/tr.test.ts"}
 {"ts":"2026-08-24T19:51:23Z","event":"file.touched","path":".claude/worktrees/TXT-001/apps/web/messages/tr.test.ts"}
 {"ts":"2026-08-24T23:20:00Z","wave":2,"event":"task.done","task":"DB-001","agent":"xox-dev-backend","attempts":1,"tests":"66","coverage":"100%","note":"4 major + 3 minor duzeltildi; kapsam dislamasi kaldirilinca 2 gercek bosluk daha cikti"}
+{"ts":"2026-08-24T19:53:51Z","event":"file.touched","path":".claude/worktrees/TXT-001/apps/web/messages/tr.test.ts"}
+{"ts":"2026-08-24T19:56:39Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.ts"}
+{"ts":"2026-08-24T19:57:15Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.test.ts"}
+{"ts":"2026-08-24T19:57:22Z","event":"file.touched","path":".claude/worktrees/TXT-001/docs/board/reports/TXT-001.md"}
+{"ts":"2026-08-24T19:57:55Z","event":"file.touched","path":".claude/worktrees/OPS-003/apps/web/app/api/admin/migrate/route.ts"}
+{"ts":"2026-08-24T19:58:08Z","event":"file.touched","path":".claude/worktrees/TXT-001/docs/board/reports/TXT-001.md"}
+{"ts":"2026-08-24T19:58:18Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/index.ts"}
+{"ts":"2026-08-24T19:58:18Z","event":"file.touched","path":".claude/worktrees/TXT-001/docs/board/reports/TXT-001.md"}
+{"ts":"2026-08-24T19:58:34Z","event":"file.touched","path":".claude/worktrees/OPS-003/apps/web/app/api/admin/migrate/route.test.ts"}
+{"ts":"2026-08-24T19:58:48Z","event":"file.touched","path":".claude/worktrees/OPS-003/.env.example"}
+{"ts":"2026-08-24T20:01:11Z","event":"subagent.stop"}
+{"ts":"2026-08-24T20:02:23Z","event":"file.touched","path":".claude/worktrees/OPS-003/.github/workflows/e2e-preview.yml"}
+{"ts":"2026-08-24T20:02:46Z","event":"file.touched","path":".claude/worktrees/OPS-003/.github/workflows/e2e-preview.yml"}
+{"ts":"2026-08-24T20:05:37Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.ts"}
+{"ts":"2026-08-24T20:05:46Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.ts"}
+{"ts":"2026-08-24T20:05:52Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.ts"}
+{"ts":"2026-08-24T23:50:00Z","wave":2,"event":"merge.ok","tasks":["DB-001","CTR-002","TXT-001"],"note":"cakisma yok ama lockfile yeniden uretimi @xox/db typecheck-i kirdi, integrator duzeltti"}
+{"ts":"2026-08-24T20:05:59Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.ts"}

@@ -5,7 +5,7 @@
   "nightRun": {
     "active": true,
     "deadline": null,
-    "wave": 2,
+    "wave": 3,
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0
   },
@@ -211,7 +211,7 @@
       "agent": "xox-designer",
       "deps": ["CTR-001"],
       "conflictSet": ["apps/web/messages/**", "apps/mobile/messages/**"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/TXT-001",
       "report": null,

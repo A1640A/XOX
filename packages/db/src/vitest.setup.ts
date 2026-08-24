@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /**
  * `.env.local` gitignore'da olduğu için normal ortam değişkeni yüklemesi
@@ -8,7 +9,10 @@ import { resolve } from 'node:path'
  */
 function loadEnvLocal(): void {
   if (process.env['MONGODB_URI'] !== undefined) return
-  const envPath = resolve(import.meta.dirname, '../../../.env.local')
+  // `import.meta.dirname` tipte `string | undefined` (Node 20.11+ runtime-inda hep dolu,
+  // ama @types/node surumune gore daraltilmiyor). fileURLToPath geri donusu her surumde calisir.
+  const here = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url))
+  const envPath = resolve(here, '../../../.env.local')
   if (!existsSync(envPath)) return
 
   const content = readFileSync(envPath, 'utf8')
