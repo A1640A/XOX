@@ -2,5 +2,7 @@ packages:
   - 'apps/*'
   - 'packages/*'
 allowBuilds:
+  esbuild: true
   lefthook: true
+  mongodb-memory-server: true
   unrs-resolver: true

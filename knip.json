@@ -18,6 +18,7 @@
     "@xox/game-core",
     "@vitest/coverage-v8",
     "lefthook",
+    "mongodb-memory-server",
     "vitest",
     "vite-tsconfig-paths",
     "@vitejs/plugin-react",
