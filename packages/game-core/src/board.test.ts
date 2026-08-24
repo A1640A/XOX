@@ -7,10 +7,13 @@ import {
   cellAt,
   nextPlayer,
 } from './board'
-import type { Board } from './types'
+import type { Board, Cell } from './types'
 
 const b = (s: string): Board =>
   boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+
+/** Tip sistemini aşan girdiyi taklit eder: kalıcı katmandan böyle veri gelebilir. */
+const asCells = (values: readonly unknown[]): readonly Cell[] => values as readonly Cell[]
 
 describe('EMPTY_BOARD', () => {
   it('dokuz boş hücreden oluşur', () => {
@@ -30,6 +33,40 @@ describe('boardFromCells', () => {
 
   it('hata mesajı beklenen ve gelen hücre sayısını bildirir', () => {
     expect(() => boardFromCells([null, null])).toThrow('Tahta 9 hücre olmalı, 2 geldi')
+  })
+
+  it('X, O ve null dolu tahtayı kabul eder', () => {
+    expect(boardFromCells(asCells(['X', 'O', null, 'O', 'X', null, null, 'X', 'O']))).toHaveLength(
+      BOARD_SIZE,
+    )
+  })
+
+  it('tanımsız hücre içeren diziyi reddeder — boş sanılan tahta kazanmış görünmesin', () => {
+    expect(() => boardFromCells(asCells(Array.from({ length: BOARD_SIZE })))).toThrow(RangeError)
+  })
+
+  it('oyuncu olmayan hücre değerini reddeder', () => {
+    expect(() => boardFromCells(asCells(['a', 'a', 'a', 'b', 'c', 'd', 'e', 'f', 'g']))).toThrow(
+      RangeError,
+    )
+  })
+
+  it('hata mesajı bozuk hücrenin sırasını ve değerini bildirir', () => {
+    expect(() =>
+      boardFromCells(asCells([null, 'X', 'O', 'x', null, null, null, null, null])),
+    ).toThrow("Tahta hücresi 3 geçersiz: x — yalnız 'X', 'O' veya null olabilir")
+  })
+
+  it('küçük harf oyuncu simgesini reddeder', () => {
+    expect(() =>
+      boardFromCells(asCells(['o', null, null, null, null, null, null, null, null])),
+    ).toThrow(RangeError)
+  })
+
+  it('son hücredeki bozuk değeri de yakalar', () => {
+    expect(() =>
+      boardFromCells(asCells([null, null, null, null, null, null, null, null, 0])),
+    ).toThrow('Tahta hücresi 8 geçersiz')
   })
 })
 
