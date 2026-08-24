@@ -15,6 +15,7 @@
     "reset": "tsx src/reset.ts"
   },
   "dependencies": {
+    "@node-rs/argon2": "2.1.0",
     "@xox/shared": "workspace:*",
     "mongodb": "7.5.0",
     "mongoose": "9.9.3"
