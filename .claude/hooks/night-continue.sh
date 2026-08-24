@@ -84,6 +84,12 @@ const decide = () => {
   // lead-i geri cagirir, dongu kaldigi yerden devam eder.
   if (actionable.length === 0 && running.length > 0) return null;
 
+  // Paralellik tavani: bayraktaki maxParallel kadar agent zaten ucuyorsa lead YENI is
+  // dispatch EDEMEZ. Bloklamak bos donguye sokar; bir agent bitince bildirim geri cagirir.
+  const maxParallel = Number(flag.maxParallel ?? 4);
+  if (running.length >= maxParallel) return null;
+
+
   if (actionable.length === 0) return stop("işlenebilir görev kalmadı");
 
   return block(

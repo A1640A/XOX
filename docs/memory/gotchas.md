@@ -2,6 +2,17 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · `Stop` hook-u "su an harekete gecemem" durumlarini modellemeli
+
+Hook-un tek sorusu "yapilacak is var mi" olmamali; "LEAD SU AN bu isi dispatch edebilir mi"
+olmali. Uc kez ayni sinif kusur cikti ve her biri bos dongu yaratti:
+
+1. `in_wave` gorevleri "islenebilir" saymak — agent zaten calisiyor.
+2. Kota beklerken bloklamak — dispatch imkansiz (`pausedUntil` eklendi).
+3. Paralellik tavani dolu iken bloklamak — yeni agent acilamaz (`maxParallel` eklendi).
+   **Yapilacak:** Hook durusa izin versin; `todo`/`review` isi VARSA **ve** kapasite VARSA
+   **ve** duraklama YOKSA bloklasin. Bildirim mekanizmasi lead-i zaten geri cagiriyor.
+
 ## 2026-08-24 · Worktree `.env.local`-i ALMAZ — Atlas-a kosan testler orada patlar
 
 `git worktree add` yalnizca izlenen dosyalari getirir; `.env.local` gitignore-da oldugu icin
