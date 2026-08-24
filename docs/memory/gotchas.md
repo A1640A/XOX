@@ -2,6 +2,20 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · ⚠️ Kendine-referansli test SILMEYI goremez — beklenti disaridan gelmeli
+
+Bir semanin alanlarini `schema.shape`-ten turetip "her alan zorunlu" testi yazarsan, o alan
+semadan SILINDIGINDE onu dogrulayan test de yok olur. Kanit: `move:applied`-dan `version`
+silindi -> 187 test YESIL, tek kirmizi yok.
+Ayni acik `errorCodeSchema.options`-i kendi options-iyla karsilastiran her testte var:
+"20 kod olmali" testi, listeyi semadan okuyorsa 19-a dustugunu fark etmez.
+**Yapilacak:** IKI KATMAN kullan.
+
+1. Turetilmis test (`.shape`-ten) — yeni alan/mesaj eklendiginde kapsam kendiliginden gelsin.
+2. **Elle yazilmis beklenti tablosu** (tasarim dokumanindan kopyalanmis) — silme ve yeniden
+   adlandirmayi yakalar. Beklenen deger daima test edilen seyin DISINDAN gelmeli.
+   Sonda: bir alani semadan sil, testler kirmizi olmuyorsa testin degil senin varsayimin yanlis.
+
 ## 2026-08-24 · Oturum kotasi 3 paralel agent-i AYNI ANDA oldurur — is diskte kalir
 
 Uc agent (~100-250k token/agent) es zamanli kosarken oturum kotasi doldu ve ucu birden
