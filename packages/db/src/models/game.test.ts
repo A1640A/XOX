@@ -189,4 +189,52 @@ describe('Game modeli', () => {
       Game.create({ ...basePayload(id, 'RCBAD07'), winner: 'X', finishedAt: null }),
     ).rejects.toThrow()
   })
+
+  // DB-002/AC12: `participants`/`pairKey` `players`'tan türetilenle eşleşmek ZORUNDADIR.
+  it('participants players sırasıyla eşleşmiyorsa reddedilir', async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({
+        ...basePayload(id, 'RCBAD08'),
+        players: { X: 'u1', O: 'u2' },
+        participants: ['u2', 'u1'], // ters sıra — players'tan türetilenle eşleşmiyor
+      }),
+    ).rejects.toThrow(/participants/)
+  })
+
+  it('participants players ile tamamen ilgisiz bir kullanıcı içeriyorsa reddedilir', async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({
+        ...basePayload(id, 'RCBAD09'),
+        players: { X: 'u1', O: 'u2' },
+        participants: ['u1', 'baska-biri'],
+      }),
+    ).rejects.toThrow(/participants/)
+  })
+
+  it('pairKey players alanından türetilenle eşleşmiyorsa reddedilir', async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({
+        ...basePayload(id, 'RCBAD10'),
+        players: { X: 'u1', O: 'u2' },
+        participants: ['u1', 'u2'],
+        pairKey: 'u2|u1', // yanlış sıra — buildPairKey('u1','u2') === 'u1|u2' üretir
+      }),
+    ).rejects.toThrow(/pairKey/)
+  })
+
+  it('players tersine çevrilse bile (O küçük id, X büyük id) doğru türetilen değerlerle kabul edilir', async () => {
+    const id = track(randomUUID())
+    await Game.create({
+      _id: id,
+      roomCode: 'RCOK01',
+      players: { X: 'z-buyuk', O: 'a-kucuk' },
+      participants: ['z-buyuk', 'a-kucuk'],
+      pairKey: 'a-kucuk|z-buyuk',
+    })
+    const game = await Game.findById(id).lean()
+    expect(game?.pairKey).toBe('a-kucuk|z-buyuk')
+  })
 })
