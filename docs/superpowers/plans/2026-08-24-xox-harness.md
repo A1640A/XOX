@@ -4349,6 +4349,17 @@ sunucu ayakta değilken Playwright koşar ve kapılar hatalı kırmızı olur.
 pnpm sembolik bağlantı kullanır; Metro varsayılan olarak workspace kökünü izlemez.
 `metro.config.js` içinde `watchFolders` + `nodeModulesPaths` + `disableHierarchicalLookup`
 ayarlanmazsa `@xox/*` paketleri "module not found" verir.
+
+## 2026-08-24 · Claude Code hook'lara MUTLAK `file_path` verir
+
+`Write`/`Edit` araçlarının `tool_input.file_path` alanı **her zaman mutlak yoldur**
+(`/Users/.../XOX/apps/web/lib/x.ts`), göreli değil. Hook içinde `[[ $path == apps/web/* ]]`
+gibi göreli önek karşılaştırması gerçek kullanımda **hiç eşleşmez** — kural sessizce ölür,
+üstelik sonda göreli yolu elle beslediği için yeşil görünür (ESLint çözümleyici dersiyle aynı
+başarısızlık biçimi).
+**Yapılacak:** yolu önce `CLAUDE_PROJECT_DIR`e göre indirge (`path.relative`), `..` parçalarını
+ve sembolik bağları çöz, sonra karşılaştır. Sondayı MUTLAK yolla çalıştır; hem engelleyen hem
+izin veren yönü ayrı ayrı kanıtla.
 ```
 
 - [ ] **Step 4: `docs/memory/decisions.md`**
@@ -4606,27 +4617,74 @@ cd "${CLAUDE_PROJECT_DIR:-.}"
 
 [[ -f docs/board/board.json ]] || exit 0
 
+# Üretilen markdown Prettier'a UYGUN olmak ZORUNDA: lefthook pre-commit staged dosyalarda
+# `prettier --check` çalıştırır ve dalga döngüsü state.md'yi her dalgada commit'ler.
+# İki katman: (1) tablo hizası elle hesaplanır, (2) Prettier varsa AYNI süreç içinde
+# (alt süreç yok, pnpm çözümlemesi yok) son biçim verilir. Prettier yoksa/yavaşsa
+# 10 sn sonra vazgeçilir ve (1) yazılır — hook asla asılmaz, her koşulda 0 döner.
 node -e '
 const fs = require("node:fs");
-const b = require("./docs/board/board.json");
-const count = (s) => b.tasks.filter((t) => t.status === s).length;
-const rows = b.tasks
-  .filter((t) => t.status !== "done")
-  .map((t) => `| ${t.id} | ${t.tier} | ${t.title} | ${t.status} | ${t.agent} | ${t.blockedReason ?? ""} |`)
-  .join("\n");
-fs.writeFileSync("docs/memory/state.md", `# Anlık durum
+const OUT = "docs/memory/state.md";
+
+const build = (b) => {
+  const tasks = Array.isArray(b.tasks) ? b.tasks : [];
+  const nr = b.nightRun ?? {};
+  const count = (s) => tasks.filter((t) => t.status === s).length;
+
+  // Hücre metni: satır sonu ve boru işareti tabloyu bozar.
+  const cell = (v) => String(v ?? "").replace(/\s*\r?\n\s*/g, " ").replace(/\|/g, "\\|").trim();
+  const w = (s) => [...s].length;
+
+  const head = ["id", "katman", "başlık", "durum", "agent", "blok sebebi"].map(cell);
+  const body = tasks
+    .filter((t) => t.status !== "done")
+    .map((t) => [t.id, t.tier, t.title, t.status, t.agent, t.blockedReason].map(cell));
+  const rows = body.length ? body : [["—", "", "tüm görevler bitti", "", "", ""]];
+  const cols = head.map((h, i) => Math.max(3, w(h), ...rows.map((r) => w(r[i] ?? ""))));
+  const line = (cs) => "| " + cs.map((c, i) => c + " ".repeat(cols[i] - w(c))).join(" | ") + " |";
+  const table = [line(head), line(cols.map((n) => "-".repeat(n))), ...rows.map(line)].join("\n");
+
+  return `# Anlık durum
 
 Otomatik üretilir — elle düzenleme, \`/xox-status\` çalıştır.
 
 **Son güncelleme:** ${new Date().toISOString()}
-**Gece koşusu:** ${b.nightRun.active ? "AKTİF, dalga " + b.nightRun.wave : "kapalı"}
+**Gece koşusu:** ${nr.active ? "AKTİF, dalga " + (nr.wave ?? 0) : "kapalı"}
 **Sayım:** ${count("done")} bitti · ${count("todo")} bekliyor · ${count("in_wave")} dalgada · ${count("blocked")} bloklu
 
-| id | katman | başlık | durum | agent | blok sebebi |
-|---|---|---|---|---|---|
-${rows || "| — | | tüm görevler bitti | | | |"}
-`);
-'
+${table}
+`;
+};
+
+const polish = async (text) => {
+  try {
+    const prettier = require("prettier");
+    const cfg = (await prettier.resolveConfig(OUT)) ?? {};
+    const done = await Promise.race([
+      prettier.format(text, { ...cfg, filepath: OUT }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("prettier timeout")), 10000).unref()),
+    ]);
+    return typeof done === "string" && done.length > 0 ? done : text;
+  } catch {
+    return text;
+  }
+};
+
+const main = async () => {
+  let text;
+  try {
+    text = build(JSON.parse(fs.readFileSync("docs/board/board.json", "utf8")));
+  } catch (e) {
+    console.error("pre-compact: board.json okunamadı, state.md guncellenmedi — " + e.message);
+    return;
+  }
+  fs.writeFileSync(OUT, await polish(text));
+};
+
+main().catch((e) => {
+  console.error("pre-compact: state.md yazilamadi — " + e.message);
+});
+' || true
 
 echo "state.md güncellendi. Sıkıştırmadan sonra docs/board/board.json ve docs/memory/state.md dosyalarını oku." >&2
 exit 0
@@ -4640,8 +4698,47 @@ exit 0
 set -euo pipefail
 input=$(cat)
 
-path=$(node -e 'const i=JSON.parse(require("node:fs").readFileSync(0,"utf8"));const t=i.tool_input??{};console.log(t.file_path??"")' <<<"$input")
-content=$(node -e 'const i=JSON.parse(require("node:fs").readFileSync(0,"utf8"));const t=i.tool_input??{};console.log([t.content,t.new_string,t.command].filter(Boolean).join("\n"))' <<<"$input")
+# Claude Code, Write/Edit araçlarına MUTLAK yol verir (tool_input.file_path).
+# Karşılaştırma göreli önekler üzerinden yapıldığı için yolu önce köke göre indirger:
+# proje kökünü sök, `..` parçalarını çöz, var olan en derin atanın sembolik bağını gerçekle.
+# Kök dışındaki yollar `../...` olur ve hiçbir desene uymaz — istenen davranış.
+path=$(XOX_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}" node -e '
+const fs = require("node:fs");
+const p = require("node:path");
+const real = (d) => { try { return fs.realpathSync(d); } catch { return d; } };
+let out = "";
+try {
+  const i = JSON.parse(fs.readFileSync(0, "utf8"));
+  const raw = i.tool_input?.file_path ?? "";
+  if (raw) {
+    const root = real(p.resolve(process.env.XOX_ROOT ?? "."));
+    let head = p.resolve(root, raw);
+    let tail = "";
+    while (!fs.existsSync(head)) {
+      const up = p.dirname(head);
+      if (up === head) break;
+      tail = tail ? p.join(p.basename(head), tail) : p.basename(head);
+      head = up;
+    }
+    out = p.relative(root, p.join(real(head), tail));
+  }
+} catch {
+  out = "";
+}
+console.log(out);
+' <<<"$input" || true)
+
+content=$(node -e '
+let out = "";
+try {
+  const i = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
+  const t = i.tool_input ?? {};
+  out = [t.content, t.new_string, t.command].filter(Boolean).join("\n");
+} catch {
+  out = "";
+}
+console.log(out);
+' <<<"$input" || true)
 
 deny() {
   cat <<JSON
@@ -4674,15 +4771,33 @@ set -euo pipefail
 cd "${CLAUDE_PROJECT_DIR:-.}"
 input=$(cat)
 
-cmd=$(node -e 'const i=JSON.parse(require("node:fs").readFileSync(0,"utf8"));console.log(i.tool_input?.command??"")' <<<"$input")
+cmd=$(node -e '
+let out = "";
+try {
+  const i = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
+  out = i.tool_input?.command ?? "";
+} catch {
+  out = "";
+}
+console.log(out);
+' <<<"$input" || true)
 
 if grep -qE '(rm +-[a-z]*[rf]|dropDatabase|git +reset +--hard|git +clean +-[a-z]*f|git +push +.*--force|git +branch +-D|gh +repo +delete)' <<<"$cmd"; then
   ts=$(date -u +%Y%m%dT%H%M%SZ)
-  git tag -f "rescue/$ts" >/dev/null 2>&1 || true
+  # Saniye çözünürlüğü aynı saniyedeki iki yıkıcı komutu tek tag'e çökertirdi.
+  # PID ayrıştırır, sayaç ise teorik PID çakışmasına karşı garantiler. `-f` YOK:
+  # var olan bir kurtarma noktasının üzerine asla yazılmaz.
+  tag="rescue/$ts-$$"
+  n=0
+  while git rev-parse -q --verify "refs/tags/$tag" >/dev/null 2>&1; do
+    n=$((n + 1))
+    tag="rescue/$ts-$$-$n"
+  done
+  git tag "$tag" >/dev/null 2>&1 || true
   git stash create >/dev/null 2>&1 || true
   mkdir -p docs/board
-  printf '%s\t%s\n' "$ts" "$cmd" >> docs/board/danger.log
-  echo "⚠️  Yıkıcı komut tespit edildi. Kurtarma noktası: rescue/$ts (danger.log'a yazıldı)." >&2
+  printf '%s\t%s\t%s\n' "$ts" "$tag" "$cmd" >> docs/board/danger.log
+  echo "⚠️  Yıkıcı komut tespit edildi. Kurtarma noktası: $tag (danger.log'a yazıldı)." >&2
 fi
 
 exit 0
@@ -4729,44 +4844,96 @@ exit 0
 #!/usr/bin/env bash
 # Gece koşusu aktif ve iş varsa duruşu BLOKLAR. Üç koruma: deadline, dalga tavanı,
 # ardışık başarısızlık. Bunlardan biri tetiklenirse durmaya izin verir.
+#
+# SIRA KRİTİKTİR: deadline YALNIZCA küçük ve bir kez yazılan bayrak dosyasından okunur ve
+# board.json okunmadan ÖNCE değerlendirilir. Böylece bozuk/yarım yazılmış bir board
+# "durdurulamaz oturum" üretemez — süre dolduğunda bayrak silinir ve duruşa izin verilir.
+# Board bozuksa (deadline henüz dolmamışken) duruş BLOKLANIR ve onarım istenir; sessizce
+# geceyi bitirmek yerine lead board dosyasını tamir eder.
 set -euo pipefail
 cd "${CLAUDE_PROJECT_DIR:-.}"
 
 FLAG="docs/board/.night-run-active"
 [[ -f $FLAG ]] || exit 0
-[[ -f docs/board/board.json ]] || exit 0
 
 node -e '
 const fs = require("node:fs");
-const flag = JSON.parse(fs.readFileSync("docs/board/.night-run-active", "utf8"));
-const b = JSON.parse(fs.readFileSync("docs/board/board.json", "utf8"));
+const FLAG = "docs/board/.night-run-active";
+const BOARD = "docs/board/board.json";
 
-const stopNow = (reason) => {
-  fs.rmSync("docs/board/.night-run-active", { force: true });
-  console.log(JSON.stringify({ systemMessage: `Gece koşusu sonlandı: ${reason}. xox-reporter ile sabah raporunu üret.` }));
-  process.exit(0);
+const decide = () => {
+  const stop = (reason) => {
+    try { fs.rmSync(FLAG, { force: true }); } catch {}
+    return { systemMessage: `Gece koşusu sonlandı: ${reason}. xox-reporter ile sabah raporunu üret.` };
+  };
+  const block = (reason) => ({ decision: "block", reason });
+
+  // 1) Bayrak. Okunamıyorsa deadline doğrulanamaz -> tek güvenli yön: durmaya izin ver.
+  let flag;
+  try {
+    flag = JSON.parse(fs.readFileSync(FLAG, "utf8"));
+  } catch {
+    return stop("gece bayrağı okunamadı, deadline doğrulanamıyor");
+  }
+
+  // 2) Deadline — board OKUNMADAN önce. Eksik/geçersiz deadline DOLMUŞ sayılır.
+  const raw = flag?.deadline;
+  const deadline = typeof raw === "number" ? raw : Date.parse(String(raw ?? ""));
+  if (!Number.isFinite(deadline) || Date.now() > deadline) return stop("deadline doldu");
+
+  // 3) Board hiç yoksa eski davranış: sessizce durmaya izin ver.
+  if (!fs.existsSync(BOARD)) return null;
+
+  // 4) Board var ama okunamıyor/bozuk -> duruşu BLOKLA, onarım iste.
+  let b;
+  try {
+    b = JSON.parse(fs.readFileSync(BOARD, "utf8"));
+    if (!Array.isArray(b.tasks)) throw new Error("tasks dizisi yok");
+  } catch (e) {
+    return block(
+      `docs/board/board.json OKUNAMIYOR (${e.message}). Yarım yazılmış veya bozuk. ` +
+        `Gece koşusu bu yüzden sonlandırılmadı — önce board dosyasını ONAR: ` +
+        `1) son geçerli sürümü geri al: git show HEAD:docs/board/board.json > docs/board/board.json ` +
+        `2) o commit sonrasındaki olayları docs/board/journal.ndjson içinden tekrar uygula ` +
+        `3) JSON.parse ile geçerliliğini ve tasks dizisini doğrula ` +
+        `4) board dosyasını commit et, sonra dalga döngüsüne devam et. ` +
+        `Deadline ${flag.deadline} geçtiğinde bu blok kendiliğinden kalkar.`,
+    );
+  }
+
+  const nr = b.nightRun ?? {};
+  if ((nr.wave ?? 0) >= (flag.maxWaves ?? 40)) return stop("dalga tavanına ulaşıldı");
+  if ((nr.consecutiveFailures ?? 0) >= 3) return stop("üç ardışık dalga başarısız");
+  if ((nr.tokenBudgetUsedPct ?? 0) >= 95) return stop("token bütçesi %95");
+
+  const isDone = (id) => b.tasks.find((x) => x.id === id)?.status === "done";
+  const actionable = b.tasks.filter(
+    (t) => ["todo", "in_wave", "review"].includes(t.status) && (t.deps ?? []).every(isDone),
+  );
+
+  if (actionable.length === 0) return stop("işlenebilir görev kalmadı");
+
+  return block(
+    `Gece koşusu aktif (dalga ${nr.wave ?? 0}, deadline ${flag.deadline}). ` +
+      `${actionable.length} işlenebilir görev var: ${actionable.slice(0, 4).map((t) => t.id).join(", ")}. ` +
+      `CLAUDE.md dalga döngüsüne dön: board oku → çakışmayan görevleri seç → paralel dispatch → ` +
+      `review → merge → deploy → e2e → board commit.`,
+  );
 };
 
-if (Date.now() > Date.parse(flag.deadline)) stopNow("deadline doldu");
-if (b.nightRun.wave >= (flag.maxWaves ?? 40)) stopNow("dalga tavanına ulaşıldı");
-if (b.nightRun.consecutiveFailures >= 3) stopNow("üç ardışık dalga başarısız");
-if ((b.nightRun.tokenBudgetUsedPct ?? 0) >= 95) stopNow("token bütçesi %95");
+// process.exit KULLANILMAZ: macOS boru hatlarında stdout eşzamansızdır ve exit yazımı keser.
+// Doğal çıkışta Node stdout kuyruğunu boşaltır — JSON protokolü bozulmaz.
+let out = null;
+try {
+  out = decide();
+} catch (e) {
+  console.error("night-continue: beklenmeyen hata, duruşa izin veriliyor — " + (e?.message ?? e));
+  out = null;
+}
+if (out) console.log(JSON.stringify(out));
+' || true
 
-const actionable = b.tasks.filter(
-  (t) => ["todo", "in_wave", "review"].includes(t.status) &&
-         t.deps.every((d) => b.tasks.find((x) => x.id === d)?.status === "done"),
-);
-
-if (actionable.length === 0) stopNow("işlenebilir görev kalmadı");
-
-console.log(JSON.stringify({
-  decision: "block",
-  reason: `Gece koşusu aktif (dalga ${b.nightRun.wave}, deadline ${flag.deadline}). ` +
-    `${actionable.length} işlenebilir görev var: ${actionable.slice(0, 4).map((t) => t.id).join(", ")}. ` +
-    `CLAUDE.md dalga döngüsüne dön: board oku → çakışmayan görevleri seç → paralel dispatch → ` +
-    `review → merge → deploy → e2e → board commit.`,
-}));
-'
+exit 0
 ```
 
 - [ ] **Step 8: Çalıştırma izni ver ve sözdizimini doğrula**
@@ -4778,21 +4945,34 @@ for f in .claude/hooks/*.sh; do bash -n "$f" && echo "OK $f"; done
 
 Expected: her dosya için `OK`.
 
-- [ ] **Step 9: Playwright duvarını KANITLA**
+- [ ] **Step 9: Playwright duvarını KANITLA — sondaları MUTLAK yolla besle**
+
+⚠️ Claude Code `Write`/`Edit` araçlarına **mutlak** `file_path` verir. Sondayı göreli yolla
+beslemek duvarı yeşil gösterir ama gerçek kullanımda kural hiç çalışmıyor olabilir. Dört yönün
+dördünü de kanıtla; ikisi engelleme, ikisi izin.
 
 ```bash
-echo '{"tool_name":"Write","tool_input":{"file_path":"apps/web/lib/x.ts","content":"import { test } from \"@playwright/test\""}}' \
+R=$(pwd)
+
+# 1) mutlak apps/web + Playwright  -> DENY
+echo '{"tool_name":"Write","tool_input":{"file_path":"'"$R"'/apps/web/lib/x.ts","content":"import { test } from \"@playwright/test\""}}' \
+  | .claude/hooks/playwright-firewall.sh
+
+# 2) mutlak apps/e2e + Playwright  -> ALLOW
+echo '{"tool_name":"Write","tool_input":{"file_path":"'"$R"'/apps/e2e/tests/x.spec.ts","content":"import { test } from \"@playwright/test\""}}' \
+  | .claude/hooks/playwright-firewall.sh
+
+# 3) göreli packages/game-core + Playwright  -> DENY (regresyon koruması)
+echo '{"tool_name":"Write","tool_input":{"file_path":"packages/game-core/src/x.ts","content":"import { test } from \"@playwright/test\""}}' \
+  | .claude/hooks/playwright-firewall.sh
+
+# 4) mutlak apps/web, Playwright yok  -> ALLOW
+echo '{"tool_name":"Write","tool_input":{"file_path":"'"$R"'/apps/web/lib/score.ts","content":"export const x = 1"}}' \
   | .claude/hooks/playwright-firewall.sh
 ```
 
-Expected: `"permissionDecision":"deny"` içeren JSON.
-
-```bash
-echo '{"tool_name":"Write","tool_input":{"file_path":"apps/e2e/tests/x.spec.ts","content":"import { test } from \"@playwright/test\""}}' \
-  | .claude/hooks/playwright-firewall.sh
-```
-
-Expected: çıktı yok (izin verildi).
+Expected: 1 ve 3 `"permissionDecision":"deny"` içeren JSON basar; 2 ve 4 hiçbir şey basmaz
+(izin verildi). Hepsi exit code 0 döner — duvar `deny` kararını stdout JSON ile bildirir.
 
 - [ ] **Step 10: Commit**
 

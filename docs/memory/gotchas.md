@@ -160,3 +160,14 @@ sunucu ayakta değilken Playwright koşar ve kapılar hatalı kırmızı olur.
 pnpm sembolik bağlantı kullanır; Metro varsayılan olarak workspace kökünü izlemez.
 `metro.config.js` içinde `watchFolders` + `nodeModulesPaths` + `disableHierarchicalLookup`
 ayarlanmazsa `@xox/*` paketleri "module not found" verir.
+
+## 2026-08-24 · Claude Code hook'lara MUTLAK `file_path` verir
+
+`Write`/`Edit` araçlarının `tool_input.file_path` alanı **her zaman mutlak yoldur**
+(`/Users/.../XOX/apps/web/lib/x.ts`), göreli değil. Hook içinde `[[ $path == apps/web/* ]]`
+gibi göreli önek karşılaştırması gerçek kullanımda **hiç eşleşmez** — kural sessizce ölür,
+üstelik sonda göreli yolu elle beslediği için yeşil görünür (ESLint çözümleyici dersiyle aynı
+başarısızlık biçimi).
+**Yapılacak:** yolu önce `CLAUDE_PROJECT_DIR`e göre indirge (`path.relative`), `..` parçalarını
+ve sembolik bağları çöz, sonra karşılaştır. Sondayı MUTLAK yolla çalıştır; hem engelleyen hem
+izin veren yönü ayrı ayrı kanıtla.
