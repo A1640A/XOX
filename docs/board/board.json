@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-24T22:55:18.706Z",
+  "updatedAt": "2026-08-24T23:00:49.621Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -317,7 +317,7 @@
         "apps/web/next.config.ts"
       ],
       "status": "reviewing",
-      "attempts": 0,
+      "attempts": 1,
       "branch": "feat/UI-SKEL-001",
       "report": null,
       "acceptance": [

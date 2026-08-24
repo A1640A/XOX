@@ -724,3 +724,41 @@ ile TAM eşitlik iste. (3) Doğruluk kaynağını (elle yazılmış liste) next-
 import edilebilir bir dosyada (`auth.config.ts`) tut ve `middleware.ts`'ten ayrıştırılan literali
 BUNA karşı karşılaştır. **Aynı sınıf:** bir bağımlılığı TAMAMEN mock'layıp rotayı test ettiğini
 sanmak — o zaman test rotayı değil kendi mock'unu doğrular.
+
+## 2026-08-25 · RTL `render()` hidrasyon yapmaz — `getServerSnapshot` hataları yalnız `hydrateRoot` ile görünür
+
+`useSyncExternalStore`'un `getServerSnapshot`'ı her çağrıda YENİ nesne döndürürse React
+"The result of getServerSnapshot should be cached to avoid an infinite loop" basar. `useCallback`
+bunu çözmez — fonksiyon kimliğini sabitler, dönen DEĞERİ değil. Çözüm: modül düzeyinde donmuş
+tek bir `SERVER_SNAPSHOT` sabiti.
+
+**Tuzak testte:** Testing Library'nin `render()`'ı hiç hidrasyon yapmaz, bu yüzden hata test
+paketinde HİÇ görünmez — `use-room.test.tsx`'in 8 testi yeşilken her gerçek sayfa yüklemesi
+uyarıyı basıyordu. SSR edilen bir istemci bileşenini test ediyorsan regresyonu
+`renderToString` + `hydrateRoot` ile yaz ve `console.error` çağrılmadığını iddia et.
+Örüntü #5'in ("Vitest gizliyor, üretim kırık") React tarafındaki yüzü.
+
+## 2026-08-25 · `next-auth` v5 `signIn()` tipte `SignInResponse`, çalışma zamanında `undefined` dönebilir
+
+`next-auth@5.0.0-beta.32`, `react.js:134` ve `:141`: `getProviders()` null dönerse fonksiyon
+çıplak `return;` yapar — kaynakta _"TODO: Return error if redirect:false"_ yorumuyla. Yani
+`redirect:false` ile çağırsan bile `result.error` okuması TypeError fırlatabilir. Örüntü #3.
+
+İki katmanlı sonuç: `await signIn(...)` reddedilir/patlar, `setPending(false)` await'ten SONRA
+yazıldıysa hiç çalışmaz ve `void handleSubmit(e)` reddi yutar → **düğme sonsuza dek disabled,
+hiçbir hata mesajı yok**. Form gönderimini her zaman `try/catch/finally`ye al, `pending`i
+`finally`de düşür, `signIn` dönüşünü kullanmadan önce null kontrolü yap. Testte `signIn` mock'u
+her zaman bir nesneye resolve ederse bu sınıfın tamamı görünmez — `mockRejectedValue` ve
+`mockResolvedValue(undefined)` senaryolarını ayrıca yaz.
+
+## 2026-08-25 · Sunucu hata kodunu zod'suz `ErrorCode` saymak BOŞ bir hata şeridi üretir
+
+`body as Partial<ErrorResponse>` cast'i enum dışı bir kodu (yeni sunucu kodu, Vercel'in 504
+gövdesi, proxy hatası) `ErrorCode` sanar; `tr.errors[kod]` `undefined` olur ve
+`<p role="alert" data-testid="hata-mesaji">` **boş** render edilir. Kullanıcı boş şerit görür,
+ekran okuyucu hiçbir şey duyurmaz.
+
+En sinsi kısmı E2E: `getByTestId('hata-mesaji')` iddiası boş elemana karşı **geçer** — yani
+hata yolu testi hem birimde hem E2E'de yeşil kalırken kullanıcıya hiçbir şey söylenmez.
+Örüntü #2 + #3 birlikte. Hata gövdesini de `errorResponseSchema.safeParse`'tan geçir,
+başarısızsa `SERVER_ERROR`'a düş; hata bileşenine bilinmeyen kod için görünür bir yedek koy.

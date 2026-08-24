@@ -173,3 +173,17 @@ değiştirmeyi gerektiriyor, `packages/shared` CTR-001'de DONDU, ayrı görev + 
 **Not:** Uç noktayı bugün hiçbir istemci çağırmıyor (tüketici sondası: `JoinCodeField` doğrudan
 `/oda/[kod]`e push ediyor, `use-room` doğrudan WS'e bağlanıyor) — yani kapatmanın kırdığı bir
 akış yok.
+
+## 2026-08-25 · Kök layout tema çerezi okur — tüm rotalar dinamik (UI-SKEL-001)
+
+**Karar:** `app/layout.tsx` `resolveTheme()` → `cookies()` çağırıyor; sonuç olarak `next build`
+çıktısında 13 rotanın hepsi dinamik (ƒ), hiç dinamik verisi olmayan `/giris` ve `/kayit` dahil.
+Bilinçli kabul ediliyor, geri alınmıyor.
+**Gerekçe:** Uygulama zaten baştan sona zorunlu hesap arkasında — rotaların ezici çoğunluğu
+nasılsa dinamik. Temanın SSR'de doğru çözülmesi tema yanıp sönmesini (FOUC) önlüyor; alternatif
+her yüklemede yanlış temayla boyanıp istemcide düzeltmek olurdu. `/giris` + `/kayit`'ın statik
+CDN önbelleğini kaybetmesi bu iki sayfa için kabul edilebilir maliyet.
+**Reddedilen:** Tema okumasını Suspense sınırındaki küçük bir sunucu bileşenine indirip statik
+kabuğu korumak — iki sayfa için kök layout'a Suspense karmaşıklığı eklemeye değmez.
+**Geri dönüş yolu:** Ölçülen bir maliyet çıkarsa (Vercel fonksiyon çağrısı hacmi) reddedilen
+seçenek hâlâ geçerli; `layout.tsx` dondurulmuş dosya olduğu için ayrı bir kart gerekir.
