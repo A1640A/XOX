@@ -437,11 +437,40 @@ describe('§5.6/10 — diğer kapanışlar', () => {
     expect(ikinci.effects).toEqual([{ type: 'reconnect', attempt: 1, immediate: false }])
   })
 
-  it('başarılı bağlantı sayacı sıfırlar', () => {
-    const kopuk = roomClientReducer(bagliDurum({ reconnectAttempt: 3 }), { type: 'socket:open' })
+  // 4000-4999 kapanışlarının TAMAMI başarılı el sıkışmadan sonra gelir. Soket
+  // açılışını "başarı" sayıp sayacı sıfırlarsak bu sınıf için geri çekilme ölür.
+  it('soket açılışı TEK BAŞINA backoff sayacını sıfırlamaz', () => {
+    const { state } = roomClientReducer(bagliDurum({ reconnectAttempt: 3 }), {
+      type: 'socket:open',
+    })
 
-    expect(kopuk.state.reconnectAttempt).toBe(0)
-    expect(kopuk.state.connection).toBe('bagli')
+    expect(state.connection).toBe('bagli')
+    expect(state.reconnectAttempt).toBe(3)
+  })
+
+  it('sayacı yalnız kullanılabilir oturum (tam durum) sıfırlar', () => {
+    const acildi = roomClientReducer(bagliDurum({ reconnectAttempt: 3 }), { type: 'socket:open' })
+    const { state } = roomClientReducer(acildi.state, sunucudan(tamDurumMesaji()))
+
+    expect(state.reconnectAttempt).toBe(0)
+  })
+
+  it('kabul edip hemen kapatan sunucuda gecikme GERÇEKTEN büyür', () => {
+    let durum = bagliDurum({ reconnectAttempt: 0 })
+    const gecikmeler: number[] = []
+
+    for (let tur = 0; tur < 5; tur += 1) {
+      durum = roomClientReducer(durum, { type: 'socket:connecting' }).state
+      durum = roomClientReducer(durum, { type: 'socket:open' }).state
+      const kapandi = roomClientReducer(durum, { type: 'socket:closed', code: 1006 })
+      durum = kapandi.state
+      for (const effect of kapandi.effects) {
+        if (effect.type === 'reconnect')
+          gecikmeler.push(nextReconnectDelay(effect.attempt, () => 0.5))
+      }
+    }
+
+    expect(gecikmeler).toEqual([500, 1_000, 2_000, 4_000, 8_000])
   })
 
   it.each([

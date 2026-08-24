@@ -133,8 +133,12 @@ export function roomClientReducer(
       return canAct(state) ? sends(state, { type: 'chat:emoji', emoji: event.emoji }) : idle(state)
     case 'socket:connecting':
       return idle({ ...state, connection: 'baglaniyor' })
+    // Sayaç BİLEREK sıfırlanmıyor: 4000-4999 kapanışlarının tamamı başarılı el
+    // sıkışmadan sonra gelir, dolayısıyla açılışı başarı saymak o sınıfın
+    // tamamında geri çekilmeyi öldürür. Tek gerçek kanıt kullanılabilir bir
+    // oturumdur; sayacı `fromStateMessage` sıfırlar.
     case 'socket:open':
-      return idle({ ...state, connection: 'bagli', reconnectAttempt: 0 })
+      return idle({ ...state, connection: 'bagli' })
     case 'socket:closed':
       return closed(state, event.code)
     case 'server':
