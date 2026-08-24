@@ -1001,7 +1001,7 @@
         "packages/db/src/indexes.ts",
         ".github/workflows/**"
       ],
-      "status": "review",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/OPS-003",
       "report": "docs/board/reports/OPS-003.md",
