@@ -238,9 +238,9 @@
         "packages/db/src/elo.ts",
         "packages/db/src/index.ts"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/DB-002",
       "report": null,
       "acceptance": [
         "TransitionResult birliği (tasarım §3.7): `{ok:true,room,events} | {ok:false,code}`. Hiçbir geçiş istisna FIRLATMAZ",
