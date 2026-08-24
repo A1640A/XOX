@@ -26,7 +26,38 @@ export const WS_CLOSE = {
 
 export type WsCloseCode = (typeof WS_CLOSE)[keyof typeof WS_CLOSE]
 
-/** Takeover dışında her kapanış yeniden bağlanmayı hak eder. */
+/**
+ * Kalıcı kapanışlar: yeniden bağlanmak durumu **düzeltmez**.
+ * `PROTOCOL_VIOLATION` bilerek burada: bozuk bir istemci için yeniden bağlanma
+ * "bağlan → 3 hatalı çerçeve → 4400 → bağlan" döngüsüne dönüşür ve her tur bir
+ * WS fonksiyon çağrısı yakar. Ekran salt-okunur olur, kullanıcıya hata gösterilir.
+ */
+const PERMANENT_CLOSE_CODES: readonly number[] = [
+  WS_CLOSE.PROTOCOL_VIOLATION,
+  WS_CLOSE.FORBIDDEN,
+  WS_CLOSE.NOT_FOUND,
+  WS_CLOSE.SESSION_TAKEOVER,
+]
+
+export function isPermanentCloseCode(code: number): boolean {
+  return PERMANENT_CLOSE_CODES.includes(code)
+}
+
+/**
+ * Kimlik çözülemedi: kör geri çekilme yerine önce **yeni bilet** alınır
+ * (`POST /api/ws/ticket`), sonra bağlanılır. Bileti tazelemeden denemek aynı
+ * 4401'i tekrar üretir.
+ */
+export function requiresReauth(code: number): boolean {
+  return code === WS_CLOSE.UNAUTHENTICATED
+}
+
+/**
+ * Kalıcı olmayan her kapanış yeniden bağlanmayı hak eder:
+ * `ROTATE` (4499) **gecikmesiz** ve backoff sıfırlanarak, `UNAUTHENTICATED`
+ * (4401) `requiresReauth` adımından sonra, `IDLE_TIMEOUT` (4408) ve
+ * sınıflandırılmamış tüm kodlar üstel geri çekilmeyle.
+ */
 export function isReconnectableCloseCode(code: number): boolean {
-  return code !== WS_CLOSE.SESSION_TAKEOVER
+  return !isPermanentCloseCode(code)
 }
