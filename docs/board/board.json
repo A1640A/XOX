@@ -316,9 +316,9 @@
         "apps/web/vitest.setup.ts",
         "apps/web/next.config.ts"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/UI-SKEL-001",
       "report": null,
       "acceptance": [
         "/, /giris, /kayit, /profil (minimum: ad + e-posta + 'Çıkış yap'), /oda/[kod] rotaları render olur. Tüm testid'ler @xox/shared/testids'ten gelir; bileşenlerde serpiştirilmiş testid string'i yok",
