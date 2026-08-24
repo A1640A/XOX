@@ -1,14 +1,11 @@
 import type { MessageTree } from '@xox/shared'
 
 /**
- * Uygulama tek dilli (Türkçe). i18n kütüphanesi yok, ama tüm metinler burada
- * toplanır: ileride EN gerekirse tüm UI dosyalarını dolaşmak gerekmez.
- *
- * Ağacın ŞEKLİ (`MessageTree`) `@xox/shared`'dan (message-keys.ts, CTR-001
- * ürünü) gelir — anahtar kümesi orada donmuştur. Bu dosya TXT-001 ile
- * dondurulmuştur: yeni anahtar eklenmez, yalnızca metin değeri okunur.
- * `tr.test.ts` bu ağacı `diffMessageKeys` ile iki yönlü doğrular; bir anahtar
- * silinirse ya da fazladan eklenirse test kırmızı olur.
+ * Mobilin kendi Türkçe metin ağacı. Web'in `apps/web/messages/tr.ts`
+ * dosyasını IMPORT ETMEZ (boundaries: mobil web'e bağımlı olamaz) — eşbiçim
+ * kopyadır, tek kaynak `@xox/shared`'daki `MESSAGE_KEYS` anahtar listesidir.
+ * `tr.test.ts` bu ağacı `diffMessageKeys` ile iki yönlü doğrular ve web
+ * ağacıyla yer tutucu paritesini karşılaştırır.
  *
  * Metin kuralları (spec §5): ikinci tekil şahıs ("sen"), "siz" yasak; hata
  * mesajları ne olduğunu ve ne yapılacağını söyler; yer tutucular `{ad}`,
