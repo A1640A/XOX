@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: '1'
+
+jobs:
+  playwright-isolation:
+    name: Playwright izolasyon kontrolü
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: apps/e2e dışında playwright bağımlılığı olmamalı
+        run: |
+          violations=$(grep -rl '"@playwright/test"' --include=package.json \
+            --exclude-dir=node_modules --exclude-dir=.git . \
+            | grep -v '^\./apps/e2e/package\.json$' || true)
+          if [ -n "$violations" ]; then
+            echo "🔴 Playwright ana projeye sızmış:"; echo "$violations"; exit 1
+          fi
+          echo "✅ Playwright yalnızca apps/e2e içinde"
+
+  gates:
+    name: Kalite kapıları
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with: { version: 11.15.1 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm test:coverage
+      - run: pnpm knip
+      - name: TypeScript sürüm kilidi (7.x lint katmanını kırar)
+        run: |
+          v=$(pnpm exec tsc --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          case "$v" in 6.*) echo "✅ TypeScript $v";; *) echo "🔴 Beklenmeyen TypeScript $v"; exit 1;; esac
+
+  mutation:
+    name: game-core mutasyon testi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with: { version: 11.15.1 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm mutation
+
+  build:
+    name: Derleme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with: { version: 11.15.1 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm --filter @xox/mobile build
+      - run: pnpm exec size-limit
+
+  secrets:
+    name: Secret taraması
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v3
+        env: { GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
