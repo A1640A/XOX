@@ -33,6 +33,22 @@ describe('tokens', () => {
     await expect(signToken('ws-ticket', 'user-1')).rejects.toThrow('AUTH_SECRET')
   })
 
+  it(
+    'GÜVENLİK: AUTH_SECRET 32 karakterden KISAYSA imzalama fırlatır — ' +
+      'kısa bir sır dakikalar içinde kırılıp sahte token üretilebilir',
+    async () => {
+      process.env['AUTH_SECRET'] = 'x'
+      const { signToken } = await import('./tokens')
+      await expect(signToken('ws-ticket', 'user-1')).rejects.toThrow('32')
+    },
+  )
+
+  it('AUTH_SECRET tam 32 karakterse KABUL edilir (sınır değeri)', async () => {
+    process.env['AUTH_SECRET'] = 'a'.repeat(32)
+    const { signToken } = await import('./tokens')
+    await expect(signToken('ws-ticket', 'user-1')).resolves.toMatchObject({ expiresIn: 30 })
+  })
+
   it('WS bileti tam olarak WS_TICKET_TTL_SECONDS (30) saniye ömürlü döner', async () => {
     const { signToken } = await import('./tokens')
     const { expiresIn } = await signToken('ws-ticket', 'user-1')
@@ -87,6 +103,23 @@ describe('tokens', () => {
   it('bozuk/uydurma token reddedilir (null)', async () => {
     const { verifyToken } = await import('./tokens')
     await expect(verifyToken('uydurma.token.degeri', 'ws-ticket')).resolves.toBeNull()
+  })
+
+  it('algorithms allowlist: HS256 dışında imzalanmış bir token (aynı sırla) reddedilir', async () => {
+    const { SignJWT } = await import('jose')
+    const secret = process.env['AUTH_SECRET']
+    if (secret === undefined) throw new Error('test kurulum hatası')
+    const key = new TextEncoder().encode(secret)
+    const hs384Token = await new SignJWT({})
+      .setProtectedHeader({ alg: 'HS384' })
+      .setSubject('user-1')
+      .setAudience('xox-ws')
+      .setIssuedAt()
+      .setExpirationTime(Math.floor(Date.now() / 1000) + 30)
+      .sign(key)
+
+    const { verifyToken } = await import('./tokens')
+    await expect(verifyToken(hs384Token, 'ws-ticket')).resolves.toBeNull()
   })
 
   it('süresi dolmuş token reddedilir', async () => {

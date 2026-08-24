@@ -39,10 +39,25 @@ export interface VerifiedToken {
   claims: Record<string, unknown>
 }
 
+/**
+ * Aynı sır Auth.js oturum JWT'sini de imzalıyor (ADR-0009 ⚠️) — kısa/tahmin
+ * edilebilir bir `AUTH_SECRET` tüm kimlik katmanını çökertir. 32 karakter
+ * HS256 için asgari önerilen anahtar uzunluğudur (256 bit); güvenlik
+ * denetimi `AUTH_SECRET='x'` ile imzalama+doğrulamanın KABUL EDİLDİĞİNİ
+ * kanıtladı — kısa bir sır saniyeler içinde `hashcat -m 16500` ile kırılıp
+ * istenen `userId` için sahte token üretilebilir.
+ */
+const MIN_SECRET_LENGTH = 32
+
 function getSecretKey(): Uint8Array {
   const secret = process.env['AUTH_SECRET']
   if (secret === undefined || secret === '') {
     throw new Error('AUTH_SECRET tanımlı değil. .env.local veya Vercel ortamını kontrol et.')
+  }
+  if (secret.length < MIN_SECRET_LENGTH) {
+    throw new Error(
+      `AUTH_SECRET en az ${String(MIN_SECRET_LENGTH)} karakter olmalı (HS256 için asgari 256 bit).`,
+    )
   }
   return new TextEncoder().encode(secret)
 }
@@ -72,7 +87,14 @@ export async function signToken(
  */
 export async function verifyToken(token: string, kind: TokenKind): Promise<VerifiedToken | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecretKey(), { audience: AUDIENCE[kind] })
+    const { payload } = await jwtVerify(token, getSecretKey(), {
+      audience: AUDIENCE[kind],
+      // Anahtar bugün ham `Uint8Array` olduğu için jose zaten yalnız HS*
+      // kabul ediyor; `algorithms` açık allowlist'i anahtar tipi ileride
+      // `KeyObject`/asimetrik bir şeye dönerse "alg confusion" kapısını
+      // baştan kapatır (küçük bulgu, savunma derinliği).
+      algorithms: ['HS256'],
+    })
     if (typeof payload.sub !== 'string' || payload.sub.length === 0) return null
     // `payload` kayıtlı iddiaları (sub/aud/iat/exp) da içerir; sorun değil —
     // çağıran taraf yalnız bilerek eklediği ek alanları (örn. `name`) okur.
