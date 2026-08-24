@@ -115,3 +115,8 @@
 {"ts":"2026-08-24T17:05:18Z","event":"file.touched","path":".claude/worktrees/RT-PROBE-001/apps/web/app/api/health/realtime/route.test.ts"}
 {"ts":"2026-08-24T17:05:24Z","event":"file.touched","path":".claude/worktrees/RT-PROBE-001/apps/web/app/api/health/realtime/route.test.ts"}
 {"ts":"2026-08-24T16:00:00Z","wave":1,"event":"task.done","task":"CTR-001","agent":"xox-dev-core","tests":"154","coverage":"100%","note":"gameStatusSchema/Seats/moveIndexSchema kaldirildi - kirici, tuketicisi yoktu"}
+{"ts":"2026-08-24T17:05:51Z","event":"file.touched","path":".claude/worktrees/RT-PROBE-001/apps/web/app/api/health/realtime/route.test.ts"}
+{"ts":"2026-08-24T17:06:20Z","event":"file.touched","path":".claude/worktrees/RT-PROBE-001/apps/web/app/api/health/realtime/route.test.ts"}
+{"ts":"2026-08-24T17:08:28Z","event":"subagent.stop"}
+{"ts":"2026-08-24T17:11:11Z","event":"subagent.stop"}
+{"ts":"2026-08-24T16:30:00Z","wave":1,"event":"review.finding","task":"OPS-002","agent":"xox-reviewer","findings":8,"major":2,"summary":"jose iki kopya (instanceof kirilir), dev:ws hic kosulmamis ve temiz worktree-de calismaz"}

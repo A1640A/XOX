@@ -100,8 +100,8 @@
         "knip.json",
         "turbo.json"
       ],
-      "status": "reviewing",
-      "attempts": 0,
+      "status": "in_wave",
+      "attempts": 1,
       "branch": "feat/OPS-002",
       "report": "docs/board/reports/OPS-002.md",
       "acceptance": [
@@ -331,7 +331,7 @@
         "Renkler yalnız @xox/ui-tokens'tan; hex literal yok (UI-001'in lint kuralı bunu zorlar)",
         "Vitest + Testing Library birim testleri: Board girdi kapısı (interactive=false iken tıklama olay üretmez), ErrorBanner kod->metin eşlemesi, useRoom'un reducer'a doğru olay yolladığı. apps/web içinde playwright importu YOK",
         "pnpm gates temiz",
-        "Etkilesim testlerinde `fireEvent` kullanilir, `@testing-library/user-event` DEGIL - o paket apps/web bagimliliklarinda yok ve package.json donmus durumda (OPS-002). Paket gerekiyorsa dondurmayi kirma, blocked isaretle."
+        "Etkilesim testlerinde `@testing-library/user-event` kullanilir (OPS-002 dondurma listesine eklendi) - gercek kullanici etkilesim dizilerini simule ettigi icin fireEvent-ten daha durust test uretir."
       ],
       "blockedReason": null
     },
