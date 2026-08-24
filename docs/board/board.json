@@ -124,10 +124,10 @@
       "agent": "xox-dev-realtime",
       "deps": [],
       "conflictSet": ["apps/web/app/api/health/realtime/**"],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/RT-PROBE-001",
-      "report": null,
+      "report": "docs/board/reports/RT-PROBE-001.md",
       "acceptance": [
         "GET /api/health/realtime `{ ok, samples, p50Ms, p95Ms, maxMs }` döner: xox_test'te rooms koleksiyonuna N >= 20 kez yazar ve her yazma için change stream olayının gelişine kadar geçen süreyi ölçer",
         "Sonda TEK change stream açar ve iş bitince kapatır; açık stream sayısının 1 olduğu rapora yazılır (ADR-0002 · Z1: bağlantı-başına stream havuzu kilitler)",

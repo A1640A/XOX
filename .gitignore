@@ -45,3 +45,7 @@ docs/board/danger.log
 npm-debug.log*
 .env*
 !.env.example
+
+# Next 16 bunlari otomatik uretiyor; kok CLAUDE.md zaten var, kopyasi agent-lari yaniltir
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
