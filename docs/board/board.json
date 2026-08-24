@@ -1078,10 +1078,10 @@
       "agent": "xox-memory-curator",
       "deps": [],
       "conflictSet": [],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/MEM-001.md",
       "acceptance": [],
       "blockedReason": null
     },

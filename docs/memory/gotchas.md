@@ -2,15 +2,6 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
-## 2026-08-25 · LEAD DISIPLINI: mutasyon sondasi UYGULANDI MI diye kontrol et
-
-Bu gece uc kez `perl -0pi` / `grep` kalibi tutmadi ve sonda SESSIZCE hicbir sey degistirmedi.
-Sonuc yaniltici: "testler yesil kaldi" cikarimi yaptim, oysa mutasyon hic olusmamisti.
-Bir kez de grep YORUM satirlarini eslestirip "tek darbogaz degil" diye yanlis bulgu urettim.
-**Yapilacak:** Sondadan sonra `diff -q` ile dosyanin GERCEKTEN degistigini dogrula; degismediyse
-"kalip tutmadi" de, "test yesil kaldi" DEME. Kod ararken yorumlari ele:
-`grep -vE '^\s*(\*|//|/\*)' dosya | grep -c desen`.
-
 ## Tekrar eden örüntüler
 
 Aşağıdaki beş örüntü, alttaki maddelerin çoğunu kapsar. Yeni bir sınıfta tuzağa düşmeden önce
@@ -45,6 +36,15 @@ kurulmaz, pre-commit kapıları sessizce devre dışı kalır.
 gerçek CLI kırık · `next-auth`'un derlenmiş çıktısı Vitest'in native ESM yükleyicisinde hiç
 import edilemez (environment fark etmez) · `jose` jsdom'un ayrı `Uint8Array` realm'inde patlar
 ama gerçek Node çalışma zamanında sorun yok — iki yönde de "test ortamı = üretim" varsayımı yanlış.
+
+## 2026-08-25 · LEAD DISIPLINI: mutasyon sondasi UYGULANDI MI diye kontrol et
+
+Bu gece uc kez `perl -0pi` / `grep` kalibi tutmadi ve sonda SESSIZCE hicbir sey degistirmedi.
+Sonuc yaniltici: "testler yesil kaldi" cikarimi yaptim, oysa mutasyon hic olusmamisti.
+Bir kez de grep YORUM satirlarini eslestirip "tek darbogaz degil" diye yanlis bulgu urettim.
+**Yapilacak:** Sondadan sonra `diff -q` ile dosyanin GERCEKTEN degistigini dogrula; degismediyse
+"kalip tutmadi" de, "test yesil kaldi" DEME. Kod ararken yorumlari ele:
+`grep -vE '^\s*(\*|//|/\*)' dosya | grep -c desen`.
 
 ## 2026-08-25 · ⚠️ Mongo aynı anahtara ikinci indeksi ADA BAKMAKSIZIN reddeder — "boşluksuz takas" ÇALIŞMAZ
 
