@@ -11,7 +11,9 @@
     "./message-keys": "./src/message-keys.ts",
     "./primitives": "./src/primitives.ts",
     "./rest-contract": "./src/rest-contract.ts",
+    "./room-client": "./src/room-client.ts",
     "./testids": "./src/testids.ts",
+    "./ws-client": "./src/ws-client.ts",
     "./ws-close": "./src/ws-close.ts",
     "./ws-protocol": "./src/ws-protocol.ts"
   },

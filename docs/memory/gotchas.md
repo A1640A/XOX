@@ -2,6 +2,68 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Mongo indeks catismasi kodu 86, 85 DEGIL
+
+Dokumanlar `IndexOptionsConflict` (85) der; canli Atlas mevcut ayni isimli farkli secenekli
+indekste **86 `IndexKeySpecsConflict`** donduruyor. Yalniz 85 yakalanirsa hata disari sizar,
+`ensureIndexes()` dongusu kirilir ve kalan indeksler hic kurulmaz.
+**Yapilacak:** Ikisini de yakala. Ve bu tur kodlari dokumandan degil CANLI denemeden ogren.
+
+## 2026-08-24 · `deployment_status` workflow-u guvenilmeyen HEDEFE sir gonderebilir
+
+Bu olayda workflow dosyasi DEFAULT BRANCH-ten okunur ama deploy edilen KOD PR head-idir.
+`environment_url` olay yukunden gelir. Yani bir PR, cagrilan uc noktanin kodunu yazar; workflow
+ona gercek secret-i tasir. Fork PR-lari icin Vercel `gitForkProtection` bunu azaltir ama
+collaborator/entegrasyon yolu acik kalir.
+**Yapilacak:** CI-dan bir uc noktaya SIR GONDERME. Is zaten `MONGODB_URI`-ye sahipse islemi
+runner-dan dogrudan kosur. Sir agdan hic gecmezse sinif tamamen yok olur.
+
+## 2026-08-24 · Dusur-sonra-kur penceresi geri alinamaz
+
+`createIndex` catismada -> `dropIndex` -> `createIndex` deseni, ikinci adim basarisiz olursa
+koleksiyonu INDEKSSIZ birakir; baslangictan DAHA KOTU. Somut: `users.email_1` benzersiz degil
+ve koleksiyonda mukerrer e-posta varsa, dusurulur ama unique olarak yeniden KURULAMAZ (E11000).
+Sonuc: login lookup COLLSCAN, benzersizlik hala yok, ve tekrar cagirmak ayni yerde patlar.
+**Yapilacak:** Bosluksuz takas — yeni indeksi FARKLI adla kur, basarili olursa eskisini dusur.
+Hicbir anda indekssiz kalinmaz.
+
+## 2026-08-24 · ⚠️ mongoose CommonJS: tsx-in ESM yukleyicisi named export goremez
+
+`import { Schema, model, models } from 'mongoose'` VITEST-TE CALISIR ama `tsx` ile kosulan
+CLI betiginde `SyntaxError: The requested module 'mongoose' does not provide an export named
+'models'` verir. Vite CJS interop-u farkli yaptigi icin birim testler bu kirikligi TAMAMEN GIZLER.
+Belirti: `pnpm --filter @xox/db seed` duser ama testler yesildir — ve `e2e-preview.yml` seed
+adimini cagirdigi icin her preview e2e kosusu bu adimda olur.
+**Yapilacak:** `import mongoose from 'mongoose'` + `const { Schema, model, models } = mongoose`.
+Tipler icin ayrica `import type { Model } from 'mongoose'`.
+
+## 2026-08-24 · Test setup-i ile CLI ayni ortami yuklemeli
+
+`.env.local` yuklemesi yalniz `vitest.setup.ts`-teydi; `seed`/`reset` CLI betikleri
+`MONGODB_URI tanimli degil` ile dusuyordu. CI-da ortam degiskeni disaridan geldigi icin orada
+calisiyor, yerelde kirik — yani kirikligi yalniz insan fark ediyor.
+**Yapilacak:** Yukleyiciyi ayri bir modulde topla (`load-env.ts`) ve hem setup hem CLI ondan
+cagirsin. Setup-taki `process.env['MONGODB_DB'] = 'xox_test'` zorlamasini SILME — indeks testi
+guard-i onu bekliyor.
+
+## 2026-08-24 · Python `split`/`index` fonksiyon ADINI ararken TANIMI bulur
+
+Kod cikarirken `src.split("loadEnvLocal()")` ya da `s.index("loadEnvLocal()")` yazarsan ilk
+eslesme `function loadEnvLocal(): void {` satiridir, CAGRI degil — govde ortadan kesilir ve
+sessizce bozuk dosya uretilir. Bu gece iki kez oldu.
+**Yapilacak:** Kod bloklarini regex ile sinir belirterek cikar (`re.search(r"function X.*?\n\}\n", s, re.S)`)
+ya da dosyayi dogrudan yaz. Cikarim sonrasi `bash -n` / `tsc` ile MUTLAKA dogrula.
+
+## 2026-08-24 · Merge sonrasi lockfile yeniden uretimi TIP HATASI dogurabilir
+
+Uc branch tek tek yesildi; birlesip `pnpm install --lockfile-only` kosulunca `@xox/db`
+typecheck kirildi: `import.meta.dirname` TS-te `string | undefined` ve cozulen `@types/node`
+surumu degisince daralma kayboldu. Branch-lerde gorulmez cunku her biri kendi lockfile
+durumunda kalir.
+**Yapilacak:** Integrator merge sonrasi lockfile-i yeniden uretip kapilari MUTLAKA yeniden
+kossun — merge-in kendisi cakismasiz olsa bile. Ve `import.meta.dirname` yerine
+`import.meta.dirname ?? dirname(fileURLToPath(import.meta.url))` yaz; her surumde calisir.
+
 ## 2026-08-24 · Bir TEST hatayi kilitleyebilir — yesil, davranisin dogru oldugunu gostermez
 
 CTR-002-de `socket:open` reconnect sayacini sifirliyordu; bu, uygulama-seviyesi (4000-4999)

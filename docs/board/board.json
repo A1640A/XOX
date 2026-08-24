@@ -5,7 +5,7 @@
   "nightRun": {
     "active": true,
     "deadline": null,
-    "wave": 2,
+    "wave": 3,
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0
   },
@@ -155,7 +155,7 @@
         "packages/db/src/indexes.ts",
         "packages/db/package.json"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/DB-001",
       "report": "docs/board/reports/DB-001.md",
@@ -211,7 +211,7 @@
       "agent": "xox-designer",
       "deps": ["CTR-001"],
       "conflictSet": ["apps/web/messages/**", "apps/mobile/messages/**"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/TXT-001",
       "report": null,
@@ -275,9 +275,9 @@
         "apps/web/app/api/ws/**",
         "apps/web/types/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/AUTH-001",
       "report": null,
       "acceptance": [
         "SPLIT CONFIG (gotcha, R6): auth.config.ts yalnız pages + callbacks.authorized içerir ve kenar-güvenlidir; middleware.ts YALNIZ onu import eder, auth.ts'i ETMEZ. Kanıt: `pnpm --filter @xox/web build` başarılı ve middleware çıktısında mongoose/@node-rs/argon2 geçmiyor (grep çıktısı rapora yapıştırılır)",
@@ -1001,10 +1001,10 @@
         "packages/db/src/indexes.ts",
         ".github/workflows/**"
       ],
-      "status": "todo",
-      "attempts": 0,
-      "branch": null,
-      "report": null,
+      "status": "in_wave",
+      "attempts": 1,
+      "branch": "feat/OPS-003",
+      "report": "docs/board/reports/OPS-003.md",
       "acceptance": [
         "ensureIndexes() gercek bir cagirana baglanir (deploy sonrasi migration adimi ya da korumali bir route). Su an REPO GENELINDE tek cagiran indexes.test.ts — yani indeksler canlida HIC olusmuyor.",
         "IndexOptionsConflict ele alinir: mevcut ayni isimli ama farkli secenekli indeks varsa once dusurulup yeniden olusturulur. Kanit: xox_dev-de email_1 benzersiz-olmayan halde varken cagri kosulur ve sonunda unique:true oldugu collection.indexes() ile gosterilir.",
@@ -1012,6 +1012,24 @@
         "DB-002 MERGE EDILMEDEN once tamamlanir; yoksa WS-001 sorgulari preview-da COLLSCAN yapar ve KK-117 performans sondasi yanlis ortami olcer."
       ],
       "blockedReason": null
+    },
+    {
+      "id": "SEC-001",
+      "title": "Atlas parolasını rotate et (insan kararı — Atlas konsolu gerekiyor)",
+      "tier": "P1",
+      "agent": "xox-devops",
+      "deps": [],
+      "conflictSet": [],
+      "status": "blocked",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "xoxAdmin Atlas parolasi Atlas konsolundan degistirilir",
+        "Yeni URI Vercel (development/preview/production) ve GitHub MONGODB_URI secret-inda guncellenir",
+        "Yerel .env.local guncellenir; pnpm --filter @xox/db seed ile dogrulanir"
+      ],
+      "blockedReason": "OMER'DEN GEREKEN: Atlas konsol erisimi bende yok. Baglanti dizesi bu oturumda duz metin paylasildi (kullanicinin kendisi verdi) ve ayrica bir subagent transkriptine .env.local icerigi redaksiyonsuz dustu. Repoya/committe/rapora HIC girmedi (gitleaks 153 commit-te sifir sizinti) ve GitHub push protection acik. Yine de sir bir kez transkripte girmis durumda — dusuk ama sifir olmayan risk. Uygun bir anda rotate edilmeli, acil degil."
     }
   ]
 }
