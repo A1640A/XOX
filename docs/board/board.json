@@ -1050,6 +1050,26 @@
         "Kural gercekten calistigi KANITLANIR: esigin ustunde istek atilir ve 429 alindigi gosterilir."
       ],
       "blockedReason": null
+    },
+    {
+      "id": "PERF-001",
+      "title": "Performans olcumu: bundle, RSC/client orani, Mongo indeks kullanimi, WS mesaj hacmi",
+      "tier": "P1",
+      "agent": "xox-perf",
+      "deps": ["UI-SKEL-001", "WS-001"],
+      "conflictSet": [],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "size-limit calistirilir; 180 kB gzip butcesine karsi gercek sayi raporlanir.",
+        "'use client' sayilir; her birinin gercekten state/effect/event ihtiyaci var mi degerlendirilir.",
+        "Mongo: her sorgu icin indeks var mi — explain() ile COLLSCAN olmadigi GOSTERILIR (OPS-003 indeksleri kurdu, kullanildiklari ayri bir sorudur).",
+        "WS: bir hamlede kac mesaj gidiyor, tam state mi delta mi, heartbeat araligi makul mu.",
+        "OLCMEDIGIN SEYI RAPORLAMA — sayi ver ya da 'olculmedi' yaz."
+      ],
+      "blockedReason": null
     }
   ]
 }

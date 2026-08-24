@@ -478,3 +478,14 @@
 {"ts":"2026-08-24T21:54:30Z","event":"file.touched","path":".claude/worktrees/DB-002/packages/db/src/rooms/apply-move.test.ts"}
 {"ts":"2026-08-25T00:50:00Z","wave":3,"event":"task.done","task":"AUTH-001","agent":"xox-dev-backend","attempts":1,"tests":"122","note":"2 blocker kapandi; bilet room claim-ine baglandi; denetcinin mutasyonlari artik kirmizi"}
 {"ts":"2026-08-25T00:51:00Z","wave":3,"event":"merge.ok","tasks":["AUTH-001"]}
+{"ts":"2026-08-24T21:54:53Z","event":"file.touched","path":".claude/worktrees/DB-002/packages/db/src/rooms/apply-move.test.ts"}
+{"ts":"2026-08-24T21:56:24Z","event":"file.touched","path":".claude/worktrees/DB-002/packages/db/src/rooms/detach.ts"}
+{"ts":"2026-08-24T21:56:36Z","event":"file.touched","path":".claude/worktrees/DB-002/packages/db/src/rooms/join.ts"}
+{"ts":"2026-08-24T21:56:47Z","event":"file.touched","path":".claude/worktrees/DB-002/packages/db/src/rooms/create.test.ts"}
+{"ts":"2026-08-24T21:56:53Z","event":"file.touched","path":".claude/worktrees/DB-002/packages/db/src/rooms/create.test.ts"}
+{"ts":"2026-08-24T21:59:57Z","event":"file.touched","path":".claude/worktrees/DB-002/packages/db/src/rooms/join.test.ts"}
+{"ts":"2026-08-24T22:05:51Z","event":"file.touched","path":".claude/worktrees/DB-002/docs/board/reports/DB-002.md"}
+{"ts":"2026-08-24T17:00:00Z","wave":0,"event":"task.done","task":"SPEC-001","agent":"xox-analyst","note":"geriye donuk kayit - 28 hikaye, 88 kabul kriteri"}
+{"ts":"2026-08-24T18:30:00Z","wave":0,"event":"task.done","task":"ARCH-001","agent":"xox-architect","note":"geriye donuk kayit - teknik tasarim + 9 ADR"}
+{"ts":"2026-08-24T19:00:00Z","wave":0,"event":"task.done","task":"PLAN-001","agent":"xox-planner","note":"geriye donuk kayit - 33 kart, 12 dalga"}
+{"ts":"2026-08-25T01:00:00Z","wave":5,"event":"gotcha","summary":"LEAD KUSURU: xox-integrator hic kullanilmadi, merge-leri lead yapti. xox-memory-curator 3 dalga gecikti. xox-perf-e board-da hic kart atanmamis."}
