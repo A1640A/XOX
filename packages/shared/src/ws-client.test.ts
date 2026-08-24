@@ -75,13 +75,13 @@ interface Kurulum {
   readonly client: RoomWsClient
   readonly soketler: SahteSoket[]
   readonly degisimler: RoomClientState[]
-  readonly reauthSayisi: () => number
+  readonly reauthDenemeleri: number[]
 }
 
 function kur(overrides: Partial<RoomWsClientDeps> = {}): Kurulum {
   const soketler: SahteSoket[] = []
   const degisimler: RoomClientState[] = []
-  let reauth = 0
+  const reauthDenemeleri: number[] = []
   const deps: RoomWsClientDeps = {
     url: 'wss://ornek/api/rooms/ABC234/ws',
     roomCode: 'ABC234',
@@ -97,12 +97,10 @@ function kur(overrides: Partial<RoomWsClientDeps> = {}): Kurulum {
       clearTimeout(handle as ReturnType<typeof setTimeout>)
     },
     onChange: (state) => degisimler.push(state),
-    onReauth: () => {
-      reauth += 1
-    },
+    onReauth: (attempt) => reauthDenemeleri.push(attempt),
     ...overrides,
   }
-  return { client: createRoomWsClient(deps), soketler, degisimler, reauthSayisi: () => reauth }
+  return { client: createRoomWsClient(deps), soketler, degisimler, reauthDenemeleri }
 }
 
 function son(soketler: SahteSoket[]): SahteSoket {
@@ -343,16 +341,29 @@ describe('yeniden bağlanma', () => {
   })
 
   it('4401 kör bağlanma yerine yeni bilet ister', () => {
-    const { client, soketler, reauthSayisi } = bagli()
+    const { client, soketler, reauthDenemeleri } = bagli()
     son(soketler).sunucuKapatti(WS_CLOSE.UNAUTHENTICATED)
 
     vi.advanceTimersByTime(60_000)
-    expect(reauthSayisi()).toBe(1)
+    expect(reauthDenemeleri).toEqual([0])
     expect(soketler).toHaveLength(1)
 
     client.connect('wss://ornek/api/rooms/ABC234/ws?ticket=yeni')
     expect(soketler).toHaveLength(2)
     expect(son(soketler).url).toContain('ticket=yeni')
+  })
+
+  // S6: bozuk bilet üretilirse çağıran pes edebilmeli; deneme sayısı ona verilir.
+  it('bozuk bilet döngüsünde deneme sayısı çağırana taşınır', () => {
+    const { client, soketler, reauthDenemeleri } = bagli()
+
+    for (let tur = 0; tur < 3; tur += 1) {
+      son(soketler).sunucuKapatti(WS_CLOSE.UNAUTHENTICATED)
+      client.connect('wss://ornek/api/rooms/ABC234/ws?ticket=bozuk')
+      son(soketler).ac()
+    }
+
+    expect(reauthDenemeleri).toEqual([0, 1, 2])
   })
 })
 

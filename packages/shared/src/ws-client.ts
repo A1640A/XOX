@@ -41,9 +41,10 @@ export interface RoomWsClientDeps {
   readonly onChange: (state: RoomClientState) => void
   /**
    * 4401 — çağıran yeni bilet alır ve `connect(yeniUrl)` çağırır. G/Ç bu
-   * pakete girmez (ADR-0006).
+   * pakete girmez (ADR-0006). `attempt` kaçıncı deneme olduğunu söyler:
+   * bozuk bilet üreten bir sunucuda çağıran pes edebilmeli.
    */
-  readonly onReauth: () => void
+  readonly onReauth: (attempt: number) => void
 }
 
 export interface RoomWsClient {
@@ -82,7 +83,7 @@ export function createRoomWsClient(deps: RoomWsClientDeps): RoomWsClient {
         write({ type: 'join', roomCode: deps.roomCode })
         return
       case 'reauth':
-        deps.onReauth()
+        deps.onReauth(effect.attempt)
         return
       case 'reconnect':
         scheduleReconnect(effect.attempt, effect.immediate)

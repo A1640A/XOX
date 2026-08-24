@@ -82,8 +82,12 @@ export type RoomClientEffect =
   /** Sürüm boşluğu — taşıma `join` göndererek tam durumu ister (KK-047). */
   | { readonly type: 'resync' }
   | { readonly type: 'reconnect'; readonly attempt: number; readonly immediate: boolean }
-  /** 4401 — önce yeni bilet, sonra bağlantı (ADR-0006). Kör backoff yok. */
-  | { readonly type: 'reauth' }
+  /**
+   * 4401 — önce yeni bilet, sonra bağlantı (ADR-0006). Kör backoff yok ama
+   * `attempt` taşınır: "kör backoff yok" ile "hiç sınır yok" aynı şey değil,
+   * bileti tazeleyen taraf bozuk bilet döngüsünde pes edebilmeli.
+   */
+  | { readonly type: 'reauth'; readonly attempt: number }
 
 export interface RoomClientResult {
   readonly state: RoomClientState
@@ -257,7 +261,7 @@ function closed(state: RoomClientState, code: number): RoomClientResult {
         lastError: 'UNAUTHENTICATED',
         reconnectAttempt: state.reconnectAttempt + 1,
       },
-      effects: [{ type: 'reauth' }],
+      effects: [{ type: 'reauth', attempt: state.reconnectAttempt }],
     }
   }
   // Z2 — planlı rotasyon: sayaç sıfırlanır, gecikmesiz bağlanılır.

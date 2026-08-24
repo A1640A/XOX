@@ -493,7 +493,25 @@ describe('§5.6/10 — diğer kapanışlar', () => {
 
     expect(state.connection).toBe('baglaniyor')
     expect(state.lastError).toBe('UNAUTHENTICATED')
-    expect(effects).toEqual([{ type: 'reauth' }])
+    expect(effects).toEqual([{ type: 'reauth', attempt: 0 }])
+  })
+
+  // "Kör backoff yok" ile "hiç sınır yok" aynı şey değil: bozuk bilet üreten bir
+  // sunucuda zaman hiç ilerlemeden soket açılmaya devam ederdi. Sayaç efektle
+  // TAŞINIR ki bileti tazeleyen taraf pes edebilsin.
+  it('ardışık 4401 denemeleri sayacı efekte taşır', () => {
+    const bir = roomClientReducer(bagliDurum(), {
+      type: 'socket:closed',
+      code: WS_CLOSE.UNAUTHENTICATED,
+    })
+    const iki = roomClientReducer(bir.state, {
+      type: 'socket:closed',
+      code: WS_CLOSE.UNAUTHENTICATED,
+    })
+
+    expect(bir.effects).toEqual([{ type: 'reauth', attempt: 0 }])
+    expect(iki.effects).toEqual([{ type: 'reauth', attempt: 1 }])
+    expect(iki.state.reconnectAttempt).toBe(2)
   })
 
   // Beklenti CTR-001'in dondurulmuş sınıflandırıcılarından okunuyor; bu üçlü bu
