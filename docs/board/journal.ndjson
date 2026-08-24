@@ -186,3 +186,4 @@
 {"ts":"2026-08-24T18:29:53Z","event":"subagent.stop"}
 {"ts":"2026-08-24T18:50:00Z","wave":1,"event":"task.done","task":"CTR-001","agent":"xox-dev-core","tests":"214","coverage":"100%","note":"8 bulgu kapandi; kendine-referansli test tuzagi bulundu ve iki katmanla cozuldu"}
 {"ts":"2026-08-24T18:52:00Z","wave":1,"event":"merge.ok","tasks":["CTR-001","OPS-002","UI-001","RT-PROBE-001"],"note":"cakisma yok, 5 kapi yesil"}
+{"ts":"2026-08-24T18:55:00Z","wave":2,"event":"decision","summary":"fra1 bolge duzeltmesi sonrasi change stream p95 98.6ms -> 8.7ms (11x). Butcenin %0.58i."}

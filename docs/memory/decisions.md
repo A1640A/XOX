@@ -25,8 +25,11 @@ kurulacak. **Upstash Redis pub/sub yedeği İPTAL.**
 oyuncunun gördüğü süre. Karşı instance bacağı ölçülmedi; iki uçlu kanıt Dalga 0 E2E-001-in işi.
 15× marj bu belirsizliği karşılıyor.
 
-**Ölçüm kötümser üst sınırdı:** Fonksiyonlar `iad1`-de koşuyordu (proje varsayılanı), Atlas ise
-Avrupa-da. Bölge `fra1`-e alındı; gerçek sayı bundan daha iyi olmalı.
+**Bölge düzeltildikten sonra yeniden ölçüldü (fra1, 25 örnek):**
+**p50 5.5 ms · p95 8.7 ms · maks 69.1 ms** — iad1'den ölçülen 98.6 ms'e karşı **11× iyileşme**.
+p95 artık 1500 ms bütçesinin **%0.58**'i. Teşhis doğrulandı: Atlas Avrupa'da, fonksiyonlar
+Virginia'daydı. Proje `serverlessFunctionRegion` ayarı `fra1` (vercel.json'daki `regions`
+Hobby/Pro'da yürümüyor — ayrı gotcha).
 
 ## 2026-08-24 · Auth.js sağlayıcısı: Credentials (e-posta + parola)
 
