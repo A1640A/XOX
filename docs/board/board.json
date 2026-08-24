@@ -353,9 +353,9 @@
         "apps/web/lib/game/**",
         "apps/web/app/api/rooms/[code]/ws/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/WS-001",
       "report": null,
       "acceptance": [
         "room-hub.ts modül kapsamında EN FAZLA BİR Room.watch() tutar: sahte sürücüyle üç abone eklendiğinde watch tam 1 kez çağrılır; son abone gidince stream.close() çağrılır (ADR-0002 · Z1)",
@@ -388,9 +388,9 @@
       "agent": "xox-dev-backend",
       "deps": ["AUTH-001", "DB-002"],
       "conflictSet": ["apps/web/app/api/rooms/route.ts", "apps/web/app/api/rooms/[code]/route.ts"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/ROOM-API-001",
       "report": null,
       "acceptance": [
         "POST /api/rooms oturumlu istekte 201 + { code } döner; kod roomCodeSchema'ya uyar (6 karakter, [A-HJ-NP-Z2-9]) ve kurucu X koltuğuna oturur (KK-030/031 sunucu tarafı)",
