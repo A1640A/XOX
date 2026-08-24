@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { boardFromCells } from './board'
 import { WIN_LINES, evaluateStatus } from './status'
-import type { Board } from './types'
+import type { Board, WinLine } from './types'
 
 const b = (s: string): Board =>
   boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
@@ -9,6 +9,29 @@ const b = (s: string): Board =>
 describe('WIN_LINES', () => {
   it('sekiz kazanma hattı içerir', () => {
     expect(WIN_LINES).toHaveLength(8)
+  })
+
+  it('dizi donmuştur — hat eklenemez', () => {
+    expect(Object.isFrozen(WIN_LINES)).toBe(true)
+    expect(() => {
+      ;(WIN_LINES as WinLine[]).push([0, 0, 0])
+    }).toThrow(TypeError)
+    expect(WIN_LINES).toHaveLength(8)
+  })
+
+  it('hatların kendisi de donmuştur — kazanma tespiti bozulamaz', () => {
+    expect(WIN_LINES.every((line) => Object.isFrozen(line))).toBe(true)
+    expect(() => {
+      ;(WIN_LINES[0] as unknown as number[])[0] = 5
+    }).toThrow(TypeError)
+    expect(evaluateStatus(b('XXX......'))).toEqual({ kind: 'won', winner: 'X', line: [0, 1, 2] })
+  })
+
+  it('evaluateStatus donmuş hattı döndürür — çağıran motoru bozamaz', () => {
+    const status = evaluateStatus(b('XXX......'))
+    expect(status.kind).toBe('won')
+    if (status.kind !== 'won') return
+    expect(Object.isFrozen(status.line)).toBe(true)
   })
 })
 

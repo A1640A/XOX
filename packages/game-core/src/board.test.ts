@@ -20,6 +20,14 @@ describe('EMPTY_BOARD', () => {
     expect(EMPTY_BOARD).toHaveLength(BOARD_SIZE)
     expect(EMPTY_BOARD.every((c) => c === null)).toBe(true)
   })
+
+  it('donmuştur — yazma denemesi hata atar ve tahtayı bozmaz', () => {
+    expect(Object.isFrozen(EMPTY_BOARD)).toBe(true)
+    expect(() => {
+      ;(EMPTY_BOARD as unknown as Cell[])[0] = 'X'
+    }).toThrow(TypeError)
+    expect(cellAt(EMPTY_BOARD, 0)).toBeNull()
+  })
 })
 
 describe('boardFromCells', () => {

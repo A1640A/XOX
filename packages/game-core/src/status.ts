@@ -1,16 +1,22 @@
 import { cellAt, nextPlayer } from './board'
 import type { Board, GameStatus, WinLine } from './types'
 
-export const WIN_LINES: readonly WinLine[] = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-]
+/**
+ * Sekiz kazanma hattı. Hem dizi hem de içindeki üçlüler dondurulur: `readonly`
+ * yalnız derleme zamanında korur, oysa tek bir `WIN_LINES[0][0] = 5` yazması
+ * süreç boyunca bütün kazanma tespitini bozardı. `evaluateStatus` bulduğu hattı
+ * kopyalamadan döndürdüğü için iç üçlülerin de donmuş olması şarttır.
+ */
+export const WIN_LINES: readonly WinLine[] = Object.freeze([
+  Object.freeze<WinLine>([0, 1, 2]),
+  Object.freeze<WinLine>([3, 4, 5]),
+  Object.freeze<WinLine>([6, 7, 8]),
+  Object.freeze<WinLine>([0, 3, 6]),
+  Object.freeze<WinLine>([1, 4, 7]),
+  Object.freeze<WinLine>([2, 5, 8]),
+  Object.freeze<WinLine>([0, 4, 8]),
+  Object.freeze<WinLine>([2, 4, 6]),
+])
 
 export function evaluateStatus(board: Board): GameStatus {
   for (const line of WIN_LINES) {

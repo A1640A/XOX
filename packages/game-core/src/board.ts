@@ -2,7 +2,22 @@ import type { Board, Cell, Player } from './types'
 
 export const BOARD_SIZE = 9
 
-export const EMPTY_BOARD: Board = [null, null, null, null, null, null, null, null, null]
+/**
+ * Boş tahta modül düzeyinde tek örnektir; bu yüzden dondurulur. `readonly`
+ * yalnız derleme zamanında korur: uzun ömürlü bir sunucu sürecinde tek bir
+ * `EMPTY_BOARD[0] = 'X'` yazması bundan sonraki bütün oyunları bozardı.
+ */
+export const EMPTY_BOARD: Board = Object.freeze<Board>([
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+])
 
 /**
  * Tahta indeksi her zaman 0..8 aralığındadır; bu değişmez `boardFromCells`,
