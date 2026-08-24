@@ -161,3 +161,161 @@ commits:
   - 'test(web): RTL afterEach(cleanup) — vitest.setup.ts'
   - 'docs(board): UI-SKEL-001 raporu'
 ```
+
+---
+
+## İnceleme turu 1/3 — bulgular ve düzeltmeler
+
+```yaml
+review_round: 1
+blocker_fixed: 1
+major_fixed: 6
+minor_fixed: 7
+commits:
+  - '0ed8e67 fix(web): BLOKER — 4401 gecikmesiz sonsuz yeniden bağlanma fırtınası'
+  - '9e75585 fix(web): MAJOR — dondurma eksik slotları, pes etme onayı, ARIA duyurusu'
+  - '8e7266f fix(web): MAJOR — doğrulanmamış hata gövdesi boş hata şeridine dönüşüyordu'
+  - 'f2de41c fix(web): minor — geçerli ARIA grid deseni, TopBar nullish ad, tam token sondası'
+fixes:
+  - id: BLOCKER-4401-STORM
+    detail: >
+      `use-room.ts`'nin `onReauth`'ı `attempt`i yok sayıp anında `connect()`
+      çağırıyordu. Artık `nextReconnectDelay(attempt, rng)` kadar tek bir
+      `setTimeout` ile bekler; `MAX_REAUTH_ATTEMPTS=5` aşılırsa `client.close()`
+      ile pes eder (`connection:'kopuk'`, `lastError` zaten `'UNAUTHENTICATED'`).
+      İstemci kurulumu render sırasından `useEffect`'e taşındı ve efekt artık
+      `roomCode`'a bağımlı (önceden `[]` idi — aynı dinamik segment içinde
+      istemci-taraflı gezinmede roomCode değişse de eski soket AÇIK kalıyordu).
+    sonda_output: >
+      `use-room.test.tsx` "her 4401 kapanışında nextReconnectDelay kadar
+      bekler, 5 denemeden sonra pes edip kopuk kalır": 6 soket açıldı (1 ilk
+      bağlantı + 5 backoff'lu yeniden deneme; her biri `nextReconnectDelay(0..4,
+      rng=0.5)`'ten hesaplanan gecikmeyle — 500/1000/2000/4000/8000 ms), 6.
+      kapanışta (`attempt=5`) `MAX_REAUTH_ATTEMPTS`'i AŞTIĞI için 7. soket
+      AÇILMADI; nihai durum `connection:'kopuk'`, `lastError:'UNAUTHENTICATED'`.
+      Düzeltmeden ÖNCE aynı test (geçici olarak eski davranışa döndürülüp)
+      `expected [...] to have a length of 1 but got 2` ile İLK backoff
+      penceresinde bile kırmızıydı — sonda canlı doğrulandı, vacuous değil.
+    tests_added:
+      - "use-room.test.tsx > 'her 4401 kapanışında...pes edip kopuk kalır'"
+      - "use-room.test.tsx > 'unmount bekleyen reauth zamanlayıcısını iptal eder'"
+  - id: MAJOR-GETSERVERSNAPSHOT
+    detail: >
+      `getServerSnapshot` her çağrıda `initialRoomClientState()` ile YENİ bir
+      nesne üretiyordu; `useSyncExternalStore` üçüncü argümanın referans
+      kararlılığını şart koşar. Modül-düzeyi dondurulmuş tek `SERVER_SNAPSHOT`
+      sabitine geçildi.
+    sonda_output: >
+      `use-room.test.tsx` "hydrateRoot sırasında 'getServerSnapshot should be
+      cached' uyarısı ÜRETMEZ": gerçek `renderToString` + `hydrateRoot` +
+      `console.error` casusuyla PASS. Düzeltmeden ÖNCE (geçici geri alma ile)
+      aynı test `expected true to be false` ile KIRMIZIYDI — React'in tam
+      "should be cached to avoid an infinite loop" uyarısını bastığı canlı
+      doğrulandı.
+  - id: MAJOR-ROOMCODE-DEPENDENCY
+    detail: >
+      Efekt bağımlılığı `[]` idi (`eslint-disable-next-line exhaustive-deps`
+      ile susturulmuştu). Artık `[roomCode]` — kod değişince eski soket kapanır,
+      yeni koda bağlı soket açılır.
+    sonda_output: >
+      `use-room.test.tsx` "roomCode değiştiğinde eski soketi kapatıp yeni koda
+      bağlı bir soket açar": `ABC234`→`XYZ789` `rerender`'ında ilk soket
+      `closed=true`, ikinci `createSocket` çağrısının URL'i `XYZ789` içeriyor
+      `ABC234` içermiyor. Düzeltmeden önce `expected false to be true` ile
+      KIRMIZIYDI (soket sayısı 1'de kalıyordu).
+  - id: MAJOR-ROOMSCREEN-FROZEN-SLOTS
+    detail: >
+      RoomScreen.tsx (a) "Kodu kopyala"yı (P0, kendi kapsamı) hiç render
+      etmiyordu, (b) `graceEndsAt`/`serverOffsetMs`'i hiçbir çocuğa
+      geçirmiyordu (W2-01 dosyayı açmak zorunda kalacaktı), (c) davet linki
+      için hiçbir slot yoktu (W3-03 dosyayı açacaktı). Üçü de eklendi:
+      `CopyButton.tsx` (P0, gerçek çalışıyor), `OpponentLeftBanner.tsx` +
+      `InviteLink.tsx` (iskelet, GERÇEK state alanlarına bağlı mount edildi).
+    tests_added:
+      - CopyButton.test.tsx (2 test)
+      - OpponentLeftBanner.test.tsx, InviteLink.test.tsx (1'er test)
+      - "RoomScreen.test.tsx > 'DONDURMA #1 sözleşmesi: iskelet bileşenler
+        gerçek state alanlarına bağlı mount edilir'"
+  - id: MAJOR-RESIGN-CONFIRM
+    detail: >
+      `btn-pes-et` doğrudan `actions.resign()` çağırıyordu (KK-054 onay ister).
+      `window.confirm(tr.room.resignConfirm)` eklendi.
+    sonda_output: >
+      "btn-pes-et yalnız window.confirm ONAYLANDIĞINDA actions.resign çağırır":
+      `confirm` reddedilince `resign` HİÇ çağrılmıyor, onaylanınca çağrılıyor.
+  - id: MAJOR-ERROR-BODY-VALIDATION
+    detail: >
+      `HomeActions.tsx` sunucu hata gövdesini `as Partial<ErrorResponse>` ile
+      cast ediyordu (KayitForm.tsx'teki doğru deseni atlamıştı) —
+      `errorResponseSchema.safeParse` eklendi. `ErrorBanner.tsx`'e de ikinci
+      savunma katmanı eklendi (`tr.errors`'ta karşılığı olmayan kodda boş
+      render etmez, `SERVER_ERROR`'a düşer).
+    tests_added:
+      - "HomeActions.test.tsx (yeni dosya, 6 test) — enum dışı/şemasız 504
+        gövdesi SERVER_ERROR'a düşüyor, boş render OLMUYOR"
+      - "ErrorBanner.test.tsx > 'tr.errors içinde karşılığı olmayan bir kodda
+        BOŞ render etmez'"
+  - id: MAJOR-SIGNIN-UNDEFINED
+    detail: >
+      `next-auth@5.0.0-beta.32`'nin `signIn`'i tipte `SignInResponse` vaat eder
+      ama kaynağında (`getProviders()` null dönerse) `undefined` de dönebilir;
+      `try/catch` yoktu, `result.error` TypeError fırlatınca `setPending(false)`
+      hiç çalışmıyordu (düğme sonsuza dek `disabled`). `GirisForm.tsx` ve
+      `KayitForm.tsx`'e `try/catch/finally` (NETWORK) + `result===undefined`
+      koruması eklendi (`HomeActions.tsx`'teki desen kopyalandı).
+    tests_added:
+      - 'GirisForm.test.tsx: signIn undefined / signIn reddedilir — ikisinde
+        de hata gösterilir VE düğme disabled KALMAZ'
+      - 'KayitForm.test.tsx: aynı iki senaryo + enum dışı 504 gövdesi'
+  - id: MINOR-ARIA-ROW
+    detail: >
+      `role=\"grid\"` doğrudan `role=\"gridcell\"` çocuklarıyla — geçersiz ARIA
+      (aradaki `role=\"row\"` eksikti). Her satır `role=\"row\"` + `contents`
+      (görsel grid-cols-3 bozulmadı) ile sarıldı.
+  - id: MINOR-ARIA-LIVE
+    detail: 'durum-metni artık `role="status" aria-live="polite"` taşıyor — sıra değişimi ve sonuç ekran okuyucuya duyuruluyor.'
+  - id: MINOR-YOU-NULL
+    detail: >
+      `you===null` iken `opponent` sessizce `players.X`'e düşüyordu (ilk
+      `state`'ten önce düşen `opponent:joined` senaryosunda kullanıcı kendi
+      adını "rakip" görürdü). Artık `you===null` iken `opponent=null`.
+  - id: MINOR-TOPBAR-NULLISH
+    detail: "`session.user.name` nullish ise rozet boş render ediliyordu; `HomeActions.tsx`'teki email yedeği kopyalandı."
+  - id: MINOR-DEAD-RECONNECT-API
+    detail: "`actions.reconnect` hiçbir yere bağlı değildi; `ConnectionBadge`'e `onRetry` eklendi, yalnız `'kopuk'`da 'Tekrar dene' gösterilir."
+  - id: MINOR-GLOBALS-CSS-PARTIAL-CHECK
+    detail: >
+      İkinci test yalnız `playerX`/`playerO`'yu doğruluyordu; artık
+      `themes.acik/koyu`'nun TÜM anahtarları döngüyle doğrulanıyor. Canlı
+      sondayla (`--color-bg` satırı silinerek) regresyonu yakaladığı doğrulandı.
+  - id: MINOR-ROOMSCREEN-TEST-BODY-NOT-PROPS
+    detail: >
+      `RoomScreen.test.tsx` dondurmanın PROP YÜZEYİ sözleşmesini hiç
+      iddia etmiyordu. İskelet bileşenler (`TurnTimer`, `EmojiTray`,
+      `FriendAddButton`, `OpponentLeftBanner`, `InviteLink`) `vi.mock` ile
+      casus bileşenlere çevrildi; aldıkları prop'lar `toStrictEqual` ile
+      iddia ediliyor.
+  - id: MINOR-STRICTMODE
+    detail: >
+      Hiçbir test `<StrictMode>` altında koşmuyordu (`reactStrictMode:true`).
+      Baseline `setup()`'a `wrapper: StrictMode` eklendi — mount çift
+      çalışsa da TEK soket açık kaldığı artık mekanik olarak kilitli.
+gates_after_fixes:
+  exit_code: 0
+  web_tests: 213 (30 dosya)
+  web_coverage: { statements: 93.34, branches: 85.22, functions: 92.42, lines: 96.25 }
+new_gotcha_discovered:
+  id: USEREVENT-CLOBBERS-CLIPBOARD-STUB
+  detail: >
+    `@testing-library/user-event`'in `setup()`'ı KENDİ `navigator.clipboard`
+    sahtesini kurar ve `beforeEach`te (yani `userEvent.setup()`'tan ÖNCE)
+    tanımlanan bir `Object.defineProperty(navigator,'clipboard',...)` stub'ını
+    SESSİZCE EZER — canlı doğrulandı: `beforeEach`te tanımlanan mock ile
+    `render()` sonrası okunan `navigator.clipboard.writeText` referansı
+    (`===` karşılaştırması) FALSE çıktı, `writeText` hiç çağrılmadı (0 call).
+    Çözüm: clipboard stub'ı HER testte `userEvent.setup()` ÇAĞRISINDAN SONRA
+    kurulmalı (bkz. `RoomScreen.test.tsx`'teki `stubClipboard()` yardımcı
+    fonksiyonu — `beforeEach` yerine test gövdesinde, `userEvent.setup()`'tan
+    sonra çağrılıyor). `CopyButton.test.tsx` bu tuzağa hiç düşmedi çünkü
+    `fireEvent.click` kullanıyor (userEvent değil).
+```
