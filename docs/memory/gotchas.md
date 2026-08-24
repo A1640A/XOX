@@ -2,6 +2,90 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · ⚠️ Her change stream havuzdan BİR bağlantı tutar — bağlantı-başına stream ölümcül
+
+MongoDB resmi dokümanı: "Each change stream holds a connection open with a `getMore` operation
+while waiting for the next event. … ensure that the pool size is greater than the number of
+open change streams." `packages/db/src/client.ts` `maxPoolSize: 10` kullanıyor.
+Yani "her WS bağlantısı kendi odasına abone olsun" tasarımı **5 eşzamanlı oyuncuda havuzun
+yarısını kilitler, 10 oyuncuda tüm sorguları durdurur.**
+**Yapılacak:** Fluid instance başına **tek** change stream (modül kapsamı singleton), oda kodu
+filtresi süreç içinde. Bkz. ADR-0002.
+
+## 2026-08-24 · Change stream `$match` + `updateLookup` birleşimi resume token'ı kırabilir
+
+MongoDB dokümanı: `fullDocument: "updateLookup"` ile `fullDocument.*` üzerinde `$match`,
+hızlı silmelerde "Resume Token Not Found" üretebilir. Öneri: `fullDocument: "whenAvailable"` +
+pre/post images. Bizde pipeline **yalnız `operationType`** üzerinde filtreliyor, o yüzden
+güvendeyiz — ama biri "oda koduna göre sunucu tarafında filtreleyelim" derse bu tuzağa girer.
+
+## 2026-08-24 · ⚠️ Vercel WebSocket'i 300 saniyede KAPANIR — bu kenar durum değil, ana akış
+
+"WebSocket connections close when a Vercel Function reaches its maximum duration."
+Maks. süre: **Hobby 300 s (varsayılan = maksimum)**, Pro 300 s varsayılan / 800 s maks.
+Yani bağlantı hiç kopmasa bile en geç 5 dakikada bir kesilir ve yeni bağlantı **başka bir
+instance'a** düşebilir ("not guaranteed to reach the same instance").
+**Yapılacak:** Yeniden bağlanma + tam resync birinci sınıf akış olarak tasarlanır; sunucu
+`getDeadline()` ile süre dolmadan önce `close(4499)` ile **planlı** rotasyon yapar, istemci bu
+kodu görünce backoff'u sıfırlayıp anında bağlanır. `maxDuration`'ı koda gömme — `getDeadline()`
+kullan, plan değişince kod değişmesin. Bkz. ADR-0007.
+
+## 2026-08-24 · Yerel WS geliştirme `next dev` ile ÇALIŞMAZ — `vc dev` gerekir
+
+Vercel dokümanı: "When developing a Next.js app that uses `experimental_upgradeWebSocket()`
+locally, you must run the development server using `vc dev` with Vercel CLI 54.14.2 or above
+**instead of** `next dev`." Next.js, bu API'nin yerel geliştirmede desteklendiği **tek** çerçeve.
+**Yapılacak:** `apps/web`'e `"dev:ws": "vc dev --listen 3000"` script'i. WS gerektiren yerel
+E2E `pnpm dev` (yani `next dev --turbopack`) ile koşarsa bağlantı kurulamaz ve hata
+"Vercel WS bozuk" diye yanlış okunur.
+
+## 2026-08-24 · `experimental_upgradeWebSocket` handler'ına `Request` VERİLMEZ
+
+İmza: `experimental_upgradeWebSocket(handler: (ws) => void | Promise<void>, options?)`.
+Handler yalnız `ws` alır — çerez, başlık, sorgu parametresi oradan okunamaz.
+**Yapılacak:** Kimlik ve oda kodu upgrade'den **önce**, route handler'ın kendi `Request`
+argümanından çözülür ve closure ile handler'a taşınır. `options.maxPayload` varsayılanı
+256 KiB; oyun protokolü için 8 KiB'a düşür.
+
+## 2026-08-24 · Atlas ücretsiz katman: change stream var, ama 100 işlem/sn sınırı var
+
+Free (M0) cluster: change stream **destekleniyor** (yalnız `ns` veritabanı adı filtrelerinde
+string/regex kısıtı var, koleksiyon filtresi serbest), 500 bağlantı, **100 işlem/sn**
+(aşılırsa throttle + 1 sn soğuma), 10 GB/7 gün transfer, 0.5 GB depolama, 30 gün hareketsizlikte
+otomatik duraklatma. Her `getMore` bir işlemdir — instance başına tek stream bu bütçeyi korur.
+
+## 2026-08-24 · Vercel `partialFilterExpression` değil ama Mongo: `$ne` kısmi indekste desteklenmez
+
+Kısmi indeks filtresi yalnız eşitlik, `$exists: true`, `$gt/$gte/$lt/$lte`, `$type`, `$in`,
+`$and`, `$or` kabul eder — **`$ne` yok**. `finishedAt: { $ne: null }` için kısmi indeks
+kurulamaz; onun yerine `{ participants: 1, finishedAt: -1 }` tam indeksi kullanılır
+(`$ne` indeks anahtarı üzerinde uygulanır, doküman çekilmez → COLLSCAN yok).
+
+## 2026-08-24 · `argon2` yerine `@node-rs/argon2` — Vercel'de node-gyp derlemesi yok
+
+`@node-rs/argon2@2.1.0` napi-rs tabanlı; `linux-x64-gnu` dahil 13 platform için önceden
+derlenmiş ikiliyi optional dependency olarak yayınlıyor (npm registry'den doğrulandı).
+`argon2` (node-pre-gyp) paketinin Vercel bundle'ında native ikiliyi taşıması
+`serverExternalPackages` ayarına ve şansa bağlı; başarısız olunca hata çalışma anında ve
+anlaşılmaz gelir.
+
+## 2026-08-24 · Auth.js middleware'i `mongoose`/native ikili import EDEMEZ — split config şart
+
+Next.js middleware kenar çalışma zamanındadır. `auth.ts` `mongoose` ve `@node-rs/argon2`
+(native ikili) import ettiği için `middleware.ts` onu **doğrudan import edemez** — build patlar.
+**Yapılacak:** `auth.config.ts` (kenar-güvenli: yalnız `pages` + `callbacks.authorized`) ve
+`auth.ts` (tam: `Credentials({ authorize })` + db) ayrılır; middleware yalnız `auth.config.ts`
+kullanır. Auth.js'in belgelenmiş kalıbı budur.
+
+## 2026-08-24 · Credentials + JWT ilişkisi Auth.js v5 dokümanında YAZMIYOR — varsayılana güvenme
+
+Auth.js v5 sayfaları "Credentials provider yalnız JWT session ile çalışır" ifadesini artık
+içermiyor; doğrulanamadı. Bilinen tek kesin bilgi: "By default, the Credentials provider does
+not persist data in the database" ve `signIn` kullanıcı **oluşturmaz**.
+**Yapılacak:** `session: { strategy: 'jwt' }` **açıkça** yazılır (adapter varlığında varsayılan
+`database` olabilir), kayıt ayrı bir REST uç noktası olur, ve KK-006 (oturum sürekliliği)
+gerçek preview'da koşturulur — birim testi bu soruyu cevaplamaz.
+
 ## 2026-08-24 · TypeScript 7'ye yükseltme lint'i öldürür
 
 `typescript@7.0.2` yayında ama `typescript-eslint@8.67` (canary dahil) peer'ı `typescript <6.1.0`.

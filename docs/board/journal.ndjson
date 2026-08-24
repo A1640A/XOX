@@ -8,3 +8,17 @@
 {"ts":"2026-08-24T13:45:10Z","event":"file.touched","path":"docs/board/reports/SPEC-001.md"}
 {"ts":"2026-08-24T13:45:47Z","event":"subagent.stop"}
 {"ts":"2026-08-24T16:45:00Z","wave":0,"event":"decision","task":"SPEC-001","summary":"Auth.js Credentials (e-posta+parola); gözlemlenebilirlik Vercel araçları, Sentry yok"}
+{"ts":"2026-08-24T15:55:11Z","event":"file.touched","path":"docs/superpowers/specs/2026-08-24-xox-teknik-tasarim.md"}
+{"ts":"2026-08-24T15:56:10Z","event":"file.touched","path":"docs/adr/0001-tasima-oyun-durumu-tipi.md"}
+{"ts":"2026-08-24T15:57:14Z","event":"file.touched","path":"docs/adr/0002-change-stream-fan-out.md"}
+{"ts":"2026-08-24T15:58:28Z","event":"file.touched","path":"docs/adr/0003-eszamanlilik-versiyonlama-ve-otorite-yeri.md"}
+{"ts":"2026-08-24T15:59:31Z","event":"file.touched","path":"docs/adr/0004-sure-asimi-ve-terk-cift-yurutme.md"}
+{"ts":"2026-08-24T16:00:36Z","event":"file.touched","path":"docs/adr/0005-mobil-auth-koprusu.md"}
+{"ts":"2026-08-24T16:01:42Z","event":"file.touched","path":"docs/adr/0006-ws-kimlik-dogrulama-ve-bilet.md"}
+{"ts":"2026-08-24T16:02:53Z","event":"file.touched","path":"docs/adr/0007-ws-baglanti-omru-ve-planli-rotasyon.md"}
+{"ts":"2026-08-24T16:04:00Z","event":"file.touched","path":"docs/adr/0008-oda-yasam-dongusu-ve-presence-modeli.md"}
+{"ts":"2026-08-24T16:05:12Z","event":"file.touched","path":"docs/adr/0009-kimlik-credentials-argon2id-adapter-yok.md"}
+{"ts":"2026-08-24T16:06:02Z","event":"file.touched","path":"docs/memory/gotchas.md"}
+{"ts":"2026-08-24T16:06:16Z","event":"file.touched","path":"docs/memory/api-contract.md"}
+{"ts":"2026-08-24T16:09:54Z","event":"file.touched","path":"docs/board/reports/ARCH-001.md"}
+{"ts":"2026-08-24T16:11:01Z","event":"subagent.stop"}
