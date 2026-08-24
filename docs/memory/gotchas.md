@@ -2,6 +2,25 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-25 · Mongo AYNI key pattern-ine ikinci indeksi ADA BAKMAKSIZIN reddeder
+
+"Bosluksuz takas" fikri — yeni indeksi farkli adla kur, sonra eskisini dusur — CALISMAZ:
+`code 85, "Index already exists with a different name"`. Canli Atlas-ta dogrulandi.
+**Yapilacak:** Dusurmeden ONCE guvenli ol. unique indeks icin once mukerrer deger kontrolu yap
+(ihlal varsa hic dusurme, anlasilir hata don); dusurdukten sonraki yeniden kurma yine de
+basarisiz olursa eski indeksi ORIJINAL secenekleriyle geri kur, sonra hatayi firlat.
+Not: Bu, lead-in yanlis talimatiydi; agent korlemesine uygulamak yerine canlida sinadi.
+Talimat da olsa, gercege karsi dogrulanmali.
+
+## 2026-08-25 · Temiz `pnpm install` ile bayat kurulum FARKLI `@types/node` cozebilir
+
+Ayni lockfile, farkli sonuc: temiz kurulumda `load-env.ts` repo genelinde
+`no-unnecessary-condition` ile kirildi; bayat yerel kurulumda yesildi. `main`-in kendi
+checkout-unda da uretildi, yani bir dalin diffi degil ortam farki.
+**Yapilacak:** Merge sonrasi `pnpm install` + kapilari yeniden kos (zaten kural). Tip
+daraltmasi `@types/node` surumune bagli olan yerlerde savunmaci yaz — `import.meta.dirname`
+bu gece ayni sebeple iki kez kirildi.
+
 ## 2026-08-25 · ⚠️ Kaynak METNI okuyan test, test DEGILDIR
 
 AUTH-001-de iki test dosyayi `readFileSync` + regex ile okuyup desen ariyordu. Denetci iki

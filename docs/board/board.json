@@ -1001,7 +1001,7 @@
         "packages/db/src/indexes.ts",
         ".github/workflows/**"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/OPS-003",
       "report": "docs/board/reports/OPS-003.md",
