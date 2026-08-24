@@ -95,3 +95,63 @@ Metro workspace çözümlemesi ile tüketir.
 
 **Karar:** Orkestrasyon ana oturumda kalır; 18 agent yalnızca dispatch edilir.
 **Gerekçe:** İç içe subagent dispatch'i kırılgan; lead worktree/dalga/board state'ini kaybetmemeli.
+
+## 2026-08-24 · Taşıma katmanı "neden kazandın" bilgisini `shared`'da taşır, `game-core`'a sızdırmaz (ARCH-001)
+
+**Karar:** `line: WinLine | null` + `reason: EndReason` `shared`'da AYRI bir taşıma tipi;
+tutarlılık `superRefine` ile (`reason === 'line'` ⟺ `line !== null`). `game-core`'un
+`GameStatus` tipi DEĞİŞMEDİ. Tek yönlü köprü: `toTransportStatus` + `forfeitStatus`.
+**Gerekçe:** Motor pes etme/zaman aşımı kavramını bilmez ve bilmemeli — %100 kapsam ve %98.56
+mutasyonlu sertleştirilmiş bir paket ürün kavramı için açılmaz. `reason` ayrıca `tr.game`'deki
+dört ayrı Türkçe sonuç metnini (youWon/wonByResign/wonByTimeout/wonByAbandon) ayırt etmenin
+tek yolu.
+**Reddedilenler:** `game-core`'a `reason` eklemek (ürün mantığı motora sızar) · `line: []` boş
+dizi konvansiyonu (yazılı olmayan bilgi, kontrol her tüketiciye dağılır) · sebebi yalnız
+`game:over` mesajında taşımak (yeniden bağlanan istemci o mesajı kaçırır, yalnız `state` alır →
+sonuç metni yanlış çıkar).
+
+## 2026-08-24 · CI, `ensureIndexes()`'i HTTP route ile değil doğrudan CLI ile çağırır (OPS-003)
+
+**Karar:** İki çağıran ayrıştı: (a) `packages/db/src/migrate.ts` — CI runner'ından doğrudan
+çağrı, HTTP/DNS/TLS yok; `e2e-preview.yml` her preview deploy'undan sonra
+`pnpm --filter @xox/db migrate` koşturuyor. (b) `POST /api/admin/migrate` — YALNIZ production
+runbook'u (`MIGRATION_SECRET` başlığı + `?db=` pozitif doğrulama, bkz. `api-contract.md`).
+**Gerekçe:** İlk turda route hem CI'dan hem production'dan HTTP ile çağrılıyordu. Güvenlik
+denetimi: workflow dosyası default branch'ten okunur ama deploy edilen kod PR head'idir — PR
+yazarı sırrı çalabilir, workflow zaten yanıtı public Actions log'una basıyordu. CI zaten
+`MONGODB_URI` sırrına sahip; aynı yetkiyle `ensureIndexes()`'i doğrudan çağırmak sızıntı
+yüzeyini küçültmek yerine YOK EDİYOR.
+**Reddedilen:** Route'u CI'dan HTTP ile çağırmaya devam edip sır rotasyonu/kısa ömürlü token
+gibi azaltıcı önlemler eklemek — kökten çözüm dururken yüzeyi küçültmek tercih edilmedi.
+
+## 2026-08-24 · SEC-003: indeks çakışmasında "mükerrer-tarama + telafili düşür/kur", "boşluksuz takas" DEĞİL (OPS-003)
+
+**Karar:** `unique` istenirken önce mükerrer değer taranır (ihlal varsa eski indekse
+dokunulmaz, anlaşılır hata döner); temizse düşür + kur; ikinci kurma da patlarsa eski indeks
+ORİJİNAL seçenekleriyle geri kurulur.
+**Gerekçe:** Önerilen "boşluksuz takas" (yeni indeksi farklı adla kur, başarılıysa eskisini
+düşür) canlı Atlas'ta REDDEDİLDİ — kanıt: `docs/memory/gotchas.md` "Mongo aynı anahtara ikinci
+indeksi ADA BAKMAKSIZIN reddeder". Gerçek çalışan tasarım denenerek bulundu.
+**Reddedilen:** Boşluksuz takas (canlıda çalışmıyor) · sessiz `syncIndexes()` (drop+create,
+üretim yolunu maskeler, ayrı gotcha).
+
+## 2026-08-24 · Kopma toleransı: 30 sn grace + ikinci bağlantı = devralma (SPEC-001)
+
+**Karar:** Rakip kopmasında 30 saniyelik grace (`DISCONNECT_GRACE_SECONDS`); süre dolunca kalan
+oyuncu `abandon` sebebiyle kazanır, ikisi de bağlı değilse HİÇBİR sonuç yazılmaz (oda TTL ile
+silinir — sonucu yazacak otorite bağlı bir istemci olmalı). Aynı kullanıcının ikinci bağlantısı
+takeover'dır: eski bağlantı `SESSION_TAKEOVER` ile kapatılır ve otomatik yeniden bağlanmayı
+DENEMEZ — koltuk sahipliği userId'ye aittir, bağlantıya değil.
+**Gerekçe:** 30 sn mobil ağ geçişini (wifi→LTE) kurtaracak kadar uzun, terk edilen oyuncuyu
+bekletmeyecek kadar kısa.
+**Reddedilenler:** Anında hükmen mağlubiyet (tek bir tünel kesintisi oyunu kaybettirir) · 60 sn
+(hamle süresiyle aynı sabit ama terk edileni iki kat bekletir).
+
+## 2026-08-24 · Vercel CLI worktree kurulumunda `-y/--yes` değil `-L/--local` (OPS-002)
+
+**Karar:** Gece koşusu script'leri `vercel link -L` / `vercel pull -L` kullanır.
+**Gerekçe:** `-y` yalnız promptları otomatik onaylar ama hâlâ bir Vercel projesine bağlanmayı
+DENER (API çağrısı, `.vercel/project.json` oluşturma) — ağ erişimi yoksa ya da proje eşleşmesi
+belirsizse gece koşusunda kırılgan kalır. `-L/--local` hiçbir Vercel API çağrısı yapmadan,
+proje bağlı olsun olmasın deterministik çalışır.
+**Reddedilen:** `-y/--yes` — hâlâ ağ bağımlı, hâlâ proje eşleştirme belirsizliği taşıyor.

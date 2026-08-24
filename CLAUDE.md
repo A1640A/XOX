@@ -14,6 +14,15 @@ Türkçe XOX oyunu. Web (Next.js → Vercel) + mobil (Expo). Online oda, gerçek
    dosya yazabilir; kör staging onları merge edilmemiş işin raporu olarak `main`'e sokar.
    Dalga sırasında yalnızca açık yol stage et: `git add docs/board/board.json docs/board/journal.ndjson`
 
+## Bu geceden 3 ölümcül ders (ayrıntı: `docs/memory/gotchas.md` → "Tekrar eden örüntüler")
+
+- ESLint çözümleyicisi yanlış ayarlanırsa `boundaries`/`import-x/no-cycle` **hiç çalışmaz** ama
+  lint yeşil kalır — kural 4'ün tek denetim mekanizması budur, "yeşil" tek başına kanıt değildir.
+- Auth.js `jwt` callback'ini TANIMLAMA — oturum okumasında `user` yoktur, tanımlarsan her girişte
+  çerez sessizce silinir. `@auth/core` zaten `sub: user.id`'yi kendisi yazar.
+- `next-auth` import eden hiçbir dosya (`auth.ts`, `middleware.ts`) Vitest'te çalıştırılamaz;
+  iş mantığını next-auth'suz ayrı bir dosyada yaz ve oradan test et (bkz. `conventions.md`).
+
 ## Dizin haritası
 
 | Yol                  | İçerik                                                      |

@@ -60,14 +60,20 @@ benzersiz değilken ve mükerrer e-posta varken düşürülüp unique olarak yen
 (E11000), sonuç login lookup'ın COLLSCAN'e düşmesi VE benzersizliğin hâlâ olmamasıdır.
 **Genel ders:** Talimat/öneri olsa bile canlıya karşı doğrulanmadan "doğru" sayılmaz.
 
-## 2026-08-25 · Temiz `pnpm install` ile bayat kurulum FARKLI `@types/node` cozebilir
+## 2026-08-25 · ⚠️ `import.meta.dirname` daralması `@types/node` sürümüne bağlı — bu gece İKİ KEZ kırıldı
 
-Ayni lockfile, farkli sonuc: temiz kurulumda `load-env.ts` repo genelinde
-`no-unnecessary-condition` ile kirildi; bayat yerel kurulumda yesildi. `main`-in kendi
-checkout-unda da uretildi, yani bir dalin diffi degil ortam farki.
-**Yapilacak:** Merge sonrasi `pnpm install` + kapilari yeniden kos (zaten kural). Tip
-daraltmasi `@types/node` surumune bagli olan yerlerde savunmaci yaz — `import.meta.dirname`
-bu gece ayni sebeple iki kez kirildi.
+**Birinci oluş:** Temiz `pnpm install` ile bayat kurulum FARKLI `@types/node` çözebilir — aynı
+lockfile, farklı sonuç: temiz kurulumda `load-env.ts` repo genelinde `no-unnecessary-condition`
+ile kırıldı; bayat yerel kurulumda yeşildi. `main`'in kendi checkout'unda da üretildi, yani bir
+dalın diffi değil ortam farkı.
+**İkinci oluş:** Üç branch tek tek yeşildi; birleşip `pnpm install --lockfile-only` koşulunca
+`@xox/db` typecheck kırıldı: `import.meta.dirname` TS'te `string | undefined` ve çözülen
+`@types/node` sürümü değişince daralma kayboldu. Branch'lerde görülmez çünkü her biri kendi
+lockfile durumunda kalır.
+**Yapılacak:** Merge sonrası `pnpm install` + kapıları MUTLAKA yeniden koş (integrator görevi,
+merge'in kendisi çakışmasız olsa bile). Tip daralması `@types/node` sürümüne bağlı olan yerlerde
+savunmacı yaz: `import.meta.dirname` yerine
+`import.meta.dirname ?? dirname(fileURLToPath(import.meta.url))` — her sürümde çalışır.
 
 ## 2026-08-25 · Kisa omurlu bilet, KENDI YENILEME UCUNDA kabul edilirse sinirsiz olur
 
@@ -121,16 +127,6 @@ sessizce bozuk dosya uretilir. Bu gece iki kez oldu.
 **Yapilacak:** Kod bloklarini regex ile sinir belirterek cikar (`re.search(r"function X.*?\n\}\n", s, re.S)`)
 ya da dosyayi dogrudan yaz. Cikarim sonrasi `bash -n` / `tsc` ile MUTLAKA dogrula.
 
-## 2026-08-24 · Merge sonrasi lockfile yeniden uretimi TIP HATASI dogurabilir
-
-Uc branch tek tek yesildi; birlesip `pnpm install --lockfile-only` kosulunca `@xox/db`
-typecheck kirildi: `import.meta.dirname` TS-te `string | undefined` ve cozulen `@types/node`
-surumu degisince daralma kayboldu. Branch-lerde gorulmez cunku her biri kendi lockfile
-durumunda kalir.
-**Yapilacak:** Integrator merge sonrasi lockfile-i yeniden uretip kapilari MUTLAKA yeniden
-kossun — merge-in kendisi cakismasiz olsa bile. Ve `import.meta.dirname` yerine
-`import.meta.dirname ?? dirname(fileURLToPath(import.meta.url))` yaz; her surumde calisir.
-
 ## 2026-08-24 · Bir TEST hatayi kilitleyebilir — yesil, davranisin dogru oldugunu gostermez
 
 CTR-002-de `socket:open` reconnect sayacini sifirliyordu; bu, uygulama-seviyesi (4000-4999)
@@ -179,11 +175,14 @@ query hook-larini da ekle. Ve degismezi `updateOne` ile ihlal etmeyi DENEYEN bir
 Hook-un tek sorusu "yapilacak is var mi" olmamali; "LEAD SU AN bu isi dispatch edebilir mi"
 olmali. Uc kez ayni sinif kusur cikti ve her biri bos dongu yaratti:
 
-1. `in_wave` gorevleri "islenebilir" saymak — agent zaten calisiyor.
+1. `in_wave` gorevleri "islenebilir" saymak — agent zaten calisiyor, lead yield edemez, dispatch
+   edecek iş de yoktur, oturum boşa döner.
 2. Kota beklerken bloklamak — dispatch imkansiz (`pausedUntil` eklendi).
 3. Paralellik tavani dolu iken bloklamak — yeni agent acilamaz (`maxParallel` eklendi).
    **Yapilacak:** Hook durusa izin versin; `todo`/`review` isi VARSA **ve** kapasite VARSA
    **ve** duraklama YOKSA bloklasin. Bildirim mekanizmasi lead-i zaten geri cagiriyor.
+   Kuru koşu bunu yakalayamaz — orada agent ön planda çalışır, gerçek arka plan dispatch'inde
+   ortaya çıkar.
 
 ## 2026-08-24 · Worktree `.env.local`-i ALMAZ — Atlas-a kosan testler orada patlar
 
@@ -359,14 +358,6 @@ isareti her yerde ("lead'in", "bayragi") ve tek bir tanesi tirnagi kapatip scrip
 **Yapilacak:** `node -e` govdesindeki yorum ve string'lerde apostrof kullanma; Turkce yazacaksan
 kesme isaretsiz kur ("lead-in", "bayragi KORU"). Degisiklikten sonra MUTLAKA `bash -n` calistir
 ve hook-u gercek stdin ile bir kez kosur.
-
-## 2026-08-24 · `Stop` hook'u `in_wave` görevleri "yapılacak iş" sayarsa CANLI KİLİT olur
-
-Lead dalgayı arka plan agent'larına dispatch edip yield eder; bildirim onu geri çağırır.
-Hook `in_wave`'i de "işlenebilir" sayarsa duruşu bloklar — lead yield edemez, dispatch edecek
-iş de yoktur, oturum boşa döner. Yalnızca `todo` ve `review` sayılmalı.
-**Yapılacak:** `in_wave` görev varsa ve dispatch edilebilir iş yoksa bayrağı koru, duruşa izin ver.
-Kuru koşu bunu yakalayamaz — orada agent ön planda çalışır.
 
 ## 2026-08-24 · ⚠️ Her change stream havuzdan BİR bağlantı tutar — bağlantı-başına stream ölümcül
 
