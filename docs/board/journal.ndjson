@@ -254,3 +254,28 @@
 {"ts":"2026-08-24T19:20:31Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.test.ts"}
 {"ts":"2026-08-24T19:20:38Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.test.ts"}
 {"ts":"2026-08-24T22:50:00Z","wave":2,"event":"review.finding","task":"CTR-002","agent":"xox-reviewer","findings":8,"major":3,"summary":"backoff uygulama-seviyesi kapanislarda olu (test hatayi kilitliyordu); connect terk edilen soketi kapatmiyor; opponentLeftVisible saat sapmasini yok sayiyor"}
+{"ts":"2026-08-24T19:22:42Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.test.ts"}
+{"ts":"2026-08-24T19:23:16Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.ts"}
+{"ts":"2026-08-24T19:23:53Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.test.ts"}
+{"ts":"2026-08-24T19:24:15Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.test.ts"}
+{"ts":"2026-08-24T19:24:36Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.ts"}
+{"ts":"2026-08-24T19:25:17Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/user.test.ts"}
+{"ts":"2026-08-24T19:25:52Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/user.ts"}
+{"ts":"2026-08-24T19:26:07Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.test.ts"}
+{"ts":"2026-08-24T19:26:30Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.ts"}
+{"ts":"2026-08-24T19:27:25Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/room.ts"}
+{"ts":"2026-08-24T19:27:33Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/index.ts"}
+{"ts":"2026-08-24T19:27:48Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/room-client.test.ts"}
+{"ts":"2026-08-24T19:29:07Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.test.ts"}
+{"ts":"2026-08-24T19:29:17Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.test.ts"}
+{"ts":"2026-08-24T19:30:06Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/game.ts"}
+{"ts":"2026-08-24T19:32:18Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/vitest.config.ts"}
+{"ts":"2026-08-24T19:32:44Z","event":"file.touched","path":".claude/worktrees/CTR-002/packages/shared/src/ws-client.ts"}
+{"ts":"2026-08-24T19:34:23Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/vitest.config.ts"}
+{"ts":"2026-08-24T19:37:22Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/seed.test.ts"}
+{"ts":"2026-08-24T19:37:37Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/seed.test.ts"}
+{"ts":"2026-08-24T19:38:01Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.ts"}
+{"ts":"2026-08-24T19:38:41Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.ts"}
+{"ts":"2026-08-24T19:38:46Z","event":"subagent.stop"}
+{"ts":"2026-08-24T19:38:58Z","event":"file.touched","path":".claude/worktrees/DB-001/packages/db/src/models/friendship.test.ts"}
+{"ts":"2026-08-24T23:00:00Z","wave":2,"event":"task.done","task":"CTR-002","agent":"xox-dev-core","attempts":1,"tests":"342","note":"3 major duzeltildi, dordu de mutasyonla kilitlendi"}

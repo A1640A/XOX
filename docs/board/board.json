@@ -187,7 +187,7 @@
         "packages/shared/src/ws-client.test.ts",
         "packages/shared/src/index.ts"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/CTR-002",
       "report": "docs/board/reports/CTR-002.md",
@@ -211,9 +211,9 @@
       "agent": "xox-designer",
       "deps": ["CTR-001"],
       "conflictSet": ["apps/web/messages/**", "apps/mobile/messages/**"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/TXT-001",
       "report": null,
       "acceptance": [
         "apps/web/messages/tr.ts spec §5'teki ağacın TAMAMINI birebir metinlerle içerir: app, common, auth, home, computer, room, game, connection, rematch, profile, leaderboard, history, friends, chat, errors. P1 ve P2 metinleri DAHİL — bu dosya sonraki dalgalarda AÇILMAYACAK (sıcak dosya dondurma)",
