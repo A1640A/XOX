@@ -7,9 +7,10 @@ export default mergeConfig(
     test: {
       name: 'db',
       environment: 'node',
+      setupFiles: ['./src/vitest.setup.ts'],
       coverage: {
         thresholds: { lines: 90, branches: 85, functions: 90, statements: 90 },
-        exclude: ['src/seed.ts', 'src/models/**'],
+        exclude: ['src/seed.ts', 'src/models/**', 'src/vitest.setup.ts'],
       },
     },
   }),

@@ -1,0 +1,111 @@
+import { randomUUID } from 'node:crypto'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { connectDb, disconnectDb } from '../client'
+import { Game } from './game'
+
+describe('Game modeli', () => {
+  const createdIds: string[] = []
+
+  beforeAll(async () => {
+    await connectDb()
+    await Game.syncIndexes()
+  })
+
+  afterEach(async () => {
+    if (createdIds.length > 0) {
+      await Game.deleteMany({ _id: { $in: createdIds } })
+      createdIds.length = 0
+    }
+  })
+
+  afterAll(async () => {
+    await disconnectDb()
+  })
+
+  function track(id: string): string {
+    createdIds.push(id)
+    return id
+  }
+
+  it('_id kendiliğinden randomUUID ile üretilir', async () => {
+    const roomCode = `RC${randomUUID().slice(0, 6)}`
+    const game = await Game.create({
+      roomCode,
+      players: { X: 'u1', O: 'u2' },
+      participants: ['u1', 'u2'],
+      pairKey: 'u1|u2',
+    })
+    track(game._id)
+
+    expect(typeof game._id).toBe('string')
+    expect(game._id).toHaveLength(36)
+  })
+
+  it('tasarım §3.3 varsayılanlarıyla oluşur', async () => {
+    const id = track(randomUUID())
+    await Game.create({
+      _id: id,
+      roomCode: 'RCDEF01',
+      players: { X: 'u1', O: 'u2' },
+      participants: ['u1', 'u2'],
+      pairKey: 'u1|u2',
+    })
+
+    const game = await Game.findById(id).lean()
+    expect(game?.board).toStrictEqual(Array.from({ length: 9 }, () => null))
+    expect(game?.moves).toStrictEqual([])
+    expect(game?.winner).toBeNull()
+    expect(game?.isDraw).toBe(false)
+    expect(game?.endReason).toBeNull()
+    expect(game?.winLine).toBeNull()
+    expect(game?.rated).toBe(false)
+    expect(game?.eloDelta).toStrictEqual({ X: 0, O: 0 })
+    expect(game?.finishedAt).toBeNull()
+    expect(game?.settledAt).toBeNull()
+    expect(game?.players).toStrictEqual({ X: 'u1', O: 'u2' })
+    expect(game?.participants).toStrictEqual(['u1', 'u2'])
+    expect(game?.pairKey).toBe('u1|u2')
+  })
+
+  it('bitmiş bir oyunu winLine + endReason + eloDelta ile saklar', async () => {
+    const id = track(randomUUID())
+    const now = new Date()
+    await Game.create({
+      _id: id,
+      roomCode: 'RCFIN01',
+      players: { X: 'u1', O: 'u2' },
+      participants: ['u1', 'u2'],
+      pairKey: 'u1|u2',
+      winner: 'X',
+      endReason: 'line',
+      winLine: [0, 1, 2],
+      rated: true,
+      eloDelta: { X: 12, O: -12 },
+      finishedAt: now,
+      settledAt: now,
+    })
+
+    const game = await Game.findById(id).lean()
+    expect(game?.winner).toBe('X')
+    expect(game?.endReason).toBe('line')
+    expect(game?.winLine).toStrictEqual([0, 1, 2])
+    expect(game?.rated).toBe(true)
+    expect(game?.eloDelta).toStrictEqual({ X: 12, O: -12 })
+    expect(game?.finishedAt).toBeInstanceOf(Date)
+    expect(game?.settledAt).toBeInstanceOf(Date)
+  })
+
+  it('winLine 3 indeksten farklı bir uzunlukta ise reddedilir', async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({
+        _id: id,
+        roomCode: 'RCBAD01',
+        players: { X: 'u1', O: 'u2' },
+        participants: ['u1', 'u2'],
+        pairKey: 'u1|u2',
+        winLine: [0, 1],
+      }),
+    ).rejects.toThrow()
+  })
+})
