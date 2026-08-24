@@ -187,7 +187,7 @@
         "packages/shared/src/ws-client.test.ts",
         "packages/shared/src/index.ts"
       ],
-      "status": "review",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/CTR-002",
       "report": "docs/board/reports/CTR-002.md",
