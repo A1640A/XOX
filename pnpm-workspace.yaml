@@ -5,3 +5,5 @@ allowBuilds:
   esbuild: true
   lefthook: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@types/react-dom@19.2.5'

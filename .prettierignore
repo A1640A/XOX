@@ -8,3 +8,4 @@ docs/board/journal.ndjson
 apps/e2e/test-results
 apps/e2e/playwright-report
 reports/mutation
+apps/web/next-env.d.ts
