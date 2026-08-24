@@ -1012,6 +1012,24 @@
         "DB-002 MERGE EDILMEDEN once tamamlanir; yoksa WS-001 sorgulari preview-da COLLSCAN yapar ve KK-117 performans sondasi yanlis ortami olcer."
       ],
       "blockedReason": null
+    },
+    {
+      "id": "SEC-001",
+      "title": "Atlas parolasını rotate et (insan kararı — Atlas konsolu gerekiyor)",
+      "tier": "P1",
+      "agent": "xox-devops",
+      "deps": [],
+      "conflictSet": [],
+      "status": "blocked",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "xoxAdmin Atlas parolasi Atlas konsolundan degistirilir",
+        "Yeni URI Vercel (development/preview/production) ve GitHub MONGODB_URI secret-inda guncellenir",
+        "Yerel .env.local guncellenir; pnpm --filter @xox/db seed ile dogrulanir"
+      ],
+      "blockedReason": "OMER'DEN GEREKEN: Atlas konsol erisimi bende yok. Baglanti dizesi bu oturumda duz metin paylasildi (kullanicinin kendisi verdi) ve ayrica bir subagent transkriptine .env.local icerigi redaksiyonsuz dustu. Repoya/committe/rapora HIC girmedi (gitleaks 153 commit-te sifir sizinti) ve GitHub push protection acik. Yine de sir bir kez transkripte girmis durumda — dusuk ama sifir olmayan risk. Uygun bir anda rotate edilmeli, acil degil."
     }
   ]
 }
