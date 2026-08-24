@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { WS_HEARTBEAT_MS, WS_RECONNECT_BASE_MS } from './constants'
+import { WS_HEARTBEAT_MS } from './constants'
 import type { RoomClientState } from './room-client'
 import { WS_CLOSE } from './ws-close'
 import type { ServerMessage, StateMessage } from './ws-protocol'
@@ -260,15 +260,20 @@ describe('heartbeat (KK-060)', () => {
     const { client, soketler } = bagli()
     const ilk = son(soketler)
 
-    vi.advanceTimersByTime(WS_HEARTBEAT_MS)
+    // Çıplak sayı bilerek: sözleşme "25 sn'de bir ping, 50 sn'de kopuk".
+    vi.advanceTimersByTime(25_000)
     expect(client.getState().connection).toBe('bagli')
 
-    vi.advanceTimersByTime(WS_HEARTBEAT_MS)
+    vi.advanceTimersByTime(25_000)
     expect(client.getState().connection).toBe('kopuk')
     expect(ilk.kapanislar).toEqual([WS_CLOSE.IDLE_TIMEOUT])
 
-    vi.advanceTimersByTime(WS_RECONNECT_BASE_MS)
+    vi.advanceTimersByTime(500)
     expect(soketler).toHaveLength(2)
+  })
+
+  it('nabız aralığı ve kopukluk eşiği sabitlerle tutarlıdır', () => {
+    expect(WS_HEARTBEAT_MS).toBe(25_000)
   })
 
   it('pong geldikçe bağlantı kopuk sayılmaz', () => {
@@ -320,7 +325,7 @@ describe('yeniden bağlanma', () => {
     son(soketler).sunucuKapatti(1006)
     expect(client.getState().connection).toBe('kopuk')
 
-    vi.advanceTimersByTime(WS_RECONNECT_BASE_MS - 1)
+    vi.advanceTimersByTime(499)
     expect(soketler).toHaveLength(1)
 
     vi.advanceTimersByTime(1)
@@ -328,7 +333,7 @@ describe('yeniden bağlanma', () => {
     expect(client.getState().connection).toBe('baglaniyor')
 
     son(soketler).sunucuKapatti(1006)
-    vi.advanceTimersByTime(WS_RECONNECT_BASE_MS * 2 - 1)
+    vi.advanceTimersByTime(999)
     expect(soketler).toHaveLength(2)
     vi.advanceTimersByTime(1)
     expect(soketler).toHaveLength(3)

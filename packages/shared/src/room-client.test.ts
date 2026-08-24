@@ -568,11 +568,15 @@ describe('§5.6/10 — diğer kapanışlar', () => {
 
 // ─── nextReconnectDelay ───────────────────────────────────────────────────
 
+// Beklenen değerler ÇIPLAK yazıldı. Sabitten türetilseydi (`WS_RECONNECT_BASE_MS
+// * 0.8`) taban yarın 60_000 olsa test yine yeşil kalırdı; oysa KK-061'in
+// sözleşmesi "500 ms'den başla, 10 sn'de tavan yap"tır ve bu sözleşme kırılırsa
+// test kırmızı olmalı.
 describe('nextReconnectDelay — saf, rng enjekte edilir', () => {
-  it('ilk denemede taban gecikme ±%20 jitter ile uygulanır', () => {
-    expect(nextReconnectDelay(0, () => 0)).toBe(WS_RECONNECT_BASE_MS * 0.8)
-    expect(nextReconnectDelay(0, () => 0.5)).toBe(WS_RECONNECT_BASE_MS)
-    expect(nextReconnectDelay(0, () => 1)).toBe(WS_RECONNECT_BASE_MS * 1.2)
+  it('ilk denemede 500 ms tabanı ±%20 jitter ile uygulanır', () => {
+    expect(nextReconnectDelay(0, () => 0)).toBe(400)
+    expect(nextReconnectDelay(0, () => 0.5)).toBe(500)
+    expect(nextReconnectDelay(0, () => 1)).toBe(600)
   })
 
   it('üstel büyür', () => {
@@ -581,9 +585,15 @@ describe('nextReconnectDelay — saf, rng enjekte edilir', () => {
     expect(nextReconnectDelay(3, () => 0.5)).toBe(4_000)
   })
 
-  it('tavanı aşmaz', () => {
-    expect(nextReconnectDelay(20, () => 0.5)).toBe(WS_RECONNECT_MAX_MS)
-    expect(nextReconnectDelay(20, () => 1)).toBe(WS_RECONNECT_MAX_MS * 1.2)
+  it('taban 10 sn tavanına sabitlenir — jitter tavanın %20 üstüne çıkabilir', () => {
+    expect(nextReconnectDelay(20, () => 0.5)).toBe(10_000)
+    expect(nextReconnectDelay(20, () => 0)).toBe(8_000)
+    expect(nextReconnectDelay(20, () => 1)).toBe(12_000)
+  })
+
+  it('çıplak sayılar sabitlerle tutarlıdır', () => {
+    expect(WS_RECONNECT_BASE_MS).toBe(500)
+    expect(WS_RECONNECT_MAX_MS).toBe(10_000)
   })
 
   it('rng gerçekten kullanılır — iki farklı değer iki farklı gecikme verir', () => {
