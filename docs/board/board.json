@@ -328,10 +328,12 @@
         "components/TopBar.tsx /profil, /siralama, /gecmis, /arkadaslar bağlantılarını ve profil rozetini taşır (hedef sayfalar Dalga 2-3'te gelir)",
         "components/JoinCodeField.tsx oluşturulur ve ana sayfada kullanılır (normalleştirme sertleştirmesi W1-04'te)",
         "`@/auth` IMPORT EDİLMEZ — oturum kapısı middleware'dedir. Bu kural AUTH-001 ile paralelliği koruyan tek şeydir ve ihlali dalgayı kırar",
-        "Renkler yalnız @xox/ui-tokens'tan; hex literal yok (UI-001'in lint kuralı bunu zorlar)",
         "Vitest + Testing Library birim testleri: Board girdi kapısı (interactive=false iken tıklama olay üretmez), ErrorBanner kod->metin eşlemesi, useRoom'un reducer'a doğru olay yolladığı. apps/web içinde playwright importu YOK",
         "pnpm gates temiz",
-        "Etkilesim testlerinde `@testing-library/user-event` kullanilir (OPS-002 dondurma listesine eklendi) - gercek kullanici etkilesim dizilerini simule ettigi icin fireEvent-ten daha durust test uretir."
+        "Etkilesim testlerinde `@testing-library/user-event` kullanilir (OPS-002 dondurma listesine eklendi) - gercek kullanici etkilesim dizilerini simule ettigi icin fireEvent-ten daha durust test uretir.",
+        "globals.css ELLE YAZILMAZ: icerigi @xox/ui-tokens `themeCss()`/`cssVariables()` ciktisindan uretilir ve bir test uretilen ciktiyla dosyanin ayni oldugunu dogrular. DIKKAT: UI-001-in hex yasagi .css dosyalarini HIC ayristirmiyor (`eslint globals.css` -> 'File ignored'), yani lint burada seni KORUMAZ. 2026-08-24-te globals.css token-lardan kaymis halde bulundu.",
+        "themeCss() ciktisi Tailwind v4 `@theme` blogunun ICINE degil YANINA kardes kural olarak konur (`@theme` secici iceremez, build kirilir).",
+        "X ve O YALNIZ renkle ayrilmaz: sekil ya da stroke kalinligi farki testle dogrulanir. Olculdu - playerX/playerO parlaklik kontrasti acik temada 1.22:1, koyu temada 1.06:1; renk korlugunde tahta okunamaz hale gelir."
       ],
       "blockedReason": null
     },
@@ -687,7 +689,8 @@
         "WS bağlantısı web hedefinde ?ticket= ile kurulur — tarayıcı WebSocket API'si özel başlık gönderemez (ADR-0006); native hedefte Authorization: Bearer kullanılabilir",
         "apps/mobile/messages/tr.ts DEĞİŞTİRİLMEZ (TXT-001'de tamamlandı)",
         "KK-093 [MANUEL]: Expo Go doğrulama adımları (aç, giriş yap, bir oyun tamamla) rapora madde madde yazılır ve 'insan doğrulaması bekliyor' olarak işaretlenir. Agent bunu otomatikleştirmeye ÇALIŞMAZ",
-        "apps/mobile içinde playwright importu yok; pnpm gates temiz"
+        "apps/mobile içinde playwright importu yok; pnpm gates temiz",
+        "apps/mobile `colors.light`/`colors.dark` geriye-donuk takma adindan `themes.acik`/`themes.koyu` kullanimina tasinir ve takma ad packages/ui-tokens-tan kaldirilir. Iki isim = kalici kayma riski."
       ],
       "blockedReason": null
     },

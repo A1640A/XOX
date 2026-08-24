@@ -2,6 +2,37 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · ESLint `.css` dosyalarini HIC ayristirmaz — CSS-teki hex yasak disinda
+
+`no-restricted-syntax` JS/TS AST uzerinde calisir. `eslint apps/web/app/globals.css` ->
+"File ignored because no matching configuration was supplied", 0 error. Yani "hex yasagi var"
+demek CSS-te hex yok demek DEGILDIR; Tailwind v4 CSS-first projesinde tema degiskenleri tam
+olarak orada yasar ve token-lardan sessizce kayarlar (2026-08-24-te kaymis halde bulundu).
+**Yapilacak:** globals.css-i elle yazma, `themeCss()` ciktisindan uret ve uretilen icerikle
+dosyayi karsilastiran bir test koy. Lint bu boslugu kapatmaz.
+
+## 2026-08-24 · Tailwind keyfi-deger sozdizimi hex yasagini atlar
+
+`'#2563eb'` yakalanir ama `'bg-[#2563eb]'` yakalanmaz — tam-string eslesen bir regex className
+icindeki keyfi degeri gormez. CSS-first Tailwind-de ham renk yazmanin EN olasi yolu budur.
+8 haneli alfali hex (`#2563eb80`) de kacar.
+**Yapilacak:** Yasaga `-\[#...\]` kalibini ve 8 haneli hex-i ayrica ekle.
+
+## 2026-08-24 · Ozdeslik iddiasi test degildir
+
+`nativeColors(t)` govdesi `return themes[t]` iken `expect(nativeColors(t)).toStrictEqual(themes[t])`
+hicbir kosulda kirilmaz — ayni referansi kendisiyle karsilastirir. Kapsam yuzdesini ve test
+sayisini sisirir, sifir koruma saglar. Ayni sey `colors.light = themes.acik` takma adi icin de.
+**Yapilacak:** Test, degerin BEKLENEN bir listeye/anahtar kumesine esitligini iddia etsin.
+Mutasyon testi bunlari hayatta kalan mutant olarak gosterir.
+
+## 2026-08-24 · Testin esigi, degerin secilme gerekcesiyle AYNI sayi olmali
+
+`win` rengi 4.5:1 esiginin altinda kaldigi icin degistirildi ama testi 3:1 esigine baglandi.
+Eski degeri geri koyunca 17/17 test yesil kaldi — duzeltmeyi hicbir sey korumuyordu.
+**Yapilacak:** Bir degeri X gerekcesiyle degistiriyorsan testi X esigine bagla; aksi halde
+duzeltme bir sonraki "biraz daha canli olsun" commit-inde sessizce geri alinir.
+
 ## 2026-08-24 · Ayni paketin iki kopyasi `instanceof` kontrollerini sessizce bozar
 
 `jose@6.2.10` dogrudan bagimlilik olarak eklendi ama `@auth/core` kendi icinde `jose@6.2.3`
