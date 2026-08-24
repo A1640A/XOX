@@ -43,3 +43,4 @@ docs/board/danger.log
 .DS_Store
 *.log
 npm-debug.log*
+.env*

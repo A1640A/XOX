@@ -1,7 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
-    "packages/*": { "entry": ["src/index.ts"], "project": ["src/**/*.ts"] },
+    "packages/*": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
     "apps/web": {
       "entry": [
         "app/**/{page,layout,route,error,not-found,loading}.tsx",
@@ -30,7 +33,8 @@
     "@vitejs/plugin-react",
     "jsdom",
     "@testing-library/react",
-    "@testing-library/jest-dom"
+    "@testing-library/jest-dom",
+    "vercel"
   ],
   "ignore": ["**/*.d.ts", "vitest.shared.ts"]
 }
