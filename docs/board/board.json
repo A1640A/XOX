@@ -5,7 +5,7 @@
   "nightRun": {
     "active": true,
     "deadline": null,
-    "wave": 1,
+    "wave": 2,
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0
   },
@@ -41,7 +41,7 @@
       "agent": "xox-dev-core",
       "deps": [],
       "conflictSet": ["packages/shared/**"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/CTR-001",
       "report": "docs/board/reports/CTR-001.md",

@@ -160,3 +160,29 @@
 {"ts":"2026-08-24T18:17:54Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-close.test.ts"}
 {"ts":"2026-08-24T18:18:16Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-close.test.ts"}
 {"ts":"2026-08-24T18:35:00Z","wave":1,"event":"task.done","task":"RT-PROBE-001","agent":"xox-dev-realtime","note":"metodoloji lead tarafindan dogrulandi: tek saat, sansur muhafazakar, 3sn araliıkli tempo ayni sonuc"}
+{"ts":"2026-08-24T18:18:41Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-close.ts"}
+{"ts":"2026-08-24T18:19:29Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.test.ts"}
+{"ts":"2026-08-24T18:19:37Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.test.ts"}
+{"ts":"2026-08-24T18:19:58Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.test.ts"}
+{"ts":"2026-08-24T18:20:08Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.test.ts"}
+{"ts":"2026-08-24T18:20:31Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/constants.ts"}
+{"ts":"2026-08-24T18:20:38Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.ts"}
+{"ts":"2026-08-24T18:20:49Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.ts"}
+{"ts":"2026-08-24T18:21:00Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.ts"}
+{"ts":"2026-08-24T18:21:13Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/rest-contract.ts"}
+{"ts":"2026-08-24T18:21:35Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/constants.test.ts"}
+{"ts":"2026-08-24T18:21:52Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/constants.test.ts"}
+{"ts":"2026-08-24T18:22:08Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/constants.ts"}
+{"ts":"2026-08-24T18:23:11Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/primitives.test.ts"}
+{"ts":"2026-08-24T18:23:21Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/primitives.test.ts"}
+{"ts":"2026-08-24T18:23:39Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/primitives.ts"}
+{"ts":"2026-08-24T18:23:50Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/primitives.ts"}
+{"ts":"2026-08-24T18:24:03Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/primitives.ts"}
+{"ts":"2026-08-24T18:24:13Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.ts"}
+{"ts":"2026-08-24T18:25:08Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/primitives.ts"}
+{"ts":"2026-08-24T18:25:34Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/package.json"}
+{"ts":"2026-08-24T18:27:39Z","event":"file.touched","path":".claude/worktrees/CTR-001/docs/board/reports/CTR-001.md"}
+{"ts":"2026-08-24T18:28:29Z","event":"file.touched","path":".claude/worktrees/CTR-001/docs/board/reports/CTR-001.md"}
+{"ts":"2026-08-24T18:29:53Z","event":"subagent.stop"}
+{"ts":"2026-08-24T18:50:00Z","wave":1,"event":"task.done","task":"CTR-001","agent":"xox-dev-core","tests":"214","coverage":"100%","note":"8 bulgu kapandi; kendine-referansli test tuzagi bulundu ve iki katmanla cozuldu"}
+{"ts":"2026-08-24T18:52:00Z","wave":1,"event":"merge.ok","tasks":["CTR-001","OPS-002","UI-001","RT-PROBE-001"],"note":"cakisma yok, 5 kapi yesil"}
