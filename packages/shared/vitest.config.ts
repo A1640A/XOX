@@ -7,7 +7,7 @@ export default mergeConfig(
     test: {
       name: 'shared',
       environment: 'node',
-      coverage: { thresholds: { lines: 90, branches: 90, functions: 90, statements: 90 } },
+      coverage: { thresholds: { lines: 95, branches: 95, functions: 95, statements: 95 } },
     },
   }),
 )
