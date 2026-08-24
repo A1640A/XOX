@@ -30,6 +30,54 @@ function cellAriaLabel(index: number, cell: Cell): string {
   return `${String(row)}. satır ${String(col)}. sütun, ${cellDescription(cell)}`
 }
 
+const BOARD_SIZE = 3
+
+interface CellButtonProps {
+  readonly index: number
+  readonly cell: Cell
+  readonly interactive: boolean
+  readonly isWinning: boolean
+  readonly isPending: boolean
+  readonly onCellPress?: ((index: number) => void) | undefined
+}
+
+function CellButton({
+  index,
+  cell,
+  interactive,
+  isWinning,
+  isPending,
+  onCellPress,
+}: CellButtonProps): React.ReactElement {
+  return (
+    <button
+      type="button"
+      role="gridcell"
+      data-testid={cellTestId(index)}
+      data-tas={cell ?? ''}
+      data-kazanan={isWinning ? 'true' : undefined}
+      data-bekliyor={isPending ? 'true' : undefined}
+      aria-label={cellAriaLabel(index, cell)}
+      disabled={!interactive}
+      onClick={() => {
+        onCellPress?.(index)
+      }}
+      className="border-border flex aspect-square w-20 items-center justify-center border-2 p-3 disabled:cursor-not-allowed"
+    >
+      {cell === 'X' ? (
+        <span className="text-player-x">
+          <XMark />
+        </span>
+      ) : null}
+      {cell === 'O' ? (
+        <span className="text-player-o">
+          <OMark />
+        </span>
+      ) : null}
+    </button>
+  )
+}
+
 /**
  * Uygulamanın TEK tahta bileşeni (kart §2) — hem oda ekranı hem bilgisayara
  * karşı ekran bunu kullanır. Hücreler `<button>`: klavyeyle Tab/Enter ile
@@ -42,41 +90,33 @@ export function Board({
   pendingIndex = null,
   onCellPress,
 }: BoardProps): React.ReactElement {
+  const rows = Array.from({ length: BOARD_SIZE }, (_unused, row) => row)
+
   return (
     <div data-testid={TESTID.tahta} role="grid" className="grid w-fit grid-cols-3 gap-2">
-      {cells.map((cell, index) => {
-        const isWinning = winningLine?.includes(index) ?? false
-        const isPending = pendingIndex === index
-
-        return (
-          <button
-            key={index}
-            type="button"
-            role="gridcell"
-            data-testid={cellTestId(index)}
-            data-tas={cell ?? ''}
-            data-kazanan={isWinning ? 'true' : undefined}
-            data-bekliyor={isPending ? 'true' : undefined}
-            aria-label={cellAriaLabel(index, cell)}
-            disabled={!interactive}
-            onClick={() => {
-              onCellPress?.(index)
-            }}
-            className="border-border flex aspect-square w-20 items-center justify-center border-2 p-3 disabled:cursor-not-allowed"
-          >
-            {cell === 'X' ? (
-              <span className="text-player-x">
-                <XMark />
-              </span>
-            ) : null}
-            {cell === 'O' ? (
-              <span className="text-player-o">
-                <OMark />
-              </span>
-            ) : null}
-          </button>
-        )
-      })}
+      {rows.map((row) => (
+        // `role="grid"` doğrudan `role="gridcell"` çocuklarını KABUL ETMEZ —
+        // ARIA'nın grid deseni aradaki `role="row"`u ZORUNLU kılar (inceleme
+        // minor bulgusu). Görsel düzen (`grid-cols-3`) zaten dış kapsayıcıda
+        // olduğu için bu satır `display: contents` ile yalnız erişilebilirlik
+        // ağacına eklenir, görsel ızgarayı BOZMAZ.
+        <div key={row} role="row" className="contents">
+          {cells.slice(row * BOARD_SIZE, row * BOARD_SIZE + BOARD_SIZE).map((cell, col) => {
+            const index = row * BOARD_SIZE + col
+            return (
+              <CellButton
+                key={index}
+                index={index}
+                cell={cell}
+                interactive={interactive}
+                isWinning={winningLine?.includes(index) ?? false}
+                isPending={pendingIndex === index}
+                onCellPress={onCellPress}
+              />
+            )
+          })}
+        </div>
+      ))}
     </div>
   )
 }

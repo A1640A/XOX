@@ -81,4 +81,24 @@ describe('Board', () => {
     expect(screen.getByTestId('hucre-1')).toHaveAttribute('data-tas', 'O')
     expect(screen.getByTestId('hucre-2')).toHaveAttribute('data-tas', '')
   })
+
+  it('geçerli ARIA grid deseni üretir: role=grid -> 3x role=row -> role=gridcell (inceleme minor bulgusu)', () => {
+    const { container } = render(<Board cells={EMPTY} interactive={false} />)
+
+    const grid = screen.getByRole('grid')
+    const rows = screen.getAllByRole('row')
+    expect(rows).toHaveLength(3)
+    for (const row of rows) {
+      expect(grid).toContainElement(row)
+      const cellsInRow = row.querySelectorAll('[role="gridcell"]')
+      expect(cellsInRow).toHaveLength(3)
+    }
+    // `role="gridcell"` DOĞRUDAN `role="grid"`in altında değil, her zaman bir
+    // `role="row"`un içinde olmalı — geçersiz ARIA'yı yapısal olarak yakalar.
+    const directGridcellChildren = Array.from(grid.children).filter(
+      (child) => child.getAttribute('role') === 'gridcell',
+    )
+    expect(directGridcellChildren).toHaveLength(0)
+    expect(container.querySelectorAll('[role="gridcell"]')).toHaveLength(9)
+  })
 })

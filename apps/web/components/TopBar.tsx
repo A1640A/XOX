@@ -24,7 +24,10 @@ export function TopBar(): React.ReactElement {
       </Link>
       {session ? (
         <nav className="flex items-center gap-4">
-          <Link href="/profil">{session.user.name}</Link>
+          {/* İnceleme minor bulgusu: `name` Auth.js'in varsayılan tipinde
+              `string | null | undefined` — nullish ise rozet BOŞ render
+              edilirdi. `HomeActions.tsx`'teki aynı yedek (`email`) kullanılır. */}
+          <Link href="/profil">{session.user.name ?? session.user.email}</Link>
           <Link href="/siralama">{tr.leaderboard.title}</Link>
           <Link href="/gecmis">{tr.history.title}</Link>
           <Link href="/arkadaslar">{tr.friends.title}</Link>

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { themes } from '@xox/ui-tokens'
+import { cssVariables, themes, type Theme } from '@xox/ui-tokens'
 import { generateGlobalsCss } from '@/lib/generate-globals-css'
 
 /**
@@ -21,23 +21,35 @@ describe('globals.css', () => {
     expect(onDisk).toBe(generateGlobalsCss())
   })
 
-  it('her iki temanın player renklerini @xox/ui-tokens themes ile birebir taşır', () => {
-    // Not: apps/web/**'te literal hex YASAK (KK-084, kök eslint no-restricted-syntax) —
-    // bu yüzden beklenti burada da `@xox/ui-tokens`'tan okunur. Gerçek "elle yazılmış,
-    // tamamen bağımsız hex" katmanı `packages/ui-tokens` (hex ban'dan MUAF) içindeki
-    // `colors.test.ts`/`contrast.test.ts`'tedir; bu test onun ÜZERİNE, üretilen dosyanın
-    // o kaynaktan SESSİZCE kaymadığını (yanlış anahtar, yanlış tema eşleşmesi vb.) kilitler.
+  it("her iki temanın TÜM renk token'larını @xox/ui-tokens ile birebir taşır (inceleme minor bulgusu)", () => {
+    // İnceleme minor bulgusu: önceki sürüm yalnız `playerX`/`playerO`'yu
+    // kontrol ediyordu — sekiz diğer token (ör. `--color-bg`) korumasızdı;
+    // biri düşse bile bu iki test de yeşil kalır, sayfa beyaz render olurdu.
+    // Not: apps/web/**'te literal hex YASAK (KK-084) — beklenti burada da
+    // `@xox/ui-tokens`'tan okunur. Gerçek "elle yazılmış, tamamen bağımsız
+    // hex" katmanı `packages/ui-tokens` (hex ban'dan MUAF) içindeki
+    // `colors.test.ts`/`contrast.test.ts`'tedir; bu test onun ÜZERİNE,
+    // üretilen dosyanın o kaynaktan SESSİZCE kaymadığını kilitler.
     const dir = dirname(fileURLToPath(import.meta.url))
     const onDisk = readFileSync(join(dir, 'globals.css'), 'utf8')
 
+    for (const theme of Object.keys(themes) as Theme[]) {
+      const vars = cssVariables(theme)
+      const tokenCount = Object.keys(vars).length
+      // Bağımsız listeye karşı: tek bir tema en az bu kadar token taşımalı —
+      // `cssVariables`in kendisi boş bir nesne dönmeye başlarsa döngü hiç
+      // iddia üretmez, bu satır o "sessizce hiçbir şey test etmeme" sınıfını
+      // kapatır (gotchas.md "kendine-referanslı test silmeyi göremez").
+      expect(tokenCount).toBeGreaterThanOrEqual(10)
+      for (const [name, value] of Object.entries(vars)) {
+        expect(onDisk).toContain(`${name}: ${value};`)
+      }
+    }
+
     expect(onDisk).toContain("[data-tema='acik']")
-    expect(onDisk).toContain(`--color-player-x: ${themes.acik.playerX};`)
-    expect(onDisk).toContain(`--color-player-o: ${themes.acik.playerO};`)
     expect(onDisk).toContain("[data-tema='koyu']")
-    expect(onDisk).toContain(`--color-player-x: ${themes.koyu.playerX};`)
-    expect(onDisk).toContain(`--color-player-o: ${themes.koyu.playerO};`)
     // acik ve koyu farklı değerler taşımalı — ikisinin de aynı bloğa
     // kopyalanması gibi bir kaymayı yakalar.
-    expect(themes.acik.playerX).not.toBe(themes.koyu.playerX)
+    expect(themes.acik).not.toStrictEqual(themes.koyu)
   })
 })
