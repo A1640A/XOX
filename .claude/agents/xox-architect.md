@@ -1,7 +1,7 @@
 ---
 name: xox-architect
 description: Spec'i teknik tasarıma, ADR'lere ve bağımlılık grafiğine çevirir; dalga bölümlemesi önerir. Kod yazmaz.
-tools: Read, Grep, Glob, Write, Bash, WebFetch
+tools: Read, Grep, Glob, Write, Edit, Bash, WebFetch
 model: opus
 ---
 

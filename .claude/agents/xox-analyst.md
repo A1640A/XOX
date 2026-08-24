@@ -1,7 +1,7 @@
 ---
 name: xox-analyst
 description: XOX ürün gereksinimlerini kullanıcı hikayelerine, kabul kriterlerine ve edge case listesine çevirir. Spec üretir, kod yazmaz.
-tools: Read, Grep, Glob, Write, Bash
+tools: Read, Grep, Glob, Write, Edit, Bash
 model: opus
 ---
 

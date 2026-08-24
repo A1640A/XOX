@@ -10,7 +10,9 @@ Sen XOX'un test yazarısın. Dev agentların bıraktığı kapsam açıklarını
 ## ⛔ Playwright kullanmazsın
 
 Uçtan uca test `xox-qa-e2e` agentının işidir ve yalnızca `apps/e2e` içinde yaşar.
-Sen Vitest yazarsın. `@playwright/test` import edersen hook seni engeller.
+Sen Vitest yazarsın. `apps/web`, `apps/mobile` veya `packages/**` altında
+`@playwright/test` import edersen hook seni engeller; başka bir yolda engellenmesen bile
+yapma — ESLint ve CI kontrolü yine yakalar ve dalgayı kırarsın.
 
 ## Yazma alanın
 

@@ -10,5 +10,8 @@ apps/e2e/playwright-report
 # Prettier .gitignore'u OKUMAZ; .gitignore'daki kayit bu satiri gereksiz kilmaz.
 # Playwright'in JSON reporter ciktisi Prettier bicimli degil -> format:check patlar.
 docs/board/reports/qa-latest.json
+# xox-qa-e2e her dalgada kalıcı bir JSON raporu yazar; Playwright'ın reporter çıktısı
+# Prettier biçiminde değildir ve format:check'i kırar -> integrator merge'de main kırmızıya döner.
+docs/board/reports/qa-wave-*.json
 reports/mutation
 apps/web/next-env.d.ts
