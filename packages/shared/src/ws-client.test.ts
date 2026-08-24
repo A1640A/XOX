@@ -229,6 +229,20 @@ describe('giden mesajlar', () => {
 
     expect(soket.mesajlar).toEqual([])
   })
+
+  // S4: RN köprüsünde olay sırası garanti değil; ölü soketten düşen bir `state`
+  // istemciyi sürümce GERİ sardırırdı.
+  it('ölü soketten gelen geç durum mesajı sürümü geri sarmaz', () => {
+    const { client, soketler } = bagli()
+    const soket = son(soketler)
+    soket.getir(tamDurumMesaji({ version: 20 }))
+    soket.sunucuKapatti(1006)
+
+    soket.getir(tamDurumMesaji({ version: 7 }))
+
+    expect(client.getState().version).toBe(20)
+    expect(client.getState().connection).not.toBe('bagli')
+  })
 })
 
 describe('heartbeat (KK-060)', () => {
@@ -367,7 +381,66 @@ describe('yeniden bağlanma', () => {
   })
 })
 
+describe('terk edilen soket', () => {
+  // S2: React StrictMode effect'i iki kez koşturur; çift tık ve 4401 sonrası
+  // onReauth yarışı da aynı yolu tetikler. Kapatılmayan bağlantı sunucunun
+  // 4408 eşiğine kadar bir Fluid çağrısını tutar ve sahte takeover yazdırır.
+  it('ikinci connect() birinci soketi KAPATIR', () => {
+    const { client, soketler } = kur()
+    client.connect()
+    const ilk = son(soketler)
+    client.connect()
+
+    expect(soketler).toHaveLength(2)
+    expect(ilk.kapanislar).toEqual([1000])
+  })
+
+  it('terk edilen soketin geç kapanışı yeni bağlantıyı etkilemez', () => {
+    const { client, soketler } = kur()
+    client.connect()
+    const ilk = son(soketler)
+    client.connect()
+    son(soketler).ac()
+
+    ilk.sunucuKapatti(1006)
+
+    expect(client.getState().connection).toBe('bagli')
+    expect(soketler).toHaveLength(2)
+  })
+})
+
 describe('close()', () => {
+  it('terminal geçiş üretir — getState() yalan söylemez', () => {
+    const { client, degisimler } = bagli()
+    const oncekiSayi = degisimler.length
+    client.close()
+
+    expect(client.getState().connection).toBe('kopuk')
+    expect(degisimler.length).toBeGreaterThan(oncekiSayi)
+  })
+
+  // S3: kapanıştan sonra kapı hâlâ açıksa `pending` kalıcı kurulur, mesaj
+  // sessizce yutulur; kullanıcıya "bekliyor" yanar, sunucuya hiçbir şey gitmez.
+  it('kapandıktan sonra hücreye basmak pending KURMAZ', () => {
+    const { client, soketler } = bagli()
+    const ilk = son(soketler)
+    client.close()
+
+    client.dispatch({ type: 'ui:cell', index: 4 })
+
+    expect(client.getState().pending).toBeNull()
+    expect(ilk.mesajlar).toEqual([])
+  })
+
+  it('kapanış yeniden bağlanma zamanlamaz', () => {
+    const { client, soketler } = bagli()
+    client.close()
+
+    vi.advanceTimersByTime(60_000)
+
+    expect(soketler).toHaveLength(1)
+  })
+
   it('soketi kapatır, zamanlayıcıları durdurur', () => {
     const { client, soketler } = bagli()
     const ilk = son(soketler)

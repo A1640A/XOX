@@ -74,6 +74,8 @@ export type RoomClientEvent =
   | { readonly type: 'socket:connecting' }
   | { readonly type: 'socket:open' }
   | { readonly type: 'socket:closed'; readonly code: number }
+  /** Kullanıcı odadan çıktı: terminal: yeniden bağlanma İSTENMEZ. */
+  | { readonly type: 'client:closed' }
   /** `now` yalnız burada gerekir: `serverOffsetMs` hesabı için. */
   | { readonly type: 'server'; readonly message: ServerMessage; readonly now: number }
 
@@ -159,6 +161,11 @@ export function roomClientReducer(
       return idle({ ...state, connection: 'bagli' })
     case 'socket:closed':
       return closed(state, event.code)
+    // Soket kapandıktan sonra durum 'bagli' kalırsa kapılar açık kalır: hücreye
+    // basılır, `pending` kalıcı kurulur, mesaj sessizce yutulur ve kullanıcıya
+    // sonsuza dek "bekliyor" yanar.
+    case 'client:closed':
+      return idle({ ...state, connection: 'kopuk', pending: null, inFlight: null })
     case 'server':
       return fromServer(state, event.message, event.now)
   }

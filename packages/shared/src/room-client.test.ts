@@ -544,6 +544,18 @@ describe('§5.6/10 — diğer kapanışlar', () => {
     expect(isPermanentCloseCode(code)).toBe(false)
   })
 
+  it('kullanıcı kapatınca terminal kopuk olunur, yeniden bağlanma İSTENMEZ', () => {
+    const { state, effects } = roomClientReducer(
+      bagliDurum({ pending: { index: 1, by: 'X' }, inFlight: 'resign' }),
+      { type: 'client:closed' },
+    )
+
+    expect(state.connection).toBe('kopuk')
+    expect(state.pending).toBeNull()
+    expect(state.inFlight).toBeNull()
+    expect(effects).toEqual([])
+  })
+
   it('yeniden bağlanma denemesi başlarken connection baglaniyor olur', () => {
     const { state, effects } = roomClientReducer(bagliDurum({ connection: 'kopuk' }), {
       type: 'socket:connecting',

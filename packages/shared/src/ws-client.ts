@@ -92,8 +92,12 @@ export function createRoomWsClient(deps: RoomWsClientDeps): RoomWsClient {
   }
 
   function write(message: ClientMessage): void {
-    // Soket kapandıktan sonra düşen geç bir çerçeve efekt üretebilir; ölü
-    // soketle konuşmak yerine sessizce düşürülür — tam durum yeniden gelecek.
+    // Gönderim üreten her yol açık bir soket gerektirir: kullanıcı eylemlerinin
+    // kapısı `connection === 'bagli'`, `resync` yalnız canlı soketin
+    // çerçevesinden doğar, `ping` yalnız nabız zamanlayıcısından — o da
+    // `abandon()` ile durur. Aşağıdaki dal bu yüzden ERİŞİLEMEZ; tipin
+    // totalliği için var, kapsamdan bilerek dışlandı.
+    /* v8 ignore next */
     if (socket === null) return
     socket.send(JSON.stringify(message))
   }
@@ -120,9 +124,7 @@ export function createRoomWsClient(deps: RoomWsClientDeps): RoomWsClient {
 
   /** Sessiz kalan bağlantıyı biz kapatırız; sunucunun 4408'ini beklemeyiz. */
   function dropConnection(): void {
-    const dying = socket
-    detach()
-    dying?.close(WS_CLOSE.IDLE_TIMEOUT)
+    abandon(WS_CLOSE.IDLE_TIMEOUT)
     run({ type: 'socket:closed', code: WS_CLOSE.IDLE_TIMEOUT })
   }
 
@@ -134,17 +136,23 @@ export function createRoomWsClient(deps: RoomWsClientDeps): RoomWsClient {
   }
 
   /**
-   * Soketi **biz** bıraktığımızda kullanılır: dinleyiciler sıfırlanır, yoksa
-   * bizim `close()` çağrımızın ardından gelen `onclose` ikinci bir kapanış
-   * olayı üretir ve backoff sayacı iki kez artar.
+   * Soketi **biz** bıraktığımızda kullanılır. İki iş birden yapar:
+   *
+   * 1. Dinleyicileri sıfırlar — yoksa bizim `close()` çağrımızın ardından gelen
+   *    `onclose` ikinci bir kapanış olayı üretir, backoff sayacı iki kez artar.
+   * 2. Soketi gerçekten **kapatır**. Terk edip kapatmamak yetim bir bağlantı
+   *    bırakır: sunucunun 4408 eşiğine kadar açık kalır, bir Fluid çağrısını
+   *    tutar ve gereksiz bir takeover yazması üretir.
    */
-  function detach(): void {
+  function abandon(code: number): void {
     stopTimers()
     if (socket !== null) {
-      socket.onopen = null
-      socket.onmessage = null
-      socket.onclose = null
+      const dying = socket
       socket = null
+      dying.onopen = null
+      dying.onmessage = null
+      dying.onclose = null
+      dying.close(code)
     }
   }
 
@@ -160,7 +168,7 @@ export function createRoomWsClient(deps: RoomWsClientDeps): RoomWsClient {
 
   function connect(nextUrl?: string): void {
     if (nextUrl !== undefined) url = nextUrl
-    detach()
+    abandon(NORMAL_CLOSE)
     run({ type: 'socket:connecting' })
 
     const opened = deps.createSocket(url)
@@ -171,6 +179,10 @@ export function createRoomWsClient(deps: RoomWsClientDeps): RoomWsClient {
       run({ type: 'socket:open' })
     }
     opened.onmessage = (event): void => {
+      // Ölü ya da devredilmiş soketten düşen geç çerçeve İŞLENMEZ: sürümce geri
+      // sardırırdı. Tarayıcıda olay sırası bunu neredeyse imkânsız kılıyor,
+      // React Native köprüsünde daha az kesin.
+      if (socket !== opened) return
       handleFrame(event.data)
     }
     opened.onclose = (event): void => {
@@ -190,9 +202,8 @@ export function createRoomWsClient(deps: RoomWsClientDeps): RoomWsClient {
     },
     getState: () => state,
     close: () => {
-      const closing = socket
-      detach()
-      closing?.close(NORMAL_CLOSE)
+      abandon(NORMAL_CLOSE)
+      run({ type: 'client:closed' })
     },
   }
 }
