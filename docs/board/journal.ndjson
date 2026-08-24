@@ -372,3 +372,16 @@
 {"ts":"2026-08-24T20:48:45Z","event":"file.touched","path":".claude/worktrees/AUTH-001/docs/memory/api-contract.md"}
 {"ts":"2026-08-24T20:48:58Z","event":"file.touched","path":".claude/worktrees/AUTH-001/docs/memory/api-contract.md"}
 {"ts":"2026-08-25T00:00:00Z","wave":3,"event":"review.finding","task":"OPS-003","agent":"xox-security","findings":9,"blocker":2,"summary":"rapor public repoda kimlik olayini ifsa ediyor; CI sirri guvenilmeyen hedefe gonderiyor; dusur-sonra-kur geri alinamaz"}
+{"ts":"2026-08-24T20:51:22Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/index.ts"}
+{"ts":"2026-08-24T20:52:07Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/_ops3-dualindex-check.test.ts"}
+{"ts":"2026-08-24T20:52:51Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/_ops3-dualindex-check.test.ts"}
+{"ts":"2026-08-24T20:54:05Z","event":"file.touched","path":".claude/worktrees/AUTH-001/docs/memory/gotchas.md"}
+{"ts":"2026-08-24T20:55:05Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.ts"}
+{"ts":"2026-08-24T20:56:20Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.test.ts"}
+{"ts":"2026-08-24T20:57:09Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.test.ts"}
+{"ts":"2026-08-24T20:57:43Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.test.ts"}
+{"ts":"2026-08-24T20:58:41Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.ts"}
+{"ts":"2026-08-24T20:59:15Z","event":"file.touched","path":".claude/worktrees/OPS-003/packages/db/src/indexes.ts"}
+{"ts":"2026-08-24T21:01:18Z","event":"file.touched","path":".claude/worktrees/AUTH-001/docs/board/reports/AUTH-001.md"}
+{"ts":"2026-08-24T21:03:36Z","event":"subagent.stop"}
+{"ts":"2026-08-25T00:05:00Z","wave":3,"event":"task.done","task":"AUTH-001","agent":"xox-dev-backend","tests":"100","note":"sabit zamanli giris 1.1ms fark (sinir 100ms), uc izleyici capraz reddediliyor, 4 yeni gotcha"}

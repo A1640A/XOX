@@ -275,10 +275,10 @@
         "apps/web/app/api/ws/**",
         "apps/web/types/**"
       ],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/AUTH-001",
-      "report": null,
+      "report": "docs/board/reports/AUTH-001.md",
       "acceptance": [
         "SPLIT CONFIG (gotcha, R6): auth.config.ts yalnız pages + callbacks.authorized içerir ve kenar-güvenlidir; middleware.ts YALNIZ onu import eder, auth.ts'i ETMEZ. Kanıt: `pnpm --filter @xox/web build` başarılı ve middleware çıktısında mongoose/@node-rs/argon2 geçmiyor (grep çıktısı rapora yapıştırılır)",
         "auth.ts: NextAuth({ providers:[Credentials({authorize})], session:{strategy:'jwt'}, pages:{signIn:'/giris'} }) — `adapter` alanı YOK, session.strategy AÇIKÇA yazılı (ADR-0009 · gotcha: varsayılana güvenme)",
