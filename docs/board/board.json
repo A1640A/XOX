@@ -168,7 +168,8 @@
         "seed TEST_USERS'ı gerçek argon2id hash'iyle yazar ve TEST_USER_PASSWORD sabitini dışa verir; test hash'in düz parolaya EŞİT OLMADIĞINI ve verify ile doğrulandığını gösterir (KK-004)",
         "Math.random kullanımı packages/db içinde YOK; mevcut randomInt tabanlı generateRoomCode korunur (KK-036)",
         "Mongoose model yeniden kaydı `as Model<X> | undefined` kalıbıyla yazılır (gotcha: cast ?? fallback'i öldürür, HMR'de OverwriteModelError)",
-        "Tüm testler gerçek xox_test Atlas veritabanına karşı koşar; pnpm gates temiz"
+        "Tüm testler gerçek xox_test Atlas veritabanına karşı koşar; pnpm gates temiz",
+        "SeatOccupant tipini YENIDEN TANIMLAMA - @xox/shared zaten disa veriyor, oradan import et. Iki ayri tanim = sessiz sapma."
       ],
       "blockedReason": null
     },
@@ -540,7 +541,8 @@
         "Başarılı katılım /oda/<KOD> adresine götürür",
         "Metinler tr'den, testid'ler @xox/shared/testids'ten; hex literal yok",
         "packages/db/src/rooms/create.ts AÇILMAZ — kod çakışma yeniden denemesi DB-002'de tamamlandı",
-        "pnpm gates temiz"
+        "pnpm gates temiz",
+        "ROOM_CODE_ALPHABET degistirilirse roomCodeSchema regex-i de turetilmis olmali (CTR-001 duzeltiyor). Alfabeye karakter eklenip regex guncellenmezse oda KURULUR ama KATILINAMAZ."
       ],
       "blockedReason": null
     },
@@ -920,7 +922,8 @@
         "packages/shared/vitest.config.ts",
         "packages/db/vitest.config.ts",
         "apps/web/vitest.config.ts",
-        "vitest.shared.ts"
+        "vitest.shared.ts",
+        "packages/game-core/package.json"
       ],
       "status": "todo",
       "attempts": 0,
@@ -932,7 +935,8 @@
         "Kapsam eşikleri yükseltilir ve yeşil kalır: packages/shared ve packages/db satır kapsamı >= %95, apps/web >= %80 (mevcut 70'ten). Eşik yükseltmesi vitest.config.ts'lere yazılır",
         "Koşu sonunda .stryker-tmp artığı KALMAZ (gotcha: çöken koşu test sayısını ikiye katlar); `rm -rf packages/*/.stryker-tmp` doğrulandı",
         "game-core'a DOKUNULMAZ (bitti ve sertleştirildi)",
-        "pnpm gates temiz"
+        "pnpm gates temiz",
+        "packages/game-core/package.json-a `\"sideEffects\": false` eklenir. Gerekce: @xox/shared game-core-dan tip import ediyor; sideEffects bayragi olmadan game-core (minimax dahil) @xox/shared-i import eden HER bundle-a girer. Metro tree-shaking yapmaz, yani mobil yalnizca roomCodeSchema icin shared import etse bile AI kodunu tasir."
       ],
       "blockedReason": null
     },

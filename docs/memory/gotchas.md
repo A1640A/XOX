@@ -2,6 +2,32 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · zod fazla anahtari sessizce kirpar — "gecerli payload parse oldu" testi zayiftir
+
+Bir semadan zorunlu alan silinirse, o alani ICEREN test payload-u hala parse olur (zod bilinmeyen
+anahtari atar). Yani mutlu-yol `safeParse` testi alan kaybini YAKALAMAZ. 154 test / %100 kapsam
+bu boslugu gizleyebilir.
+**Yapilacak:** Her sema icin "her zorunlu alan tek tek eksiltilince REDDEDILIR" testi yaz ve
+alan listesini elle degil `schema.shape` anahtarlarindan uret - yeni alan eklenince kapsam
+otomatik gelsin.
+
+## 2026-08-24 · `import { type X }` ile `import type { X }` ayni sey DEGIL
+
+`verbatimModuleSyntax` acikken `import { type GameStatus } from '@xox/game-core'` satiri
+`import {} from '@xox/game-core'` olarak emit edilir - yani paket calisma zamaninda modul
+grafigine GIRER. Paketin `package.json`-inda `"sideEffects": false` yoksa bundler onu eleyemez;
+Metro zaten tree-shaking yapmaz.
+**Yapilacak:** Yalniz tip icin `import type { X }` kullan (tamamen elenir) ve her saf paketin
+`package.json`-ina `"sideEffects": false` koy.
+
+## 2026-08-24 · Sabitin regex kopyasi = sessiz sapma
+
+`ROOM_CODE_ALPHABET` sabiti ve `roomCodeSchema`-nin `/^[A-HJ-NP-Z2-9]+$/` regex-i ayni bilginin
+iki kopyasi. Alfabeye karakter eklenirse uretim yeni kod uretir, dogrulama reddeder: oda
+KURULUR ama KATILINAMAZ.
+**Yapilacak:** Regex-i sabitten turet, ya da en azindan "alfabedeki her karakter gecer,
+disindakiler gecmez" testi yaz.
+
 ## 2026-08-24 · ESLint `.css` dosyalarini HIC ayristirmaz — CSS-teki hex yasak disinda
 
 `no-restricted-syntax` JS/TS AST uzerinde calisir. `eslint apps/web/app/globals.css` ->
