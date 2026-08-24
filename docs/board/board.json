@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-24T23:45:36.436Z",
+  "updatedAt": "2026-08-24T23:58:22.276Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -316,10 +316,10 @@
         "apps/web/vitest.setup.ts",
         "apps/web/next.config.ts"
       ],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/UI-SKEL-001",
-      "report": null,
+      "report": "docs/board/reports/UI-SKEL-001.md",
       "acceptance": [
         "/, /giris, /kayit, /profil (minimum: ad + e-posta + 'Çıkış yap'), /oda/[kod] rotaları render olur. Tüm testid'ler @xox/shared/testids'ten gelir; bileşenlerde serpiştirilmiş testid string'i yok",
         "components/board/Board.tsx TEK tahta bileşenidir (hem oda hem bilgisayar ekranı onu kullanır). Girdi kapısı `interactive: boolean` prop'udur; bileşen kural bilmez, @xox/game-core çağırmaz",
@@ -339,7 +339,8 @@
         "X ve O YALNIZ renkle ayrilmaz: sekil ya da stroke kalinligi farki testle dogrulanir. Olculdu - playerX/playerO parlaklik kontrasti acik temada 1.22:1, koyu temada 1.06:1; renk korlugunde tahta okunamaz hale gelir.",
         "next.config.ts-e `agentRules: false` eklenir. Gerekce: Next 16 her dev/build-ta apps/web/AGENTS.md ve apps/web/CLAUDE.md uretiyor; bunlar apps/web altinda calisan bir Claude Code oturumu icin kok CLAUDE.md-yi GOLGELER. Simdilik gitignore-a alindi ama uretimi kapatmak dogrusu."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "7d51ffa"
     },
     {
       "id": "WS-001",

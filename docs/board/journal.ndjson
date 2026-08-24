@@ -748,3 +748,12 @@
 {"ts":"2026-08-24T23:45:23Z","event":"file.touched","path":".claude/worktrees/UI-SKEL-001/docs/board/reports/UI-SKEL-001.md"}
 {"ts":"2026-08-24T23:45:24Z","event":"file.touched","path":".claude/worktrees/WS-001/apps/web/lib/auth/tokens.ts"}
 {"ts":"2026-08-24T23:52:00Z","event":"review.findings","task":"WS-001","verdict":"findings","blocker":3,"high":2,"note":"Iki inceleme BAGIMSIZ olarak ayni bulguya vardi: join cercevesinin sinirsiz CAS yazmasi (~10x amplifikasyon, tek soket instance-taki BUTUN odalari geciktiriyor). Reviewer ajanin dort sorusunu kesin cevapladi: cift guard-in biri KANITLANABILIR olu kod, roomHub globalThis korumasindan yoksun (gercekten ikizlenebilir), erken abonelik sizintisi olumcul-OLMAYAN iki dalda, draw dali P0-da gercekten ulasilamaz ama SESSIZ. Guvenlik: /api/ws/echo production-da kimliksiz+sinirsiz (harness kalintisi, siliniyor). Konsolide fix turu 1/3 dispatch edildi. SEC-003 acildi, W1-02 ve W2-01 kartlarina borc yazildi"}
+{"ts":"2026-08-24T23:45:39Z","event":"file.touched","path":".claude/worktrees/WS-001/apps/web/lib/auth/tokens.ts"}
+{"ts":"2026-08-24T23:45:47Z","event":"file.touched","path":".claude/worktrees/WS-001/apps/web/lib/auth/tokens.ts"}
+{"ts":"2026-08-24T23:46:57Z","event":"subagent.stop"}
+{"ts":"2026-08-24T23:48:25Z","event":"file.touched","path":".claude/worktrees/WS-001/packages/db/src/rooms/settle.ts"}
+{"ts":"2026-08-25T00:05:00Z","event":"task.fixed","task":"UI-SKEL-001","note":"1 blocker + 6 major + 7 minor kapatildi. Lead 3 bagimsiz sonda kostu (reauth tavani, reauth gecikmesi, getServerSnapshot) — ucu de kirmizi. Dondurma kilidi dogrulandi: iskeletler casus bilesene cevrilip PROP-lar iddia ediliyor. 172 -> 213 web testi. Integrator dispatch edildi"}
+{"ts":"2026-08-24T23:49:10Z","event":"file.touched","path":".claude/worktrees/WS-001/packages/db/src/rooms/join.ts"}
+{"ts":"2026-08-24T23:55:05Z","event":"file.touched","path":".claude/worktrees/WS-001/apps/web/lib/realtime/room-hub.ts"}
+{"ts":"2026-08-24T23:57:52Z","event":"subagent.stop"}
+{"ts":"2026-08-25T00:15:00Z","event":"task.done","task":"UI-SKEL-001","mergeSha":"7d51ffa","note":"cakisma yok. turbo --force 7/7 + 5/5 Cached: 0. Integrator cache tuzagini CANLI yakaladi: --force sonrasi duz pnpm gates 39ms-de FULL TURBO verdi. Toplam 831 test (web 235). 15 rotanin hepsi dinamik — 13->15 farki tam olarak ROOM-API-001, decisions.md karari gecerli"}

@@ -773,3 +773,23 @@ Sıra her zaman şu olmalı: **düzeltmeyi commit et → sondayı uygula → `di
 doğrula → koş → `git checkout --` → `git status --porcelain` boş mu bak.** Commit edilmiş bir
 tabana karşı sonda koşmak geri almayı kayıpsız kılar. Örüntü #2'nin operasyonel ayağı: sonda
 disiplinsiz uygulanırsa sondanın kendisi yanlış sonuç üretir.
+
+## 2026-08-25 · `userEvent.setup()` kendisinden ÖNCE tanımlanan `navigator.clipboard` sahtesini sessizce eziyor
+
+`@testing-library/user-event`'in `setup()`'ı kendi clipboard stub'ını kuruyor ve daha önce
+tanımlanmış olanı değiştiriyor. Panoya kopyalama testinde stub `setup()`'tan **sonra**
+tanımlanmalı, yoksa test kendi kurduğu sahteyi değil user-event'inkini doğrular — örüntü #2'nin
+bir başka yüzü, üstelik hata mesajı hiçbir şeyi ele vermiyor.
+
+## 2026-08-25 · Integrator `main`'de merge ederken lead `main`'in git'ine DOKUNMAMALI
+
+Lead, integrator `git merge` koştururken aynı checkout'a `git commit` attı. Merge kazandı,
+commit `fatal: could not open '.git/MERGE_HEAD'` ile düştü ve değişiklikler **staged** kaldı —
+veri kaybı olmadı ama board bir süre gerçeği yansıtmadı. Daha kötüsü mümkündü: commit merge
+penceresinde geçseydi yarı birleşmiş bir ağaç commit'lenebilirdi.
+
+`CLAUDE.md` kural 6 ("dalga uçuştayken `git add -A` kullanma") bunun yalnız bir yüzü.
+Genel kural: **bir integrator `main`'de çalışırken lead `main`'in git'inde hiçbir yazma
+yapmaz** — board/journal/memory commit'leri integrator raporunu verene kadar bekler.
+Worktree'lerdeki agent'lar etkilenmez, onların kendi `.git` dosyaları var; çakışan tek şey
+ana checkout'un index'i ve `MERGE_HEAD`'i.
