@@ -317,6 +317,62 @@ describe('session · gelen mesaj', () => {
   })
 })
 
+describe('session · çerçeve sıralaması', () => {
+  it('art arda gelen iki hamle ÜST ÜSTE BİNMEDEN sırayla işlenir', async () => {
+    const olay: string[] = []
+    /** Yalnız BİRİNCİ hamle elde tutulur; ikincisi hemen çözülür. */
+    const bekleyen: (() => void)[] = []
+    let cagri = 0
+    const applyMove = vi.fn((_code: string, _userId: string, index: number) => {
+      olay.push(`giris-${String(index)}`)
+      cagri += 1
+      const tut = cagri === 1
+      return new Promise<{ ok: true; room: RoomDoc; events: [] }>((resolve) => {
+        const bitir = (): void => {
+          olay.push(`cikis-${String(index)}`)
+          resolve({ ok: true, room: makeRoom(), events: [] })
+        }
+        if (tut) bekleyen.push(bitir)
+        else bitir()
+      })
+    })
+    const f = fixture({ applyMove })
+    await f.session.start()
+
+    const ilk = f.session.handleMessage(JSON.stringify({ type: 'move', index: 0 }))
+    const ikinci = f.session.handleMessage(JSON.stringify({ type: 'move', index: 4 }))
+
+    // İlk hamle henüz bitmedi: ikincisi HİÇ başlamamış olmalı.
+    await vi.waitFor(() => {
+      expect(olay).toStrictEqual(['giris-0'])
+    })
+    bekleyen[0]?.()
+    await Promise.all([ilk, ikinci])
+
+    expect(olay).toStrictEqual(['giris-0', 'cikis-0', 'giris-4', 'cikis-4'])
+  })
+
+  it('start bitmeden gelen mesaj, join tamamlandıktan SONRA işlenir', async () => {
+    const olay: string[] = []
+    const f = fixture({
+      joinRoom: () => {
+        olay.push('join')
+        return Promise.resolve({ ok: true, room: makeRoom(), events: [] })
+      },
+      applyMove: () => {
+        olay.push('move')
+        return Promise.resolve({ ok: true, room: makeRoom(), events: [] })
+      },
+    })
+
+    const started = f.session.start()
+    const moved = f.session.handleMessage(JSON.stringify({ type: 'move', index: 0 }))
+    await Promise.all([started, moved])
+
+    expect(olay).toStrictEqual(['join', 'move'])
+  })
+})
+
 describe('session · boşta kalma (4408)', () => {
   it('WS_IDLE_TIMEOUT_MS sessizlikten sonra 4408 ile kapanır', async () => {
     const f = fixture()

@@ -145,92 +145,109 @@ export function createRoomSession(deps: RoomSessionDeps): RoomSession {
     settlementTimer.cancel()
   }
 
+  /**
+   * Gelen çerçeveler **sırayla** işlenir. `ws.on('message')` dinleyicileri
+   * sırayla ateşlenir ama gövdeleri asenkrondur: iki hamle art arda gelirse
+   * ikincisinin `applyMove`ı birincisinin CAS'ından ÖNCE okuma yapabilir ve
+   * sırası gelen oyuncu haksız yere `not-your-turn` yer. Kuyruk, `start()`
+   * bitmeden gelen bir mesajın koltuksuz işlenmesini de engeller.
+   */
+  let queue: Promise<void> = Promise.resolve()
+  function enqueue(task: () => Promise<void>): Promise<void> {
+    const next = queue.then(task)
+    queue = next.catch(() => undefined)
+    return next
+  }
+
+  async function doStart(): Promise<void> {
+    rotation = scheduleRotation({
+      getDeadline: deps.getDeadline,
+      now: deps.now,
+      setTimer: deps.setTimer,
+      clearTimer: deps.clearTimer,
+      close: (code, reason) => {
+        connection.close(code, reason)
+      },
+      ...(deps.rotateMarginMs === undefined ? {} : { marginMs: deps.rotateMarginMs }),
+    })
+    armIdle()
+
+    await settle()
+
+    // Abonelik `join` yazımından ÖNCE (spec §5.2'nin 5→7 sırasından bilinçli
+    // sapma): aradaki pencerede rakibin olayı kaybolur ve gönderdiğimiz tam
+    // durum bayat kalırdı. Anlık görüntü kurulmadan gelen olay
+    // `connection.primeState` içinde uzlaştırılıyor.
+    await deps.hub.subscribe(subscriber)
+    subscribed = true
+
+    await dispatchMessage(context, { type: 'join', roomCode: deps.roomCode })
+
+    if (connection.isClosed()) {
+      await doEnd()
+      return
+    }
+
+    const room = connection.lastRoom()
+    if (room !== null) settlementTimer.schedule(room)
+  }
+
+  async function doHandle(raw: string): Promise<void> {
+    if (connection.isClosed() || ended) return
+    armIdle()
+
+    // Sıra spec §5.2'den: zod → settleDeadlines → handler. Şema önce
+    // geliyor ki bozuk çerçeveler her seferinde bir okuma tetiklemesin.
+    const message = parseClientMessage(raw)
+    if (message === null) {
+      connection.sendError('INVALID_MESSAGE', 'Mesaj protokole uymuyor.')
+      if (connection.noteProtocolViolation()) {
+        connection.close(WS_CLOSE.PROTOCOL_VIOLATION, 'protocol-violation')
+      }
+      return
+    }
+    connection.noteValidMessage()
+
+    await settle()
+
+    try {
+      await dispatchMessage(context, message)
+    } catch (error) {
+      deps.logError(`handler hatası (${message.type})`, error)
+      connection.sendError('SERVER_ERROR', 'İstek işlenemedi.')
+    }
+  }
+
+  async function doEnd(): Promise<void> {
+    if (ended) return
+    ended = true
+    cancelTimers()
+
+    if (subscribed) {
+      subscribed = false
+      try {
+        await deps.hub.unsubscribe(subscriber)
+      } catch (error) {
+        deps.logError('hub aboneliği bırakılamadı', error)
+      }
+    }
+
+    const seat = connection.seat()
+    if (seat === null) return
+    try {
+      // KOŞULLU yazma: yalnız `presence[seat].connId` hâlâ bizsek
+      // `disconnected` damgalanır (§5.4). Devredilmiş eski bağlantının
+      // kapanışı hiçbir şey yazmaz.
+      await deps.db.detachConnection(deps.roomCode, seat, deps.connId)
+    } catch (error) {
+      deps.logError('detachConnection başarısız', error)
+    }
+  }
+
   return {
     connection,
-
-    async start(): Promise<void> {
-      rotation = scheduleRotation({
-        getDeadline: deps.getDeadline,
-        now: deps.now,
-        setTimer: deps.setTimer,
-        clearTimer: deps.clearTimer,
-        close: (code, reason) => {
-          connection.close(code, reason)
-        },
-        ...(deps.rotateMarginMs === undefined ? {} : { marginMs: deps.rotateMarginMs }),
-      })
-      armIdle()
-
-      await settle()
-
-      // Abonelik `join` yazımından ÖNCE (spec §5.2'nin 5→7 sırasından bilinçli
-      // sapma): aradaki pencerede rakibin olayı kaybolur ve gönderdiğimiz tam
-      // durum bayat kalırdı. Anlık görüntü kurulmadan gelen olay
-      // `connection.primeState` içinde uzlaştırılıyor.
-      await deps.hub.subscribe(subscriber)
-      subscribed = true
-
-      await dispatchMessage(context, { type: 'join', roomCode: deps.roomCode })
-
-      if (connection.isClosed()) {
-        await this.end()
-        return
-      }
-
-      const room = connection.lastRoom()
-      if (room !== null) settlementTimer.schedule(room)
-    },
-
-    async handleMessage(raw: string): Promise<void> {
-      if (connection.isClosed() || ended) return
-      armIdle()
-
-      // Sıra spec §5.2'den: zod → settleDeadlines → handler. Şema önce
-      // geliyor ki bozuk çerçeveler her seferinde bir okuma tetiklemesin.
-      const message = parseClientMessage(raw)
-      if (message === null) {
-        connection.sendError('INVALID_MESSAGE', 'Mesaj protokole uymuyor.')
-        if (connection.noteProtocolViolation()) {
-          connection.close(WS_CLOSE.PROTOCOL_VIOLATION, 'protocol-violation')
-        }
-        return
-      }
-      connection.noteValidMessage()
-
-      await settle()
-
-      try {
-        await dispatchMessage(context, message)
-      } catch (error) {
-        deps.logError(`handler hatası (${message.type})`, error)
-        connection.sendError('SERVER_ERROR', 'İstek işlenemedi.')
-      }
-    },
-
-    async end(): Promise<void> {
-      if (ended) return
-      ended = true
-      cancelTimers()
-
-      if (subscribed) {
-        subscribed = false
-        try {
-          await deps.hub.unsubscribe(subscriber)
-        } catch (error) {
-          deps.logError('hub aboneliği bırakılamadı', error)
-        }
-      }
-
-      const seat = connection.seat()
-      if (seat === null) return
-      try {
-        // KOŞULLU yazma: yalnız `presence[seat].connId` hâlâ bizsek
-        // `disconnected` damgalanır (§5.4). Devredilmiş eski bağlantının
-        // kapanışı hiçbir şey yazmaz.
-        await deps.db.detachConnection(deps.roomCode, seat, deps.connId)
-      } catch (error) {
-        deps.logError('detachConnection başarısız', error)
-      }
-    },
+    start: () => enqueue(doStart),
+    handleMessage: (raw: string) => enqueue(() => doHandle(raw)),
+    end: () => enqueue(doEnd),
   }
 }

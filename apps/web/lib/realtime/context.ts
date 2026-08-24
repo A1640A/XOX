@@ -38,10 +38,10 @@ export interface HandlerContext {
   readonly now: () => number
 }
 
-export type ClientMessageType = ClientMessage['type']
+type ClientMessageType = ClientMessage['type']
 export type ClientMessageOf<T extends ClientMessageType> = Extract<ClientMessage, { type: T }>
 
-export type MessageHandler<T extends ClientMessageType> = (
+type MessageHandler<T extends ClientMessageType> = (
   context: HandlerContext,
   message: ClientMessageOf<T>,
 ) => Promise<void>
