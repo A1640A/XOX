@@ -2,6 +2,25 @@
 
 > Format: tarih · karar · bağlam · gerekçe · reddedilen alternatifler
 
+## 2026-08-24 · Auth.js sağlayıcısı: Credentials (e-posta + parola)
+
+**Karar:** P0'da tek sağlayıcı — Auth.js Credentials. Parola `argon2id` ile hash'lenir,
+`users.passwordHash` alanında saklanır. `/kayit` ve `/giris` ekranları var.
+**Gerekçe:** Harici konsol kurulumu gerektirmez; gece koşusunda agentlar bir OAuth uygulaması
+açılmasını bekleyip tıkanmaz. Web ve mobilde aynı akış, E2E girişi seed'lenmiş test
+kullanıcılarıyla önemsiz.
+**Reddedilenler:** Google OAuth (Google Cloud'da uygulama + redirect URI kurulumu insan eli
+ister, gece bloklanır) · ikisi birden (P0 kapsamını büyütür, hesap birleştirme işi çıkarır).
+**İleriye dönük:** Auth.js'te sağlayıcı eklemek `providers: []` dizisine satır eklemektir;
+Google/Apple sonradan mevcut hesapları bozmadan eklenebilir.
+
+## 2026-08-24 · Gözlemlenebilirlik: Vercel'in kendi araçları, Sentry yok
+
+**Karar:** Vercel Analytics + Speed Insights + Runtime Logs. Sentry entegrasyonu yapılmayacak.
+**Gerekçe:** Sıfır kurulum, ek vendor ve ek anahtar yok; DSN bekleyen bloklu görev kalmaz.
+**Reddedilen:** Sentry (daha zengin hata takibi ama DSN gerektiriyor ve P1'i bloklardı).
+**Yeniden değerlendirme:** Gerçek kullanıcı trafiği başladıktan sonra.
+
 ## 2026-08-24 · Vercel Fluid Compute WebSocket'i GERÇEK deploy'da doğrulandı ✅
 
 `experimental_upgradeWebSocket` gerçek bir Vercel preview deploy'unda çalışıyor.

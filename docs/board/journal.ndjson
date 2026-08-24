@@ -3,3 +3,8 @@
 {"ts":"2026-08-24T03:06:00Z","wave":1,"event":"wave.start","tasks":["DRY-001"]}
 {"ts":"2026-08-24T03:12:00Z","wave":1,"event":"task.done","task":"DRY-001","agent":"xox-dev-core","tests":"91/91","coverage":"100%","mutation":"98.56%"}
 {"ts":"2026-08-24T03:12:30Z","wave":1,"event":"merge.ok","task":"DRY-001","branch":"feat/DRY-001"}
+{"ts":"2026-08-24T13:43:20Z","event":"file.touched","path":"docs/superpowers/specs/2026-08-24-xox-oyun-spec.md"}
+{"ts":"2026-08-24T13:43:29Z","event":"file.touched","path":"docs/superpowers/specs/2026-08-24-xox-oyun-spec.md"}
+{"ts":"2026-08-24T13:45:10Z","event":"file.touched","path":"docs/board/reports/SPEC-001.md"}
+{"ts":"2026-08-24T13:45:47Z","event":"subagent.stop"}
+{"ts":"2026-08-24T16:45:00Z","wave":0,"event":"decision","task":"SPEC-001","summary":"Auth.js Credentials (e-posta+parola); gözlemlenebilirlik Vercel araçları, Sentry yok"}
