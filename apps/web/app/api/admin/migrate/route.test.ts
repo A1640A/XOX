@@ -96,10 +96,11 @@ describe('POST /api/admin/migrate', () => {
       await POST(request({ 'x-migration-secret': wrongValue }))
 
       expect(warn).toHaveBeenCalledTimes(1)
-      const loggedArgs = warn.mock.calls[0] ?? []
-      const serialized = JSON.stringify(loggedArgs)
-      expect(serialized).not.toContain(wrongValue)
-      expect(serialized).not.toContain('37') // yanlış sırrın uzunluğu bile yok
+      const [message, meta] = warn.mock.calls[0] ?? []
+      expect(message).toBe('migrate: yetkisiz istek reddedildi')
+      // Meta nesnesi YALNIZ zaman damgası taşır — değer de, uzunluk (37) da yok.
+      expect(Object.keys(meta as object)).toStrictEqual(['at'])
+      expect(JSON.stringify(message)).not.toContain(wrongValue)
     })
   })
 
