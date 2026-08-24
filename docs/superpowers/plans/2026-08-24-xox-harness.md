@@ -4977,6 +4977,12 @@ const decide = () => {
   );
   const running = b.tasks.filter((t) => ["in_wave", "reviewing"].includes(t.status));
 
+  // Kota/oran siniri: bayrakta `pausedUntil` varsa ve gelecekteyse durusa izin ver.
+  // Lead o ana kadar agent dispatch EDEMEZ; bloklamak bos donguye sokar.
+  const pausedUntil = flag.pausedUntil ? Date.parse(flag.pausedUntil) : NaN;
+  if (Number.isFinite(pausedUntil) && Date.now() < pausedUntil) return null;
+
+
   // Dalga ucusta: bayragi KORU, durusa izin ver. Agent bitince bildirim
   // lead-i geri cagirir, dongu kaldigi yerden devam eder.
   if (actionable.length === 0 && running.length > 0) return null;

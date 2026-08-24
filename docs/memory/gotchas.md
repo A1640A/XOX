@@ -2,6 +2,19 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-24 · Oturum kotasi 3 paralel agent-i AYNI ANDA oldurur — is diskte kalir
+
+Uc agent (~100-250k token/agent) es zamanli kosarken oturum kotasi doldu ve ucu birden
+"API error: session limit" ile dustu. Kayip riski: bir agent tam raporu yazmak uzereyken
+duserse **10 dosyalik commit-lenmemis is** diskte oylece kalir; worktree silinirse gider.
+**Yapilacak:**
+
+- Paralellik 4 degil 2-3 tut; agent basina token maliyeti 100k+ ise 2.
+- Dusen agent-in worktree-sini SILME. Once `git status --porcelain` bak; is tutarliysa
+  (testler geciyor, lint temiz) hemen commit et — sonra devam ettir.
+- `Stop` hook-una `pausedUntil` alani eklendi: kota beklerken lead-in durusuna izin verir,
+  yoksa dispatch edemedigi halde bloklanip bos donguye girer.
+
 ## 2026-08-24 · ⚠️ `Model.watch()` TIPI YALAN SOYLUYOR — `resumeToken` yok
 
 Mongoose `Model.watch()` tipte `mongodb.ChangeStream` doner ama calisma aninda mongoose-un kendi

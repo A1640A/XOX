@@ -147,3 +147,4 @@
 {"ts":"2026-08-24T18:00:00Z","wave":1,"event":"task.done","task":"OPS-002","agent":"xox-devops","attempts":1,"note":"5 bulgu duzeltildi; jose tek fiziksel kopya dogrulandi (@auth/core ve apps/web ayni dizin)"}
 {"ts":"2026-08-24T17:26:10Z","event":"file.touched","path":".claude/worktrees/UI-001/docs/board/reports/UI-001.md"}
 {"ts":"2026-08-24T18:10:00Z","wave":1,"event":"review.finding","task":"CTR-001","agent":"xox-reviewer","findings":7,"major":1,"summary":"alan-zorunlulugu testi yalniz state icin; kapanis kodu siniflandirmasi sonsuz reconnect dongusune aciyor"}
+{"ts":"2026-08-24T18:11:00Z","wave":1,"event":"danger","summary":"oturum kotasi doldu, 3 agent birden dustu; UI-001 in 10 dosyalik isi kurtarilip commitlendi, paralellik dusuruluyor"}
