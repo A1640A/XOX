@@ -10,6 +10,17 @@ import { hashPassword } from '@/lib/auth/password'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * RFC 5321 §4.5.3.1.3 — e-posta yolu (`Reverse-path`/`Forward-path`) en fazla
+ * 256 sekizli, `<`/`>` çerçevesi düşülünce fiilen 254. `emailSchema`
+ * (`@xox/shared`, bu görevde DONDU) üst sınır tanımlamıyor; Mongo'nun
+ * `email_1` benzersiz indeksi ~1024 baytlık anahtar sınırını AŞAN bir değer
+ * `E11000` DIŞI bir hata fırlatır → `isDuplicateKeyError` false döner →
+ * 500 (güvenlik denetimi bulgusu). Sınır burada, route seviyesinde,
+ * savunma amaçlı uygulanıyor; kalıcı çözüm `emailSchema.max(254)`.
+ */
+const MAX_EMAIL_LENGTH = 254
+
 function fieldErrorCode(field: unknown): ErrorCode {
   if (field === 'email') return 'INVALID_EMAIL'
   if (field === 'password') return 'WEAK_PASSWORD'
@@ -53,8 +64,29 @@ export async function POST(req: Request): Promise<Response> {
 
   const { email, password, displayName }: RegisterBody = parsed.data
 
+  if (email.length > MAX_EMAIL_LENGTH) {
+    return errorJson('INVALID_EMAIL', 'Geçersiz kayıt bilgisi.', 400)
+  }
+
   try {
     await connectDb()
+
+    /**
+     * KK-002 hızlı yol (güvenlik denetimi madde 5): pahalı argon2id hash'i
+     * (19 MiB bellek + ~100ms CPU) hesaplamadan ÖNCE ucuz bir varlık
+     * kontrolü yapılır. ZATEN kayıtlı bir e-postaya yağdırılan istekler
+     * (probing/DoS) artık tam maliyeti ödemiyor. Bu, DOĞRULUK için TEK
+     * mekanizma DEĞİL — eşzamanlı iki isteğin ikisi de bu kontrolü "boş"
+     * görebileceği yarış penceresi hâlâ var; nihai/atomik doğruluk aşağıdaki
+     * unique indeks + `E11000` yakalamasından gelir (ADR-0009'un reddettiği
+     * "yalnız önce-oku" alternatifi burada YOK, bu yalnız bir performans
+     * ön-filtresi).
+     */
+    const existing = await User.findOne({ email }).select('_id').lean()
+    if (existing !== null) {
+      return errorJson('EMAIL_TAKEN', 'Bu e-posta zaten kayıtlı.', 409)
+    }
+
     const passwordHash = await hashPassword(password)
     const created = await User.create({
       _id: randomUUID(),
