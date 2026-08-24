@@ -316,7 +316,7 @@
         "apps/web/vitest.setup.ts",
         "apps/web/next.config.ts"
       ],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/UI-SKEL-001",
       "report": null,
@@ -388,7 +388,7 @@
       "agent": "xox-dev-backend",
       "deps": ["AUTH-001", "DB-002"],
       "conflictSet": ["apps/web/app/api/rooms/route.ts", "apps/web/app/api/rooms/[code]/route.ts"],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/ROOM-API-001",
       "report": null,
