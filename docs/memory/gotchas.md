@@ -2,6 +2,37 @@
 
 > Bir yaklaşımı denemeden ÖNCE burayı oku. Buradaki her satır, birinin zaman kaybetmesiyle öğrenildi.
 
+## 2026-08-25 · ⚠️ Kaynak METNI okuyan test, test DEGILDIR
+
+AUTH-001-de iki test dosyayi `readFileSync` + regex ile okuyup desen ariyordu. Denetci iki
+mutasyon kosturdu, IKISI DE 100 testin tamamini yesil biraktı:
+
+- `token.sub = user.id` -> `token.sub = 'sabit-yonetici'` : her kullanici AYNI kimlige cozuluyor
+- `matcher: [6 desen]` -> `.slice(0,1)` : runtime-da yalniz /oyna korunuyor, 5 rota TAMAMEN acik
+  Kaynak metin her iki mutasyonda da hala "dogru gorunuyordu".
+  **Yapilacak:** Middleware/config gibi seyleri gercek `NextRequest` ile davranis olarak test et.
+  `toContain('/profil')` bir sey kanitlamaz. Ayni sinif: rotanin bagimliligini TAMAMEN mock-layip
+  rotayi test ettigini sanmak — o zaman test rotayi degil kendi mock-unu dogrular.
+
+## 2026-08-25 · Auth.js `jwt` callback-inde `user` OTURUM OKUMASINDA undefined
+
+Tipte zorunlu, calisma zamaninda opsiyonel — TypeScript yakalamaz, `pnpm gates` yesil kalir.
+`@auth/core/lib/actions/session.js` callback-i `user` anahtari OLMADAN cagirir; `user` yalniz
+signIn yolunda verilir. Hata firlatilirsa @auth/core yakalayip **oturum cerezini SILER**
+(`sessionStore.clean()`), yani cerez kimligi hic calismaz ve belirti "kullanici surekli
+cikis yapiyor" olur.
+**Yapilacak:** `jwt` callback-ini yazma — @auth/core zaten `sub: user.id` yaziyor. Yazacaksan
+`user?.id` kullan.
+
+## 2026-08-25 · Kisa omurlu bilet, KENDI YENILEME UCUNDA kabul edilirse sinirsiz olur
+
+30 saniyelik WS bileti `resolveIdentity`-de her cagrida kabul ediliyordu — `/api/ws/ticket`-in
+kendisinde de. Log-dan bilet calan biri 25 saniyede bir yenileyip zinciri SURESIZ uzatabiliyor,
+ve bileti herhangi bir REST ucuna takabiliyor. "Kisa omurlu oldugu icin sizmasi onemsiz"
+gerekcesi, bilet kendini yenileyebildigi anda cokuyor.
+**Yapilacak:** Kaynak izni parametresi (`allowTicket`) — bilet yalnizca onu bekleyen uc noktada
+gecerli olsun. Ve kisa omurlu bir sirri URL-de tasiyorsan, onu kapsamla (oda/kaynak claim-i) bagla.
+
 ## 2026-08-24 · Mongo indeks catismasi kodu 86, 85 DEGIL
 
 Dokumanlar `IndexOptionsConflict` (85) der; canli Atlas mevcut ayni isimli farkli secenekli

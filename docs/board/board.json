@@ -275,8 +275,8 @@
         "apps/web/app/api/ws/**",
         "apps/web/types/**"
       ],
-      "status": "reviewing",
-      "attempts": 0,
+      "status": "in_wave",
+      "attempts": 1,
       "branch": "feat/AUTH-001",
       "report": "docs/board/reports/AUTH-001.md",
       "acceptance": [
@@ -1030,6 +1030,25 @@
         "Yerel .env.local guncellenir; pnpm --filter @xox/db seed ile dogrulanir"
       ],
       "blockedReason": "OMER'DEN GEREKEN: Atlas konsol erisimi bende yok. Baglanti dizesi bu oturumda duz metin paylasildi (kullanicinin kendisi verdi) ve ayrica bir subagent transkriptine .env.local icerigi redaksiyonsuz dustu. Repoya/committe/rapora HIC girmedi (gitleaks 153 commit-te sifir sizinti) ve GitHub push protection acik. Yine de sir bir kez transkripte girmis durumda — dusuk ama sifir olmayan risk. Uygun bir anda rotate edilmeli, acil degil."
+    },
+    {
+      "id": "SEC-002",
+      "title": "Kimlik uçlarına hız sınırı — Vercel WAF kuralı",
+      "tier": "P1",
+      "agent": "xox-devops",
+      "deps": ["AUTH-001"],
+      "conflictSet": ["apps/web/vercel.json", ".github/workflows/**"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "POST /api/auth/* icin IP basina hiz siniri kurulur (Vercel WAF kurali ya da uygulama ici sayac).",
+        "Gerekce olculdu: argon2id m=19456 (19 MiB) t=2 p=1, hash 36ms / verify 31ms yerelde, Vercel vCPU-da ~2-4x. Vercel WAF hiz siniri ve Attack Challenge Mode VARSAYILAN KAPALI ve apps/web/vercel.json-da hicbir firewall ayari yok — yani platform bu ucu KORUMUYOR.",
+        "Iki ayri etki kapatilmali: (a) kaynak — kimliksiz istek yagmuru 19 MiB x eszamanlilik pinliyor, Fluid in-function eszamanliligiyla ~100 istek ~2 GB; (b) kimlik — Credentials girisinde deneme sayaci/kilit/gecikme YOK, 36ms argon2 tek basina cevrimici tahmini engellemiyor, MIN_PASSWORD_LENGTH=8 + karmasiklik kurali yok = credential stuffing acik.",
+        "Kural gercekten calistigi KANITLANIR: esigin ustunde istek atilir ve 429 alindigi gosterilir."
+      ],
+      "blockedReason": null
     }
   ]
 }
