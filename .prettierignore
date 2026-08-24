@@ -7,6 +7,8 @@ pnpm-lock.yaml
 docs/board/journal.ndjson
 apps/e2e/test-results
 apps/e2e/playwright-report
+# Prettier .gitignore'u OKUMAZ; .gitignore'daki kayit bu satiri gereksiz kilmaz.
+# Playwright'in JSON reporter ciktisi Prettier bicimli degil -> format:check patlar.
 docs/board/reports/qa-latest.json
 reports/mutation
 apps/web/next-env.d.ts

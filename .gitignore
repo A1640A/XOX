@@ -27,6 +27,11 @@ apps/e2e/playwright-report/
 apps/e2e/blob-report/
 .stryker-tmp/
 reports/mutation/
+# Yalnizca bu tek dosya - dizinin tamami DEGIL. docs/board/reports/ altindaki
+# qa-wave-<n>.json / qa-wave-<n>.md dosyalari kalici kanittir ve commit edilir;
+# qa-latest.json ise her Playwright kosusunda uzerine yazilan gecici ciktidir.
+# Dizini komple yoksaymak kalici raporlari da gorunmez yapardi.
+docs/board/reports/qa-latest.json
 
 # ---- Claude calisma alani ----
 .claude/worktrees/
