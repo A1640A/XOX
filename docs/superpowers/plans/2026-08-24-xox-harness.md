@@ -1021,6 +1021,11 @@ export default mergeConfig(
     test: {
       name: 'game-core',
       environment: 'node',
+      // Yenilmezlik kanıtı 642 oyunu baştan sona oynatır (~0.6 sn) ve Stryker
+      // dokuz test koşucusunu aynı anda çalıştırdığında bu süre birkaç katına
+      // çıkar. Varsayılan 5 sn sınırı bu yüzden yükseltildi; takılan bir
+      // mutantı hâlâ yakalar.
+      testTimeout: 20_000,
       coverage: {
         thresholds: { lines: 100, branches: 100, functions: 100, statements: 100 },
       },
@@ -1098,23 +1103,31 @@ import { describe, expect, it } from 'vitest'
 import {
   BOARD_SIZE,
   EMPTY_BOARD,
-  applyMove,
   availableMoves,
   boardFromCells,
   cellAt,
-  isValidMove,
   nextPlayer,
 } from './board'
-import { InvalidMoveError } from './errors'
-import type { Board } from './types'
+import type { Board, Cell } from './types'
 
 const b = (s: string): Board =>
   boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+
+/** Tip sistemini aşan girdiyi taklit eder: kalıcı katmandan böyle veri gelebilir. */
+const asCells = (values: readonly unknown[]): readonly Cell[] => values as readonly Cell[]
 
 describe('EMPTY_BOARD', () => {
   it('dokuz boş hücreden oluşur', () => {
     expect(EMPTY_BOARD).toHaveLength(BOARD_SIZE)
     expect(EMPTY_BOARD.every((c) => c === null)).toBe(true)
+  })
+
+  it('donmuştur — yazma denemesi hata atar ve tahtayı bozmaz', () => {
+    expect(Object.isFrozen(EMPTY_BOARD)).toBe(true)
+    expect(() => {
+      ;(EMPTY_BOARD as unknown as Cell[])[0] = 'X'
+    }).toThrow(TypeError)
+    expect(cellAt(EMPTY_BOARD, 0)).toBeNull()
   })
 })
 
@@ -1130,70 +1143,39 @@ describe('boardFromCells', () => {
   it('hata mesajı beklenen ve gelen hücre sayısını bildirir', () => {
     expect(() => boardFromCells([null, null])).toThrow('Tahta 9 hücre olmalı, 2 geldi')
   })
-})
 
-describe('isValidMove', () => {
-  it('boş hücre için true döner', () => {
-    expect(isValidMove(EMPTY_BOARD, 4)).toBe(true)
-  })
-
-  it('dolu hücre için false döner', () => {
-    expect(isValidMove(b('....X....'), 4)).toBe(false)
-  })
-
-  it('sınırdaki geçerli indeksler için true döner', () => {
-    expect(isValidMove(EMPTY_BOARD, 0)).toBe(true)
-    expect(isValidMove(EMPTY_BOARD, 8)).toBe(true)
-  })
-
-  it('aralık dışı indeks için false döner', () => {
-    expect(isValidMove(EMPTY_BOARD, -1)).toBe(false)
-    expect(isValidMove(EMPTY_BOARD, 9)).toBe(false)
-  })
-
-  it('tam sayı olmayan indeks için false döner', () => {
-    expect(isValidMove(EMPTY_BOARD, 1.5)).toBe(false)
-  })
-})
-
-describe('applyMove', () => {
-  it('yeni tahta döner, girdiyi değiştirmez', () => {
-    const before = EMPTY_BOARD
-    const after = applyMove(before, 0, 'X')
-    expect(cellAt(after, 0)).toBe('X')
-    expect(cellAt(before, 0)).toBeNull()
-  })
-
-  it('dolu hücrede InvalidMoveError atar', () => {
-    expect(() => applyMove(b('X........'), 0, 'O')).toThrow(
-      expect.objectContaining({ name: 'InvalidMoveError', reason: 'occupied' }),
+  it('X, O ve null dolu tahtayı kabul eder', () => {
+    expect(boardFromCells(asCells(['X', 'O', null, 'O', 'X', null, null, 'X', 'O']))).toHaveLength(
+      BOARD_SIZE,
     )
   })
 
-  it('aralık dışı indekste InvalidMoveError atar', () => {
-    try {
-      applyMove(EMPTY_BOARD, 9, 'X')
-      expect.unreachable('hata atmalıydı')
-    } catch (error) {
-      expect(error).toBeInstanceOf(InvalidMoveError)
-      expect((error as InvalidMoveError).reason).toBe('out-of-range')
-    }
+  it('tanımsız hücre içeren diziyi reddeder — boş sanılan tahta kazanmış görünmesin', () => {
+    expect(() => boardFromCells(asCells(Array.from({ length: BOARD_SIZE })))).toThrow(RangeError)
   })
 
-  it('tam sayı olmayan indekste InvalidMoveError atar', () => {
-    expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(InvalidMoveError)
-  })
-
-  it('tam sayı olmayan indeksi occupied değil out-of-range sayar', () => {
-    expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(
-      expect.objectContaining({ reason: 'out-of-range' }),
+  it('oyuncu olmayan hücre değerini reddeder', () => {
+    expect(() => boardFromCells(asCells(['a', 'a', 'a', 'b', 'c', 'd', 'e', 'f', 'g']))).toThrow(
+      RangeError,
     )
   })
 
-  it('negatif indeksi occupied değil out-of-range sayar', () => {
-    expect(() => applyMove(EMPTY_BOARD, -1, 'X')).toThrow(
-      expect.objectContaining({ reason: 'out-of-range' }),
-    )
+  it('hata mesajı bozuk hücrenin sırasını ve değerini bildirir', () => {
+    expect(() =>
+      boardFromCells(asCells([null, 'X', 'O', 'x', null, null, null, null, null])),
+    ).toThrow("Tahta hücresi 3 geçersiz: x — yalnız 'X', 'O' veya null olabilir")
+  })
+
+  it('küçük harf oyuncu simgesini reddeder', () => {
+    expect(() =>
+      boardFromCells(asCells(['o', null, null, null, null, null, null, null, null])),
+    ).toThrow(RangeError)
+  })
+
+  it('son hücredeki bozuk değeri de yakalar', () => {
+    expect(() =>
+      boardFromCells(asCells([null, null, null, null, null, null, null, null, 0])),
+    ).toThrow('Tahta hücresi 8 geçersiz')
   })
 })
 
@@ -1234,45 +1216,63 @@ Expected: `Failed to resolve import "./board"` — dosya henüz yok.
 - [ ] **Step 3: `packages/game-core/src/board.ts` yaz**
 
 ```ts
-import { InvalidMoveError } from './errors'
 import type { Board, Cell, Player } from './types'
 
 export const BOARD_SIZE = 9
 
-export const EMPTY_BOARD: Board = [null, null, null, null, null, null, null, null, null]
+/**
+ * Boş tahta modül düzeyinde tek örnektir; bu yüzden dondurulur. `readonly`
+ * yalnız derleme zamanında korur: uzun ömürlü bir sunucu sürecinde tek bir
+ * `EMPTY_BOARD[0] = 'X'` yazması bundan sonraki bütün oyunları bozardı.
+ */
+export const EMPTY_BOARD: Board = Object.freeze<Board>([
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+])
 
 /**
  * Tahta indeksi her zaman 0..8 aralığındadır; bu değişmez `boardFromCells`,
  * `availableMoves` ve `WIN_LINES` tarafından garanti edilir. Bu yüzden burada
  * savunmacı bir dal yerine tek bir daraltma yapılır — böylece kural motorunda
  * test edilemeyen dal kalmaz.
+ *
+ * Pakete özeldir, `index.ts` dışa aktarmaz: `Board` bir tuple olduğu için
+ * tüketiciler `board[4]` yazarak aynı hücreyi tam tip güvenliğiyle okur,
+ * `cellAt(board, 9)` ise `Cell` tipiyle `undefined` döndürürdü.
  */
 export function cellAt(board: Board, index: number): Cell {
   return board[index] as Cell
 }
 
+/**
+ * Dışarıdan gelen diziyi tahtaya çevirir; `Board`'a giden tek yol budur.
+ *
+ * Hem uzunluk hem de her hücrenin değeri doğrulanır: kalıcı katmandaki şema
+ * hücreleri yalnız `String` olarak tanımlar, dolayısıyla `undefined` ya da
+ * `'a'` gibi bir değer buraya kadar gelebilir. Doğrulanmazsa `evaluateStatus`
+ * üç `undefined` hücreyi kazanan hat sanar ve `Player` tipli bir alana `'a'`
+ * yazılır.
+ */
 export function boardFromCells(cells: readonly Cell[]): Board {
   if (cells.length !== BOARD_SIZE) {
     throw new RangeError(`Tahta ${String(BOARD_SIZE)} hücre olmalı, ${String(cells.length)} geldi`)
   }
+  for (let index = 0; index < BOARD_SIZE; index += 1) {
+    const cell = cells[index]
+    if (cell !== null && cell !== 'X' && cell !== 'O') {
+      throw new RangeError(
+        `Tahta hücresi ${String(index)} geçersiz: ${String(cell)} — yalnız 'X', 'O' veya null olabilir`,
+      )
+    }
+  }
   return cells as Board
-}
-
-export function isValidMove(board: Board, index: number): boolean {
-  if (!Number.isInteger(index) || index < 0 || index >= BOARD_SIZE) return false
-  return cellAt(board, index) === null
-}
-
-export function applyMove(board: Board, index: number, player: Player): Board {
-  if (!Number.isInteger(index) || index < 0 || index >= BOARD_SIZE) {
-    throw new InvalidMoveError(index, 'out-of-range')
-  }
-  if (cellAt(board, index) !== null) {
-    throw new InvalidMoveError(index, 'occupied')
-  }
-  const next: Cell[] = [...board]
-  next[index] = player
-  return boardFromCells(next)
 }
 
 export function availableMoves(board: Board): number[] {
@@ -1283,6 +1283,18 @@ export function availableMoves(board: Board): number[] {
   return moves
 }
 
+/**
+ * Sırası gelen oyuncuyu taş paritesinden türetir: X başlar, oyuncular sırayla
+ * oynar; taş sayısı çiftse sıra X'te, tekse O'dadır.
+ *
+ * Sözleşme yalnızca kurallı oyunla üretilebilen tahtalar için anlamlıdır
+ * (X sayısı O sayısına eşit ya da bir fazla). Beş X ve dört boş hücreden oluşan
+ * gibi hiçbir oyunda oluşamayacak bir tahtada da kendinden emin bir cevap
+ * ('O') döner: girdinin geçerliliğini doğrulamak çağıranın işidir.
+ *
+ * Sunucu "sıra kimde?" sorusunu bununla yanıtlar; `evaluateStatus(board)`
+ * oyun sürüyorsa aynı değeri `turn` alanında verir.
+ */
 export function nextPlayer(board: Board): Player {
   let placed = 0
   for (const cell of board) {
@@ -1318,7 +1330,7 @@ git commit -m "feat(core): tahta işlemleri — değişmez uygulama, katı hamle
 import { describe, expect, it } from 'vitest'
 import { boardFromCells } from './board'
 import { WIN_LINES, evaluateStatus } from './status'
-import type { Board } from './types'
+import type { Board, WinLine } from './types'
 
 const b = (s: string): Board =>
   boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
@@ -1326,6 +1338,29 @@ const b = (s: string): Board =>
 describe('WIN_LINES', () => {
   it('sekiz kazanma hattı içerir', () => {
     expect(WIN_LINES).toHaveLength(8)
+  })
+
+  it('dizi donmuştur — hat eklenemez', () => {
+    expect(Object.isFrozen(WIN_LINES)).toBe(true)
+    expect(() => {
+      ;(WIN_LINES as WinLine[]).push([0, 0, 0])
+    }).toThrow(TypeError)
+    expect(WIN_LINES).toHaveLength(8)
+  })
+
+  it('hatların kendisi de donmuştur — kazanma tespiti bozulamaz', () => {
+    expect(WIN_LINES.every((line) => Object.isFrozen(line))).toBe(true)
+    expect(() => {
+      ;(WIN_LINES[0] as unknown as number[])[0] = 5
+    }).toThrow(TypeError)
+    expect(evaluateStatus(b('XXX......'))).toEqual({ kind: 'won', winner: 'X', line: [0, 1, 2] })
+  })
+
+  it('evaluateStatus donmuş hattı döndürür — çağıran motoru bozamaz', () => {
+    const status = evaluateStatus(b('XXX......'))
+    expect(status.kind).toBe('won')
+    if (status.kind !== 'won') return
+    expect(Object.isFrozen(status.line)).toBe(true)
   })
 })
 
@@ -1376,16 +1411,22 @@ Expected: `Failed to resolve import "./status"`
 import { cellAt, nextPlayer } from './board'
 import type { Board, GameStatus, WinLine } from './types'
 
-export const WIN_LINES: readonly WinLine[] = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-]
+/**
+ * Sekiz kazanma hattı. Hem dizi hem de içindeki üçlüler dondurulur: `readonly`
+ * yalnız derleme zamanında korur, oysa tek bir `WIN_LINES[0][0] = 5` yazması
+ * süreç boyunca bütün kazanma tespitini bozardı. `evaluateStatus` bulduğu hattı
+ * kopyalamadan döndürdüğü için iç üçlülerin de donmuş olması şarttır.
+ */
+export const WIN_LINES: readonly WinLine[] = Object.freeze([
+  Object.freeze<WinLine>([0, 1, 2]),
+  Object.freeze<WinLine>([3, 4, 5]),
+  Object.freeze<WinLine>([6, 7, 8]),
+  Object.freeze<WinLine>([0, 3, 6]),
+  Object.freeze<WinLine>([1, 4, 7]),
+  Object.freeze<WinLine>([2, 5, 8]),
+  Object.freeze<WinLine>([0, 4, 8]),
+  Object.freeze<WinLine>([2, 4, 6]),
+])
 
 export function evaluateStatus(board: Board): GameStatus {
   for (const line of WIN_LINES) {
@@ -1418,7 +1459,211 @@ git commit -m "feat(core): kazanma/beraberlik değerlendirmesi — sekiz hat, ka
 
 ---
 
-### Task 13: Minimax AI — TDD
+### Task 13: Hamle katmanı ve minimax AI — TDD
+
+⚠️ **Katman sırası kritik.** `applyMove`/`isValidMove` oyunun bitip bitmediğini bilmek zorunda,
+yani `evaluateStatus`'a ihtiyaç duyar; `status.ts` de `board.ts`'ten `cellAt`/`nextPlayer` alır.
+İkisini `board.ts`'e koyarsan **döngüsel import** oluşur ve `import-x/no-cycle` build'i kırar.
+Çözüm katmanlama — hepsi tek yönlü: `board → status → moves → ai`.
+
+- [ ] **Step 0a: `moves.test.ts` yaz, kırmızı olduğunu gör**
+
+```ts
+import { describe, expect, it } from 'vitest'
+import { EMPTY_BOARD, boardFromCells, cellAt } from './board'
+import { InvalidMoveError } from './errors'
+import { applyMove, isValidMove } from './moves'
+import { evaluateStatus } from './status'
+import type { Board } from './types'
+
+const b = (s: string): Board =>
+  boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
+
+/** X 0-1-2 hattıyla kazanmıştır; 5 dahil dört hücre boş durur. */
+const wonBoard = 'XXXOO....'
+
+describe('isValidMove', () => {
+  it('boş hücre için true döner', () => {
+    expect(isValidMove(EMPTY_BOARD, 4)).toBe(true)
+  })
+
+  it('dolu hücre için false döner', () => {
+    expect(isValidMove(b('....X....'), 4)).toBe(false)
+  })
+
+  it('sınırdaki geçerli indeksler için true döner', () => {
+    expect(isValidMove(EMPTY_BOARD, 0)).toBe(true)
+    expect(isValidMove(EMPTY_BOARD, 8)).toBe(true)
+  })
+
+  it('aralık dışı indeks için false döner', () => {
+    expect(isValidMove(EMPTY_BOARD, -1)).toBe(false)
+    expect(isValidMove(EMPTY_BOARD, 9)).toBe(false)
+  })
+
+  it('tam sayı olmayan indeks için false döner', () => {
+    expect(isValidMove(EMPTY_BOARD, 1.5)).toBe(false)
+  })
+
+  it('oyun kazanılmışsa boş hücre için bile false döner', () => {
+    expect(cellAt(b(wonBoard), 5)).toBeNull()
+    expect(isValidMove(b(wonBoard), 5)).toBe(false)
+  })
+
+  it('tahta dolduğunda false döner', () => {
+    expect(isValidMove(b('XXOOOXXOX'), 0)).toBe(false)
+  })
+})
+
+describe('applyMove', () => {
+  it('yeni tahta döner, girdiyi değiştirmez', () => {
+    const before = EMPTY_BOARD
+    const after = applyMove(before, 0, 'X')
+    expect(cellAt(after, 0)).toBe('X')
+    expect(cellAt(before, 0)).toBeNull()
+  })
+
+  it('dolu hücrede InvalidMoveError atar', () => {
+    expect(() => applyMove(b('X........'), 0, 'O')).toThrow(
+      expect.objectContaining({ name: 'InvalidMoveError', reason: 'occupied' }),
+    )
+  })
+
+  it('aralık dışı indekste InvalidMoveError atar', () => {
+    try {
+      applyMove(EMPTY_BOARD, 9, 'X')
+      expect.unreachable('hata atmalıydı')
+    } catch (error) {
+      expect(error).toBeInstanceOf(InvalidMoveError)
+      expect((error as InvalidMoveError).reason).toBe('out-of-range')
+    }
+  })
+
+  it('tam sayı olmayan indekste InvalidMoveError atar', () => {
+    expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(InvalidMoveError)
+  })
+
+  it('tam sayı olmayan indeksi occupied değil out-of-range sayar', () => {
+    expect(() => applyMove(EMPTY_BOARD, 2.5, 'X')).toThrow(
+      expect.objectContaining({ reason: 'out-of-range' }),
+    )
+  })
+
+  it('negatif indeksi occupied değil out-of-range sayar', () => {
+    expect(() => applyMove(EMPTY_BOARD, -1, 'X')).toThrow(
+      expect.objectContaining({ reason: 'out-of-range' }),
+    )
+  })
+
+  it('oyun kazanıldıktan sonra boş hücreye hamleyi reddeder', () => {
+    expect(() => applyMove(b(wonBoard), 5, 'O')).toThrow(
+      expect.objectContaining({ index: 5, reason: 'game-over' }),
+    )
+  })
+
+  it('biten oyunda ikinci bir kazanan hat oluşturulamaz', () => {
+    // Doğrulanmasaydı 5 hamlesi 3-4-5 hattını da tamamlar ve iki kazananlı,
+    // sunucuda onarılamaz bir oyun kaydı üretirdi.
+    expect(evaluateStatus(b(wonBoard))).toEqual({ kind: 'won', winner: 'X', line: [0, 1, 2] })
+    expect(() => applyMove(b(wonBoard), 5, 'O')).toThrow(InvalidMoveError)
+  })
+
+  it('biten oyunda dolu hücre için occupied değil game-over bildirir', () => {
+    expect(() => applyMove(b(wonBoard), 0, 'O')).toThrow(
+      expect.objectContaining({ reason: 'game-over' }),
+    )
+  })
+
+  it('biten oyunda bile aralık dışı indeks out-of-range kalır', () => {
+    expect(() => applyMove(b(wonBoard), 9, 'O')).toThrow(
+      expect.objectContaining({ reason: 'out-of-range' }),
+    )
+  })
+
+  it('beraberlikle dolan tahtada hamleyi reddeder', () => {
+    expect(() => applyMove(b('XXOOOXXOX'), 0, 'X')).toThrow(
+      expect.objectContaining({ reason: 'game-over' }),
+    )
+  })
+})
+```
+
+Run: `pnpm --filter @xox/game-core test moves` → Expected: `Cannot find module './moves'`
+
+- [ ] **Step 0b: `packages/game-core/src/moves.ts` yaz**
+
+Reddetme sırası **aralık → oyun bitti → dolu**. Oyun bittiğinde hücrenin boş olup olmaması
+önemsizdir, bu yüzden `game-over` `occupied`'dan önce gelir.
+
+```ts
+import { BOARD_SIZE, boardFromCells, cellAt } from './board'
+import { InvalidMoveError } from './errors'
+import { evaluateStatus } from './status'
+import type { Board, Cell, Player } from './types'
+
+/**
+ * Hamle katmanı. Hamle doğrulaması `evaluateStatus`'a, `status.ts` ise
+ * `board.ts`'e ihtiyaç duyduğu için doğrulama `board.ts` içinde kalsaydı
+ * board -> status -> board döngüsü oluşurdu. Katmanlar tek yönlü tutulur:
+ * board -> status -> moves -> ai.
+ */
+
+function isInRange(index: number): boolean {
+  return Number.isInteger(index) && index >= 0 && index < BOARD_SIZE
+}
+
+function isPlayable(board: Board): boolean {
+  return evaluateStatus(board).kind === 'playing'
+}
+
+/** Hamlenin kurallara uygunluğu: indeks aralığı, oyunun sürüyor olması, hücrenin boşluğu. */
+export function isValidMove(board: Board, index: number): boolean {
+  if (!isInRange(index)) return false
+  if (!isPlayable(board)) return false
+  return cellAt(board, index) === null
+}
+
+/**
+ * Hamleyi uygular ve yeni tahtayı döner; girdiyi değiştirmez.
+ *
+ * Reddetme sırası niyetlidir: aralık dışı indeks argümanın kendi hatasıdır,
+ * biten oyun ise tahtanın durumu hakkındadır ve dolu hücreden önce gelir —
+ * bitmiş bir oyunda hiçbir hücreye oynanamaz, hücrenin boş olması bunu
+ * değiştirmez.
+ *
+ * Sıra sahipliği bilerek doğrulanmaz; gerekçesi için `index.ts`'e bakın.
+ */
+export function applyMove(board: Board, index: number, player: Player): Board {
+  if (!isInRange(index)) {
+    throw new InvalidMoveError(index, 'out-of-range')
+  }
+  if (!isPlayable(board)) {
+    throw new InvalidMoveError(index, 'game-over')
+  }
+  if (cellAt(board, index) !== null) {
+    throw new InvalidMoveError(index, 'occupied')
+  }
+  return placeStone(board, index, player)
+}
+
+/**
+ * Doğrulanmış hamleyi tahtaya işler. Pakete özeldir (`index.ts` dışa aktarmaz):
+ * dışarıdan gelen her hamle `applyMove`'dan geçmelidir.
+ *
+ * Arama ağacı (minimax) hamlelerini `availableMoves`'tan üretir ve yalnız
+ * `playing` durumundaki tahtalarda ilerler, yani üç doğrulamanın üçünü de
+ * kurulum gereği sağlar. Aramanın her düğümde yeniden doğrulaması hamle başına
+ * fazladan bir `evaluateStatus` demek olurdu: ölçümde boş tahtadaki en iyi hamle
+ * 515 ms yerine 1006 ms sürüyordu.
+ */
+export function placeStone(board: Board, index: number, player: Player): Board {
+  const next: Cell[] = [...board]
+  next[index] = player
+  return boardFromCells(next)
+}
+```
+
+Run: `pnpm --filter @xox/game-core test moves` → Expected: geçmeli
 
 **Files:**
 
@@ -1428,11 +1673,12 @@ git commit -m "feat(core): kazanma/beraberlik değerlendirmesi — sekiz hat, ka
 
 ```ts
 import { describe, expect, it } from 'vitest'
-import { EMPTY_BOARD, applyMove, availableMoves, boardFromCells } from './board'
+import { EMPTY_BOARD, availableMoves, boardFromCells } from './board'
+import { applyMove } from './moves'
 import { evaluateStatus } from './status'
 import { bestMove, chooseMove } from './ai'
 import { InvalidMoveError } from './errors'
-import type { Board, Player } from './types'
+import type { Board, Difficulty, Player } from './types'
 
 const b = (s: string): Board =>
   boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
@@ -1453,12 +1699,21 @@ describe('bestMove', () => {
   })
 
   it('kazanmayı engellemeye tercih eder', () => {
-    // X hem 2'de kazanabilir hem O 3-4-5'te kazanmak üzere — kazanmayı seçmeli
-    expect(bestMove(b('XX.OO....'), 'X')).toBe(2)
+    // O 0-1-2'de kazanmak üzere (engelleme hücresi 2), X ise 3-4-5 ile hemen
+    // kazanabilir (kazanma hücresi 5). Kazanma hücresi engelleme hücresinden
+    // BÜYÜK indeksli seçildi: "önce engelle" ya da "en küçük indeksi seç"
+    // davranışı bu tahtada 2 döner ve testi düşürür.
+    expect(bestMove(b('OO.XX....'), 'X')).toBe(5)
   })
 
   it('hamle kalmamışsa InvalidMoveError atar', () => {
     expect(() => bestMove(b('XOXXOOOXX'), 'X')).toThrow(
+      expect.objectContaining({ index: -1, reason: 'game-over' }),
+    )
+  })
+
+  it('oyun kazanılmışsa boş hücre kalsa bile hamle üretmez', () => {
+    expect(() => bestMove(b('XXXOO....'), 'O')).toThrow(
       expect.objectContaining({ index: -1, reason: 'game-over' }),
     )
   })
@@ -1475,40 +1730,75 @@ describe('bestMove', () => {
     // olmadan AI erteleyeni seçerdi.
     expect(bestMove(b('....XX.OO'), 'X')).toBe(3)
   })
+
+  // Seçilen hamle sunucu otoritesidir ve iki istemcide aynı çıkmalıdır; oyun
+  // teorisi açısından eşdeğer başka hamleler bulunsa da SEÇİM sabittir. Bu
+  // tablo hem stratejiyi hem de eşitlik bozma kuralını (en küçük indeks)
+  // oyun ortasındaki tahtalarda çivi ler.
+  it.each([
+    ['X........', 'O', 4, 'merkez tek doğru cevaptır'],
+    ['....X....', 'O', 0, 'merkez alınmışsa köşe — eşit dört köşeden ilki'],
+    ['X.......O', 'X', 2, 'eşit puanlı 2 ve 6 arasından küçük indeksli'],
+    ['XOX......', 'X', 4, 'eşit puanlı 4, 6 ve 8 arasından küçük indeksli'],
+    ['X..O..X..', 'O', 4, 'çifte tehdidi yalnız merkez durdurur'],
+    ['X.O.X...O', 'X', 5, 'beraberliği yalnız 5 kurtarır'],
+    ['XX.O.O...', 'X', 2, 'kazanç hattı tamamlanır'],
+  ])('%s tahtasında %s için %i seçilir (%s)', (cells, player, expected) => {
+    expect(bestMove(b(cells), player as Player)).toBe(expected)
+  })
 })
 
 describe('unbeatable zorluk', () => {
-  const playFullGame = (aiPlayer: Player, humanPicks: (board: Board) => number): Board => {
-    let board = EMPTY_BOARD
-    while (evaluateStatus(board).kind === 'playing') {
-      const status = evaluateStatus(board)
-      if (status.kind !== 'playing') break
-      const move =
-        status.turn === aiPlayer ? chooseMove(board, aiPlayer, 'unbeatable') : humanPicks(board)
-      board = applyMove(board, move, status.turn)
-    }
-    return board
+  interface Tally {
+    games: number
+    losses: number
+    illegal: number
   }
 
-  it('ilk sırayı alan mükemmel AI asla kaybetmez (rakip ilk boşluğu oynar)', () => {
-    const final = playFullGame('X', (board) => availableMoves(board)[0] ?? 0)
-    const status = evaluateStatus(final)
-    expect(status.kind === 'draw' || (status.kind === 'won' && status.winner === 'X')).toBe(true)
+  /**
+   * Tümevarımsal kanıt: insanın oynadığı her düğümde BÜTÜN hamleler denenir,
+   * AI'nın düğümünde tek dal (motorun seçtiği hamle) izlenir. Böylece mükemmel
+   * AI'nın karşılaşabileceği bütün oyunlar taranır — senaryo örneklemesi değil.
+   */
+  const explore = (board: Board, aiPlayer: Player, tally: Tally): void => {
+    const status = evaluateStatus(board)
+    if (status.kind !== 'playing') {
+      tally.games += 1
+      if (status.kind === 'won' && status.winner !== aiPlayer) tally.losses += 1
+      return
+    }
+    if (status.turn === aiPlayer) {
+      const move = chooseMove(board, aiPlayer, 'unbeatable')
+      if (!availableMoves(board).includes(move)) {
+        tally.illegal += 1
+        return
+      }
+      explore(applyMove(board, move, aiPlayer), aiPlayer, tally)
+      return
+    }
+    for (const move of availableMoves(board)) {
+      explore(applyMove(board, move, status.turn), aiPlayer, tally)
+    }
+  }
+
+  const playAll = (aiPlayer: Player): Tally => {
+    const tally: Tally = { games: 0, losses: 0, illegal: 0 }
+    explore(EMPTY_BOARD, aiPlayer, tally)
+    return tally
+  }
+
+  it('X olarak oynayan AI, rakibin bütün oyunlarında kaybetmez ve kural dışı hamle yapmaz', () => {
+    const tally = playAll('X')
+    expect({ losses: tally.losses, illegal: tally.illegal }).toEqual({ losses: 0, illegal: 0 })
+    // Oyun sayısı, eşitlik bozma kuralının deterministik olduğunu da sabitler:
+    // AI başka bir eşdeğer hamle seçseydi ağaç başka sayıda yaprak verirdi.
+    expect(tally.games).toBe(73)
   })
 
-  it('ikinci oynayan mükemmel AI asla kaybetmez (rakip son boşluğu oynar)', () => {
-    const final = playFullGame('O', (board) => {
-      const moves = availableMoves(board)
-      return moves[moves.length - 1] ?? 0
-    })
-    const status = evaluateStatus(final)
-    expect(status.kind === 'draw' || (status.kind === 'won' && status.winner === 'O')).toBe(true)
-  })
-
-  it('ikinci oynayan mükemmel AI, ilk boşluğu oynayan rakibe karşı da kaybetmez', () => {
-    const final = playFullGame('O', (board) => availableMoves(board)[0] ?? 0)
-    const status = evaluateStatus(final)
-    expect(status.kind === 'draw' || (status.kind === 'won' && status.winner === 'O')).toBe(true)
+  it('O olarak oynayan AI, rakibin bütün oyunlarında kaybetmez ve kural dışı hamle yapmaz', () => {
+    const tally = playAll('O')
+    expect({ losses: tally.losses, illegal: tally.illegal }).toEqual({ losses: 0, illegal: 0 })
+    expect(tally.games).toBe(569)
   })
 
   it('iki mükemmel AI karşılaşırsa beraberlik olur', () => {
@@ -1527,41 +1817,53 @@ describe('chooseMove', () => {
     expect(chooseMove(EMPTY_BOARD, 'X', 'easy', seededRng([0.5]))).toBe(4)
   })
 
-  it('medium zorlukta rng < 0.5 ise en iyi hamleyi oynar', () => {
-    expect(chooseMove(b('XX.OO....'), 'X', 'medium', seededRng([0.1]))).toBe(2)
-  })
-
-  it('medium zorlukta rng >= 0.5 ise rastgele oynar', () => {
-    expect(chooseMove(b('XX.OO....'), 'X', 'medium', seededRng([0.9, 0]))).toBe(2)
-  })
-
   // Aşağıdaki tahtada en iyi hamle 2 (O'nun 0-1-2 tehdidini bloklar); boş
   // hücreler [2, 4, 5, 7, 8] olduğundan rng=0.9 rastgele seçiciyi 8'e götürür.
   // Böylece "en iyi" ile "rastgele" birbirinden ayırt edilebilir.
   const forkBoard = 'OO.X..X..'
 
   it('easy zorlukta en iyi hamleyi değil rastgele hamleyi oynar', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'easy', seededRng([0.9, 0]))).toBe(8)
+    expect(chooseMove(b(forkBoard), 'X', 'easy', seededRng([0.9]))).toBe(8)
   })
 
   it('easy zorlukta rng 1 dönse bile son geçerli hamleyi seçer', () => {
     expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => 1)).toBe(8)
   })
 
+  it('easy zorlukta rng < 0.5 olsa bile en iyi hamleye sapmaz', () => {
+    // medium dalına düşen bir uygulama burada 0.3 < 0.5 diye en iyi hamleyi (2)
+    // oynardı; easy her zaman rastgeledir.
+    expect(chooseMove(b(forkBoard), 'X', 'easy', seededRng([0.3]))).toBe(4)
+  })
+
+  it('easy zorlukta rng negatif dönse bile ilk geçerli hamleyi seçer', () => {
+    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => -0.1)).toBe(0)
+  })
+
+  it('easy zorlukta rng NaN dönse bile geçerli bir hamle seçer', () => {
+    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => Number.NaN)).toBe(0)
+  })
+
+  // Aşağıdaki üç test tek değerli (sabit) bir üreteç kullanır: ternary'nin
+  // koşulu kaldırılırsa `rng()` çağrısı da kaybolur, dizi tabanlı bir üreteçte
+  // sıra kayar ve rastgele seçici tesadüfen en iyi hamleyi bulabilirdi. Sabit
+  // üreteçte hangi dalın çalıştığı sonuçtan tek anlamlı okunur.
   it('medium zorlukta rng < 0.5 ise rastgeleyi değil en iyiyi oynar', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.1, 0.9]))).toBe(2)
+    // 0.3 rastgele seçiciye gitseydi indeks 1, yani 4 hamlesi seçilirdi.
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.3]))).toBe(2)
   })
 
   it('medium zorlukta rng >= 0.5 ise en iyiyi değil rastgeleyi oynar', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.9, 0.9]))).toBe(8)
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.9]))).toBe(8)
   })
 
   it('medium zorlukta rng tam 0.5 ise rastgele oynar — sınır dahil değil', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.5, 0.9]))).toBe(8)
+    // 0.5 en iyi hamleye (2) değil, listenin ortasındaki 5'e götürür.
+    expect(chooseMove(b(forkBoard), 'X', 'medium', seededRng([0.5]))).toBe(5)
   })
 
   it('unbeatable zorlukta rastgeleliği yok sayar', () => {
-    expect(chooseMove(b(forkBoard), 'X', 'unbeatable', seededRng([0.9, 0.9]))).toBe(2)
+    expect(chooseMove(b(forkBoard), 'X', 'unbeatable', seededRng([0.9]))).toBe(2)
   })
 
   it('geçerli bir hamle indeksi döndürür', () => {
@@ -1575,6 +1877,22 @@ describe('chooseMove', () => {
       expect.objectContaining({ index: -1, reason: 'game-over' }),
     )
   })
+
+  it('oyun kazanılmışsa boş hücre kalsa bile hamle üretmez', () => {
+    expect(() => chooseMove(b('XXXOO....'), 'O', 'unbeatable')).toThrow(
+      expect.objectContaining({ index: -1, reason: 'game-over' }),
+    )
+  })
+
+  it('kolay zorlukta bile biten oyunda hamle üretmez', () => {
+    expect(() => chooseMove(b('XXXOO....'), 'O', 'easy', () => 0)).toThrow(InvalidMoveError)
+  })
+
+  it('tip sisteminin dışından gelen zorluğu sessizce kabul etmez', () => {
+    expect(() => chooseMove(EMPTY_BOARD, 'X', 'imkansiz' as Difficulty)).toThrow(
+      new RangeError('Bilinmeyen zorluk: imkansiz'),
+    )
+  })
 })
 ```
 
@@ -1586,12 +1904,31 @@ Expected: `Failed to resolve import "./ai"`
 - [ ] **Step 3: `packages/game-core/src/ai.ts` yaz**
 
 ```ts
-import { applyMove, availableMoves } from './board'
+import { availableMoves } from './board'
 import { InvalidMoveError } from './errors'
+import { placeStone } from './moves'
 import { evaluateStatus } from './status'
 import type { Board, Difficulty, Player } from './types'
 
+/**
+ * DEĞİŞMEZ: WIN_SCORE > BOARD_SIZE (yani > 9, `board.ts`).
+ *
+ * Minimax kazancı `WIN_SCORE - depth`, kaybı `depth - WIN_SCORE` diye puanlar;
+ * derinlik en fazla BOARD_SIZE (dokuz yarım hamle) olur. WIN_SCORE bu sınıra
+ * eşit ya da altında kalsaydı geç bir kazanç 0'a (beraberlik) düşer, altına
+ * inince de işaret değiştirip kayıp gibi görünürdü. Şu anki pay tam olarak 1.
+ *
+ * Sabit bilerek `BOARD_SIZE + 1` diye türetilmedi: 9040 ulaşılabilir
+ * (konum × oyuncu) çiftinde WIN_SCORE=8 ile WIN_SCORE=10 aynı hamleyi seçiyor,
+ * yani türetmenin doğuracağı `BOARD_SIZE - 1` mutantı hiçbir testle
+ * öldürülemeyen eşdeğer bir mutant olurdu. Değişmez bu yüzden burada yazıyla
+ * korunuyor; ihlali `ai.test.ts`'teki tümevarımsal yenilmezlik kanıtı
+ * yakalar (örneğin WIN_SCORE=5 ile AI 48 farklı oyunu kaybeder).
+ */
 const WIN_SCORE = 10
+
+/** Kökten oynanan hamlenin derinliği — tek yerde yazılır, bkz. `bestMove`. */
+const ROOT_DEPTH = 1
 
 function opponentOf(player: Player): Player {
   return player === 'X' ? 'O' : 'X'
@@ -1606,7 +1943,11 @@ function opponentOf(player: Player): Player {
  * sağlanamadığı için stil kuralı tek satırda susturulur.
  */
 function pickRandom(moves: readonly number[], rng: () => number): number {
-  const index = Math.min(Math.floor(rng() * moves.length), moves.length - 1)
+  const raw = Math.floor(rng() * moves.length)
+  // rng dışarıdan enjekte edilebilir (tohumlu üreteç, sahte üreteç): sözleşmeye
+  // uymayan bir değer indeksi listenin dışına taşımasın diye iki uç da
+  // kelepçelenir. NaN her karşılaştırmada false döndüğü için ayrıca ele alınır.
+  const index = Number.isNaN(raw) ? 0 : Math.min(Math.max(raw, 0), moves.length - 1)
   // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- `!` yasak
   return moves[index] as number
 }
@@ -1623,29 +1964,37 @@ function minimax(board: Board, current: Player, maximizing: Player, depth: numbe
   if (status.kind === 'draw') return 0
 
   const scores = availableMoves(board).map((move) =>
-    minimax(applyMove(board, move, current), opponentOf(current), maximizing, depth + 1),
+    minimax(placeStone(board, move, current), opponentOf(current), maximizing, depth + 1),
   )
 
   return current === maximizing ? Math.max(...scores) : Math.min(...scores)
 }
 
-export function bestMove(board: Board, player: Player): number {
-  const moves = availableMoves(board)
-  const [first, ...rest] = moves
-  if (first === undefined) throw new InvalidMoveError(-1, 'game-over')
-
-  let chosen = first
-  let chosenScore = minimax(applyMove(board, first, player), opponentOf(player), player, 1)
-
-  for (const move of rest) {
-    const score = minimax(applyMove(board, move, player), opponentOf(player), player, 1)
-    if (score > chosenScore) {
-      chosenScore = score
-      chosen = move
-    }
+/** Oyun bitmişse hamle üretilemez; kalan tek doğru cevap hatadır. */
+function assertPlayable(board: Board): void {
+  if (evaluateStatus(board).kind !== 'playing') {
+    throw new InvalidMoveError(-1, 'game-over')
   }
+}
 
-  return chosen
+/**
+ * Oyun teorisi anlamında en iyi hamle. `assertPlayable` sayesinde en az bir
+ * hamle vardır, bu yüzden puanlama tek biçimli bir döngüdür: kök derinliği
+ * tek bir yerde geçer ve "ilk hamleyi ayrı puanla" tohumlaması gerekmez.
+ *
+ * Eşit puanlı hamlelerde en küçük indeksli olan korunur (karşılaştırma kesin
+ * `>`): seçim sunucu otoritesidir ve platformlar arası yeniden üretilebilir
+ * olmalıdır.
+ */
+export function bestMove(board: Board, player: Player): number {
+  assertPlayable(board)
+
+  const scored = availableMoves(board).map((move) => ({
+    move,
+    score: minimax(placeStone(board, move, player), opponentOf(player), player, ROOT_DEPTH),
+  }))
+
+  return scored.reduce((best, candidate) => (candidate.score > best.score ? candidate : best)).move
 }
 
 export function chooseMove(
@@ -1654,8 +2003,8 @@ export function chooseMove(
   difficulty: Difficulty,
   rng: () => number = Math.random,
 ): number {
+  assertPlayable(board)
   const moves = availableMoves(board)
-  if (moves.length === 0) throw new InvalidMoveError(-1, 'game-over')
 
   switch (difficulty) {
     case 'easy':
@@ -1664,6 +2013,10 @@ export function chooseMove(
       return rng() < 0.5 ? bestMove(board, player) : pickRandom(moves, rng)
     case 'unbeatable':
       return bestMove(board, player)
+    // Zorluk tip sisteminin dışından (istek gövdesi, veritabanı) gelebilir;
+    // sessizce `undefined` döndürmek yerine yüksek sesle reddedilir.
+    default:
+      throw new RangeError(`Bilinmeyen zorluk: ${String(difficulty)}`)
   }
 }
 ```
@@ -1696,16 +2049,27 @@ git commit -m "feat(core): derinlik cezalı minimax AI ve üç zorluk seviyesi"
 - [ ] **Step 1: `packages/game-core/src/index.ts`**
 
 ```ts
-export {
-  BOARD_SIZE,
-  EMPTY_BOARD,
-  applyMove,
-  availableMoves,
-  boardFromCells,
-  cellAt,
-  isValidMove,
-  nextPlayer,
-} from './board'
+/**
+ * @xox/game-core — saf kural motoru: G/Ç yok, çerçeve yok, bağımlılık yok.
+ *
+ * `applyMove` / `isValidMove` şu üç kuralı uygular (reddetme sırasıyla):
+ * 1. indeks 0..8 aralığında tam sayı olmalı  -> 'out-of-range'
+ * 2. oyun sürüyor olmalı                     -> 'game-over'
+ * 3. hücre boş olmalı                        -> 'occupied'
+ *
+ * SIRA SAHİPLİĞİ BİLEREK DOĞRULANMAZ. `applyMove(board, i, 'X')` üst üste
+ * çağrılırsa X arka arkaya oynayabilir. Gerekçe: motorun sıra paritesini
+ * dayatması sunucuyu güvende tutmaya yetmez — asıl soru "sıra X'te mi?" değil,
+ * "bu isteği gönderen *kullanıcı* X mi?"dir ve oyuncu kimliği game-core'un
+ * göremediği bir bilgidir. Yarım bir kontrol, tam sanılma riski taşır.
+ * Motor bunun yerine kararı vermek için gereken tek girdiyi dışa verir:
+ * `nextPlayer(board)` (oyun sürerken `evaluateStatus(board).turn` ile aynıdır).
+ *
+ * Çevrimiçi oyunu yöneten katman her hamlede şunu doğrulamalıdır:
+ *   nextPlayer(board) === istegiGonderenOyuncununTasi
+ */
+export { BOARD_SIZE, EMPTY_BOARD, availableMoves, boardFromCells, nextPlayer } from './board'
+export { applyMove, isValidMove } from './moves'
 export { WIN_LINES, evaluateStatus } from './status'
 export { bestMove, chooseMove } from './ai'
 export { InvalidMoveError } from './errors'
@@ -1794,7 +2158,11 @@ describe('InvalidMoveError', () => {
 - [ ] **Step 4: Çalıştır**
 
 Run: `pnpm --filter @xox/game-core mutation`
-Expected: `Mutation score: 9X.XX%` ve `break` eşiği (90) aşıldığı için exit code 0.
+Expected: `Mutation score: 98.49%` — `break` eşiği (90) aşıldığı için exit code 0.
+
+⚠️ `testTimeout: 20_000` `vitest.config.ts`'te olmalı: Stryker dry-run'da 9 eşzamanlı runner
+başlatır ve 1 saniyelik `bestMove(EMPTY_BOARD)` testi 5 saniyelik varsayılanı aşıp tüm
+mutasyon koşusunu iptal ettirir.
 
 Skor 90'ın altındaysa: rapor `reports/mutation/game-core.html`'de hangi mutantların hayatta kaldığını gösterir. Her hayatta kalan mutant, bir testin bir davranışı gerçekten doğrulamadığı anlamına gelir — test ekle, kodu değiştirme.
 
