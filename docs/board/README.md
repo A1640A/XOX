@@ -23,7 +23,7 @@
 
 | Alan          | Anlamı                                                                              |
 | ------------- | ----------------------------------------------------------------------------------- |
-| `status`      | `todo` · `in_wave` · `review` · `blocked` · `done` · `failed`                       |
+| `status`      | `todo` · `in_wave` · `review` · `reviewing` · `blocked` · `done` · `failed`         |
 | `deps`        | Bu görev başlamadan `done` olması gereken görev id'leri                             |
 | `conflictSet` | Dokunacağı dosya desenleri. **İki görev aynı dalgaya ancak kümeleri ayrıksa girer** |
 | `attempts`    | 3'e ulaşırsa `blocked` yapılır ve gece durmadan devam eder                          |
@@ -45,3 +45,18 @@ Her satır bağımsız bir JSON olay. Append-only — çakışmaz, asla silinmez
 
 Olaylar: `wave.start` · `task.dispatch` · `task.done` · `task.blocked` · `review.finding` ·
 `merge.ok` · `merge.revert` · `deploy.preview` · `qa.result` · `decision` · `gotcha` · `danger`
+
+## Durum anlamları — `Stop` hook'u bunlara göre karar verir
+
+| Durum             | Anlamı                                               | Lead şu an bir şey yapabilir mi? |
+| ----------------- | ---------------------------------------------------- | -------------------------------- |
+| `todo`            | Bekliyor; bağımlılığı çözülmüşse dispatch edilebilir | **evet**                         |
+| `in_wave`         | Dispatch edildi, geliştirici agent çalışıyor         | hayır, bekle                     |
+| `review`          | Bitti, reviewer **henüz atanmadı**                   | **evet**                         |
+| `reviewing`       | Reviewer atandı, çalışıyor                           | hayır, bekle                     |
+| `blocked`         | İnsan kararı bekliyor                                | hayır                            |
+| `done` / `failed` | Kapandı                                              | hayır                            |
+
+`in_wave` ve `reviewing` **uçuşta** sayılır: hook duruşa izin verir, arka plan agent-i bitince
+bildirim lead-i geri çağırır ve döngü kaldığı yerden devam eder. Bu ikisini "işlenebilir"
+saymak canlı kilit yaratır — lead yield edemez ama dispatch edecek işi de yoktur.
