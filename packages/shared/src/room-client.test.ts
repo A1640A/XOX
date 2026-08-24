@@ -514,6 +514,16 @@ describe('koltuk ve varlık olayları', () => {
     expect(state.players.X).toBeNull()
   })
 
+  it('O koltuğundaki oyuncu için X koltuğu dolar', () => {
+    const { state } = roomClientReducer(
+      bagliDurum({ you: 'O' }),
+      sunucudan({ type: 'opponent:joined', userId: 'u1', seat: 'X', name: 'Ayse' }),
+    )
+
+    expect(state.players.X).toEqual({ userId: 'u1', name: 'Ayse' })
+    expect(state.players.O).toBeNull()
+  })
+
   it('opponent:left grace hedefini saklar', () => {
     const { state } = roomClientReducer(
       bagliDurum(),
