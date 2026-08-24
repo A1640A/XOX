@@ -16,7 +16,11 @@
       "project": ["**/*.{ts,tsx}"],
       "ignoreDependencies": ["@xox/game-core", "@xox/shared", "expo-auth-session"]
     },
-    "apps/e2e": { "entry": ["tests/**/*.spec.ts", "playwright.config.ts"], "project": ["**/*.ts"] }
+    "apps/e2e": {
+      "entry": ["tests/**/*.spec.ts", "playwright.config.ts"],
+      "project": ["**/*.ts"],
+      "ignoreDependencies": ["@xox/shared"]
+    }
   },
   "ignoreDependencies": [
     "@vitest/coverage-v8",

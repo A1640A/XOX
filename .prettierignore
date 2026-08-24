@@ -7,5 +7,6 @@ pnpm-lock.yaml
 docs/board/journal.ndjson
 apps/e2e/test-results
 apps/e2e/playwright-report
+docs/board/reports/qa-latest.json
 reports/mutation
 apps/web/next-env.d.ts
