@@ -11,6 +11,16 @@ bütçenin **%6.6**'sı. Isınmış havuzda (N=175) p95 98.6 ms.
 **Karar:** ADR-0002 doğrulandı. Gerçek zamanlı katman MongoDB change stream fan-out üzerine
 kurulacak. **Upstash Redis pub/sub yedeği İPTAL.**
 
+**Metodoloji bağımsız olarak doğrulandı (lead, 2026-08-24):**
+
+- İki damga da aynı Node sürecinde `performance.now()` — monotonik tek saat, kayma yok.
+- Zaman aşımına uğrayan örnek ATILMIYOR; `censored: true` ile `totalMs = timeout` alıyor,
+  yani p95'i kötüleştiriyor. 200 örnekte sansür 0.
+- Dinleyici yazmadan ÖNCE kaydediliyor — olay-yazma yarışı yok.
+- **Gerçek oyun temposu sınandı:** 3 sn aralıklı 20 örnek → p50 96.2 · p95 100.7 · maks 100.8.
+  Arka arkaya 20 örnek → p50 96.8 · p95 98.6 · maks 605.7. Sessiz bağlantıda gecikme ARTMIYOR;
+  büyük maks değeri yalnızca ilk isteğin soğuk başlangıcı.
+
 **Kapsam sınırı (dürüstlük notu):** Sonda "yazma → kendi stream-inde olay" ölçer, yani yazan
 oyuncunun gördüğü süre. Karşı instance bacağı ölçülmedi; iki uçlu kanıt Dalga 0 E2E-001-in işi.
 15× marj bu belirsizliği karşılıyor.

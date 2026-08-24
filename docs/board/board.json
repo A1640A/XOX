@@ -124,7 +124,7 @@
       "agent": "xox-dev-realtime",
       "deps": [],
       "conflictSet": ["apps/web/app/api/health/realtime/**"],
-      "status": "review",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/RT-PROBE-001",
       "report": "docs/board/reports/RT-PROBE-001.md",

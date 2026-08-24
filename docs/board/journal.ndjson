@@ -151,3 +151,12 @@
 {"ts":"2026-08-24T18:14:48Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.test.ts"}
 {"ts":"2026-08-24T18:15:05Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.test.ts"}
 {"ts":"2026-08-24T18:20:00Z","wave":1,"event":"task.done","task":"UI-001","agent":"xox-designer","attempts":1,"note":"3 major bulgu duzeltildi; win testi mutasyonla dogrulandi (eski deger geri konunca kiriliyor)"}
+{"ts":"2026-08-24T18:15:20Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.test.ts"}
+{"ts":"2026-08-24T18:15:29Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.test.ts"}
+{"ts":"2026-08-24T18:15:48Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.test.ts"}
+{"ts":"2026-08-24T18:16:43Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.test.ts"}
+{"ts":"2026-08-24T18:16:57Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.test.ts"}
+{"ts":"2026-08-24T18:17:05Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-protocol.test.ts"}
+{"ts":"2026-08-24T18:17:54Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-close.test.ts"}
+{"ts":"2026-08-24T18:18:16Z","event":"file.touched","path":".claude/worktrees/CTR-001/packages/shared/src/ws-close.test.ts"}
+{"ts":"2026-08-24T18:35:00Z","wave":1,"event":"task.done","task":"RT-PROBE-001","agent":"xox-dev-realtime","note":"metodoloji lead tarafindan dogrulandi: tek saat, sansur muhafazakar, 3sn araliıkli tempo ayni sonuc"}
