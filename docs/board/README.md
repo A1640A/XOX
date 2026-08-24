@@ -60,3 +60,13 @@ Olaylar: `wave.start` · `task.dispatch` · `task.done` · `task.blocked` · `re
 `in_wave` ve `reviewing` **uçuşta** sayılır: hook duruşa izin verir, arka plan agent-i bitince
 bildirim lead-i geri çağırır ve döngü kaldığı yerden devam eder. Bu ikisini "işlenebilir"
 saymak canlı kilit yaratır — lead yield edemez ama dispatch edecek işi de yoktur.
+
+## Kadro işleri de board'a yazılır
+
+`xox-memory-curator`, `xox-integrator`, `xox-reporter` gibi **kart üretmeyen** agent'ların
+koşuları da board'a bir görev olarak eklenmeli (`MEM-001`, `INT-<kart>`, `RPT-<tarih>`).
+
+Sebep: `Stop` hook'unun kapasite hesabı `in_wave`/`reviewing` görevleri sayar. Board'da
+temsil edilmeyen bir agent gerçek kapasiteyi tüketir ama hook onu görmez — sonuç, tavan
+doluyken lead'in yeni iş dispatch etmeye zorlanması. Board, yapılan **tüm** işi modellemeli;
+yalnız ürün kartlarını değil.

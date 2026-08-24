@@ -238,7 +238,7 @@
         "packages/db/src/elo.ts",
         "packages/db/src/index.ts"
       ],
-      "status": "review",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/DB-002",
       "report": "docs/board/reports/DB-002.md",
@@ -1069,6 +1069,34 @@
         "WS: bir hamlede kac mesaj gidiyor, tam state mi delta mi, heartbeat araligi makul mu.",
         "OLCMEDIGIN SEYI RAPORLAMA — sayi ver ya da 'olculmedi' yaz."
       ],
+      "blockedReason": null
+    },
+    {
+      "id": "MEM-001",
+      "title": "Hafiza damitmasi (dalga 1-5)",
+      "tier": "P0",
+      "agent": "xox-memory-curator",
+      "deps": [],
+      "conflictSet": [],
+      "status": "in_wave",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [],
+      "blockedReason": null
+    },
+    {
+      "id": "INT-DB-002",
+      "title": "feat/DB-002 -> main entegrasyonu",
+      "tier": "P0",
+      "agent": "xox-integrator",
+      "deps": [],
+      "conflictSet": [],
+      "status": "in_wave",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [],
       "blockedReason": null
     }
   ]
