@@ -155,7 +155,7 @@
         "packages/db/src/indexes.ts",
         "packages/db/package.json"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/DB-001",
       "report": "docs/board/reports/DB-001.md",
@@ -1001,9 +1001,9 @@
         "packages/db/src/indexes.ts",
         ".github/workflows/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/OPS-003",
       "report": null,
       "acceptance": [
         "ensureIndexes() gercek bir cagirana baglanir (deploy sonrasi migration adimi ya da korumali bir route). Su an REPO GENELINDE tek cagiran indexes.test.ts — yani indeksler canlida HIC olusmuyor.",
