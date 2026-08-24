@@ -26,3 +26,4 @@
 {"ts":"2026-08-24T16:38:18Z","event":"file.touched","path":"docs/plans/2026-08-24-oyun-dalga-plani.md"}
 {"ts":"2026-08-24T16:39:40Z","event":"file.touched","path":"docs/board/reports/PLAN-001.md"}
 {"ts":"2026-08-24T16:40:30Z","event":"subagent.stop"}
+{"ts":"2026-08-24T14:20:00Z","wave":0,"event":"wave.start","tasks":["CTR-001","UI-001","OPS-002","RT-PROBE-001"],"note":"Dalga 0a — yürüyen iskelet başlıyor"}

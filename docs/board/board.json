@@ -3,9 +3,9 @@
   "project": "XOX",
   "updatedAt": "2026-08-24T09:40:00.000Z",
   "nightRun": {
-    "active": false,
+    "active": true,
     "deadline": null,
-    "wave": 0,
+    "wave": 1,
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0
   },
@@ -41,9 +41,9 @@
       "agent": "xox-dev-core",
       "deps": [],
       "conflictSet": ["packages/shared/**"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/CTR-001",
       "report": null,
       "acceptance": [
         "game-status.ts: transportStatusSchema superRefine değişmezi İKİ YÖNLÜ testle kanıtlanır — {kind:'won',reason:'resign',line:[0,1,2]} REDDEDİLİR ve {kind:'won',reason:'line',line:null} REDDEDİLİR (tasarım §2.1)",
@@ -69,9 +69,9 @@
       "agent": "xox-designer",
       "deps": [],
       "conflictSet": ["packages/ui-tokens/**", "eslint.config.mjs"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/UI-001",
       "report": null,
       "acceptance": [
         "@xox/ui-tokens `themes.acik` ve `themes.koyu` dışa verir; iki temanın anahtar kümesi BİREBİR aynı (test anahtar farkını kırmızı yapar)",
@@ -100,9 +100,9 @@
         "knip.json",
         "turbo.json"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/OPS-002",
       "report": null,
       "acceptance": [
         "apps/web/package.json'a `\"dev:ws\": \"vc dev --listen 3000\"` script'i eklenir; raporda `vc --version` çıktısı >= 54.14.2 yazılı (gotcha: next dev WS'i desteklemez)",
@@ -124,9 +124,9 @@
       "agent": "xox-dev-realtime",
       "deps": [],
       "conflictSet": ["apps/web/app/api/health/realtime/**"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/RT-PROBE-001",
       "report": null,
       "acceptance": [
         "GET /api/health/realtime `{ ok, samples, p50Ms, p95Ms, maxMs }` döner: xox_test'te rooms koleksiyonuna N >= 20 kez yazar ve her yazma için change stream olayının gelişine kadar geçen süreyi ölçer",
