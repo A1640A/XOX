@@ -31,6 +31,8 @@ export interface RoomConnection extends RoomSubscriber {
    * HİÇBİR mesaj gitmez (KK-008 ruhu: koltuksuza oda içeriği yayınlanmaz).
    */
   primeState(room: RoomDoc): boolean
+  /** En son görülen oda dokümanı — süre zamanlayıcısını beslemek için. */
+  lastRoom(): RoomDoc | null
   /** zod ihlali; `MAX_PROTOCOL_VIOLATIONS`e ulaşıldıysa `true` (kapat). */
   noteProtocolViolation(): boolean
   /** Geçerli mesaj — ARDIŞIK ihlal sayacını sıfırlar. */
@@ -86,6 +88,14 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
   let lastEmojiAt = 0
   let violations = 0
   let closed = false
+  /**
+   * Anlık görüntü kurulmadan ÖNCE gelen olay burada bekler. Abonelik `join`
+   * yazımından önce kurulduğu için (session.ts) o pencerede rakibin olayı
+   * gelebilir; `primeState` daha eski bir dokümanla çağrılırsa tam durum
+   * bayat gider ve bağlantı bir sonraki olaya kadar geride kalırdı.
+   */
+  let seenBeforePrime: RoomDoc | null = null
+  let latestRoom: RoomDoc | null = null
 
   function send(message: ServerMessage): void {
     if (closed) return
@@ -202,12 +212,19 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
     close,
     isClosed: () => closed,
 
-    primeState(room: RoomDoc): boolean {
+    lastRoom: () => latestRoom,
+
+    primeState(incoming: RoomDoc): boolean {
+      const pending = seenBeforePrime
+      seenBeforePrime = null
+      const room = pending !== null && pending.version > incoming.version ? pending : incoming
+
       const seat = seatOf(room, deps.userId)
       if (seat === null) return false
       currentSeat = seat
       lastEmojiAt = room.lastEmoji?.at.getTime() ?? 0
       snapshot = snapshotOf(room)
+      latestRoom = room
       send(toStateMessage(room, seat, deps.now()))
       return true
     },
@@ -215,10 +232,17 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
     onRoomChange(room: RoomDoc): void {
       if (closed) return
 
-      emitEmoji(room)
-
       const previous = snapshot
-      if (previous === null) return
+      if (previous === null) {
+        // Henüz tam durum göndermedik: olayı sakla, `primeState` uzlaştırsın.
+        if (seenBeforePrime === null || room.version > seenBeforePrime.version) {
+          seenBeforePrime = room
+        }
+        return
+      }
+
+      latestRoom = room
+      emitEmoji(room)
       if (room.version === previous.version) return
 
       const seat = seatOf(room, deps.userId)
@@ -250,6 +274,8 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
       }
       if (detectTakeover(room, seat)) return
       currentSeat = seat
+      seenBeforePrime = null
+      latestRoom = room
       lastEmojiAt = Math.max(lastEmojiAt, room.lastEmoji?.at.getTime() ?? 0)
       snapshot = snapshotOf(room)
       send(toStateMessage(room, seat, deps.now()))
