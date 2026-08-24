@@ -25,6 +25,23 @@ const PLAYWRIGHT_WALL = {
   ],
 }
 
+/**
+ * Hem eslint-plugin-boundaries (import/resolver) hem eslint-plugin-import-x
+ * (import-x/resolver) aynı çözümleyiciyi kullanır: ikisi de bir import'un
+ * NEREYE gittiğini yalnız çözümlenmiş dosya yolundan bilir.
+ * `project` listesi kök tsconfig'i de kapsar; böylece bir paket bağımlılığı
+ * package.json'a eklenmemiş olsa bile '@xox/...' hedefi çözülür.
+ */
+const TS_RESOLVER = {
+  typescript: {
+    alwaysTryTypes: true,
+    project: ['tsconfig.json', 'apps/*/tsconfig.json', 'packages/*/tsconfig.json'],
+    // Birden fazla tsconfig bilerek veriliyor; resolver'ın her çalıştırmada
+    // bastığı "Multiple projects found" uyarısı gürültüden ibaret.
+    noWarnOnMultipleProjects: true,
+  },
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -64,17 +81,23 @@ export default tseslint.config(
       // TypeScript resolver hem '.ts' uzantısını, hem `exports` alanını, hem tsconfig
       // `paths` eşlemesini bilir ve pnpm symlink'lerini gerçek yola (realpath) çözer —
       // eleman desenleri (packages/shared/**) ancak gerçek yolla eşleşir.
-      // `project` listesi kök tsconfig'i de kapsar: bir paket bağımlılığını package.json'a
-      // EKLEMEDEN '@xox/...' yazsa bile hedef çözülür ve sınır ihlali yakalanır.
-      'import/resolver': {
-        typescript: {
-          alwaysTryTypes: true,
-          project: ['tsconfig.json', 'apps/*/tsconfig.json', 'packages/*/tsconfig.json'],
-          // Birden fazla tsconfig bilerek veriliyor; resolver'ın her çalıştırmada
-          // bastığı "Multiple projects found" uyarısı gürültüden ibaret.
-          noWarnOnMultipleProjects: true,
-        },
-      },
+      'import/resolver': TS_RESOLVER,
+
+      // --- import-x tarafı: no-cycle'ın gerçekten çalışması + stderr sessizliği ---
+      // import-x kendi çözümleyicisini 'import-x/resolver' anahtarından okur;
+      // 'import/resolver' onu ETKİLEMEZ. Varsayılan node çözümleyicisinin uzantı
+      // listesinde '.ts' yoktu, bu yüzden göreli TS importları hiç çözülmüyordu.
+      'import-x/resolver': TS_RESOLVER,
+      // ExportMap yalnız bu uzantılara sahip dosyaları ayrıştırır
+      // (utils/export-map.js -> hasValidExtension). Varsayılan ['.js','.mjs','.cjs']
+      // ile birinci-parti TS hiç okunmuyor, buna karşılık node_modules içindeki
+      // .js dosyaları okunuyordu: no-cycle atıl kalırken react-native/index.js'in
+      // Flow sözdizimi her lint çalıştırmasında stderr'e yığın döküyordu.
+      'import-x/extensions': ['.ts', '.tsx', '.mts', '.cts'],
+      // İkinci savunma: node_modules ASLA ayrıştırılmaz. @xox/* paketleri gerçek
+      // yollarına (packages/...) çözüldüğü için bu desen onları kapsamaz —
+      // paketler arası döngüler yakalanmaya devam eder.
+      'import-x/ignore': ['node_modules'],
       'boundaries/elements': [
         { type: 'game-core', pattern: 'packages/game-core/**' },
         { type: 'shared', pattern: 'packages/shared/**' },
@@ -133,6 +156,10 @@ export default tseslint.config(
   {
     files: ['apps/web/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks, 'jsx-a11y': jsxA11y, '@next/next': nextPlugin },
+    // Monorepo: Next uygulaması kökte değil. Bu ayar olmadan no-html-link-for-pages
+    // kuralı repo kökünde pages/ arar, bulamaz ve her lint çalıştırmasında
+    // stderr'e "Pages directory cannot be found" satırı basar.
+    settings: { next: { rootDir: 'apps/web' } },
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...jsxA11y.flatConfigs.recommended.rules,
