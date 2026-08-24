@@ -116,29 +116,51 @@ echo "24" > .nvmrc
   "private": true,
   "version": "0.0.0",
   "packageManager": "pnpm@11.15.1",
-  "engines": { "node": ">=24.0.0", "pnpm": ">=11.0.0" },
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "lint": "eslint . --max-warnings=0",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test --filter=!@xox/e2e",
-    "test:coverage": "turbo run test:coverage --filter=!@xox/e2e",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "knip": "knip",
-    "e2e": "pnpm --filter @xox/e2e test",
+    "e2e": "pnpm --filter @xox/e2e e2e",
     "mutation": "pnpm --filter @xox/game-core mutation",
     "gates": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test:coverage && pnpm knip"
   },
   "devDependencies": {
-    "prettier": "3.9.6",
-    "turbo": "2.10.11",
-    "typescript": "6.0.3",
+    "@commitlint/cli": "21.2.2",
+    "@commitlint/config-conventional": "21.2.2",
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.3.2",
+    "@size-limit/preset-app": "13.0.3",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.2",
+    "@vitejs/plugin-react": "6.1.0",
+    "@vitest/coverage-v8": "4.1.11",
+    "eslint": "10.9.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-boundaries": "7.2.0",
+    "eslint-plugin-import-x": "4.17.1",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-security": "4.0.1",
+    "jsdom": "30.0.1",
     "knip": "6.32.2",
     "lefthook": "2.1.10",
-    "@commitlint/cli": "21.2.2",
-    "@commitlint/config-conventional": "21.2.2"
+    "prettier": "3.9.6",
+    "size-limit": "13.0.3",
+    "turbo": "2.10.11",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.67.0",
+    "vite-tsconfig-paths": "6.1.1",
+    "vitest": "4.1.11"
   }
 }
 ```
@@ -146,16 +168,13 @@ echo "24" > .nvmrc
 - [ ] **Step 3: Workspace tanımı**
 
 ```yaml
-# pnpm-workspace.yaml
 packages:
   - 'apps/*'
   - 'packages/*'
-
-# pnpm 11 postinstall script'lerini varsayılan olarak engeller. lefthook'un tüm işlevi
-# postinstall'da git hook'larını kurmaktır — onaylanmazsa bağımlılık etkisiz kalır ve
-# `pnpm install` ERR_PNPM_IGNORED_BUILDS ile exit 1 verir.
 allowBuilds:
+  esbuild: true
   lefthook: true
+  unrs-resolver: true
 ```
 
 Not: lefthook'un postinstall'ı örnek içerikli bir `lefthook.yml` üretir. Onu commit etme —
@@ -1824,14 +1843,18 @@ git commit -m "test(core): Stryker mutasyon testi, %90 kırılma eşiği"
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
-  "dependencies": { "@xox/game-core": "workspace:*", "zod": "4.4.3" }
+  "dependencies": {
+    "zod": "4.4.3"
+  }
 }
 ```
 
@@ -2060,7 +2083,9 @@ git commit -m "feat(shared): zod tabanlı WS protokolü ve oda kodu sözleşmesi
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
@@ -2070,9 +2095,14 @@ git commit -m "feat(shared): zod tabanlı WS protokolü ve oda kodu sözleşmesi
     "reset": "tsx src/reset.ts"
   },
   "dependencies": {
-    "@xox/game-core": "workspace:*",
     "@xox/shared": "workspace:*",
+    "mongodb": "7.5.0",
     "mongoose": "9.9.3"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "4.1.11",
+    "tsx": "^4.23.12",
+    "vitest": "4.1.11"
   }
 }
 ```
@@ -2133,7 +2163,7 @@ export async function connectDb(): Promise<typeof mongoose> {
  */
 export async function getMongoClient(): Promise<MongoClient> {
   const conn = await connectDb()
-  return conn.connection.getClient() as unknown as MongoClient
+  return conn.connection.getClient()
 }
 
 export async function disconnectDb(): Promise<void> {
@@ -2177,7 +2207,7 @@ const userSchema = new Schema<UserDoc>(
 )
 
 export const User: Model<UserDoc> =
-  (models['User'] as Model<UserDoc>) ?? model<UserDoc>('User', userSchema)
+  (models['User'] as Model<UserDoc> | undefined) ?? model<UserDoc>('User', userSchema)
 ```
 
 - [ ] **Step 4: `packages/db/src/models/room.ts`**
@@ -2229,7 +2259,7 @@ const roomSchema = new Schema<RoomDoc>(
 roomSchema.index({ updatedAt: 1 }, { expireAfterSeconds: ROOM_TTL_SECONDS })
 
 export const Room: Model<RoomDoc> =
-  (models['Room'] as Model<RoomDoc>) ?? model<RoomDoc>('Room', roomSchema)
+  (models['Room'] as Model<RoomDoc> | undefined) ?? model<RoomDoc>('Room', roomSchema)
 ```
 
 - [ ] **Step 5: `packages/db/src/models/game.ts`**
@@ -2278,7 +2308,7 @@ const gameSchema = new Schema<GameDoc>(
 gameSchema.index({ finishedAt: -1 })
 
 export const Game: Model<GameDoc> =
-  (models['Game'] as Model<GameDoc>) ?? model<GameDoc>('Game', gameSchema)
+  (models['Game'] as Model<GameDoc> | undefined) ?? model<GameDoc>('Game', gameSchema)
 ```
 
 - [ ] **Step 6: Oda kodu üretimi — önce başarısız test**
@@ -2321,7 +2351,7 @@ import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@xox/shared'
 export function generateRoomCode(): string {
   let code = ''
   for (let i = 0; i < ROOM_CODE_LENGTH; i += 1) {
-    code += ROOM_CODE_ALPHABET[randomInt(ROOM_CODE_ALPHABET.length)]
+    code += ROOM_CODE_ALPHABET.charAt(randomInt(ROOM_CODE_ALPHABET.length))
   }
   return code
 }
@@ -2395,7 +2425,219 @@ export { Room, type RoomDoc, type RoomState } from './models/room'
 export { Game, type GameDoc, type MoveDoc } from './models/game'
 ```
 
-- [ ] **Step 11: `packages/db/vitest.config.ts`**
+- [ ] **Step 11: `client.ts` ve `reset.ts` testleri — kapsam eşiği bunlarsız tutmaz**
+
+Bir sonraki adımdaki kapsam eşiği (90/85/90/90) `client.ts` ve `reset.ts`'i de kapsar;
+yalnızca `room-code.test.ts` ile eşik **tutmaz ve build kırılır.** Bu iki dosya davranış
+doğrular: önbellek `??=` yerine `=` olursa, `getMongoClient` ikinci havuz açarsa,
+`disconnectDb` önbelleği temizlemezse, ya da `resetDatabase` guard'ı delinirse testler kırılır.
+
+```ts
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mocks = vi.hoisted(() => {
+  const rawClient = { tag: 'raw-mongo-client' }
+  const getClient = vi.fn()
+  const disconnect = vi.fn()
+  const connect = vi.fn()
+  const fake = { connect, connection: { getClient }, disconnect }
+  return { rawClient, getClient, disconnect, connect, fake }
+})
+
+vi.mock('mongoose', () => ({ default: mocks.fake }))
+
+const globalCache = globalThis as unknown as { __xoxMongoose?: unknown }
+
+/** Her test taze modül kapsamıyla başlar; global önbellek testler arası sızmamalı. */
+async function loadClient() {
+  return import('./client')
+}
+
+beforeEach(() => {
+  vi.resetModules()
+  delete globalCache.__xoxMongoose
+  mocks.connect.mockImplementation((): Promise<unknown> => Promise.resolve(mocks.fake))
+  mocks.getClient.mockImplementation((): unknown => mocks.rawClient)
+  mocks.disconnect.mockImplementation((): Promise<void> => Promise.resolve())
+  vi.stubEnv('MONGODB_URI', 'mongodb://localhost:27017')
+  vi.stubEnv('MONGODB_DB', undefined)
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+describe('getMongoUri', () => {
+  it('ortam değişkenindeki URI değerini döndürür', async () => {
+    vi.stubEnv('MONGODB_URI', 'mongodb://example:27017')
+    const { getMongoUri } = await loadClient()
+    expect(getMongoUri()).toBe('mongodb://example:27017')
+  })
+
+  it('MONGODB_URI tanımsızsa hata fırlatır', async () => {
+    vi.stubEnv('MONGODB_URI', undefined)
+    const { getMongoUri } = await loadClient()
+    expect(() => getMongoUri()).toThrow(/MONGODB_URI/)
+  })
+
+  it('MONGODB_URI boş dizeyse hata fırlatır', async () => {
+    vi.stubEnv('MONGODB_URI', '')
+    const { getMongoUri } = await loadClient()
+    expect(() => getMongoUri()).toThrow(/MONGODB_URI/)
+  })
+})
+
+describe('getDbName', () => {
+  it('MONGODB_DB tanımsızsa xox_dev varsayılanını döndürür', async () => {
+    const { getDbName } = await loadClient()
+    expect(getDbName()).toBe('xox_dev')
+  })
+
+  it('MONGODB_DB tanımlıysa onu döndürür', async () => {
+    vi.stubEnv('MONGODB_DB', 'xox_test')
+    const { getDbName } = await loadClient()
+    expect(getDbName()).toBe('xox_test')
+  })
+})
+
+describe('connectDb', () => {
+  it('mongoose.connect çağrısını URI ve veritabanı adıyla yapar', async () => {
+    vi.stubEnv('MONGODB_DB', 'xox_test')
+    const { connectDb } = await loadClient()
+    await connectDb()
+    expect(mocks.connect).toHaveBeenCalledWith('mongodb://localhost:27017', {
+      dbName: 'xox_test',
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10_000,
+    })
+  })
+
+  it('ikinci çağrıda önbelleği kullanır — ikinci havuz açmaz', async () => {
+    const { connectDb } = await loadClient()
+    const first = await connectDb()
+    const second = await connectDb()
+    expect(second).toBe(first)
+    expect(mocks.connect).toHaveBeenCalledTimes(1)
+  })
+
+  it('eşzamanlı çağrılarda tek bir bağlantı sözü paylaşılır', async () => {
+    const { connectDb } = await loadClient()
+    await Promise.all([connectDb(), connectDb(), connectDb()])
+    expect(mocks.connect).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('getMongoClient', () => {
+  it('mongoose bağlantısının altındaki ham istemciyi paylaşır', async () => {
+    const { getMongoClient } = await loadClient()
+    const client = await getMongoClient()
+    expect(client).toBe(mocks.rawClient)
+  })
+
+  it('ikinci bağlantı havuzu açmaz', async () => {
+    const { connectDb, getMongoClient } = await loadClient()
+    await connectDb()
+    await getMongoClient()
+    expect(mocks.connect).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('disconnectDb', () => {
+  it('hiç bağlanılmadıysa hiçbir şey yapmaz', async () => {
+    const { disconnectDb } = await loadClient()
+    await disconnectDb()
+    expect(mocks.disconnect).not.toHaveBeenCalled()
+  })
+
+  it('bağlantıyı kapatır ve önbelleği temizler — sonraki çağrı yeniden bağlanır', async () => {
+    const { connectDb, disconnectDb } = await loadClient()
+    await connectDb()
+    await disconnectDb()
+    expect(mocks.disconnect).toHaveBeenCalledTimes(1)
+
+    await connectDb()
+    expect(mocks.connect).toHaveBeenCalledTimes(2)
+  })
+})
+```
+
+```ts
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mocks = vi.hoisted(() => {
+  const dropDatabase = vi.fn()
+  const connectDb = vi.fn()
+  const disconnectDb = vi.fn()
+  const getDbName = vi.fn()
+  return { dropDatabase, connectDb, disconnectDb, getDbName }
+})
+
+vi.mock('./client', () => ({
+  connectDb: mocks.connectDb,
+  disconnectDb: mocks.disconnectDb,
+  getDbName: mocks.getDbName,
+}))
+
+beforeEach(() => {
+  vi.resetModules()
+  mocks.dropDatabase.mockImplementation((): Promise<void> => Promise.resolve())
+  mocks.connectDb.mockImplementation((): Promise<unknown> =>
+    Promise.resolve({ connection: { dropDatabase: mocks.dropDatabase } }),
+  )
+  mocks.disconnectDb.mockImplementation((): Promise<void> => Promise.resolve())
+  mocks.getDbName.mockImplementation((): string => 'xox_test')
+})
+
+describe('resetDatabase', () => {
+  it('xox_test veritabanını düşürür', async () => {
+    const { resetDatabase } = await import('./reset')
+    await resetDatabase()
+    expect(mocks.dropDatabase).toHaveBeenCalledTimes(1)
+  })
+
+  it('xox_test dışındaki veritabanını reddeder ve bağlanmaz', async () => {
+    mocks.getDbName.mockImplementation((): string => 'xox_prod')
+    const { resetDatabase } = await import('./reset')
+    await expect(resetDatabase()).rejects.toThrow(/xox_prod/)
+    expect(mocks.connectDb).not.toHaveBeenCalled()
+    expect(mocks.dropDatabase).not.toHaveBeenCalled()
+  })
+
+  it('geliştirme veritabanını da reddeder', async () => {
+    mocks.getDbName.mockImplementation((): string => 'xox_dev')
+    const { resetDatabase } = await import('./reset')
+    await expect(resetDatabase()).rejects.toThrow(/Yalnızca xox_test/)
+    expect(mocks.dropDatabase).not.toHaveBeenCalled()
+  })
+})
+
+describe('CLI girişi', () => {
+  it('doğrudan çalıştırıldığında sıfırlar ve bağlantıyı kapatır', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const originalArgv = [...process.argv]
+    process.argv = ['node', '/repo/packages/db/src/reset.ts']
+    try {
+      await import('./reset')
+    } finally {
+      process.argv = originalArgv
+    }
+
+    expect(mocks.dropDatabase).toHaveBeenCalledTimes(1)
+    expect(mocks.disconnectDb).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith('Sıfırlandı: xox_test')
+  })
+
+  it('başka bir dosyadan import edildiğinde kendiliğinden çalışmaz', async () => {
+    await import('./reset')
+    expect(mocks.dropDatabase).not.toHaveBeenCalled()
+    expect(mocks.disconnectDb).not.toHaveBeenCalled()
+  })
+})
+```
+
+Gerçek MongoDB'ye bağlanılmaz — `mongoose` ve `./client` mock'lanır.
+
+- [ ] **Step 12: `packages/db/vitest.config.ts`**
 
 ```ts
 import { defineConfig, mergeConfig } from 'vitest/config'
@@ -2416,7 +2658,7 @@ export default mergeConfig(
 )
 ```
 
-- [ ] **Step 12: Tip kontrolü, test, commit**
+- [ ] **Step 13: Tip kontrolü, test, commit**
 
 Run: `pnpm --filter @xox/db typecheck && pnpm --filter @xox/db test:coverage`
 Expected: exit code 0.
@@ -3090,7 +3332,7 @@ git commit -m "feat(mobile): Expo 57 iskeleti, monorepo Metro çözümlemesi, we
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test",
+    "e2e": "playwright test",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -3101,8 +3343,14 @@ git commit -m "feat(mobile): Expo 57 iskeleti, monorepo Metro çözümlemesi, we
 }
 ```
 
-⚠️ `@playwright/test` **yalnızca burada** görünür. Başka bir `package.json`'a eklenirse
-CI kontrolü (Task 30) kırılır.
+⚠️ İki nokta:
+
+- `@playwright/test` **yalnızca burada** görünür. Başka bir `package.json`'a eklenirse
+  CI kontrolü (Task 33) kırılır.
+- Script'in adı `test` **değil** `e2e`. Sebebi: `turbo run test` kök seviyede tüm paketlerin
+  `test` task'ını koşar; e2e'ye `test` adı verilirse Playwright sunucu ayakta değilken çalışır
+  ve kapılar hatalı kırmızı olur. Negatif filtre (`--filter=!@xox/e2e`) ile çözmek kırılgandır —
+  paket henüz yokken turbo `No package found` diye hata verir ve `pnpm gates` tamamen ölür.
 
 - [ ] **Step 2: Kur**
 
@@ -3245,7 +3493,7 @@ test.describe('WebSocket kanıtı', () => {
 ```bash
 pnpm --filter @xox/web dev &
 sleep 8
-E2E_BASE_URL=http://localhost:3000 pnpm --filter @xox/e2e test --grep "ana sayfa"
+E2E_BASE_URL=http://localhost:3000 pnpm --filter @xox/e2e e2e --grep "ana sayfa"
 kill %1
 ```
 
@@ -3528,6 +3776,31 @@ devre dışı kalır) ve `unrs-resolver` (`eslint-plugin-import-x`'in native res
 
 expo-router artık Expo SDK ile hizalı sürümleniyor: SDK 57 için doğru sürüm `57.0.15`.
 npm'de duran `7.0.0-canary-*` sürümleri kararsızdır. `~7.0.0` yazmak canary çeker.
+
+## 2026-08-24 · `--filter=!@paket` var olmayan pakette turbo'yu öldürür
+
+Kök script'te olmayan bir pakete negatif filtre yazarsan turbo `No package found with name ...`
+ile hata verir — yani `pnpm gates` paket oluşturulana kadar tamamen çalışmaz.
+**Yapılacak:** Negatif filtre kullanma. e2e paketinin task adını `test` yerine `e2e` yap;
+`turbo run test` onu hiç görmez.
+
+## 2026-08-24 · Mongoose model yeniden kaydı: cast `??` fallback'ini öldürür
+
+`(models['User'] as Model<UserDoc>) ?? model(...)` yazarsan cast `undefined`'ı **??'den önce**
+kaldırır, fallback ölü koda döner (`no-unnecessary-condition` bunu yakalar) ve HMR/yeniden
+içe aktarmada `OverwriteModelError` alırsın.
+**Yapılacak:** `as Model<UserDoc> | undefined` yaz.
+
+## 2026-08-24 · `noUncheckedIndexedAccess` + string indeksleme
+
+`ALPHABET[i]` tipi `string | undefined` döner; `restrict-plus-operands` reddeder ve `!`
+`strictTypeChecked` altında yasak. `.charAt(i)` kullan — total fonksiyon, aynı sonuç.
+
+## 2026-08-24 · `import type { X } from 'mongodb'` bile paketi bağımlılık yapar
+
+pnpm izole linker'da `mongodb` yalnızca `.pnpm/node_modules` altındadır; `tsc` `TS2307` verir.
+`mongoose@9.9.3`'ün çözdüğü sürümle aynısını (`7.5.0`) doğrudan bağımlılık olarak ekle —
+store'da tek kopya kalır.
 
 ## 2026-08-24 · `turbo run test` Playwright'ı da çalıştırır
 
@@ -4483,7 +4756,7 @@ Lead sana verir: `previewUrl` · dalga numarası · değişen özellikler · kab
 
 ## Nasıl koşarsın
 ```bash
-E2E_BASE_URL=<previewUrl> pnpm --filter @xox/e2e test --grep "<kapsam>"
+E2E_BASE_URL=<previewUrl> pnpm --filter @xox/e2e e2e --grep "<kapsam>"
 ````
 
 Veritabanı `xox_test`. Gerekirse önce sıfırla ve tohumla:
@@ -5309,7 +5582,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @xox/db reset && pnpm --filter @xox/db seed
       - run: pnpm --filter @xox/e2e exec playwright install --with-deps chromium
-      - run: pnpm --filter @xox/e2e test
+      - run: pnpm --filter @xox/e2e e2e
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -5521,7 +5794,7 @@ Bu karar verilmeden Dalga 0 başlatılmaz.
 - [ ] **Step 5: E2E paketini preview'a karşı koştur**
 
 ```bash
-E2E_BASE_URL="$PREVIEW" pnpm --filter @xox/e2e test
+E2E_BASE_URL="$PREVIEW" pnpm --filter @xox/e2e e2e
 ```
 
 Expected: `4 passed` (ana sayfa · sağlık · iki oyuncu fixture · WS echo)
