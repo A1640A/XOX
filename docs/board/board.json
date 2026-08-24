@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-24T23:10:48.874Z",
+  "updatedAt": "2026-08-24T23:30:03.473Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -353,7 +353,7 @@
         "apps/web/lib/game/**",
         "apps/web/app/api/rooms/[code]/ws/**"
       ],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/WS-001",
       "report": null,
