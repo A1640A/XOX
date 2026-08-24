@@ -713,23 +713,47 @@ describe('kullanıcı eylemleri — kapı hep aynı: bağlıyım ve koltuğum va
 
 describe('opponentLeftVisible — 2 saniyelik gösterim eşiği (ADR-0007)', () => {
   const graceMs = DISCONNECT_GRACE_SECONDS * 1_000
+  const sapmasiz = (
+    graceEndsAt: number | null,
+  ): Pick<RoomClientState, 'graceEndsAt' | 'serverOffsetMs'> => ({ graceEndsAt, serverOffsetMs: 0 })
 
   it('eşik tam 2 saniyedir', () => {
     expect(OPPONENT_LEFT_DISPLAY_DELAY_MS).toBe(2_000)
   })
 
   it('kopmanın ilk anında gösterilmez — rotasyon saniyeler içinde geri döner', () => {
-    expect(opponentLeftVisible({ graceEndsAt: 10_000 + graceMs }, 10_000)).toBe(false)
-    expect(opponentLeftVisible({ graceEndsAt: 10_000 + graceMs - 1_999 }, 10_000)).toBe(false)
+    expect(opponentLeftVisible(sapmasiz(10_000 + graceMs), 10_000)).toBe(false)
+    expect(opponentLeftVisible(sapmasiz(10_000 + graceMs - 1_999), 10_000)).toBe(false)
   })
 
   it('2 saniye geçtikten sonra gösterilir', () => {
-    expect(opponentLeftVisible({ graceEndsAt: 10_000 + graceMs - 2_000 }, 10_000)).toBe(true)
-    expect(opponentLeftVisible({ graceEndsAt: 10_000 + graceMs - 9_000 }, 10_000)).toBe(true)
+    expect(opponentLeftVisible(sapmasiz(10_000 + graceMs - 2_000), 10_000)).toBe(true)
+    expect(opponentLeftVisible(sapmasiz(10_000 + graceMs - 9_000), 10_000)).toBe(true)
   })
 
   it('kopma yoksa gösterilmez', () => {
-    expect(opponentLeftVisible({ graceEndsAt: null }, 10_000)).toBe(false)
+    expect(opponentLeftVisible(sapmasiz(null), 10_000)).toBe(false)
+  })
+
+  // `graceEndsAt` SUNUCU damgasıdır; istemci saatiyle doğrudan karşılaştırmak
+  // KK-070'in 2 sn bütçesini saat sapması kadar kaydırır.
+  it('istemci saati geride kalsa da eşik sunucu zamanına göre işler', () => {
+    // İstemci 25 sn geride: sunucu 35_000 derken istemci 10_000 diyor.
+    const sapma = { serverOffsetMs: 25_000 }
+    const kopmaAni = 35_000 + graceMs
+
+    expect(opponentLeftVisible({ graceEndsAt: kopmaAni, ...sapma }, 10_000)).toBe(false)
+    expect(opponentLeftVisible({ graceEndsAt: kopmaAni, ...sapma }, 11_999)).toBe(false)
+    expect(opponentLeftVisible({ graceEndsAt: kopmaAni, ...sapma }, 12_000)).toBe(true)
+  })
+
+  it('istemci saati ileri gitse de sahte "rakip koptu" yanmaz', () => {
+    // İstemci 5 sn ileride: düzeltmesiz her rotasyonda banner yanardı.
+    const sapma = { serverOffsetMs: -5_000 }
+    const kopmaAni = 10_000 + graceMs
+
+    expect(opponentLeftVisible({ graceEndsAt: kopmaAni, ...sapma }, 15_000)).toBe(false)
+    expect(opponentLeftVisible({ graceEndsAt: kopmaAni, ...sapma }, 17_000)).toBe(true)
   })
 })
 

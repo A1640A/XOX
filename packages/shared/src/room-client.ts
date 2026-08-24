@@ -160,13 +160,22 @@ export function nextReconnectDelay(attempt: number, rng: () => number): number {
   return Math.round(base * (0.8 + 0.4 * rng()))
 }
 
-/** Rakibin kopması `now` anında kullanıcıya gösterilmeli mi? (ADR-0007) */
+/**
+ * Rakibin kopması `now` anında kullanıcıya gösterilmeli mi? (ADR-0007)
+ *
+ * `graceEndsAt` bir **sunucu** damgasıdır; istemci saatiyle doğrudan
+ * karşılaştırmak eşiği saat sapması kadar kaydırır. 25 sn geri kalan bir saatte
+ * banner 29. saniyede belirir — oyuncu 30 sn'lik grace'i hiç görmeden abandon
+ * galibiyetini alır. Karşılaştırma bu yüzden `serverOffsetMs` ile düzeltilmiş
+ * zamanda yapılır; `state` mesajı bu alanı tam bu amaçla taşıyor.
+ */
 export function opponentLeftVisible(
-  state: Pick<RoomClientState, 'graceEndsAt'>,
+  state: Pick<RoomClientState, 'graceEndsAt' | 'serverOffsetMs'>,
   now: number,
 ): boolean {
   if (state.graceEndsAt === null) return false
-  const elapsed = DISCONNECT_GRACE_SECONDS * 1_000 - (state.graceEndsAt - now)
+  const serverNow = now + state.serverOffsetMs
+  const elapsed = DISCONNECT_GRACE_SECONDS * 1_000 - (state.graceEndsAt - serverNow)
   return elapsed >= OPPONENT_LEFT_DISPLAY_DELAY_MS
 }
 
