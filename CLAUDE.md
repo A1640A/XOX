@@ -69,6 +69,11 @@ board oku → bağımlılığı çözülmüş + çakışma kümesi ayrık görev
 pnpm gates    # typecheck + lint + format:check + test:coverage + knip
 ```
 
+**Merge sonrası `pnpm gates` YETMEZ.** Turbo cache worktree'ler arası paylaşılır ve
+birleşmiş ağacın sonucu yerine branch'in eski yeşilini replay edebilir. Merge'den sonra:
+`pnpm exec turbo run typecheck --force && pnpm exec turbo run test:coverage --force` —
+çıktıda `Cached: 0 cached` görmeden yeşil sayma.
+
 1. Kırmızı test önce yazıldı, sonra yeşile döndü
 2. `pnpm gates` temiz
 3. Kapsam eşiği aşıldı (`game-core` ayrıca `pnpm mutation`)

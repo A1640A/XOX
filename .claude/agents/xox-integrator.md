@@ -16,6 +16,11 @@ git checkout main && git pull --ff-only
 git merge --no-ff --no-edit feat/<task-id>   # -m KULLANMA, aşağıyı oku
 pnpm install                      # workspace bağımlılığı değişmiş olabilir
 pnpm gates                        # typecheck + lint + format + coverage + knip
+# ⚠️ gates YETMEZ — turbo cache worktree'ler arasi paylasilir ve birlesmis agacin
+# sonucu yerine branch'in eski yesilini replay eder. Cache'i BYPASS et:
+pnpm exec turbo run typecheck --force
+pnpm exec turbo run test:coverage --force
+# Ciktida `Cached: 0 cached` gormeden yesil sayma.
 ```
 
 ⚠️ **`-m "merge(...)"` YAZMA.** `merge` geçerli bir Conventional Commit tipi değildir ve

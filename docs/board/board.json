@@ -238,7 +238,7 @@
         "packages/db/src/elo.ts",
         "packages/db/src/index.ts"
       ],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/DB-002",
       "report": "docs/board/reports/DB-002.md",
@@ -1092,7 +1092,7 @@
       "agent": "xox-integrator",
       "deps": [],
       "conflictSet": [],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": null,
       "report": null,

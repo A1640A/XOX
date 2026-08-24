@@ -37,6 +37,16 @@ gerçek CLI kırık · `next-auth`'un derlenmiş çıktısı Vitest'in native ES
 import edilemez (environment fark etmez) · `jose` jsdom'un ayrı `Uint8Array` realm'inde patlar
 ama gerçek Node çalışma zamanında sorun yok — iki yönde de "test ortamı = üretim" varsayımı yanlış.
 
+## 2026-08-25 · ⚠️ Turbo cache merge sonrasi kapiyi SAHTE YESIL gosterir
+
+Turbo cache ayni makinedeki worktree-ler arasinda PAYLASILIR. Merge-den sonra `pnpm gates`
+kosuldugunda `@xox/db:typecheck` "cache hit" verip **branch worktree-sinde hesaplanmis** sonucu
+replay etti — yani BIRLESMIS agacin typecheck-i hic calismadi. Tam da "branch-ler tek tek yesil,
+birlesince kirmizi" sinifi buradan sizar: merge sonrasi kapi, branch-in eski yesilini gosterir.
+**Yapilacak:** Merge sonrasi dogrulama `--force` ile kosulmali:
+`pnpm exec turbo run typecheck --force` ve `... test:coverage --force`. Ciktida
+`Cached: 0 cached` gormeden "yesil" deme. (Ornek 2026-08-25: 7/7 ve 5/5, 0 cached.)
+
 ## 2026-08-25 · LEAD DISIPLINI: mutasyon sondasi UYGULANDI MI diye kontrol et
 
 Bu gece uc kez `perl -0pi` / `grep` kalibi tutmadi ve sonda SESSIZCE hicbir sey degistirmedi.
