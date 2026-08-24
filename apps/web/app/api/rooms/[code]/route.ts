@@ -5,6 +5,7 @@ import {
   type ErrorCode,
   type ErrorResponse,
 } from '@xox/shared'
+import { resolveIdentity } from '@/lib/auth/identity'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,23 +19,39 @@ function errorJson(code: ErrorCode, message: string, status: number): Response {
 
 /**
  * Oda özeti — WS upgrade **öncesi** ön kontrol (tasarım §5.1/§7, KK-033).
- * Kimlik gerektirmez: bir kullanıcı giriş yapmadan bile bir kodun geçerli
- * olup olmadığını görebilmeli (davet akışı).
+ *
+ * **Kimlik zorunludur** (lead kararı, güvenlik incelemesi bulgusu): yanıt
+ * `seats.X/O.userId`'yi (gerçek ad eşliğinde) taşıyor ve bu değer
+ * `POST /api/friends`'in `{userId}` gövdesinin birebir kabul ettiği şey —
+ * kimliksiz bir çağıran, sızmış TEK bir oda kodundan hedeflenebilir bir
+ * kimlik + gerçek ad çıkarabilir. Bugün hiçbir istemci bu uca kimliksiz
+ * erişmiyor (davet akışı `/oda/[kod]`e doğrudan yönleniyor, WS'e bağlanıyor),
+ * yani `canJoin` bile şu an tüketilmiyor — kapatmanın maliyeti sıfır.
+ * `resolveIdentity` `allowTicket` GEÇMEDEN çağrılır (`POST /api/rooms`'la
+ * aynı disiplin): bilet yalnız WS upgrade'inde geçerlidir.
+ *
+ * Sıra ÖNEMLİDİR: önce kimlik, sonra kod doğrulama — aksi hâlde kimliksiz
+ * çağıran "bu kod geçerli formatta mı" bilgisini hâlâ öğrenebilirdi.
  *
  * Kod **sunucu tarafında** normalleştirilir (trim + büyük harf) — istemci
  * doğrulaması tek savunma hattı değildir. Normalleştirme sonrası
  * `roomCodeSchema` dışı kalan her değer `400 INVALID_CODE` alır.
  */
-export async function GET(_req: Request, { params }: RouteContext): Promise<Response> {
-  const { code: rawCode } = await params
-  const normalized = rawCode.trim().toUpperCase()
-  const parsed = roomCodeSchema.safeParse(normalized)
-  if (!parsed.success) {
-    return errorJson('INVALID_CODE', 'Geçersiz oda kodu.', 400)
-  }
-  const code = parsed.data
-
+export async function GET(req: Request, { params }: RouteContext): Promise<Response> {
   try {
+    const identity = await resolveIdentity(req)
+    if (identity === null) {
+      return errorJson('UNAUTHENTICATED', 'Oturum bulunamadı.', 401)
+    }
+
+    const { code: rawCode } = await params
+    const normalized = rawCode.trim().toUpperCase()
+    const parsed = roomCodeSchema.safeParse(normalized)
+    if (!parsed.success) {
+      return errorJson('INVALID_CODE', 'Geçersiz oda kodu.', 400)
+    }
+    const code = parsed.data
+
     await connectDb()
     const room = await Room.findOne({ code }).select('code state seats').lean()
     if (room === null) {

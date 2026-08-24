@@ -68,6 +68,7 @@ describe('POST /api/rooms — gerçek resolveIdentity, yalnız auth()+createRoom
     expect(response.status).toBe(201)
     expect(await response.json()).toStrictEqual({ code: 'ABC234' })
     expect(mockCreateRoom).toHaveBeenCalledWith({ userId: 'cerez-kullanici', name: 'Ayşe' })
+    expect(mockConnectDb).toHaveBeenCalled()
   })
 
   it('AC2: Authorization Bearer ile de AYNI userId createRoom-a geçirilir (çerezle eşdeğer yol)', async () => {
@@ -135,4 +136,21 @@ describe('POST /api/rooms — gerçek resolveIdentity, yalnız auth()+createRoom
       message: 'Oda oluşturulamadı.',
     })
   })
+
+  it(
+    'MINOR-3 fix: resolveIdentity fırlatırsa (ör. AUTH_SECRET eksik/kısa, @auth/core ' +
+      'MissingSecret) sözleşme BİÇİMİ korunur — generic Next 500 değil, { code, message } zarfı',
+    async () => {
+      mockAuth.mockRejectedValue(new Error('MissingSecret'))
+
+      const { POST } = await import('./route')
+      const response = await POST(makeRequest())
+
+      expect(response.status).toBe(500)
+      const body: unknown = await response.json()
+      expect(body).toMatchObject({ code: 'SERVER_ERROR' })
+      expect(JSON.stringify(body)).not.toContain('MissingSecret')
+      expect(mockCreateRoom).not.toHaveBeenCalled()
+    },
+  )
 })

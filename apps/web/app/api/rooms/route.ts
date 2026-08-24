@@ -17,12 +17,12 @@ function errorJson(code: ErrorCode, message: string, status: number): Response {
  * bilet yalnız WS upgrade'inde geçerlidir, burada değil.
  */
 export async function POST(req: Request): Promise<Response> {
-  const identity = await resolveIdentity(req)
-  if (identity === null) {
-    return errorJson('UNAUTHENTICATED', 'Oturum bulunamadı.', 401)
-  }
-
   try {
+    const identity = await resolveIdentity(req)
+    if (identity === null) {
+      return errorJson('UNAUTHENTICATED', 'Oturum bulunamadı.', 401)
+    }
+
     await connectDb()
     const result = await createRoom({ userId: identity.userId, name: identity.name })
 
