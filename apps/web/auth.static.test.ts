@@ -11,12 +11,21 @@ import { describe, expect, it } from 'vitest'
  * Bu, gerçek `next-auth` paketini import eden HER modül (`./auth`,
  * `./middleware`) için geçerli; gotchas.md'ye kayıt düşüldü.
  *
- * Bu yüzden kriter 2 ("adapter alanı YOK") burada METİN düzeyinde
- * doğrulanır. Gerçek mekanik kanıt `pnpm --filter @xox/web build`.
+ * ÖNEMLİ SINIR (güvenlik denetimi bulgusu): bu dosyadaki testler `auth.ts`'i
+ * ÇALIŞTIRMAZ, yalnız kaynak METNİNİ tarar. Bu, kendi başına GÜVENİLİR bir
+ * davranış kanıtı DEĞİLDİR — `auth.ts` içine gömülü herhangi bir mantık
+ * (örn. eskiden burada duran `jwt`/`session` callback gövdeleri) bu şekilde
+ * test edilemez; bir mutasyon (`token.sub = 'sabit-yonetici'` gibi) hiçbir
+ * testi kırmadan buradan geçer. Bu yüzden `auth.ts`'in TÜM gerçek mantığı
+ * (`authorizeCredentials`, `applySessionUser`) `next-auth`'a bağımlı OLMAYAN
+ * ayrı dosyalara taşındı ve ORADA gerçek, çalıştırılan testlerle kilitlendi
+ * (`lib/auth/authorize.test.ts`, `lib/auth/session-callback.test.ts`).
+ * Bu dosyada kalan tek şey "auth.ts satır içi mantık İÇERMİYOR, hep dışarıya
+ * DELEGE EDİYOR" iddiasıdır — mekanik kanıt yine `pnpm --filter @xox/web build`.
  */
 const authSource = readFileSync(join(process.cwd(), 'auth.ts'), { encoding: 'utf8' })
 
-describe('auth.ts — ADR-0009 A: adapter alanı yok', () => {
+describe('auth.ts — ADR-0009 A: adapter alanı yok, mantık DIŞARIYA delege edilir', () => {
   it('"adapter" anahtarı HİÇBİR yerde geçmez', () => {
     expect(authSource).not.toMatch(/\badapter\s*:/)
     expect(authSource).not.toContain('MongoDBAdapter')
@@ -34,4 +43,19 @@ describe('auth.ts — ADR-0009 A: adapter alanı yok', () => {
   it('iş mantığı (authorizeCredentials) ayrı, test edilebilir bir dosyadan gelir', () => {
     expect(authSource).toMatch(/from ['"]\.\/lib\/auth\/authorize['"]/)
   })
+
+  it('session callback mantığı ayrı, test edilebilir bir dosyadan gelir (applySessionUser)', () => {
+    expect(authSource).toMatch(/from ['"]\.\/lib\/auth\/session-callback['"]/)
+    expect(authSource).toMatch(/applySessionUser\(session,\s*token\)/)
+  })
+
+  it(
+    "'jwt' callback'i TANIMLANMAZ — @auth/core oturum okumasında `user` " +
+      'anahtarı OLMADAN çağırır, bir zamanlar burada duran ' +
+      '`user.id !== undefined` satırı her oturum okumasında TypeError ' +
+      'fırlatıp çerezi siliyordu (güvenlik denetimi BLOCKER-1)',
+    () => {
+      expect(authSource).not.toMatch(/\bjwt\s*\(/)
+    },
+  )
 })
