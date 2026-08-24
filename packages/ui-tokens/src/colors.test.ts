@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { colors, themes } from './colors'
+import { themes } from './colors'
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/
 
@@ -21,9 +21,7 @@ describe('themes', () => {
   })
 })
 
-describe('colors (geriye dönük takma ad)', () => {
-  it('light/dark, themes.acik/koyu ile birebir aynıdır — tek kaynak korunuyor', () => {
-    expect(colors.light).toStrictEqual(themes.acik)
-    expect(colors.dark).toStrictEqual(themes.koyu)
-  })
-})
+// `colors.light`/`colors.dark` (geriye dönük takma ad) burada kasıtlı olarak test EDİLMİYOR:
+// gövdesi `{ light: themes.acik, dark: themes.koyu }` — kendisiyle karşılaştıran bir test
+// tanım gereği asla kırılamaz (reviewer bulgusu, bkz. docs/board/reports/UI-001.md). Modül
+// yüklendiğinde nesne literali zaten çalıştığı için satır kapsamı bundan etkilenmiyor.

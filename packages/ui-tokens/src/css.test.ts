@@ -1,8 +1,30 @@
 import { describe, expect, it } from 'vitest'
 import { cssVariables, cssVariableTokenNames, nativeColors, themeCss, themeCssBlock } from './css'
-import { type Theme, themes } from './colors'
+import { type ColorToken, type Theme, themes } from './colors'
 
 const ALL_THEMES = Object.keys(themes) as Theme[]
+
+/**
+ * `ColorToken` birleşiminin TAMAMINI, FAZLASIZ listeler. `Record<ColorToken, true>` tipine
+ * atanan bir nesne literali hem eksik hem fazla anahtarda DERLEME HATASI verir (TS'in fazla
+ * özellik denetimi) — yani bu liste `themes`'ten bağımsız, derleme zamanında kilitli bir
+ * referans noktasıdır. Aşağıdaki testler `cssVariables`/`nativeColors` çıktısını BİRBİRİYLE
+ * değil, bu bağımsız listeyle karşılaştırır; `nativeColors(theme) === themes[theme]` gibi bir
+ * özdeşlik iddiası hiçbir gerçek riski sınamaz (tanım gereği asla kırılamaz).
+ */
+const EXPECTED_COLOR_TOKENS_RECORD: Record<ColorToken, true> = {
+  bg: true,
+  surface: true,
+  border: true,
+  text: true,
+  textMuted: true,
+  accent: true,
+  playerX: true,
+  playerO: true,
+  win: true,
+  danger: true,
+}
+const EXPECTED_COLOR_TOKENS = Object.keys(EXPECTED_COLOR_TOKENS_RECORD).sort()
 
 describe('cssVariables', () => {
   it.each(ALL_THEMES)('%s için --color- önekli CSS custom property üretir', (theme) => {
@@ -20,20 +42,28 @@ describe('cssVariables', () => {
     expect(vars['--color-player-x']).toBe(themes[theme].playerX)
     expect(vars['--color-player-o']).toBe(themes[theme].playerO)
   })
+
+  it.each(ALL_THEMES)(
+    '%s: anahtar kümesi ColorToken birleşiminin TAMAMINI kapsar (bağımsız listeye karşı)',
+    (theme) => {
+      expect(cssVariableTokenNames(theme).sort()).toStrictEqual(EXPECTED_COLOR_TOKENS)
+    },
+  )
 })
 
 describe('nativeColors', () => {
   it.each(ALL_THEMES)('%s için aynı kaynaktan düz bir RN renk nesnesi üretir', (theme) => {
-    expect(nativeColors(theme)).toStrictEqual(themes[theme])
+    const colors = nativeColors(theme)
+    expect(colors.bg).toBe(themes[theme].bg)
+    expect(colors.playerO).toBe(themes[theme].playerO)
   })
-})
 
-describe('web (cssVariables) ve mobil (nativeColors) anahtar paritesi', () => {
-  it.each(ALL_THEMES)('%s: iki çıktının token anahtarları eşittir, kayma yok', (theme) => {
-    const cssTokenNames = cssVariableTokenNames(theme).sort()
-    const nativeTokenNames = Object.keys(nativeColors(theme)).sort()
-    expect(cssTokenNames).toStrictEqual(nativeTokenNames)
-  })
+  it.each(ALL_THEMES)(
+    '%s: anahtar kümesi ColorToken birleşiminin TAMAMINI kapsar (bağımsız listeye karşı)',
+    (theme) => {
+      expect(Object.keys(nativeColors(theme)).sort()).toStrictEqual(EXPECTED_COLOR_TOKENS)
+    },
+  )
 })
 
 describe('themeCssBlock', () => {

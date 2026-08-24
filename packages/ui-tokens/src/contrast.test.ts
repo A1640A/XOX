@@ -3,8 +3,21 @@ import { contrastRatio, meetsTextContrast } from './contrast'
 import { type ColorToken, type Theme, themes } from './colors'
 
 const ALL_THEMES = Object.keys(themes) as Theme[]
-/** Metin ya da metin büyüklüğünde vurgu olarak kullanılan token'lar — WCAG AA 4.5:1 ister. */
-const TEXT_TOKENS: ColorToken[] = ['text', 'textMuted', 'accent', 'playerX', 'playerO', 'danger']
+/**
+ * Metin ya da metin büyüklüğünde vurgu olarak kullanılan token'lar — WCAG AA 4.5:1 ister.
+ * `win` de burada: kazanan hattın rengi bu değeri seçmenin gerekçesiydi (bkz. UI-001 raporu,
+ * eski `#16a34a` 3.13:1 ile eşiğin altındaydı) — reddedilen eski değer geri konursa bu test
+ * kırmızı olmalı, `it.each` üzerinden garanti ediliyor.
+ */
+const TEXT_TOKENS: ColorToken[] = [
+  'text',
+  'textMuted',
+  'accent',
+  'playerX',
+  'playerO',
+  'danger',
+  'win',
+]
 
 describe('contrastRatio', () => {
   it('aynı renk için oranı 1 döner', () => {
@@ -18,6 +31,16 @@ describe('contrastRatio', () => {
   it('girdi sırası sonucu değiştirmez', () => {
     expect(contrastRatio('#123456', '#abcdef')).toBeCloseTo(contrastRatio('#abcdef', '#123456'), 10)
   })
+
+  it('3 haneli kısaltmayı 6 haneli eşdeğeriyle özdeş işler', () => {
+    expect(contrastRatio('#fff', '#000')).toBeCloseTo(contrastRatio('#ffffff', '#000000'), 10)
+  })
+
+  it('geçersiz hex girdisinde SESSİZCE NaN dönmez, fırlatır', () => {
+    expect(() => contrastRatio('mavi', '#000000')).toThrow(/geçersiz hex/i)
+    expect(() => contrastRatio('#12345', '#000000')).toThrow(/geçersiz hex/i)
+    expect(() => contrastRatio('#2563eb80', '#000000')).toThrow(/geçersiz hex/i)
+  })
 })
 
 describe('meetsTextContrast — KK: metin/arka plan >= 4.5:1', () => {
@@ -30,12 +53,12 @@ describe('meetsTextContrast — KK: metin/arka plan >= 4.5:1', () => {
   }
 })
 
-describe('win token — grafik/vurgu için WCAG 1.4.11 eşiği (>= 3:1)', () => {
+describe('border — WCAG 1.4.11 anlamlı UI bileşeni eşiği (>= 3:1)', () => {
   for (const theme of ALL_THEMES) {
-    it(`${theme}.win, bg ve surface üzerinde >= 3:1`, () => {
+    it(`${theme}.border, bg ve surface üzerinde >= 3:1 (tahta hücre sınırı görünür olmalı)`, () => {
       const palette = themes[theme]
-      expect(contrastRatio(palette.win, palette.bg)).toBeGreaterThanOrEqual(3)
-      expect(contrastRatio(palette.win, palette.surface)).toBeGreaterThanOrEqual(3)
+      expect(contrastRatio(palette.border, palette.bg)).toBeGreaterThanOrEqual(3)
+      expect(contrastRatio(palette.border, palette.surface)).toBeGreaterThanOrEqual(3)
     })
   }
 })

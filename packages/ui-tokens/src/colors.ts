@@ -3,15 +3,17 @@
  * değerlerini buradan alır. `themes` TEK kaynaktır — başka hiçbir dosyada hex literal renk
  * tekrarlanmaz (bkz. KK-084, kök `eslint.config.mjs` `no-restricted-syntax` kuralı).
  *
- * Kontrast notu: her metin/arka plan çifti WCAG AA (>=4.5:1) hedefiyle seçildi.
- * `playerX`/`playerO` yalnızca renkle ayırt edilmemeli — bileşen katmanı (sonraki dalga)
- * ayrıca şekil/kalınlık farkı ekler (X: kalın çift çizgi, O: ince çember).
+ * Kontrast notu: her metin/arka plan çifti WCAG AA (>=4.5:1) hedefiyle, `border` ise WCAG
+ * 1.4.11 (>=3:1, "anlamlı UI bileşeni" — 3×3 tahtanın hücre sınırları) hedefiyle seçildi
+ * ve `contrast.test.ts`'te kilitlendi. `playerX`/`playerO` yalnızca renkle ayırt edilmemeli
+ * — bileşen katmanı (sonraki dalga) ayrıca şekil/kalınlık farkı ekler (X: kalın çift çizgi,
+ * O: ince çember).
  */
 export const themes = {
   acik: {
     bg: '#faf9f7',
     surface: '#ffffff',
-    border: '#e5e2dd',
+    border: '#857f79',
     text: '#1c1917',
     textMuted: '#78716c',
     accent: '#2563eb',
@@ -23,7 +25,7 @@ export const themes = {
   koyu: {
     bg: '#17161a',
     surface: '#211f26',
-    border: '#35323c',
+    border: '#78727e',
     text: '#f5f4f2',
     textMuted: '#a8a29e',
     accent: '#60a5fa',

@@ -1,7 +1,26 @@
 import { type ColorToken, type Theme, themes } from './colors'
 
+/** KK-084'ün izin verdiği aynı biçim: 3 ya da 6 haneli hex. Alfa kanallı 8 haneli renk için
+ * kompozisyon (arkaplanla karıştırma) gerekir, bu modül yalnız opak temaların rengini alır. */
+const VALID_HEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
+
+/** `#abc` -> `#aabbcc`. `noUncheckedIndexedAccess` altında dizin erişimi yerine `charAt` —
+ * bkz. docs/memory/gotchas.md "noUncheckedIndexedAccess + string indeksleme". */
+function expandShorthandHex(hex: string): string {
+  if (hex.length !== 4) return hex
+  const r = hex.charAt(1)
+  const g = hex.charAt(2)
+  const b = hex.charAt(3)
+  return `#${r}${r}${g}${g}${b}${b}`
+}
+
 function hexToRgb(hex: string): [number, number, number] {
-  const value = hex.replace('#', '')
+  if (!VALID_HEX.test(hex)) {
+    throw new Error(
+      `contrastRatio: geçersiz hex renk '${hex}'. 3 ya da 6 haneli olmalı (ör. '#fff', '#2563eb').`,
+    )
+  }
+  const value = expandShorthandHex(hex).slice(1)
   const r = Number.parseInt(value.slice(0, 2), 16)
   const g = Number.parseInt(value.slice(2, 4), 16)
   const b = Number.parseInt(value.slice(4, 6), 16)
@@ -25,6 +44,7 @@ function relativeLuminance(hex: string): number {
 /**
  * WCAG 2 kontrast oranı (1:1 - 21:1). Referans: w3.org/TR/WCAG21/#contrast-minimum.
  * Girdi sırası önemsizdir — daima açık/koyu ayrımı içeriden yapılır.
+ * Geçersiz (3/6 haneli olmayan) bir hex verilirse SESSİZCE `NaN` DÖNMEZ — fırlatır.
  */
 export function contrastRatio(hexA: string, hexB: string): number {
   const luminanceA = relativeLuminance(hexA)

@@ -28,9 +28,11 @@ export function cssVariables(theme: Theme): Record<string, string> {
 /**
  * Aynı `themes` kaynağından React Native `StyleSheet` için düz renk nesnesi üretir.
  * `cssVariables` ile birebir aynı anahtar kümesini (kebab-case önekten arındırılmış hâliyle)
- * taşır — iki çıktı kaymaz.
+ * taşır — iki çıktı kaymaz. Dönüş değeri `themes[theme]`'in KENDİSİDİR (kopya değil) — bu
+ * yüzden `Readonly` işaretli: geri dönüş tipi mutable olsaydı `nativeColors('acik').bg = ...`
+ * tsc'den geçer ve sürecin TEK renk kaynağını kalıcı olarak bozardı.
  */
-export function nativeColors(theme: Theme): Record<ColorToken, string> {
+export function nativeColors(theme: Theme): Readonly<Record<ColorToken, string>> {
   return themes[theme]
 }
 
@@ -46,7 +48,9 @@ const THEME_SELECTOR: Record<Theme, string> = {
 
 /**
  * Bir temanın CSS seçici bloğunu üretir, ör. `[data-tema='koyu'] { --color-bg: #17161a; ... }`.
- * `apps/web/app/globals.css`'in `@theme` bloğuna yapıştırılmak üzere tasarlandı (sonraki dalga).
+ * `apps/web/app/globals.css`'teki `@theme` bloğunun İÇİNE DEĞİL, YANINA kardeş bir kural
+ * olarak yapıştırılmak üzere tasarlandı (sonraki dalga, UI-SKEL-001). Tailwind v4'te `@theme`
+ * bir seçici içeremez — bu blok `@theme`'in içine gömülürse build kırılır.
  */
 export function themeCssBlock(theme: Theme): string {
   const vars = cssVariables(theme)
