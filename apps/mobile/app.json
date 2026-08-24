@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "XOX",
+    "slug": "xox",
+    "scheme": "xox",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "updates": { "enabled": false },
+    "web": { "bundler": "metro", "output": "static" },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.omerdursun.xox" },
+    "android": { "package": "com.omerdursun.xox" }
+  }
+}

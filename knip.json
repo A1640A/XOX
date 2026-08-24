@@ -11,7 +11,11 @@
       ],
       "project": ["**/*.{ts,tsx}"]
     },
-    "apps/mobile": { "entry": ["app/**/*.tsx", "app.config.ts"], "project": ["**/*.{ts,tsx}"] },
+    "apps/mobile": {
+      "entry": ["app/**/*.tsx", "app.config.ts"],
+      "project": ["**/*.{ts,tsx}"],
+      "ignoreDependencies": ["@xox/game-core", "@xox/shared", "expo-auth-session"]
+    },
     "apps/e2e": { "entry": ["tests/**/*.spec.ts", "playwright.config.ts"], "project": ["**/*.ts"] }
   },
   "ignoreDependencies": [
