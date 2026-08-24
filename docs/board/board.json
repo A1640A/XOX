@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-24T23:00:49.621Z",
+  "updatedAt": "2026-08-24T23:09:20.437Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -388,10 +388,10 @@
       "agent": "xox-dev-backend",
       "deps": ["AUTH-001", "DB-002"],
       "conflictSet": ["apps/web/app/api/rooms/route.ts", "apps/web/app/api/rooms/[code]/route.ts"],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/ROOM-API-001",
-      "report": null,
+      "report": "docs/board/reports/ROOM-API-001.md",
       "acceptance": [
         "POST /api/rooms oturumlu istekte 201 + { code } döner; kod roomCodeSchema'ya uyar (6 karakter, [A-HJ-NP-Z2-9]) ve kurucu X koltuğuna oturur (KK-030/031 sunucu tarafı)",
         "Kimlik resolveIdentity ile çözülür: çerez VE Authorization: Bearer aynı userId'yi verir; kimliksiz istek 401 + UNAUTHENTICATED (KK-010)",
@@ -401,7 +401,8 @@
         "Route dosyaları İNCE: kural ve koşullu yazma yok, yalnız zarf açma + packages/db çağrısı + sonucu yanıta çevirme; dosya başına < 120 satır (tasarım §1)",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "3cb2fc6"
     },
     {
       "id": "E2E-001",

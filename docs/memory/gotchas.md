@@ -762,3 +762,14 @@ En sinsi kısmı E2E: `getByTestId('hata-mesaji')` iddiası boş elemana karşı
 hata yolu testi hem birimde hem E2E'de yeşil kalırken kullanıcıya hiçbir şey söylenmez.
 Örüntü #2 + #3 birlikte. Hata gövdesini de `errorResponseSchema.safeParse`'tan geçir,
 başarısızsa `SERVER_ERROR`'a düş; hata bileşenine bilinmeyen kod için görünür bir yedek koy.
+
+## 2026-08-25 · Sonda uygulamadan ÖNCE gerçek düzeltmeleri commit et
+
+Bir dosyaya mutasyon sondası uygulayıp `git checkout --` ile geri alırken, aynı dosyada duran
+**commit edilmemiş gerçek düzeltmeler de** geri gider. ROOM-API-001'de tam bu oldu: sonda geri
+alınırken kimlik kapısı düzeltmesi de silindi; ajan diff'te bloğun kaybolduğunu görüp yakaladı.
+
+Sıra her zaman şu olmalı: **düzeltmeyi commit et → sondayı uygula → `diff -q` ile uygulandığını
+doğrula → koş → `git checkout --` → `git status --porcelain` boş mu bak.** Commit edilmiş bir
+tabana karşı sonda koşmak geri almayı kayıpsız kılar. Örüntü #2'nin operasyonel ayağı: sonda
+disiplinsiz uygulanırsa sondanın kendisi yanlış sonuç üretir.
