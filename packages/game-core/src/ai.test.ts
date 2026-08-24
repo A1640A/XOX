@@ -35,6 +35,12 @@ describe('bestMove', () => {
     )
   })
 
+  it('oyun kazanılmışsa boş hücre kalsa bile hamle üretmez', () => {
+    expect(() => bestMove(b('XXXOO....'), 'O')).toThrow(
+      expect.objectContaining({ index: -1, reason: 'game-over' }),
+    )
+  })
+
   it('eşit puanlı hamlelerde ilkini seçer — seçim deterministiktir', () => {
     // Boş tahtada her hamle beraberlikle biter; sunucu otoritesi için sonuç
     // yeniden üretilebilir olmalı, bu yüzden ilk en iyi hamle korunur.
@@ -46,6 +52,22 @@ describe('bestMove', () => {
     // 2 ile 3'te çifte tehdit kurar) ama bir hamle sonra: derinlik cezası
     // olmadan AI erteleyeni seçerdi.
     expect(bestMove(b('....XX.OO'), 'X')).toBe(3)
+  })
+
+  // Seçilen hamle sunucu otoritesidir ve iki istemcide aynı çıkmalıdır; oyun
+  // teorisi açısından eşdeğer başka hamleler bulunsa da SEÇİM sabittir. Bu
+  // tablo hem stratejiyi hem de eşitlik bozma kuralını (en küçük indeks)
+  // oyun ortasındaki tahtalarda çivi ler.
+  it.each([
+    ['X........', 'O', 4, 'merkez tek doğru cevaptır'],
+    ['....X....', 'O', 0, 'merkez alınmışsa köşe — eşit dört köşeden ilki'],
+    ['X.......O', 'X', 2, 'eşit puanlı 2 ve 6 arasından küçük indeksli'],
+    ['XOX......', 'X', 4, 'eşit puanlı 4, 6 ve 8 arasından küçük indeksli'],
+    ['X..O..X..', 'O', 4, 'çifte tehdidi yalnız merkez durdurur'],
+    ['X.O.X...O', 'X', 5, 'beraberliği yalnız 5 kurtarır'],
+    ['XX.O.O...', 'X', 2, 'kazanç hattı tamamlanır'],
+  ])('%s tahtasında %s için %i seçilir (%s)', (cells, player, expected) => {
+    expect(bestMove(b(cells), player as Player)).toBe(expected)
   })
 })
 
@@ -146,5 +168,15 @@ describe('chooseMove', () => {
     expect(() => chooseMove(b('XOXXOOOXX'), 'X', 'easy')).toThrow(
       expect.objectContaining({ index: -1, reason: 'game-over' }),
     )
+  })
+
+  it('oyun kazanılmışsa boş hücre kalsa bile hamle üretmez', () => {
+    expect(() => chooseMove(b('XXXOO....'), 'O', 'unbeatable')).toThrow(
+      expect.objectContaining({ index: -1, reason: 'game-over' }),
+    )
+  })
+
+  it('kolay zorlukta bile biten oyunda hamle üretmez', () => {
+    expect(() => chooseMove(b('XXXOO....'), 'O', 'easy', () => 0)).toThrow(InvalidMoveError)
   })
 })
