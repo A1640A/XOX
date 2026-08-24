@@ -48,12 +48,33 @@ export default tseslint.config(
     },
     plugins: { 'import-x': importX, security, boundaries },
     settings: {
-      // pnpm workspace paketleri (@xox/*) node_modules altında symlink olarak durur.
-      // preserveSymlinks:false olmadan çözümleyici gerçek yolu değil symlink yolunu
-      // döndürür; bu da eslint-plugin-boundaries'in yerel paketleri "external" sanıp
-      // sınır kontrolünü sessizce atlamasına yol açar. Bu ayar olmadan boundaries
-      // kuralı paket-adı importlarında (gerçek kullanım şekli) asla tetiklenmez.
-      'import/resolver': { node: { preserveSymlinks: false } },
+      // eslint-plugin-boundaries bir import'un HANGİ elemana gittiğini yalnızca
+      // çözümlenmiş DOSYA YOLUNDAN bilir (Elements/Elements.js -> eslint-module-utils/resolve).
+      // Çözümleme başarısızsa hedef `isUnknown: true` olur ve boundaries/dependencies
+      // sessizce hiçbir şey söylemez — yani kural "varmış gibi" görünüp aslında çalışmaz.
+      //
+      // Eski ayar (`node` resolver) iki yerden birden kırılıyordu:
+      //   1. eslint-import-resolver-node varsayılan uzantıları ['.mjs','.js','.json','.node'];
+      //      '.ts' YOK. Bu yüzden GÖRELİ importlar ('../../shared/src/constants') çözülemiyordu.
+      //   2. Altında yatan `resolve` paketi package.json `exports` alanını bilmez; @xox/*
+      //      paketlerinde yalnız `exports` var (`main` yok), bu yüzden PAKET-ADI importları
+      //      ('@xox/shared') da çözülemiyor, "external" sanılıyordu.
+      // Sonuç: boundaries/dependencies HER İKİ import biçiminde de tamamen atıl durumdaydı.
+      //
+      // TypeScript resolver hem '.ts' uzantısını, hem `exports` alanını, hem tsconfig
+      // `paths` eşlemesini bilir ve pnpm symlink'lerini gerçek yola (realpath) çözer —
+      // eleman desenleri (packages/shared/**) ancak gerçek yolla eşleşir.
+      // `project` listesi kök tsconfig'i de kapsar: bir paket bağımlılığını package.json'a
+      // EKLEMEDEN '@xox/...' yazsa bile hedef çözülür ve sınır ihlali yakalanır.
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: ['tsconfig.json', 'apps/*/tsconfig.json', 'packages/*/tsconfig.json'],
+          // Birden fazla tsconfig bilerek veriliyor; resolver'ın her çalıştırmada
+          // bastığı "Multiple projects found" uyarısı gürültüden ibaret.
+          noWarnOnMultipleProjects: true,
+        },
+      },
       'boundaries/elements': [
         { type: 'game-core', pattern: 'packages/game-core/**' },
         { type: 'shared', pattern: 'packages/shared/**' },
