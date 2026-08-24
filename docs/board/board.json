@@ -69,10 +69,10 @@
       "agent": "xox-designer",
       "deps": [],
       "conflictSet": ["packages/ui-tokens/**", "eslint.config.mjs"],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/UI-001",
-      "report": null,
+      "report": "docs/board/reports/UI-001.md",
       "acceptance": [
         "@xox/ui-tokens `themes.acik` ve `themes.koyu` dışa verir; iki temanın anahtar kümesi BİREBİR aynı (test anahtar farkını kırmızı yapar)",
         "cssVariables(theme) web için CSS custom property bloğu, aynı kaynak RN için düz nesne üretir; iki çıktının anahtarları eşit (test)",
