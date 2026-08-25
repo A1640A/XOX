@@ -807,3 +807,20 @@
 {"ts":"2026-08-25T00:29:59Z","event":"file.touched","path":".claude/worktrees/DB-003/packages/db/src/rooms/summary.ts"}
 {"ts":"2026-08-25T00:30:17Z","event":"file.touched","path":".claude/worktrees/DB-003/packages/db/src/rooms/summary.ts"}
 {"ts":"2026-08-25T00:32:00Z","event":"task.fixed","task":"WS-001","note":"3 blocker + 2 high kapatildi, 61 yeni test. TEK STREAM DEGISMEZI CANLIDA KANITLANDI: 3 escamanli baglanti -> openStreams=1 watchCalls=1. Lead-in health/realtime onerisi YANLISTI: Vercel-de her route ayri fonksiyon, ayri modul kapsami — ajan denedi, 25/25 sifir aldi, geri aldi ve olcumu WS route icine tasidi. join kisa devresi olculdu: 10 ardisik join version 12->22 iken simdi 12->12, canlida 15 join -> artis 0. Echo route silindi, canli 404."}
+{"ts":"2026-08-25T00:30:27Z","event":"file.touched","path":".claude/worktrees/SEC-002/apps/web/app/api/auth/[...nextauth]/route.test.ts"}
+{"ts":"2026-08-25T00:30:42Z","event":"file.touched","path":".claude/worktrees/DB-003/packages/db/src/index.ts"}
+{"ts":"2026-08-25T00:30:52Z","event":"file.touched","path":".claude/worktrees/DB-003/apps/web/app/api/rooms/[code]/route.ts"}
+{"ts":"2026-08-25T00:30:55Z","event":"file.touched","path":".claude/worktrees/DB-003/apps/web/app/api/rooms/[code]/route.ts"}
+{"ts":"2026-08-25T00:30:56Z","event":"file.touched","path":".claude/worktrees/DB-003/apps/web/app/api/rooms/[code]/route.ts"}
+{"ts":"2026-08-25T00:31:16Z","event":"file.touched","path":".claude/worktrees/SEC-002/apps/web/lib/rate-limit/credential-lockout.ts"}
+{"ts":"2026-08-25T00:31:24Z","event":"file.touched","path":".claude/worktrees/SEC-002/apps/web/lib/rate-limit/credential-lockout.ts"}
+{"ts":"2026-08-25T00:31:37Z","event":"file.touched","path":".claude/worktrees/DB-003/apps/web/app/api/rooms/[code]/route.test.ts"}
+{"ts":"2026-08-25T00:32:16Z","event":"file.touched","path":".claude/worktrees/SEC-002/apps/web/lib/rate-limit/credential-request.test.ts"}
+{"ts":"2026-08-25T00:32:33Z","event":"file.touched","path":".claude/worktrees/E2E-001/apps/e2e/tests/smoke.spec.ts"}
+{"ts":"2026-08-25T00:32:36Z","event":"file.touched","path":".claude/worktrees/SEC-002/apps/web/lib/rate-limit/ip-limit.test.ts"}
+{"ts":"2026-08-25T00:38:23Z","event":"file.touched","path":"docs/board/reports/DB-003.md"}
+{"ts":"2026-08-25T00:38:36Z","event":"file.touched","path":".claude/worktrees/E2E-001/apps/e2e/tests/smoke.spec.ts"}
+{"ts":"2026-08-25T00:39:32Z","event":"subagent.stop"}
+{"ts":"2026-08-25T00:39:40Z","event":"subagent.stop"}
+{"ts":"2026-08-25T00:41:11Z","event":"file.touched","path":"/private/tmp/claude-501/-Users-omerdursun-PROJELER-XOX/02ee006c-b5d2-4e00-837b-bd8913dc4c5a/scratchpad/board3.cjs"}
+{"ts":"2026-08-25T00:45:00Z","event":"task.done","task":"WS-001","mergeSha":"ae25322","note":"KRITIK YOL ACILDI. Sifir cakisma (kesisim kumesi bos, olculdu). turbo --force 7/7 + 5/5 Cached: 0. Web 235->405 test, mutabakat kalem kalem tuttu. rooms/index.ts dondurmasi korundu. e2e kapilara girmiyor (coverage 5 task, e2e-de test:coverage scripti yok). E2E-001 Asama 2 GO verildi"}

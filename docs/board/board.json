@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T00:26:22.654Z",
+  "updatedAt": "2026-08-25T00:41:26.682Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -354,10 +354,10 @@
         "apps/web/lib/game/**",
         "apps/web/app/api/rooms/[code]/ws/**"
       ],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/WS-001",
-      "report": null,
+      "report": "docs/board/reports/WS-001.md",
       "acceptance": [
         "room-hub.ts modül kapsamında EN FAZLA BİR Room.watch() tutar: sahte sürücüyle üç abone eklendiğinde watch tam 1 kez çağrılır; son abone gidince stream.close() çağrılır (ADR-0002 · Z1)",
         "Stream tembel açılır (ilk subscribe'da, uygulama açılışında değil). Pipeline YALNIZ operationType üzerinde $match yapar; oda filtresi süreç içinde subscribers.get(change.fullDocument.code) ile yapılır (gotcha Z7)",
@@ -379,7 +379,8 @@
         "vercel.json GERCEKTEN okunuyor mu mekanik kanit: route yazildiktan sonra `vc build` cikisindaki .vercel/output/functions/**/.vc-config.json icinde maxDuration beklenen deger olarak okunur. Gerekce: Vercel, next runtime-inda `app/` ile baslayan functions anahtarlarini HIC dogrulamaz (checkUnusedFunctions onlari sessizce atar) - yani deploy yesili ayarin uygulandiginin kaniti degildir. Root Directory yanlissa dosya komple yok sayilir.",
         "BILET ODA DOGRULAMASI ZORUNLU: WS upgrade-inde `resolveIdentity(req, {allowTicket:true})` cagrilir VE donen `identity.room` URL-deki oda koduyla KARSILASTIRILIR. Eslesmiyorsa 4403 ile kapatilir. AUTH-001 bileti `room` claim-ine bagladi (yatay yetki karari) ama dogrulamayi yapacak taraf BURASI — yapilmazsa A odasinin bileti B odasinda calisir."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "ae25322"
     },
     {
       "id": "ROOM-API-001",
@@ -1143,10 +1144,10 @@
         "packages/db/src/index.ts",
         "apps/web/app/api/rooms/[code]/route.ts"
       ],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/DB-003",
-      "report": null,
+      "report": "docs/board/reports/DB-003.md",
       "blockedReason": null,
       "acceptance": [
         "packages/db/src/rooms/summary.ts içinde getRoomSummary(code) — projeksiyon dizesi ve koltuk şekli bilgisi packages/db içinde kalır",
@@ -1228,6 +1229,34 @@
         "Build uyarisi kalkar: \"The <middleware> file convention is deprecated. Please use <proxy> instead.\" (UI-SKEL-001 entegrasyonunda gozlendi, Next 16.3.2 hala onurluyor)",
         "Oturum korumasi davranisi DEGISMEZ — mevcut middleware testleri dokunulmadan yesil kalir",
         "DIKKAT: bu dosya next-auth import ediyor, yani Vitest-te calistirilamaz (gotchas). Is mantigi next-auth-suz ayri dosyada kalmali, gecis yalniz dosya adi/konvansiyonu duzeyinde olmali",
+        "pnpm gates temiz"
+      ]
+    },
+    {
+      "id": "DB-004",
+      "title": "apps/web -> Mongoose model sınırını LINT ile dayat (DB-003 takibi)",
+      "tier": "P2",
+      "wave": "2",
+      "agent": "xox-dev-backend",
+      "deps": ["DB-003"],
+      "conflictSet": [
+        "eslint.config.mjs",
+        "apps/web/app/api/health/realtime/route.ts",
+        "apps/web/app/api/auth/register/route.ts",
+        "apps/web/lib/auth/authorize.ts",
+        "apps/web/lib/realtime/room-hub.ts",
+        "packages/db/src/index.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "DB-003 ajani DURUSTCE bildirdi: kartinin \"apps/web-de mongoose modeline uzanan tek yer kapanir\" iddiasi GENEL OLARAK YANLISTI. Kalan dogrudan model importlari: app/api/health/realtime/route.ts (Room, RoomDoc), app/api/auth/register/route.ts (User), lib/auth/authorize.ts (User), lib/realtime/room-hub.ts (Room, RoomDoc)",
+        "ONCE KARAR VER, sonra uygula: bu sinir GERCEKTEN istenen bir sinir mi? health/realtime bir sonda ucu, room-hub change stream kurmak icin Room.watch() cagirmak ZORUNDA (baska yolu yok), authorize/register kimlik katmani. Her biri icin ya mesru istisna gerekcesi yaz ya da packages/db-ye tasi. Gerekcesiz birakma",
+        "ASIL IS: karar ne olursa olsun ESLint ile DAYATILIR. Bu gecenin 1 numarali oruntusu \"kural yazilmis ama atesLenmiyor\" — bir siniri yalniz insan dikkatiyle korumak o oruntunun ta kendisi. eslint-plugin-boundaries ya da no-restricted-imports ile yaz, mesru istisnalari ACIKCA listele",
+        "KURAL GERCEKTEN ATESLENIYOR MU: yasakli bir import ekle, lint KIRMIZI donsun, sonra geri al. Sondanin cikitisi rapora yazilir. eslint.config.mjs bu gece BIR KEZ sessizce olu kaldi (cozumleyici yanlisti, boundaries VE no-cycle ikisi de hic calismiyordu ama lint yesildi) — yesil tek basina kanit degildir",
         "pnpm gates temiz"
       ]
     }
