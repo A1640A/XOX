@@ -1,4 +1,5 @@
 import { Room, connectDb, generateRoomCode, getDbName, type RoomDoc } from '@xox/db'
+import { roomHub } from '@/lib/realtime/room-hub'
 
 export const dynamic = 'force-dynamic'
 /** Sonda ~25 tur yazma + olay bekleme yapar; varsayılan 10 sn'ye sığmaz. */
@@ -267,10 +268,48 @@ async function runProbe(options: ProbeOptions): Promise<ProbeResult> {
   }
 }
 
+/**
+ * WS-001 · ADR-0002'nin "instance başına EN FAZLA BİR change stream"
+ * değişmezinin **tek canlı ölçüm yolu**. Birim testler ve mutasyon sondaları
+ * kodun doğru olduğunu gösterir; bu alanlar ÇALIŞAN instance'ta gerçekten tek
+ * stream olduğunu gösterir.
+ *
+ * Nasıl okunur: aynı odaya N WS bağlantısı aç, sonra bu ucu çağır ve yanıttaki
+ * `x-vercel-id`nin instance parçasının WS bağlantılarıyla AYNI olduğu bir
+ * çağrıda `hub.openStreams === 1` ve `hub.subscribers === N` gör. Farklı bir
+ * instance'a düşersen hepsi 0 görünür — bu bir hata değil, ölçümün başka bir
+ * sürece düştüğünün işaretidir.
+ *
+ * Sondanın KENDİ stream'i hub'ınkinden ayrıdır (`runProbe` kendi stream'ini
+ * açıp `finally`de kapatır); `hub.*` alanları yalnız hub'ı raporlar.
+ */
+function hubSnapshot(): Record<string, number | boolean> {
+  const stats = roomHub.stats()
+  return {
+    openStreams: stats.openStreams,
+    watchCalls: stats.watchCalls,
+    rooms: stats.rooms,
+    subscribers: stats.subscribers,
+    reopenAttempts: stats.reopenAttempts,
+    hasResumeToken: stats.hasResumeToken,
+  }
+}
+
 export async function GET(request: Request): Promise<Response> {
   // Yazma yapan bir sonda canlıda açıkta kalmaz.
   if (process.env['VERCEL_ENV'] === 'production') {
     return new Response('Not Found', { status: 404 })
+  }
+
+  // Yalnız hub'ı okumak: gecikme ölçümü ÇALIŞTIRMADAN (ve ikinci bir stream
+  // AÇMADAN) tek-stream değişmezini gözlemlemek için. `?only=hub`.
+  if (new URL(request.url).searchParams.get('only') === 'hub') {
+    return Response.json({
+      ok: true,
+      hub: hubSnapshot(),
+      region: process.env['VERCEL_REGION'] ?? null,
+      at: new Date().toISOString(),
+    })
   }
 
   if (probeRunning) {
@@ -317,6 +356,7 @@ export async function GET(request: Request): Promise<Response> {
       resumeTokenOnDriver: resumeToken.driver,
       peakOpenStreams,
       openStreamsAfterClose: openStreams,
+      hub: hubSnapshot(),
       db: getDbName(),
       env: process.env['VERCEL_ENV'] ?? 'local',
       region: process.env['VERCEL_REGION'] ?? null,
@@ -324,7 +364,10 @@ export async function GET(request: Request): Promise<Response> {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'bilinmeyen hata'
-    return Response.json({ ok: false, error: message, peakOpenStreams }, { status: 503 })
+    return Response.json(
+      { ok: false, error: message, peakOpenStreams, hub: hubSnapshot() },
+      { status: 503 },
+    )
   } finally {
     probeRunning = false
   }

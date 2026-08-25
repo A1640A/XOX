@@ -42,6 +42,7 @@ interface Fixture {
   subscribed: RoomSubscriber[]
   unsubscribed: RoomSubscriber[]
   settlementTimer: SettlementTimer & { scheduled: number; cancelled: number }
+  hubState: { openStreams: number }
   db: RoomTransitions
   detach: ReturnType<typeof vi.fn>
   settle: ReturnType<typeof vi.fn>
@@ -53,6 +54,8 @@ interface Fixture {
 function fixture(
   dbOverrides: Partial<RoomTransitions> = {},
   extra: Partial<RoomSessionDeps> = {},
+  /** `true` ise sahte zamanlayıcı ENJEKTE EDİLMEZ — gerçek kablolama koşar. */
+  useRealTimer = false,
 ): Fixture {
   const sent: ServerMessage[] = []
   const closes: Fixture['closes'] = []
@@ -62,6 +65,7 @@ function fixture(
   const room = makeRoom()
 
   const order: string[] = []
+  const hubState = { openStreams: 1 }
   const detach = vi.fn(() => Promise.resolve())
   const settle = vi.fn(() => Promise.resolve(null))
 
@@ -91,11 +95,13 @@ function fixture(
       unsubscribed.push(subscriber)
       return Promise.resolve()
     },
+    // Sağlıklı varsayılan: hub'ın açık bir stream'i var. `openStreams: 0`
+    // "instance SAĞIR" demektir ve ayrı bir testin konusu.
     stats: (): RoomHubStats => ({
-      watchCalls: 0,
-      openStreams: 0,
-      rooms: 0,
-      subscribers: 0,
+      watchCalls: 1,
+      openStreams: hubState.openStreams,
+      rooms: 1,
+      subscribers: subscribed.length - unsubscribed.length,
       reopenAttempts: 0,
       hasResumeToken: false,
     }),
@@ -131,7 +137,7 @@ function fixture(
     clearTimer: () => undefined,
     getDeadline: () => new Date(NOW + 800_000),
     logError: () => undefined,
-    settlementTimer,
+    ...(useRealTimer ? {} : { settlementTimer }),
     ...extra,
   })
 
@@ -147,6 +153,7 @@ function fixture(
     detach,
     settle,
     order,
+    hubState,
     runTimer: (index) => timers[index]?.callback(),
   }
 }
@@ -317,6 +324,233 @@ describe('session · gelen mesaj', () => {
   })
 })
 
+describe('session · ZOMBİ BAĞLANTI regresyonu (BLOCKER 1)', () => {
+  it('join SERVER_ERROR dönerse TEK yeniden deneme yapılır ve başarılıysa oturum kurulur', async () => {
+    let call = 0
+    const f = fixture({
+      joinRoom: () => {
+        call += 1
+        // İki sekme yarışı: ilk CAS kaybedildi, ikinci okuma yeni version'ı görür.
+        if (call === 1) return Promise.resolve({ ok: false as const, code: 'SERVER_ERROR' })
+        return Promise.resolve({ ok: true as const, room: makeRoom(), events: [] })
+      },
+    })
+    await f.session.start()
+
+    expect(call).toBe(2)
+    expect(f.session.connection.seat()).toBe('X')
+    // İstemciye SAHTE bir hata gösterilmez: yalnız tam durum gider.
+    expect(f.sent.map((m) => m.type)).toStrictEqual(['state'])
+    expect(f.closes).toStrictEqual([])
+  })
+
+  it('yeniden deneme de başarısızsa bağlantı KAPANIR — sessiz zombi bırakılmaz', async () => {
+    const f = fixture({
+      joinRoom: () => Promise.resolve({ ok: false, code: 'SERVER_ERROR' }),
+    })
+    await f.session.start()
+
+    expect(f.session.connection.seat()).toBeNull()
+    expect(f.sent.filter((m) => m.type === 'error')).toHaveLength(2)
+    // 1011: sınıflandırılmamış → istemci üstel geri çekilmeyle YENİDEN BAĞLANIR.
+    // 4403/4404 olsaydı kalıcı sayılır ve geçici bir CAS yarışı kilide dönerdi.
+    expect(f.closes).toStrictEqual([{ code: 1011, reason: 'join-failed' }])
+    expect(f.unsubscribed).toHaveLength(1)
+  })
+
+  it('koltuksuz kalan bağlantı gelen olayları SESSİZCE YUTMAZ (kapanmış olur)', async () => {
+    const f = fixture({
+      joinRoom: () => Promise.resolve({ ok: false, code: 'SERVER_ERROR' }),
+    })
+    await f.session.start()
+    f.sent.length = 0
+
+    f.subscribed[0]?.onRoomChange(makeRoom({ version: 11 }))
+    // Kapalı bağlantı: ne mesaj gider ne de olay yutulup birikir.
+    expect(f.sent).toStrictEqual([])
+    expect(f.session.connection.isClosed()).toBe(true)
+  })
+})
+
+describe('session · doStart FIRLATIRSA (BLOCKER 2)', () => {
+  it('geçici Atlas hatası sessizce yutulmaz: error + close + unsubscribe', async () => {
+    const logs: string[] = []
+    const f = fixture(
+      { joinRoom: () => Promise.reject(new Error('Atlas erişilemedi')) },
+      { logError: (message) => logs.push(message) },
+    )
+
+    await expect(f.session.start()).resolves.toBeUndefined()
+
+    expect(f.sent).toHaveLength(1)
+    expect(f.sent[0]).toMatchObject({ type: 'error', code: 'SERVER_ERROR' })
+    expect(f.closes).toStrictEqual([{ code: 1011, reason: 'start-failed' }])
+    expect(f.unsubscribed).toHaveLength(1)
+    expect(logs).toContain('bağlantı kurulamadı')
+  })
+
+  it('hub.subscribe fırlatsa bile bağlantı kapatılır (abonelik hiç kurulmadı)', async () => {
+    const failingHub: RoomHub = {
+      subscribe: () => Promise.reject(new Error('havuz tükendi')),
+      unsubscribe: () => Promise.resolve(),
+      stats: (): RoomHubStats => ({
+        watchCalls: 0,
+        openStreams: 0,
+        rooms: 0,
+        subscribers: 0,
+        reopenAttempts: 0,
+        hasResumeToken: false,
+      }),
+    }
+    const f = fixture({}, { hub: failingHub })
+
+    await expect(f.session.start()).resolves.toBeUndefined()
+    expect(f.closes).toStrictEqual([{ code: 1011, reason: 'start-failed' }])
+  })
+
+  it('enqueue reddi SESSİZCE yutulmaz — logError çağrılır', async () => {
+    // `doHandle`ın hiçbir try/catch'inin sarmadığı bir yol gerekiyor: soketin
+    // KENDİSİ patlarsa (kapanmış bir yazma ucu) rejection kuyruğa düşer.
+    // Eski `queue = next.catch(() => undefined)` bunu tamamen yutuyordu;
+    // `unhandledRejection` bile oluşmuyordu, yani hiçbir teşhis sinyali yoktu.
+    const logs: string[] = []
+    const f = fixture(
+      {},
+      {
+        logError: (message) => logs.push(message),
+        socket: {
+          send: () => {
+            throw new Error('soket koptu')
+          },
+          close: () => undefined,
+        },
+      },
+    )
+
+    await expect(f.session.handleMessage('{bozuk')).rejects.toThrow('soket koptu')
+    await vi.waitFor(() => {
+      expect(logs).toContain('kuyruk görevi reddedildi')
+    })
+  })
+})
+
+describe('session · hız sınırı (güvenlik denetimi HIGH)', () => {
+  it('pencere içinde 20 çerçeve geçer, 21. RATE_LIMITED alır ama bağlantı AÇIK kalır', async () => {
+    const f = fixture()
+    await f.session.start()
+    f.sent.length = 0
+
+    for (let i = 0; i < 20; i += 1) {
+      await f.session.handleMessage(JSON.stringify({ type: 'ping' }))
+    }
+    expect(f.sent.filter((m) => m.type === 'pong')).toHaveLength(20)
+    expect(f.sent.filter((m) => m.type === 'error')).toHaveLength(0)
+
+    await f.session.handleMessage(JSON.stringify({ type: 'ping' }))
+    expect(f.sent.at(-1)).toMatchObject({ type: 'error', code: 'RATE_LIMITED' })
+    expect(f.closes).toStrictEqual([])
+  })
+
+  it('ısrar eden istemci 4400 ile kapatılır (MAX_CONSECUTIVE_VIOLATIONS bunu kapatmıyordu)', async () => {
+    const f = fixture()
+    await f.session.start()
+
+    for (let i = 0; i < 41; i += 1) {
+      await f.session.handleMessage(JSON.stringify({ type: 'ping' }))
+    }
+    expect(f.closes).toStrictEqual([{ code: 4400, reason: 'rate-limit' }])
+  })
+
+  it('sel, join yazmasını da durdurur — change stream tek olduğu için asıl kazanç bu', async () => {
+    const joinRoom = vi.fn(() =>
+      Promise.resolve({ ok: true as const, room: makeRoom(), events: [] }),
+    )
+    const f = fixture({ joinRoom })
+    await f.session.start()
+    const afterStart = joinRoom.mock.calls.length
+
+    for (let i = 0; i < 60; i += 1) {
+      await f.session.handleMessage(JSON.stringify({ type: 'join', roomCode: CODE }))
+    }
+    // 20'lik bütçe dolunca yazma yolu tamamen kapanıyor.
+    expect(joinRoom.mock.calls.length - afterStart).toBeLessThanOrEqual(20)
+  })
+
+  it('pencere kayınca bütçe tazelenir', async () => {
+    let clock = NOW
+    const f = fixture({}, { now: () => clock })
+    await f.session.start()
+    for (let i = 0; i < 21; i += 1) {
+      await f.session.handleMessage(JSON.stringify({ type: 'ping' }))
+    }
+    f.sent.length = 0
+
+    clock += 10_001
+    await f.session.handleMessage(JSON.stringify({ type: 'ping' }))
+    expect(f.sent).toStrictEqual([{ type: 'pong' }])
+  })
+})
+
+describe('session · koltuk kapısı', () => {
+  it('koltuksuz bir bağlantıda join DIŞINDAKİ mesajlar reddedilir', async () => {
+    const f = fixture({ joinRoom: () => Promise.resolve({ ok: false, code: 'ROOM_FULL' }) })
+    await f.session.start()
+    // 4403 ile kapandı; kapalı bağlantıda kapı zaten devrede. Kapıyı yalıtmak
+    // için doğrudan koltuksuz ama AÇIK bir oturum kurulur:
+    const g = fixture()
+    g.settle.mockClear()
+    await g.session.handleMessage(JSON.stringify({ type: 'move', index: 0 }))
+
+    expect(g.sent).toHaveLength(1)
+    expect(g.sent[0]).toMatchObject({ type: 'error', code: 'ROOM_FULL' })
+    // Koltuk yoksa `settleDeadlines` de çağrılmaz — okuma harcanmaz.
+    expect(g.settle).not.toHaveBeenCalled()
+    expect(f.closes).toStrictEqual([{ code: 4403, reason: 'room-full' }])
+  })
+
+  it('join koltuk kapısından MUAF — koltuk almanın tek yolu odur', async () => {
+    const f = fixture()
+    await f.session.handleMessage(JSON.stringify({ type: 'join', roomCode: CODE }))
+    expect(f.sent.map((m) => m.type)).toStrictEqual(['state'])
+  })
+})
+
+describe('session · SAĞIR instance kurtarma', () => {
+  it('stream kapalıyken her temasta taze durum zorlanır', async () => {
+    const f = fixture()
+    await f.session.start()
+    f.sent.length = 0
+
+    f.hubState.openStreams = 0
+    const findRoom = vi.spyOn(f.db, 'findRoom')
+    findRoom.mockResolvedValue(makeRoom({ version: 30 }))
+
+    await f.session.handleMessage(JSON.stringify({ type: 'ping' }))
+
+    expect(f.sent.map((m) => m.type)).toStrictEqual(['pong', 'state'])
+    expect(f.sent.at(-1)).toMatchObject({ type: 'state', version: 30 })
+  })
+
+  it('stream AÇIKKEN fazladan okuma YAPILMAZ', async () => {
+    const f = fixture()
+    await f.session.start()
+    const findRoom = vi.spyOn(f.db, 'findRoom')
+
+    await f.session.handleMessage(JSON.stringify({ type: 'ping' }))
+    expect(findRoom).not.toHaveBeenCalled()
+  })
+
+  it('sağır kurtarma okuması patlarsa bağlantı düşmez', async () => {
+    const f = fixture()
+    await f.session.start()
+    f.hubState.openStreams = 0
+    vi.spyOn(f.db, 'findRoom').mockRejectedValue(new Error('atlas yok'))
+
+    await expect(f.session.handleMessage(JSON.stringify({ type: 'ping' }))).resolves.toBeUndefined()
+    expect(f.closes).toStrictEqual([])
+  })
+})
+
 describe('session · çerçeve sıralaması', () => {
   it('art arda gelen iki hamle ÜST ÜSTE BİNMEDEN sırayla işlenir', async () => {
     const olay: string[] = []
@@ -426,6 +660,40 @@ describe('session · kapanış (§5.2 adım 10)', () => {
     await f.session.start()
     await expect(f.session.end()).resolves.toBeUndefined()
     expect(f.unsubscribed).toHaveLength(1)
+  })
+})
+
+describe('session · GERÇEK süre zamanlayıcısı kablolaması (ADR-0004)', () => {
+  it('sahte değil GERÇEK createSettlementTimer ile: zamanlayıcı dolunca settleDeadlines koşar', async () => {
+    // Diğer testler `settlementTimer`ı enjekte ediyor, yani "kablolama
+    // kilitlendi" iddiası yalnız ÇAĞRI SAYISI için geçerliydi; `onDue`
+    // kablosu %0 kapsamdaydı. W2-01 kabloyu yanlış bağlarsa ADR-0004'ün çift
+    // yürütmesi sessizce TEK yürütmeye düşerdi.
+    const disconnected = {
+      seat: 'O' as const,
+      at: new Date(NOW),
+      graceEndsAt: new Date(NOW + 30_000),
+    }
+    const room = makeRoom({ disconnected })
+    const f = fixture({ joinRoom: () => Promise.resolve({ ok: true, room, events: [] }) }, {}, true)
+
+    await f.session.start()
+    f.settle.mockClear()
+
+    const graceTimer = f.timers.find((t) => t.ms === 30_000)
+    expect(graceTimer, 'grace için gerçek bir zamanlayıcı kurulmalı').toBeDefined()
+
+    graceTimer?.callback()
+    await vi.waitFor(() => {
+      expect(f.settle).toHaveBeenCalledWith(CODE, NOW)
+    })
+  })
+
+  it('deadline yoksa gerçek zamanlayıcı da kurulmaz (P0 · AS-08)', async () => {
+    const f = fixture({}, {}, true)
+    await f.session.start()
+    // Yalnız rotasyon (790_000) ve boşta kalma (75_000) zamanlayıcıları var.
+    expect(f.timers.map((t) => t.ms).toSorted()).toStrictEqual([75_000, 790_000])
   })
 })
 

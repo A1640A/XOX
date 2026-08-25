@@ -1,3 +1,4 @@
+import type { TransitionResult } from '@xox/db'
 import { WS_CLOSE } from '@xox/shared'
 import type { ClientMessageOf, HandlerContext } from '../context'
 
@@ -12,6 +13,14 @@ import type { ClientMessageOf, HandlerContext } from '../context'
  * bağlantının ürettiği bir olayın süreç içi kısayolu değil. Rakip, bu
  * `joinRoom` yazımını yalnız change stream'den öğrenir.
  */
+function attemptJoin(context: HandlerContext): Promise<TransitionResult> {
+  return context.db.joinRoom(
+    context.roomCode,
+    { userId: context.identity.userId, name: context.identity.name },
+    context.connId,
+  )
+}
+
 export async function handleJoin(
   context: HandlerContext,
   message: ClientMessageOf<'join'>,
@@ -23,11 +32,17 @@ export async function handleJoin(
     return
   }
 
-  const result = await context.db.joinRoom(
-    context.roomCode,
-    { userId: context.identity.userId, name: context.identity.name },
-    context.connId,
-  )
+  let result = await attemptJoin(context)
+
+  // `joinRoom` CAS'ı kaybettiğinde `SERVER_ERROR` döner (bkz.
+  // `packages/db/src/rooms/join.ts` — `reconnect()` yarışı). Bu GEÇİCİ bir
+  // durumdur ve gerçekçi bir tetikleyicisi var: aynı kullanıcı iki sekmeyi
+  // aynı anda açar, iki `joinRoom` aynı `version`ı okur, biri kaybeder. TEK
+  // yeniden deneme yarışı çözer (ikinci okuma yeni `version`ı görür) ve
+  // istemciye sahte bir hata göstermeden geçer.
+  if (!result.ok && result.code === 'SERVER_ERROR') {
+    result = await attemptJoin(context)
+  }
 
   if (!result.ok) {
     if (result.code === 'ROOM_NOT_FOUND') {
