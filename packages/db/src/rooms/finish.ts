@@ -20,8 +20,9 @@ export function toRoomResult(status: FinishedStatus): RoomResult {
   return {
     kind: 'won',
     winner: status.winner,
-    // Motorun dondurulmuş `WIN_LINES` üçlüsüne referans tutmamak için kopya.
-    line: status.line === null ? null : [status.line[0], status.line[1], status.line[2]],
+    // Motorun dondurulmuş, memoize edilmiş hattına referans tutmamak için kopya.
+    // Yayma hat uzunluğundan bağımsızdır (K = 3..6, ADR-0011 §4).
+    line: status.line === null ? null : [...status.line],
     reason: status.reason,
   }
 }

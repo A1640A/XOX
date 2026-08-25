@@ -2,10 +2,26 @@ export type Player = 'X' | 'O'
 
 export type Cell = Player | null
 
-/** Tahta her zaman tam 9 hücredir. Sıra: sol üstten sağ alta. */
-export type Board = readonly [Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell]
+declare const boardBrand: unique symbol
 
-export type WinLine = readonly [number, number, number]
+/**
+ * DOĞRULANMIŞ tahta. Sıra: sol üstten sağ alta, satır satır.
+ *
+ * Marka (ADR-0011) bir süs değil, bir KAPIDIR: eski tuple tipi iki iş yapıyordu
+ * — (i) indeks totalliği, (ii) "`Board`'a giden tek yol `boardFromCells`'tir"
+ * kanıtı. Değişken boyutla (i) tuple ile taşınamaz; markasız düz
+ * `readonly Cell[]`'e geçmek ise (ii)'yi SESSİZCE yok ederdi: doğrulanmamış bir
+ * `Cell[]` doğrudan `evaluateStatus`'a girebilir ve E-18 ("size 11 ama tahta 9
+ * hücre") hiçbir kapıyı ateşlemezdi. Marka kapıyı tip düzeyinde korur.
+ *
+ * Okuma serbesttir (`length`, `for..of`, `.map`, `[...board]`); yayma sonucu
+ * marka TAŞIMAZ — istenen davranış budur: DB'ye ve protokole yazılan şey düz
+ * `Cell[]`'dir.
+ */
+export type Board = readonly Cell[] & { readonly [boardBrand]: true }
+
+/** Kazanan hat: K indeks (K = `config.winLength`, 3..6). */
+export type WinLine = readonly number[]
 
 export type GameStatus =
   | { readonly kind: 'playing'; readonly turn: Player }
