@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T22:40:29.654Z",
+  "updatedAt": "2026-08-25T23:14:52.675Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1647,10 +1647,10 @@
       "agent": "xox-perf",
       "deps": [],
       "conflictSet": ["docs/board/reports/AI-SPIKE-001.md"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/AI-SPIKE-001",
-      "report": null,
+      "report": "docs/board/reports/AI-SPIKE-001.md",
       "acceptance": [
         "BU KART CORE-AI-001-I BEKLETMEZ. Olcum gelmezse varsayimla devam, ama varsayim GORUNUR kalir — sessizce dogru sanilmaz.",
         "LEAD KARARI — MANUEL ADIM BLOKLAMAZ: (a) adimi (Omerin gercek Androidinde olcum) yapilamazsa kart DURMAZ. Muhafazakar bir varsayimla ilerlenir: CDP CPU kisitlamasi 6x, orta sinif Android icin yaygin bir vekil. R=6 SECILDI ve ACIKCA DOGRULANMAMIS olarak isaretlenir — hem kartin raporunda hem ai-config.ts yorumunda. Omer olcum yapinca R yeniden kalibre edilir ve butun esikler o carpanla tazelenir.",
@@ -1665,7 +1665,8 @@
         "AS-B02 girdisi: 11x11'in mobilde acilip acilmayacagina dair olcum sonucu rapora yazilir. Karari W2-03 verir; bu kart onu BLOKLAMAZ.",
         "CORE-AI-001 bu kart bitmeden BASLAYABILIR ama BITIREMEZ: algoritma butce sayisindan bagimsizdir, sabitin DEGERI olcumden gelir."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "77ba0cc"
     },
     {
       "id": "CORE-CFG-001",
@@ -1790,6 +1791,8 @@
       "branch": null,
       "report": null,
       "acceptance": [
+        "URUN GERCEGI (AI-SPIKE-001): 11x11-in HICBIR K degeri derinlik 3-u gercekci butcede tamamlayamiyor (tutucu tahmin 3.2-6.2 sn). Derinlik 2 her yerde <=260 ms guvenli. Yani 11x11-de iteratif derinlesme pratikte derinlik 2-de kalacak — bu bir KUSUR DEGIL, olculmus bir sinir. Raporda ACIKCA yaz, kullanici beklentisi buna gore kurulsun.",
+        "AI-SPIKE-001 OLCTU — bu sayilari kullan, yeniden tahmin etme: CANDIDATE_RADIUS=2 (r=1->2 gercek sicrama, r=2->3 getirisi dusuk) · MAX_SEARCH_DEPTH=6 · AI_NODE_BUDGET=30000 dugum/hamle (Vitest, deterministik) · AI_BUDGET_MS=1000 (tarayici). AI_BUDGET_MS DOGRULANMAMIS: R=6 varsayimina DOGRUSAL bagli, gercek olcum gelince x(gercek_R/6) ile tazelenir. Bu damgayi ai-config.ts yorumuna DA yaz.",
         "SERT ON KOSUL PERF-003 (D8): agir rotalarda size-limit payi yalniz ~20 kB gzip (heavy butce 235 kB, olculen 214.65 kB) ve @xox/game-core BUGUN TUM rotalara siziyor. Yeni arama + degerlendirme kodu bu payi yiyebilir. Bu kart size-limit kapisini KENDI yesil tutmak zorundadir ve olculen ROTA BAZLI sonucu raporuna yazar.",
         "SERT ON KOSUL AI-SPIKE-001: AI_BUDGET_MS, AI_NODE_BUDGET, MAX_SEARCH_DEPTH sayilari OLCUMDEN gelir. Algoritma spike bitmeden yazilabilir ama kart TAHMIN EDILMIS sayiyla KAPANMAZ; her sabitin yaninda spike raporuna atif yazilir (800 ms bir oneriydi, olcum degil).",
         "KK-B20 saglanir: bestMove'un GOVDESI VE IMZASI DEGISMEZ ve chooseMove'un 4. parametresi (rng) KONUMUNU KORUR -> ai.test.ts SIFIR SATIR duzenlenir, tumevarimsal yenilmezlik kosusu (X olarak, O olarak, iki mukemmel AI) hicbir iddiasi zayiflatilmadan yesil kalir ve numaralandirdigi oyun sayisi degismez. Bir iddia silinir ya da gevsetilirse KRITER IHLAL EDILMISTIR.",
@@ -1808,7 +1811,8 @@
         "index.ts YUZEY TESTI guncellenir: AI_BUDGET_MS, CANDIDATE_RADIUS, MAX_SEARCH_DEPTH elle yazilmis dISA aktarim listesine eklenir. Sabitlerin yeri packages/game-core/src/ai-config.ts'tir; packages/shared'a KONMAZ (D5).",
         "Katman yonu korunur: config -> board -> status -> moves -> evaluate -> search -> ai. import-x/no-cycle yesil.",
         "CORE-CFG-001 bir dalga once merge EDILMIS olmali — bu kart da index.ts'e dokunuyor.",
-        "pnpm gates + pnpm mutation temiz; merge sonrasi turbo --force ile `Cached: 0`."
+        "pnpm gates + pnpm mutation temiz; merge sonrasi turbo --force ile `Cached: 0`.",
+        "KALIBRASYON SAPMASI: AI-SPIKE-001 basit prototiple olctu ve x3 tutucu duzeltme uyguladi. Gercek kod yazilinca AI_BUDGET_MS YENIDEN OLCULMELI. AI_NODE_BUDGET dugum bazli oldugu icin bu duzeltmeden etkilenmiyor — once onu kilitle."
       ],
       "blockedReason": null
     },
@@ -2062,6 +2066,29 @@
         "Gercek preview dagitimina karsi kosar; rapor docs/board/reports/E2E-BOARD-001.md'ye yazilir ve 15 [E2E] kriterinin her biri MADDE MADDE gecti/kaldi olarak isaretlenir."
       ],
       "blockedReason": null
+    },
+    {
+      "id": "CORE-AI-002",
+      "title": "3x3 minimax 1000ms tavanini IKI KAT asiyor — alfa-beta ekle",
+      "tier": "P1",
+      "wave": "B2",
+      "agent": "xox-dev-core",
+      "deps": ["CORE-CFG-001"],
+      "conflictSet": ["packages/game-core/src/ai.ts", "packages/game-core/src/ai.test.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "OLCULDU (AI-SPIKE-001, gercek uretim bestMove kodu esbuild ile bundle-lanip tarayicida): R=6 kisitlamasinda 1982-2265 ms. KK-023 tavani 1000 ms. IKI KAT asim",
+        "BU OZELLIGIN BORCU DEGIL — bugun YAYINLANMIS kodda var. Tahta boyutu ozelligi onu yalnizca GORUNUR kildi",
+        "AI_BUDGET_MS BUNU COZEMEZ: ADR-0013 §1 3x3 yolunu bilerek butcesiz birakiyor (yenilmezlik kanitinin kostugu kod aynen kalsin diye)",
+        "COZUM: 3x3 minimax-a alfa-beta budama ekle. Alfa-beta minimax DEGERINI DEGISTIRMEZ, yalniz budar — KK-B20-nin yenilmezlik sonucu AYNEN korunur, yalniz dugum sayisi duser",
+        "KANIT 1: mevcut 642 oyunluk tumevarimsal yenilmezlik kosusu ve %98.49 mutasyon esigi DEGISMEDEN yesil kalir. Oyun sayisi degismez",
+        "KANIT 2: ayni is yuku R=6 kisitlamasinda YENIDEN olculur ve <=1000 ms gosterilir. Olcum AI-SPIKE-001-in yontemiyle (esbuild bundle + CDP throttle) yapilir, CI Node-unda DEGIL",
+        "SONDA: alfa-beta budamasini devre disi birakan mutasyon, dugum sayisi iddiasini KIRMIZI dondurmeli — yoksa budama gercekten calisiyor mu bilinmez"
+      ]
     }
   ]
 }
