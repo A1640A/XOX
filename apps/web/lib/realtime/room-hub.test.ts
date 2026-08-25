@@ -23,6 +23,7 @@ function makeRoom(code: string, version = 1): RoomDoc {
     turnDeadline: null,
     disconnected: null,
     rematch: null,
+    result: null,
     lastEmoji: null,
     gameId: null,
     version,

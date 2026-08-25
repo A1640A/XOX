@@ -25,6 +25,7 @@ function makeRoom(overrides: Partial<RoomDoc> = {}): RoomDoc {
     turnDeadline: null,
     disconnected: null,
     rematch: null,
+    result: null,
     lastEmoji: null,
     gameId: null,
     version: 7,
@@ -64,11 +65,11 @@ describe('roomTransportStatus', () => {
     })
   })
 
-  it('state finished ama tahta bitmemişse GÜRÜLTÜ çıkarır (sessiz değişmez ihlali yok)', () => {
+  it('state finished ama rooms.result BOŞSA GÜRÜLTÜ çıkarır (sessiz değişmez ihlali yok)', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     roomTransportStatus(makeRoom({ state: 'finished', board: cells('X........') }))
     expect(spy).toHaveBeenCalledTimes(1)
-    expect(String(spy.mock.calls[0]?.[0])).toContain('W1-02')
+    expect(String(spy.mock.calls[0]?.[0])).toContain('rooms.result')
     spy.mockRestore()
   })
 
@@ -77,17 +78,113 @@ describe('roomTransportStatus', () => {
     roomTransportStatus(makeRoom())
     roomTransportStatus(makeRoom({ board: cells('XXXOO....'), state: 'finished' }))
     roomTransportStatus(makeRoom({ board: cells('XXOOOXXOX'), state: 'finished' }))
+    roomTransportStatus(
+      makeRoom({
+        state: 'finished',
+        board: cells('X........'),
+        result: { kind: 'won', winner: 'O', line: null, reason: 'resign' },
+      }),
+    )
     expect(spy).not.toHaveBeenCalled()
     spy.mockRestore()
   })
 
-  it('state finished ama tahta bitmemişse draw ile kapatır — sebep odada YAZILI DEĞİL', () => {
-    // Pes/süre aşımı/terk sonucunu `rooms` dokümanı taşımıyor (§3.2). P0'da bu
-    // dal üretilmez; W1-02 gerçek sebebi `games`ten okuyup buraya taşıyacak.
-    // Sözleşme: uydurma bir KAZANAN yazmak yerine oyunu sonuçsuz kapat.
+  it('state finished ama sonuç alanı boşsa draw ile kapatır — uydurma kazanan YAZILMAZ', () => {
     expect(
       roomTransportStatus(makeRoom({ state: 'finished', board: cells('X........') })),
     ).toStrictEqual({ kind: 'draw' })
+  })
+})
+
+/**
+ * BORÇ KAPANIŞI (WS-001 incelemesi): pes/süre aşımı/terk ile biten oyunun
+ * kazananı `rooms.result` alanından okunuyor. Bu alan olmadan `resign`
+ * yazıldığı an pes eden oyuncu da rakibi de `game:over {kind:'draw'}` görürdü.
+ */
+describe('roomTransportStatus · rooms.result önceliği', () => {
+  it('pes sonucu: tahta bitmemiş olsa bile KAZANAN ve sebep okunur', () => {
+    const status = roomTransportStatus(
+      makeRoom({
+        state: 'finished',
+        board: cells('XO.......'),
+        result: { kind: 'won', winner: 'O', line: null, reason: 'resign' },
+      }),
+    )
+    expect(status).toStrictEqual({ kind: 'won', winner: 'O', line: null, reason: 'resign' })
+  })
+
+  it('süre aşımı ve terk sonuçları da aynı alandan taşınır', () => {
+    for (const reason of ['timeout', 'abandon'] as const) {
+      expect(
+        roomTransportStatus(
+          makeRoom({
+            state: 'finished',
+            board: cells('X........'),
+            result: { kind: 'won', winner: 'X', line: null, reason },
+          }),
+        ),
+      ).toStrictEqual({ kind: 'won', winner: 'X', line: null, reason })
+    }
+  })
+
+  it('çizgi ile kazanılmış oyunda çizgi alandan gelir', () => {
+    expect(
+      roomTransportStatus(
+        makeRoom({
+          state: 'finished',
+          board: cells('XXXOO....'),
+          result: { kind: 'won', winner: 'X', line: [0, 1, 2], reason: 'line' },
+        }),
+      ),
+    ).toStrictEqual({ kind: 'won', winner: 'X', line: [0, 1, 2], reason: 'line' })
+  })
+
+  it('beraberlik alanı draw olarak okunur', () => {
+    expect(
+      roomTransportStatus(
+        makeRoom({
+          state: 'finished',
+          board: cells('XXOOOXXOX'),
+          result: { kind: 'draw', winner: null, line: null, reason: null },
+        }),
+      ),
+    ).toStrictEqual({ kind: 'draw' })
+  })
+
+  it('ADR-0001 değişmezini İHLAL EDEN bir kayıt kabul EDİLMEZ — gürültü + tahtaya düşüş', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    // `reason:'resign'` + dolu `line`: şema bunu reddeder (superRefine).
+    const status = roomTransportStatus(
+      makeRoom({
+        state: 'finished',
+        board: cells('XXXOO....'),
+        result: { kind: 'won', winner: 'O', line: [0, 1, 2], reason: 'resign' },
+      }),
+    )
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(String(spy.mock.calls[0]?.[0])).toContain('protokol şemasına uymuyor')
+    // Bozuk kayıt yok sayıldı; tahtadan okunan gerçek sonuç kaldı.
+    expect(status).toStrictEqual({ kind: 'won', winner: 'X', line: [0, 1, 2], reason: 'line' })
+    spy.mockRestore()
+  })
+
+  it('toStateMessage sonucu aynı alandan taşır', () => {
+    const message = toStateMessage(
+      makeRoom({
+        state: 'finished',
+        board: cells('XO.......'),
+        result: { kind: 'won', winner: 'X', line: null, reason: 'timeout' },
+      }),
+      'X',
+      NOW,
+    )
+    expect(message.status).toStrictEqual({
+      kind: 'won',
+      winner: 'X',
+      line: null,
+      reason: 'timeout',
+    })
+    expect(stateMessageSchema.safeParse(message).success).toBe(true)
   })
 })
 

@@ -1,33 +1,51 @@
 import type { RoomDoc } from '@xox/db'
 import { boardFromCells, evaluateStatus } from '@xox/game-core'
 import type { Player, StateMessage, TransportStatus } from '@xox/shared'
-import { toTransportStatus } from '@xox/shared'
+import { toTransportStatus, transportStatusSchema } from '@xox/shared'
 
 /** Sonuç okumak için gereken en küçük oda parçası. */
-export type StatusInput = Pick<RoomDoc, 'state' | 'board'>
+export type StatusInput = Pick<RoomDoc, 'state' | 'board' | 'result'>
 
 /**
- * Odanın tahtasından taşıma durumunu okur. Kural mantığı **yeniden
- * yazılmaz**: karar `@xox/game-core`'un `evaluateStatus`'una, çeviri
- * `@xox/shared`'ın `toTransportStatus`'una delege edilir (kural 4).
+ * `rooms.result` → `TransportStatus`. Alanlar birebir aynı olduğu için elle
+ * bir eşleme YOK: protokol şemasının kendisi doğrular. Böylece ADR-0001'in
+ * `reason === 'line' ⟺ line !== null` değişmezi veritabanından gelen veride de
+ * çalışma zamanında kontrol edilir — elle yazılmış bir dönüştürücü bu
+ * kontrolü sessizce atlardı.
+ */
+function storedStatus(result: RoomDoc['result']): TransportStatus | null {
+  if (result === null) return null
+  const parsed = transportStatusSchema.safeParse(result)
+  if (!parsed.success) {
+    console.error('[room-view] rooms.result protokol şemasına uymuyor', parsed.error.issues)
+    return null
+  }
+  return parsed.data
+}
+
+/**
+ * Odanın **sonucunu** okur. Kural mantığı **yeniden yazılmaz**: karar
+ * `@xox/game-core`'un `evaluateStatus`'una, çeviri `@xox/shared`'ın
+ * `toTransportStatus`'una delege edilir (kural 4).
  *
- * ⚠️ **Bilinen boşluk (W1-02):** pes / süre aşımı / terk ile biten oyunun
- * sebebi ve kazananı `rooms` dokümanında **tutulmuyor** (§3.2 — `RoomDoc`ta
- * sonuç alanı yok, sonuç `games`e yazılıyor). O yüzden "oda `finished` ama
- * tahta bitmemiş" durumunda buradan uydurma bir kazanan çıkarmak yerine
- * `draw` dönüyoruz: oyun kapanır, kimseye yanlış galibiyet atfedilmez. P0 bu
- * dalı hiç üretmez (tek bitiş yolu `applyMove`ın kazanan çizgisi/beraberliği);
- * W1-02 pes/terk yazarken gerçek sonucu taşıyacak.
+ * Öncelik `rooms.result` alanındadır (W1-02): pes / süre aşımı / terk ile
+ * biten oyunun kazananı tahtadan OKUNAMAZ, o yüzden oda dokümanına
+ * damgalanıyor (`models/room.ts` → `RoomResult`). Alan yoksa tahtaya bakılır;
+ * tahta da bitmemişken oda `finished` ise **değişmez ihlali** vardır ve
+ * sessiz kalmaz.
  */
 export function roomTransportStatus(room: StatusInput): TransportStatus {
+  const stored = storedStatus(room.result)
+  if (stored !== null) return stored
+
   const status = evaluateStatus(boardFromCells(room.board))
   if (status.kind !== 'playing') return toTransportStatus(status)
   if (room.state === 'finished') {
-    // Sessiz kalmıyor: bu dal P0'da ULAŞILAMAZ olmalı. W1-02 `resign` yazdığı
-    // gün buraya düşülürse pes eden oyuncu `game:over {kind:'draw'}` görür ve
-    // hiçbir kapı kırılmaz — o yüzden değişmez ihlali GÜRÜLTÜ çıkarsın.
+    // Buraya düşmek, bitişi yazan yolun `result` alanını DOLDURMADIĞI anlamına
+    // gelir; sonuç ekranı kimseye yanlış galibiyet atfetmesin diye oyunu
+    // sonuçsuz kapatıyoruz — ama gürültü çıkararak (W1-02).
     console.error(
-      '[room-view] oda finished ama tahta bitmemiş — sonuç `rooms`ta taşınmıyor (TODO W1-02)',
+      '[room-view] oda finished ama rooms.result BOŞ — kazanan taşınamıyor, draw ile kapatıldı',
     )
     return { kind: 'draw' }
   }
