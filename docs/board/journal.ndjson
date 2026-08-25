@@ -1009,3 +1009,12 @@
 {"ts":"2026-08-25T03:32:05Z","event":"file.touched","path":".claude/worktrees/E2E-002/apps/e2e/package.json"}
 {"ts":"2026-08-25T03:33:06Z","event":"subagent.stop"}
 {"ts":"2026-08-25T03:35:00Z","event":"task.done","task":"E2E-003","mergeSha":"836d493","note":"Cakisma yok, fixture dondurmasi TUTTU (fixtures/** ve playwright.config.ts dokunulmadi, dogrulandi). coverage gorevi 5 task — @xox/e2e uc yontemle grafik disinda dogrulandi. CI Kalite kapilari YESIL. OPERASYONEL BULGU: dort yetim vitest iscisi PPID=1 ile 27 saattir dort cekirdegi yiyordu, yuk ortalamasi 57.85 -> 8.19. Bir kosudaki ENOENT coverage-3.json hatasi muhtemelen bundandi — kararsizlik sanilan sey kaynak acligiymis"}
+{"ts":"2026-08-25T03:35:50Z","event":"file.touched","path":".claude/worktrees/E2E-002/apps/e2e/tests/computer.spec.ts"}
+{"ts":"2026-08-25T03:35:58Z","event":"file.touched","path":".claude/worktrees/E2E-002/apps/e2e/tests/computer.spec.ts"}
+{"ts":"2026-08-25T03:36:31Z","event":"file.touched","path":".claude/worktrees/E2E-002/apps/e2e/tests/auth.spec.ts"}
+{"ts":"2026-08-25T03:37:15Z","event":"file.touched","path":".claude/worktrees/E2E-002/apps/e2e/tests/join.spec.ts"}
+{"ts":"2026-08-25T03:37:30Z","event":"file.touched","path":".claude/worktrees/E2E-002/apps/e2e/tests/computer.spec.ts"}
+{"ts":"2026-08-25T03:37:45Z","event":"file.touched","path":".claude/worktrees/E2E-002/apps/e2e/tests/computer.spec.ts"}
+{"ts":"2026-08-25T03:38:04Z","event":"subagent.stop"}
+{"ts":"2026-08-25T03:38:10Z","event":"file.touched","path":".claude/worktrees/E2E-002/apps/e2e/tests/computer.spec.ts"}
+{"ts":"2026-08-25T03:42:00Z","event":"task.built","task":"PERF-002","note":"SUPHE DOGRULANDI: tek glob tum rotalari topluyordu, olculen 263.57 kB CI ile birebir ayni. Ajan BUTCEYI BUYUTMEDI, OLCUMU ANLAMLI HALE GETIRDI — rota bazina inince /oda/[kod] 214.65 kB, /profil 142.39 kB. Statik glob-la rota ayrimi Turbopack icerik-hash-li adlandirma yuzunden MEKANIK OLARAK IMKANSIZ; dosya adi sabitlemek 0 eslesme = her zaman yesil tuzagi olurdu, bu yuzden her kosuda route-bundle-stats.json okuyan .size-limit.mjs yazildi. Gercek CI: run 32805562975 SUCCESS, Derleme kirmizidan yesile dondu. YAN BULGU: game-core TAMAMI minimax dahil /, /giris, /kayit, /oda/[kod] rotalarina da siziyor — PERF-003 acildi. Next 16 First Load JS tablosunu kaldirmis (RSC-de yaniltici oldugu gerekcesiyle), olcum yeni resmi diagnostikten alindi"}
