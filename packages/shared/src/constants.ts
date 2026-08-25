@@ -60,3 +60,14 @@ export const ELO_PAIR_MAX_RATED = 3
 export const LEADERBOARD_MIN_RATED_GAMES = 5
 export const LEADERBOARD_SIZE = 50
 export const HISTORY_PAGE_SIZE = 20
+
+// ─── Bilgisayara karşı oyun (W1-01) ────────────────────────────────────────
+/**
+ * İnsanın hamlesinden sonra bilgisayarın hamlesini tahtaya yazana kadar
+ * bekletilen süre — KK-023. `apps/web/components/computer/**` bu sabiti
+ * `@xox/shared`'dan okur, bileşene gömülü bir sihirli sayı OLMAZ. 1000 ms'lik
+ * tepki üst sınırının (kart §oyna/bilgisayar) çok altında tutulur: minimax
+ * hesabı tic-tac-toe tahtasında birkaç ms sürer, geri kalan pay ağ/render
+ * gecikmesi için tampon.
+ */
+export const COMPUTER_MOVE_DELAY_MS = 400
