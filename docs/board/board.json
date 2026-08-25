@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T23:28:08.600Z",
+  "updatedAt": "2026-08-25T23:57:32.999Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -653,7 +653,8 @@
         "KK-076: her iki oyuncu da bağlı değilken hiçbir sonuç yazılmaz; oyun finishedAt:null kalır ve oda TTL ile silinir. CRON/SÜPÜRÜCÜ EKLENMEZ (ADR-0004 değişmezi)",
         "KK-077: finishedAt:null oyunlar stats, ELO ve maç geçmişi sorgularının hiçbirinde görünmez (sorgu sondası)",
         "pnpm gates temiz",
-        "BORC (WS-001 incelemesi): apps/web/lib/game/deadlines.ts icindeki dueSettlement uretimde SIFIR cagirana sahip ve dokumante edilmis gelecek tuketicisi packages/db/src/rooms/settle.ts, apps/web-den import EDEMEZ — bagimlilik yonu ters. Bu kart govdeyi yazarken kurali packages/db icinde YENIDEN yazarsa ayni kural iki yerde olur ve saparlar. ONCE dueSettlement-i packages/game-core (saf, bagimliliksiz — tam yeri) ya da packages/shared-a tasi, sonra hem timers.ts hem settle.ts TEK kaynagi cagirsin. Tasarim §5.7 dosya yolunu apps/web diye yaziyor — spec kendi mimarisiyle celisiyor. AYRICA: settle.ts iskeleti WS-001 duzeltme turunda throw yerine return null donuyor; bu kart govdeyi doldurmayi UNUTURSA artik hicbir sey bagirmaz — settle.ts-teki TODO(W2-01) yorumunu ve no-op testini kontrol et."
+        "BORC (WS-001 incelemesi): apps/web/lib/game/deadlines.ts icindeki dueSettlement uretimde SIFIR cagirana sahip ve dokumante edilmis gelecek tuketicisi packages/db/src/rooms/settle.ts, apps/web-den import EDEMEZ — bagimlilik yonu ters. Bu kart govdeyi yazarken kurali packages/db icinde YENIDEN yazarsa ayni kural iki yerde olur ve saparlar. ONCE dueSettlement-i packages/game-core (saf, bagimliliksiz — tam yeri) ya da packages/shared-a tasi, sonra hem timers.ts hem settle.ts TEK kaynagi cagirsin. Tasarim §5.7 dosya yolunu apps/web diye yaziyor — spec kendi mimarisiyle celisiyor. AYRICA: settle.ts iskeleti WS-001 duzeltme turunda throw yerine return null donuyor; bu kart govdeyi doldurmayi UNUTURSA artik hicbir sey bagirmaz — settle.ts-teki TODO(W2-01) yorumunu ve no-op testini kontrol et.",
+        "[W2-02 kartindan TASINDI 2026-08-26 — yanlis karta dusmustu, W2-02 ajani fark edip bildirdi] `move:applied` ince yolu yeni `turnDeadline` TASIMIYOR (CTR-002 kararı). Süre açılırken karar ver: ya mesaja alan ekle, ya her hamlede tam `state` yayınla. P0'da turnDeadline hep null oldugu icin etkisizdi; burada etkili hale geliyor."
       ],
       "blockedReason": null
     },
@@ -669,10 +670,10 @@
         "apps/web/app/api/profile/**",
         "apps/web/components/profile/**"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W2-02",
-      "report": null,
+      "report": "docs/board/reports/W2-02.md",
       "acceptance": [
         "GET /api/profile { name, email, stats, elo, theme } döner; PATCH { name? } / { theme? } kabul eder ve gövdeler rest-contract şemalarından geçer",
         "KK-080: /profil görünen adı, e-postayı (salt okunur) ve istatistik-galibiyet / -maglubiyet / -beraberlik sayılarını gösterir; sayılar users.stats ile BİREBİR eşittir",
@@ -681,10 +682,10 @@
         "KK-083: tema değiştirici <html data-tema=\"koyu\"> yapar; seçim users.theme'e yazıldığı için sayfa yenilemesinden VE cihaz değişiminden sonra korunur",
         "app/layout.tsx AÇILMAZ — tema altyapısı ve data-tema yazımı UI-SKEL-001'de hazır; bu kart yalnız components/profile/ThemeToggle.tsx ve PATCH çağrısını ekler",
         "KK-084: renkler yalnız @xox/ui-tokens'tan gelir, dosyalarda hex literal yok (UI-001'in lint kuralı yeşil)",
-        "pnpm gates temiz",
-        "`move:applied` ince yolu yeni `turnDeadline` TASIMIYOR (CTR-002 kararı). Süre açılırken karar ver: ya mesaja alan ekle, ya her hamlede tam `state` yayınla. P0'da turnDeadline hep null oldugu icin etkisizdi; burada etkili hale geliyor."
+        "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "5a73009"
     },
     {
       "id": "W2-03",
@@ -2113,6 +2114,27 @@
         "OLCULMUS YAKLASIM UYARISI (PERF-003 uc yolu denedi): alt yol export + statik import SIFIR ETKI yapti (bayt bayt ayni) · ham import() KOTULESTIRDI (next start + curl ile dogrulandi, /giris HTML-i minimaxi eagerly servis etti) · ise yarayan tek sey next/dynamic + ssr:false bileşen sinirıydi. Ayni tuzaklara dusme",
         "SIRA: CTR-BOARD-001 protokol penceresini KAPATTIKTAN sonra. O kart packages/shared/src/** sahibi ve zaten sinirda; import yapisini ayni anda degistirmek onu patlatir",
         "Duzeltme sonrasi agir butce DUSURULMELI — 235 kB olculen degerden turetilmisti, sizinti kalkinca dogru sayi degil"
+      ]
+    },
+    {
+      "id": "W2-05",
+      "title": "Tema cihazlar arasi senkron degil — resolveTheme yalniz cerezi okuyor",
+      "tier": "P2",
+      "wave": "B4",
+      "agent": "xox-dev-web",
+      "deps": ["W2-02"],
+      "conflictSet": ["apps/web/lib/theme.ts", "apps/web/app/layout.tsx"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "W2-02 ajani DURUSTCE bildirdi: resolveTheme() yalniz cerezi okuyor, cunku kart app/layout.tsx-e dokunmayi yasakliyordu (W2-04 orada calisiyordu)",
+        "SONUC: gercekten yeni bir cihazda (cerez yok) kullanici users.theme tercihini /profil-e ugrayana kadar GORMEZ. Tercih kaydediliyor ama uygulanmiyor",
+        "COZUM: resolveTheme() cerez yoksa DB-den okusun. DIKKAT — bu her istekte bir DB sorgusu demek; kok layout zaten dinamik ama maliyeti OLC ve raporla",
+        "layout.tsx DONDURULMUS dosya; degisiklik tema okumasiyla SINIRLI kalmali",
+        "Cerez hala hizli yol olmali: DB okumasi yalniz cerez YOKKEN"
       ]
     }
   ]
