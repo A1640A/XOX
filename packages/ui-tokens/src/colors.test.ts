@@ -19,6 +19,13 @@ describe('themes', () => {
   it('acik ve koyu farklı değerler üretir (kopyala-yapıştır kayması yok)', () => {
     expect(themes.acik).not.toStrictEqual(themes.koyu)
   })
+
+  it("surfaceRaised, surface ve bg'den farklı bir değerdir (DESIGN-001a hover/aktif zemini, kopyala-yapıştır kayması yok)", () => {
+    for (const palette of Object.values(themes)) {
+      expect(palette.surfaceRaised).not.toBe(palette.surface)
+      expect(palette.surfaceRaised).not.toBe(palette.bg)
+    }
+  })
 })
 
 // `colors.light`/`colors.dark` (geriye dönük takma ad) burada kasıtlı olarak test EDİLMİYOR:

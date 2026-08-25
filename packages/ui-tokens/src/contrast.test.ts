@@ -53,12 +53,19 @@ describe('meetsTextContrast — KK: metin/arka plan >= 4.5:1', () => {
   }
 })
 
+/**
+ * DESIGN-001a: `surfaceRaised` (Yön A hover/aktif zemini) eklendi — `border` bu yüzeyde de
+ * görünür olmalı, yoksa hover durumundaki bir hücrenin kenarlığı kaybolabilir.
+ */
+const SURFACE_TOKENS: ColorToken[] = ['bg', 'surface', 'surfaceRaised']
+
 describe('border — WCAG 1.4.11 anlamlı UI bileşeni eşiği (>= 3:1)', () => {
   for (const theme of ALL_THEMES) {
-    it(`${theme}.border, bg ve surface üzerinde >= 3:1 (tahta hücre sınırı görünür olmalı)`, () => {
+    it(`${theme}.border, bg/surface/surfaceRaised üzerinde >= 3:1 (tahta hücre sınırı + hover zemin görünür olmalı)`, () => {
       const palette = themes[theme]
-      expect(contrastRatio(palette.border, palette.bg)).toBeGreaterThanOrEqual(3)
-      expect(contrastRatio(palette.border, palette.surface)).toBeGreaterThanOrEqual(3)
+      for (const surface of SURFACE_TOKENS) {
+        expect(contrastRatio(palette.border, palette[surface])).toBeGreaterThanOrEqual(3)
+      }
     })
   }
 })

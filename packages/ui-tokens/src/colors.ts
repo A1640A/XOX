@@ -3,36 +3,47 @@
  * değerlerini buradan alır. `themes` TEK kaynaktır — başka hiçbir dosyada hex literal renk
  * tekrarlanmaz (bkz. KK-084, kök `eslint.config.mjs` `no-restricted-syntax` kuralı).
  *
- * Kontrast notu: her metin/arka plan çifti WCAG AA (>=4.5:1) hedefiyle, `border` ise WCAG
- * 1.4.11 (>=3:1, "anlamlı UI bileşeni" — 3×3 tahtanın hücre sınırları) hedefiyle seçildi
- * ve `contrast.test.ts`'te kilitlendi. `playerX`/`playerO` yalnızca renkle ayırt edilmemeli
- * — bileşen katmanı (sonraki dalga) ayrıca şekil/kalınlık farkı ekler (X: kalın çift çizgi,
- * O: ince çember).
+ * DESIGN-001a (2026-08-26): Ömer'in seçtiği Yön A — "Kağıt & Mürekkep" (bkz.
+ * `docs/design/2026-08-25-gorsel-yonler.md`). Sıcak kağıt zemin, mürekkep tonlarında
+ * `playerX`/`playerO`, gölgesiz — hiyerarşi tipografi + boşluk + hairline ile kurulur.
+ *
+ * `surfaceRaised`: Yön A'nın yeni token'ı — gölgesiz "yükselti" zemini (hover/aktif/basılı
+ * durum, UI-BOARD-001'in hücre hover'ı için). `surface`den bilinçli olarak farklı bir
+ * değerdir (aşağıdaki `colors.test.ts` kopya-yapıştır kaymasını kilitler).
+ *
+ * Kontrast notu: her metin/vurgu token'ı WCAG AA (>=4.5:1) hedefiyle ÜÇ yüzeyin TÜMÜNE karşı
+ * (`bg`, `surface`, `surfaceRaised`) ölçüldü — `border` ise WCAG 1.4.11 (>=3:1, "anlamlı UI
+ * bileşeni") hedefiyle, yine üç yüzeye karşı. Tümü `contrast.test.ts`'te kilitlendi; gerçek
+ * ölçüm tablosu `docs/board/reports/DESIGN-001a.md`'de. `playerX`/`playerO` yalnızca renkle
+ * ayırt edilmemeli — bileşen katmanı (sonraki dalga) ayrıca şekil/kalınlık farkı ekler
+ * (X: kalın çift çizgi ~3px, O: ince çember ~2px — bkz. `board.ts` `markStrokeX/O`).
  */
 export const themes = {
   acik: {
-    bg: '#faf9f7',
+    bg: '#f7f4ee',
     surface: '#ffffff',
-    border: '#857f79',
-    text: '#1c1917',
-    textMuted: '#78716c',
-    accent: '#2563eb',
-    playerX: '#2563eb',
-    playerO: '#be123c',
-    win: '#15803d',
-    danger: '#dc2626',
+    surfaceRaised: '#fbf9f5',
+    border: '#8a8478',
+    text: '#241f1a',
+    textMuted: '#6b6255',
+    accent: '#1d4ed8',
+    playerX: '#243b5c',
+    playerO: '#7a2e2e',
+    win: '#2f6b3a',
+    danger: '#a13d2c',
   },
   koyu: {
-    bg: '#17161a',
-    surface: '#211f26',
-    border: '#78727e',
-    text: '#f5f4f2',
-    textMuted: '#a8a29e',
-    accent: '#60a5fa',
-    playerX: '#60a5fa',
-    playerO: '#fb7185',
-    win: '#4ade80',
-    danger: '#f87171',
+    bg: '#14120f',
+    surface: '#1e1b17',
+    surfaceRaised: '#262220',
+    border: '#786d5f',
+    text: '#f2ede4',
+    textMuted: '#b3a998',
+    accent: '#93b4ff',
+    playerX: '#aac0ea',
+    playerO: '#e6a8a2',
+    win: '#8ccb98',
+    danger: '#e2897c',
   },
 } as const
 
