@@ -998,3 +998,21 @@ altına bir sayaç koyup dispatch/return'de güncellemek · hook'a bir "ekip me�
 Hangisi seçilirse seçilsin, **lead'in hook'a körü körüne uymaması gerektiği** de bir kural:
 deadline'a kalan süre bir kartın build+inceleme+düzeltme+merge döngüsünden kısaysa yeni kart
 açmak sabahki tabloyu iyileştirmez, karmaşıklaştırır.
+
+## 2026-08-25 · `E2E (preview)` işi gece boyunca HİÇ koşmadı — main = Production Branch
+
+`e2e-preview.yml` `deployment_status` olayını `environment == 'Preview'` filtresiyle dinliyor.
+Ama `main` Vercel'de **Production Branch** olduğu için `main`'e yapılan her push GitHub'a
+**"Production"** ortamı olarak bildiriliyor; gerçek bir "Preview" `deployment_status` hiç
+oluşmuyor ve iş her seferinde `skipped` dönüyor.
+
+Kanıt: CI-002 ajanı bir dal PR'ı açtığında **ilk kez** `environment: "Preview"` üretildi ve iş
+gerçekten koşup geçti.
+
+Yani bu gece E2E kapısı **CI seviyesinde hiç çalışmadı**; tüm E2E doğrulaması lead'in elle
+dispatch ettiği `xox-qa-e2e` ajanlarıyla yapıldı. İşin `skipped` dönmesi başarısızlık gibi
+görünmediği için kimsenin dikkatini çekmedi — örüntü #1'in en sessiz biçimi: kural yazılmış,
+sarı bile yanmıyor, sadece yok sayılıyor.
+
+**Ders:** bir CI işinin `skipped` dönmesi "geçti" değildir. `gh run list` çıktısında `skipped`
+gören biri onu yeşil sanmamalı; koşması BEKLENEN bir işin atlanması bir bulgudur.

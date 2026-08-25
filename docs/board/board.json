@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T02:40:53.941Z",
+  "updatedAt": "2026-08-25T02:48:22.847Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1305,6 +1305,71 @@
         "82 adet rescue/* tag-i birikti (yalniz yerel, push edilmedi). Eskilerini buda, saklama politikasi tanimla",
         "MEKANIZMANIN YARISI OLU: .claude/danger.log HIC OLUSMAMIS. Yani kurtarma noktasi var ama NEYIN yapilmak uzere oldugu kayitli degil — geri donebilirsin ama neye ve neden donduugunu bilemezsin",
         "SONDA: yikici bir islem tetikle, hem tag hem danger.log satirinin olustugunu GOSTER. Bu gecenin 1 numarali oruntusu (mekanizma var ama atesLenmiyor) tam olarak burada, ustelik harness-in kendisinde"
+      ]
+    },
+    {
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "status": "todo",
+      "id": "PERF-002",
+      "title": "size-limit butcesi asiliyor — glob TUM rotalari tek butcede topluyor",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-perf",
+      "deps": [],
+      "conflictSet": [".size-limit.json", "apps/web/next.config.ts"],
+      "acceptance": [
+        "OLCULDU (CI-002): 80cd3d8 commit-inde, yani W1 kartlarindan ONCE, zaten 80.35 kB asim vardi. W1-01+W1-02+W1-03 toplam yalniz +3.22 kB ekledi. Yani bu bu geceden eski bir sorun, regresyon degil",
+        "MUHTEMEL KOK NEDEN: .size-limit.json glob-u tum rotalarin JS-ini TEK butcede topluyor. Once bunu dogrula — gercek suclu bu mu, yoksa gercek bir sisme mi var",
+        "BUTCEYI SESSIZCE YUKSELTME. Bu, gecenin 6. oruntusu olur: kapiyi gecirmek icin hedef diregini oynatmak. Yukseltilecekse rota bazinda ayrilmis butcelerle ve her birinin gerekcesiyle yukseltilir",
+        "Rota bazinda olcum: hangi rota ne kadar? /oyna/bilgisayar minimax tasiyor mu yoksa game-core lazy mi geliyor?",
+        "Duzeltmeden sonra CI build isi YESIL donmeli — gercek CI kosusuyla kanitla"
+      ]
+    },
+    {
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "status": "todo",
+      "id": "CI-003",
+      "title": "E2E (preview) isi HIC kosmuyor — main = Production Branch",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-devops",
+      "deps": ["CI-002"],
+      "conflictSet": [".github/workflows/e2e-preview.yml"],
+      "acceptance": [
+        "TESHIS EDILDI (CI-002): main-e dogrudan push Vercel tarafindan GitHub-a her zaman \"Production\" ortami olarak bildiriliyor (main = Production Branch), bu yuzden gercek bir \"Preview\" deployment_status HIC olusmuyor ve is surekli skipped donuyor",
+        "KANIT: CI-002 ajani feat/CI-002-ten PR acinca ILK KEZ environment:\"Preview\" uretildi ve E2E (preview) gercekten kosup gecti",
+        "Yani bu gece boyunca E2E kapisi CI seviyesinde HIC calismadi — E2E dogrulamasinin tamami lead-in elle dispatch ettigi qa-e2e ajanlariyla yapildi. Oruntu #1: kural yazilmis ama atesLenmiyor",
+        "Cozum: is akisini production deployment_status-u de kabul edecek sekilde genislet, ya da ayri bir preview deploy adimi ekle. Hangisi secilirse gerekcesi yazilir",
+        "SONDA: main-e bir push yap ve E2E isinin GERCEKTEN kostugunu goster. skipped gormek yeterli degil"
+      ]
+    },
+    {
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "status": "todo",
+      "id": "UI-002",
+      "title": "Ana sayfada iki bagimsiz hata-mesaji dugumu olusabiliyor",
+      "tier": "P2",
+      "wave": "2",
+      "agent": "xox-dev-web",
+      "deps": ["W1-04"],
+      "conflictSet": [
+        "apps/web/components/home/HomeActions.tsx",
+        "apps/web/components/JoinCodeField.tsx"
+      ],
+      "acceptance": [
+        "HomeActions kendi oda-kur hatasini, JoinCodeField kendi katilma hatasini ayri ErrorBanner-larda gosteriyor; ikisi ayni anda gorunebiliyor",
+        "Sonuc: getByTestId(\"hata-mesaji\") \"found multiple elements\" ile patlar. E2E yazildiginda ilk kurbani bu olur",
+        "Kusur W1-04-ten ONCE de vardi; W1-04 JoinCodeField-in hata yuzeyini genislettigi icin olasiligi artirdi",
+        "Cozum: ya JoinCodeField-in banner-ini cagirana kaldir, ya da tek bir hata bolgesi olsun. E2E selector-unu kapsamlandirmak ikinci tercih — asil sorun iki dugumun ayni anda var olabilmesi"
       ]
     }
   ]
