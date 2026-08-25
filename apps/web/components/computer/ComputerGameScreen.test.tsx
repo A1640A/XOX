@@ -1,4 +1,8 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { COMPUTER_MOVE_DELAY_MS, TESTID } from '@xox/shared'
 import { tr } from '@/messages/tr'
@@ -38,12 +42,58 @@ describe('ComputerGameScreen', () => {
     expect(screen.getByText(tr.computer.notCounted)).toBeInTheDocument()
   })
 
-  it('bileşende Türkçe string literal yok — tüm metinler tr.computer/tr.game üzerinden gelir', () => {
+  it('render edilen metinler tr.computer/tr.game üzerinden gelir', () => {
     render(<ComputerGameScreen />)
 
     expect(screen.getByRole('heading', { name: tr.computer.title })).toBeInTheDocument()
     expect(screen.getByText(tr.computer.difficulty)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: tr.computer.playAgain })).toBeInTheDocument()
+  })
+
+  /**
+   * İNCELEME MINOR DÜZELTMESİ: üstteki test yalnız RENDER EDİLEN metni
+   * doğruluyordu — `tr.computer.title` yerine gömme bir `'Bilgisayara karşı'`
+   * literal'i konsaydı test AYNEN yeşil kalırdı (render edilen metin gene
+   * doğru olurdu, kaynağın NEREDEN geldiği doğrulanmıyordu). Bu test
+   * `components/computer/**` ÜRETİM kaynağını (test dosyaları hariç),
+   * yorumları çıkardıktan sonra, string literal'lerin içinde Türkçeye özgü
+   * bir karakter (ç/ğ/ı/ö/ş/ü ve büyükleri) olup olmadığına bakarak tarar —
+   * gömme bir Türkçe cümle hemen hemen her zaman bu karakterlerden birini
+   * taşır.
+   */
+  it('components/computer/** ÜRETİM kaynağında (yorumlar hariç) Türkçe karakterli string literal yoktur', () => {
+    const here = dirname(fileURLToPath(import.meta.url))
+
+    function listFiles(dir: string): string[] {
+      return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = join(dir, entry.name)
+        if (entry.isDirectory()) return listFiles(full)
+        return entry.name.endsWith('.ts') || entry.name.endsWith('.tsx') ? [full] : []
+      })
+    }
+
+    function stripComments(source: string): string {
+      return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+    }
+
+    const TURKISH_CHAR_RE = /[çğıöşüÇĞİÖŞÜ]/
+    const STRING_LITERAL_RE = /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g
+
+    const productionFiles = listFiles(resolve(here))
+      .filter((f) => !f.endsWith('.test.ts') && !f.endsWith('.test.tsx'))
+      .filter((f) => f !== fileURLToPath(import.meta.url))
+
+    expect(productionFiles.length).toBeGreaterThan(0)
+
+    const offenders: string[] = []
+    for (const file of productionFiles) {
+      const code = stripComments(readFileSync(file, 'utf8'))
+      for (const literal of code.matchAll(STRING_LITERAL_RE)) {
+        if (TURKISH_CHAR_RE.test(literal[0])) offenders.push(`${file}: ${literal[0]}`)
+      }
+    }
+
+    expect(offenders).toEqual([])
   })
 
   it('KK-022/023: insan hamlesinden sonra bilgisayar YALNIZ chooseMove ile ve gecikme sabidiyle oynar', async () => {
@@ -127,5 +177,77 @@ describe('ComputerGameScreen', () => {
       expect(screen.getByTestId(`hucre-${String(index)}`)).toHaveAttribute('data-tas', '')
     }
     expect(screen.getByTestId(TESTID.zorlukUnbeatable)).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('İNCELEME MINOR: ZATEN SEÇİLİ zorluğa tekrar tıklamak süren oyunu SİLMEZ', async () => {
+    vi.useFakeTimers()
+    render(<ComputerGameScreen />)
+
+    // Varsayılan zaten zorluk-medium — bir hamle oyna, sonra AYNI düğmeye
+    // (teyit amaçlı) tekrar tıkla.
+    clickCell(0)
+    await advanceComputerMove()
+
+    const filledBefore = Array.from({ length: 9 }, (_unused, i) =>
+      screen.getByTestId(`hucre-${String(i)}`).getAttribute('data-tas'),
+    )
+    expect(filledBefore.filter((v) => v !== '')).toHaveLength(2) // X + O
+
+    fireEvent.click(screen.getByTestId(TESTID.zorlukMedium))
+
+    const filledAfter = Array.from({ length: 9 }, (_unused, i) =>
+      screen.getByTestId(`hucre-${String(i)}`).getAttribute('data-tas'),
+    )
+    expect(filledAfter).toEqual(filledBefore)
+    expect(screen.getByTestId(TESTID.zorlukMedium)).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('İNCELEME MINOR: reset yarışı — insan hamlesinden hemen sonra Yeniden oyna tıklanırsa, beklemedeki bilgisayar zamanlayıcısı sıfırlanmış tahtaya YAZMAZ', async () => {
+    vi.useFakeTimers()
+    render(<ComputerGameScreen />)
+
+    fireEvent.click(screen.getByTestId(TESTID.zorlukUnbeatable))
+    clickCell(0) // X oynar, COMPUTER_MOVE_DELAY_MS'lik bir zamanlayıcı kurulur
+
+    // Zamanlayıcı DOLMADAN (400 ms'nin yalnız yarısı) "Yeniden oyna"ya bas.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(COMPUTER_MOVE_DELAY_MS / 2)
+    })
+    fireEvent.click(screen.getByRole('button', { name: tr.computer.playAgain }))
+
+    // Eski zamanlayıcının kalan süresini de ilerlet — `useEffect` deps
+    // `[state, difficulty]` sayesinde reset yeni bir `state` ürettiği için
+    // ESKİ efekt temizlenmiş (cleanup) olmalı; hiçbir "O" boş tahtaya
+    // yazılmamalı (X'siz bir O, kural dışı/imkânsız bir pozisyon olurdu).
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(COMPUTER_MOVE_DELAY_MS)
+    })
+
+    for (let index = 0; index < 9; index += 1) {
+      expect(screen.getByTestId(`hucre-${String(index)}`)).toHaveAttribute('data-tas', '')
+    }
+  })
+
+  it('İNCELEME MINOR: StrictMode altında çift mount/effectte zamanlayıcı sızdırmaz — tek bir bilgisayar hamlesi yazılır', async () => {
+    vi.useFakeTimers()
+    render(
+      <StrictMode>
+        <ComputerGameScreen />
+      </StrictMode>,
+    )
+
+    fireEvent.click(screen.getByTestId(TESTID.zorlukUnbeatable))
+    clickCell(0)
+
+    await advanceComputerMove()
+
+    // Sızan bir zamanlayıcı ikinci bir bilgisayar hamlesini X'in HÂLÂ sırası
+    // olduğu bir anda tetikleyip kural dışı bir tahta üretebilirdi; StrictMode
+    // çift efekt çalıştırsa da yalnız BİR "O" yazılmış olmalı.
+    const marks = Array.from({ length: 9 }, (_unused, i) =>
+      screen.getByTestId(`hucre-${String(i)}`).getAttribute('data-tas'),
+    )
+    expect(marks.filter((v) => v === 'O')).toHaveLength(1)
+    expect(marks.filter((v) => v === 'X')).toHaveLength(1)
   })
 })
