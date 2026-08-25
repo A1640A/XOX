@@ -33,6 +33,23 @@ const COLLECTION_NAME = 'rateLimitBuckets'
  * EKLEMİYOR. Kilitli bir kimlik için argon2 hiç ÇALIŞTIRILMIYOR (route
  * seviyesinde kısa devre) — bu yazı, tam da bu sayede, argon2 maliyetinin
  * TEKRARINI önlüyor.
+ *
+ * FAIL-CLOSED KARARI (güvenlik denetimi MEDIUM — bilerek BELGELENDİ,
+ * DEĞİŞTİRİLMEDİ): `getRateLimitCollection()`/`checkIpRateLimit()`/
+ * `getLoginLockStatus()` Mongo'ya ulaşamazsa (ör. Atlas kesintisi)
+ * FIRLATIR; `register/route.ts` ve `[...nextauth]/route.ts`da bu çağrı
+ * bilerek dış `try`in DIŞINDA — yani Mongo çökerse kayıt/giriş 500 ile
+ * TAMAMEN durur (rate-limit'in kendisi "sessizce izin ver"e düşmez).
+ * Alternatif (fail-OPEN: hata olursa sınırsız izin ver) REDDEDİLDİ: giriş/
+ * kayıt zaten `connectDb()`/`User.findOne`/argon2 için Mongo'ya muhtaç —
+ * Atlas çökmüşse özellik ZATEN çalışmıyor, rate limiter'ı fail-open yapmak
+ * yalnız TAM OLARAK bu kartın kapatmaya çalıştığı pencereyi (kaynak
+ * tükenmesi + kimlik bilgisi tahmini) Atlas en kırılgan olduğu ANDA
+ * (bir kesinti/saldırı sırasında) yeniden AÇAR — savunmanın en çok
+ * gerektiği anda kendini kapatması kabul edilemez. Bedel: gerçek bir Atlas
+ * kesintisinde kullanıcılar `serverSelectionTimeoutMS` (10 sn, `client.ts`)
+ * kadar bekleyip 500 alır — bu zaten `connectDb()`'nin var olan davranışı,
+ * bu kart YENİ bir gecikme eklemiyor.
  */
 export interface RateLimitBucketDoc extends Document {
   _id: string
@@ -48,6 +65,14 @@ export interface RateLimitBucketDoc extends Document {
  * kurulur, sonraki her `getRateLimitCollection()` çağrısı ek round-trip
  * YAPMAZ (aksi halde her istekte bir `createIndex` komutu daha argon2'nin
  * yanına eklenir — küçük ama gereksiz bir maliyet).
+ *
+ * GÜVENLİK DENETİMİ — MEDIUM (kalıcı bozulma): `createIndex` bir kez
+ * REDDEDERSE (ör. geçici bir Atlas hıçkırığı), önceki sürüm o REDDEDİLMİŞ
+ * promise'i `??=` ile SONSUZA KADAR önbellekte tutuyordu — aynı örnek
+ * (aynı Fluid instance) o andan sonra HER isteğe aynı hatayı fırlatıyordu,
+ * bağlantı düzelse bile. Şimdi reddedilirse önbellek TEMİZLENİYOR ki bir
+ * sonraki çağrı YENİDEN denesin; geçici bir hata kalıcı bir instance
+ * çökmesine dönüşmesin.
  */
 interface RateLimitIndexCache {
   promise: Promise<void> | null
@@ -68,6 +93,10 @@ export async function getRateLimitCollection<T extends Document = RateLimitBucke
   indexCache.promise ??= collection
     .createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 })
     .then(() => undefined)
+    .catch((error: unknown) => {
+      indexCache.promise = null
+      throw error
+    })
   await indexCache.promise
   return collection
 }
