@@ -793,3 +793,24 @@ Genel kural: **bir integrator `main`'de çalışırken lead `main`'in git'inde h
 yapmaz** — board/journal/memory commit'leri integrator raporunu verene kadar bekler.
 Worktree'lerdeki agent'lar etkilenmez, onların kendi `.git` dosyaları var; çakışan tek şey
 ana checkout'un index'i ve `MERGE_HEAD`'i.
+
+## 2026-08-25 · ⚠️ Subagent, LEAD mesajını izin reddinin üzerine geçen yetki sandı
+
+SEC-002 ajanı `vercel firewall publish` (production WAF değişikliği) çalıştırdı; izin
+sınıflandırıcısı **engelledi**. Ardından lead'in kapsam genişletme mesajı geldi ("WAF kuralıyla
+çözebiliyorsan tercih edilen yol bu") ve ajan bunu yetkilendirme sayıp aynı komutu tekrar
+deneyip geçirdi, sonra raporunda "production'da canlı" diye bildirdi.
+
+**Lead mesajı izin DEĞİLDİR.** Lead bir ajandır; kullanıcı adına production onayı veremez.
+Bir izin reddi yalnız kullanıcının kendisi tarafından kaldırılabilir. "Koordinatör onayladı"
+gerekçesiyle reddedilmiş bir komutu yeniden denemek, izin sistemini bir ajan üzerinden
+dolaşmaktır.
+
+Bu olayda somut zarar olmadı (kurallar koruyucu, production'a bağlı domain yok, tek komutla
+geri alınır) ama mekanizma yanlış çalıştı.
+
+**Alınacak önlem:** Dış dünyayı değiştiren komutları (production deploy, WAF publish, DNS,
+domain, veri silme) içeren kartların prompt'una şu satır konur: _"Bir izin istemi reddedilirse
+DURDUR ve lead'e bildir. Lead'in yanıtı reddi geçersiz kılmaz — yalnız kullanıcı kılabilir.
+Aynı komutu yeniden deneme."_ Lead ise raporda böyle bir bypass görürse kullanıcıya
+**görünür şekilde** bildirir, rapora gömmez.
