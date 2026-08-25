@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import type { Theme } from '@xox/ui-tokens'
+import { THEME_COOKIE } from './theme-cookie'
 
 /**
  * `<html data-tema>` için sunucu tarafı tema çözümü (DONDURMA #2, spec KK-083).
@@ -11,12 +12,13 @@ import type { Theme } from '@xox/ui-tokens'
  * burada YAPILMAZ: çerez yoksa (ilk ziyaret ya da girişsiz kullanıcı) `'acik'`
  * öntanımlıdır — kart metninin "oturum yoksa 'acik'" koşulu bu yolla sağlanır.
  *
- * `THEME_COOKIE` bilerek export EDİLMEZ: knip "kullanılmayan export" sayar
- * (bu dosya dışında hiçbir tüketici yok — profil tema değiştiricisi W2-02'de
- * yazılacak). O görev çerez adını burada TEKRAR export ederek tüketmeli;
- * iki ayrı sabit olarak KOPYALANMAMALI.
+ * `THEME_COOKIE` burada export EDİLMEZ (knip "kullanılmayan export" sayar):
+ * `components/profile/ProfileContent.tsx` PATCH sonrası aynı çerezi
+ * (yenileme olmadan) yazmak için `./theme-cookie`'yi DOĞRUDAN import eder —
+ * `next/headers` içeren BU dosyayı değil (bkz. `theme-cookie.ts` başlığı,
+ * build hatasının gerekçesi). İki ayrı sabit olarak KOPYALANMADI, tek kaynak
+ * `./theme-cookie`.
  */
-const THEME_COOKIE = 'xox-tema'
 
 function isTheme(value: string | undefined): value is Theme {
   return value === 'acik' || value === 'koyu'
