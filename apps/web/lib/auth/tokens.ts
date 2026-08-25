@@ -2,6 +2,7 @@ import {
   MOBILE_ACCESS_TTL_SECONDS,
   MOBILE_REFRESH_TTL_SECONDS,
   WS_TICKET_TTL_SECONDS,
+  roomCodeSchema,
 } from '@xox/shared'
 import { jwtVerify, SignJWT } from 'jose'
 
@@ -81,6 +82,23 @@ export async function signToken(
 }
 
 /**
+ * WS bileti KAPSAM TAŞIMAK ZORUNDA (`room` claim'i, geçerli bir oda kodu).
+ *
+ * Koruma önceden "iddia VARSA karşılaştır" biçimindeydi: `room` claim'i
+ * olmayan bir `xox-ws` bileti üretecek ikinci bir yol eklendiği an o bilet
+ * HER odada geçerli olurdu ve hiçbir test kırılmazdı (fail-open). Burada
+ * zorunlu kılınca eksiklik bir **doğrulama hatası** oluyor, yetki bypass'ı
+ * değil — yani yanlış yöne düşüyor.
+ *
+ * Kapsam kontrolünün KENDİSİ hâlâ WS route'unda (`identity.room` ile URL'deki
+ * oda kodu karşılaştırması); burada yalnız claim'in VARLIĞI ve BİÇİMİ
+ * garantileniyor.
+ */
+function hasValidRoomScope(payload: Record<string, unknown>): boolean {
+  return roomCodeSchema.safeParse(payload['room']).success
+}
+
+/**
  * `kind` ile eşleşen `aud` dışında hiçbir token kabul edilmez — jose'nin
  * `audience` seçeneği bunu doğrular, uyumsuzlukta fırlatılan hata burada
  * yutulup `null` olarak dönülür (çağıran taraf 401/UNAUTHENTICATED üretir).
@@ -96,6 +114,7 @@ export async function verifyToken(token: string, kind: TokenKind): Promise<Verif
       algorithms: ['HS256'],
     })
     if (typeof payload.sub !== 'string' || payload.sub.length === 0) return null
+    if (kind === 'ws-ticket' && !hasValidRoomScope(payload)) return null
     // `payload` kayıtlı iddiaları (sub/aud/iat/exp) da içerir; sorun değil —
     // çağıran taraf yalnız bilerek eklediği ek alanları (örn. `name`) okur.
     return { userId: payload.sub, kind, claims: payload }

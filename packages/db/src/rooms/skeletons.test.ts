@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  acceptRematch,
-  finishGame,
-  offerRematch,
-  pushEmoji,
-  resign,
-  settleDeadlines,
-} from './index'
+import { acceptRematch, finishGame, offerRematch, pushEmoji, resign } from './index'
 import type { RoomDoc } from '../models/room'
 
 /**
@@ -26,10 +19,6 @@ describe('rooms/ iskelet fonksiyonları (henüz uygulanmadı)', () => {
 
   it('acceptRematch() açık bir hata fırlatır', async () => {
     await expect(acceptRematch('CODE01', 'user-1')).rejects.toThrow(/henüz uygulanmadı/)
-  })
-
-  it('settleDeadlines() açık bir hata fırlatır', async () => {
-    await expect(settleDeadlines('CODE01', Date.now())).rejects.toThrow(/henüz uygulanmadı/)
   })
 
   it('pushEmoji() açık bir hata fırlatır', async () => {

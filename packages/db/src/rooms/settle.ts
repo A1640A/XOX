@@ -7,13 +7,29 @@ import type { TransitionResult } from './types'
  * kesinleşir. Uygulanacak bir şey yoksa `null` döner (istisna değil, "bu
  * çağrının konusu yok" anlamına gelir).
  *
- * **Tipli iskelet**: `W2-01` doldurur (`packages/db/src/rooms/settle.ts`,
- * tasarım §12). Saf karar fonksiyonu `dueSettlement` `apps/web/lib/game/
- * deadlines.ts`'te ayrıca yazılır — bu fonksiyon onu çağırıp CAS'ı uygular.
+ * **TODO(W2-01): GÖVDE HENÜZ YAZILMADI — bugün koşulsuz `null` dönüyor.**
+ *
+ * Diğer iskeletlerin aksine bu fonksiyon FIRLATMIYOR. Sebep davranışsal:
+ * `apps/web/lib/realtime/session.ts` bunu bağlantı kurulurken ve GEÇERLİ HER
+ * mesajdan önce çağırıyor. Fırlatan bir gövde, her `ping` başına bir yakalanmış
+ * istisna + bir `console.error` üretiyordu; bu (a) gerçek hataları gürültüye
+ * gömüyor, (b) **aktif oda kodlarını yüksek hacimde log'a akıtıyordu** — oda
+ * kodu bu sistemde odanın tek yetki anahtarıdır (kodu bilen + boş koltuk =
+ * odaya girer), yani log erişimi olan biri canlı oyunlara katılabilirdi
+ * (güvenlik denetimi bulgusu).
+ *
+ * Sessiz bir no-op'a dönüşmemesi için `settle.skeleton.test.ts` bugünkü
+ * "hiçbir koşulda yazma yapmaz + daima null" davranışını AÇIKÇA iddia ediyor:
+ * W2-01 gövdeyi doldurduğu anda o test kırmızıya döner ve güncellenmek
+ * ZORUNDA kalır. Unutulup sessizce yaşamaya devam edemez.
+ *
+ * Saf karar fonksiyonu (`dueSettlement`) bugün `apps/web/lib/game/deadlines.ts`
+ * içinde; W2-01 gövdeyi yazarken kuralı BURADA yeniden yazmak yerine taşımayı
+ * değerlendirmeli (bağımlılık yönü `packages/db → apps/web` olamaz).
  */
 export async function settleDeadlines(code: string, now: number): Promise<TransitionResult | null> {
   await Promise.resolve()
-  throw new Error(
-    `settleDeadlines(${code}, ${String(now)}) henüz uygulanmadı — W2-01 doldurur (tasarım §5.7)`,
-  )
+  void code
+  void now
+  return null
 }
