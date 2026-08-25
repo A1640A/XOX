@@ -41,9 +41,33 @@ describe('ConnectionBadge', () => {
     expect(screen.getByTestId('baglanti-durumu')).toHaveTextContent(label)
   })
 
-  it("devredildi durumunda data-durum='kopuk' olur (spec §2.0 yalnız üçlü değer tanımlar)", () => {
-    render(<ConnectionBadge status="devredildi" />)
+  it.each([
+    ['bagli', 'bagli'],
+    ['baglaniyor', 'baglaniyor'],
+    ['kopuk', 'kopuk'],
+    ['devredildi', 'devredildi'],
+  ] as const)('data-durum durumu OLDUĞU GİBİ yazar: %s', (status, durum) => {
+    render(<ConnectionBadge status={status} />)
 
-    expect(screen.getByTestId('baglanti-durumu')).toHaveAttribute('data-durum', 'kopuk')
+    expect(screen.getByTestId('baglanti-durumu')).toHaveAttribute('data-durum', durum)
   })
+
+  it(
+    "devredildi ARTIK kopuk'a eşlenmez — iki durumun davranışı TAM TERS " +
+      '(kopuk: yeniden bağlan + "Tekrar dene", devredildi: hiçbiri, §3.2)',
+    () => {
+      const { unmount } = render(<ConnectionBadge status="devredildi" onRetry={vi.fn()} />)
+      const devredildi = screen.getByTestId('baglanti-durumu')
+      const devredildiDurum = devredildi.getAttribute('data-durum')
+      const devredildiDugme = devredildi.querySelector('button')
+      unmount()
+
+      render(<ConnectionBadge status="kopuk" onRetry={vi.fn()} />)
+      const kopuk = screen.getByTestId('baglanti-durumu')
+
+      expect(devredildiDurum).not.toBe(kopuk.getAttribute('data-durum'))
+      expect(devredildiDugme).toBeNull()
+      expect(kopuk.querySelector('button')).not.toBeNull()
+    },
+  )
 })

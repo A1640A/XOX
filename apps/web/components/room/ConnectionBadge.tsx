@@ -14,17 +14,21 @@ export interface ConnectionBadgeProps {
 }
 
 /**
- * Spec §2.0 `baglanti-durumu` yalnız üç değer tanımlar: `bagli`|`baglaniyor`|`kopuk`.
- * `devredildi` (§3.2 takeover) görüntüde `kopuk` olarak eşlenir — istemci zaten
- * yeniden bağlanmayı denemeyecektir (`room-client.ts`), yalnız ekran sözleşmesi
- * üçlü kalır. Görsel/animasyon zenginleştirmesi sonraki dalgadadır; bu, iskeletin
- * doğru veri sözleşmesini şimdiden kilitleyen minimum halidir.
+ * `data-durum` DÖRT değer yazar: `bagli`|`baglaniyor`|`kopuk`|`devredildi`.
+ *
+ * Spec §2.0'ın tablosu üç değerle yazılmıştı ve iskelet `devredildi`yi
+ * `kopuk`a eşliyordu. W1-03 bunu **bilerek genişletti**: eşleme, birbirinden
+ * TAM TERSİ davranış gerektiren iki durumu tek değere sıkıştırıyordu —
+ * `kopuk`ta istemci üstel geri çekilmeyle yeniden bağlanır ve kullanıcıya
+ * "Tekrar dene" gösterilir (KK-062), `devredildi`de (§3.2) hiçbir yeniden
+ * bağlanma denenmez (aksi hâlde iki sekme sonsuz takeover savaşına girer).
+ * Ayrım DOM'a yazılmazsa E2E "yeniden bağlanma denenmedi"yi ekrandan hiç
+ * doğrulayamaz. KK-062'nin `kopuk` iddiası bundan etkilenmez: gerçek ağ
+ * kesintisi (1006) hâlâ `kopuk` üretir.
  */
 export function ConnectionBadge({ status, onRetry }: ConnectionBadgeProps): React.ReactElement {
-  const durum = status === 'devredildi' ? 'kopuk' : status
-
   return (
-    <p data-testid={TESTID.baglantiDurumu} data-durum={durum}>
+    <p data-testid={TESTID.baglantiDurumu} data-durum={status}>
       {connectionLabel(status)}
       {status === 'kopuk' && onRetry ? (
         <button type="button" onClick={onRetry}>

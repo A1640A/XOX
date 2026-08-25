@@ -1,4 +1,9 @@
 export { connectDb, disconnectDb, getDbName, getMongoClient, getMongoUri } from './client'
+// `.env.local` yükleyicisi TEK modülde toplanır (gotcha 2026-08-24: "test
+// setup'ı ile CLI aynı ortamı yüklemeli"). Üçüncü tüketici `apps/web`'in
+// gerçek Atlas'a koşan presence entegrasyon testidir; kendi kopyasını yazsaydı
+// aynı ayrışma bu kez web tarafında doğardı.
+export { loadEnvLocal } from './load-env'
 export { generateRoomCode } from './room-code'
 export { buildPairKey, deriveParticipants } from './pair'
 export { resetDatabase } from './reset'
