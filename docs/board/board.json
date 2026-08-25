@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T08:29:47.829Z",
+  "updatedAt": "2026-08-25T21:12:46.445Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1034,16 +1034,17 @@
       "agent": "xox-devops",
       "deps": [],
       "conflictSet": [],
-      "status": "blocked",
+      "status": "done",
       "attempts": 0,
       "branch": null,
       "report": null,
       "acceptance": [
         "xoxAdmin Atlas parolasi Atlas konsolundan degistirilir",
         "Yeni URI Vercel (development/preview/production) ve GitHub MONGODB_URI secret-inda guncellenir",
-        "Yerel .env.local guncellenir; pnpm --filter @xox/db seed ile dogrulanir"
+        "Yerel .env.local guncellenir; pnpm --filter @xox/db seed ile dogrulanir",
+        "KAPATILDI 2026-08-25 — OMER KARARI: \"Atlas parolasini degistirmeyecegim ayni kalacak.\" Rotasyon YAPILMAYACAK. Risk kabul edildi: baglanti dizesi bu oturumun transkriptine ve bir subagent transkriptine dustu; repoya/committe HIC girmedi (gitleaks tum commitlerde sifir sizinti), GitHub push protection acik. Fikir degisirse yeni kart acilir ve o an Vercel uc ortaminin MONGODB_URI-si + GitHub secret-i birlikte guncellenir."
       ],
-      "blockedReason": "OMER USTLENDI (2026-08-25): \"Atlas parolasini ben sonra degistiririm.\" Lead tarafinda yapilacak is YOK. Rotasyon sonrasi Vercel ve GitHub secret-larindaki MONGODB_URI da guncellenmeli — o an lead-e haber verilsin."
+      "blockedReason": null
     },
     {
       "id": "SEC-002",
@@ -1527,9 +1528,9 @@
       "id": "DESIGN-001",
       "title": "Gorsel tasarimi profesyonel seviyeye cikar",
       "tier": "P1",
-      "wave": "3",
+      "wave": "2",
       "agent": "xox-designer",
-      "deps": ["W2-02"],
+      "deps": [],
       "conflictSet": [
         "packages/ui-tokens/**",
         "apps/web/app/globals.css",
@@ -1537,6 +1538,8 @@
         "apps/web/components/**"
       ],
       "acceptance": [
+        "ADIM 1 (kesif, UCUSTA): xox-designer UC gorsel yon hazirliyor — docs/design/onizleme/yon-{a,b,c}.html. OMER SECECEK. Uygulama secim yapilmadan BASLAMAZ — yanlis yone emek harcamayalim.",
+        "ONCELIK YUKSELTILDI 2026-08-25 — OMER: \"mevcut maddelere ek olarak tasarimsal iyilestirmeler de yapmani bekliyorum. Suan tasarim oldukca amator gorunuyor, profesyonel olmali.\" Artik sonraki dalgalara ERTELENMIYOR, Dalga 2-de.",
         "OMER ISTEDI: \"Sistemin tasarimini daha iyi hale getirmeliyiz. Profesyonel dursun istiyorum. Bunu sonraki dalgalara saklayabiliriz.\" — yani P0/P1 islevsellik onde, bu kart Dalga 3-te",
         "MEVCUT DURUM: UI-SKEL-001 islevsel bir kabuk kurdu (tokenlar, Board, ARIA, tema) ama gorsel dil MINIMAL — amac calisan iskeletti, estetik degil",
         "ONCE TASARIM DILI, SONRA UYGULAMA: palet, tipografi olcegi, bosluk sistemi, hareket dili KARARLASTIRILIR ve packages/ui-tokens-a yazilir. Bilesenler sonra o tokenlari tuketir",
