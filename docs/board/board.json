@@ -1,11 +1,11 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T23:14:52.675Z",
+  "updatedAt": "2026-08-25T23:24:26.685Z",
   "nightRun": {
     "active": true,
     "deadline": null,
-    "wave": "B0",
+    "wave": "B1",
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0,
     "maxParallel": 3
@@ -1418,10 +1418,10 @@
         "packages/game-core/package.json",
         ".size-limit.mjs"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/PERF-003",
-      "report": null,
+      "report": "docs/board/reports/PERF-003.md",
       "blockedReason": null,
       "acceptance": [
         "OLCULDU (PERF-002): @xox/game-core-un TAMAMI — chooseMove/bestMove dahil, strings ile dogrulandi — 1gn2loqck7nj8.js (298 kB ham, en buyuk parca) uzerinden /, /giris, /kayit ve /oda/[kod] rotalarina da giriyor. Oysa minimax YALNIZ /oyna/bilgisayar-in ihtiyaci",
@@ -1433,7 +1433,8 @@
         "SERT ON KOSUL ROLU (ADR-0013 sonuclar, tasarim D8): bu kart CORE-AI-001'den ONCE kapanmali. Agir rotalarda size-limit payi yalniz ~20 kB gzip (heavy butce 235 kB, olculen 214.65 kB) ve game-core TUM rotalara siziyor; yeni arama + degerlendirme kodu bu payi yer.",
         "apps/web/next.config.ts ROLLOUT-BOARD-001'in de cakisma kumesindedir (ADR-0018 sonuclar): `deploymentId` satiri BU KARTTAN SONRAKI bir dalgada yazilir, iki kart ayni dalgaya konmaz.",
         "Yeniden turetilen rota butceleri CORE-AI-001 ve UI-COMP-001'in kapisidir; butce sayilari ve gerekceleri rapora ACIKCA yazilir ki sonraki kartlar neye karsi olctugunu bilsin."
-      ]
+      ],
+      "mergeSha": "e588156"
     },
     {
       "attempts": 0,
@@ -1539,10 +1540,10 @@
         "apps/web/lib/generate-globals-css.ts",
         "docs/design/**"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/DESIGN-001a",
-      "report": null,
+      "report": "docs/board/reports/DESIGN-001a.md",
       "acceptance": [
         "BOLUNME NOTU: DESIGN-001 bu kart ile DESIGN-001b'ye AYRILDI (ADR-0017 §10 — katmana gore bolme). 001a yalniz TASARIM DILI + TOKEN katmanidir. apps/web/components/** bu kartta ACILMAZ — tek satir bile. Aksi halde UI-BOARD-001 ile ayni agacta bulusur ve paralellik olur.",
         "OMER YON A'yi SECTI (2026-08-25) — Kagit & Murekkep: sicak, minimal, hairline izgara, dekorasyon yerine bosluk ve tipografi. Gerekce ve reddedilenler decisions.md'de. ADIM 1 (uc gorsel yon, docs/design/onizleme/yon-{a,b,c}.html) TAMAM.",
@@ -1559,7 +1560,8 @@
         "Bu kart UI-BOARD-001'in SERT ON KOSULUDUR (ADR-0017 §10).",
         "pnpm gates temiz."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "e4421fb"
     },
     {
       "id": "DESIGN-001b",
@@ -2088,6 +2090,29 @@
         "KANIT 1: mevcut 642 oyunluk tumevarimsal yenilmezlik kosusu ve %98.49 mutasyon esigi DEGISMEDEN yesil kalir. Oyun sayisi degismez",
         "KANIT 2: ayni is yuku R=6 kisitlamasinda YENIDEN olculur ve <=1000 ms gosterilir. Olcum AI-SPIKE-001-in yontemiyle (esbuild bundle + CDP throttle) yapilir, CI Node-unda DEGIL",
         "SONDA: alfa-beta budamasini devre disi birakan mutasyon, dugum sayisi iddiasini KIRMIZI dondurmeli — yoksa budama gercekten calisiyor mu bilinmez"
+      ]
+    },
+    {
+      "id": "PERF-004",
+      "title": "shared barrel game-core-u BES rotaya yayiyor — 298 kB ortak parca",
+      "tier": "P1",
+      "wave": "B3",
+      "agent": "xox-perf",
+      "deps": ["CTR-BOARD-001"],
+      "conflictSet": ["packages/shared/src/index.ts", "packages/shared/src/room-client.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "OLCULDU (PERF-003, kapsami disindaydi): packages/shared/src/room-client.ts @xox/game-core ANA barrel-ini STATIK cekiyor; packages/shared/src/index.ts-in export * barrel-i bunu yalnizca TESTID gibi ufak bir sey icin @xox/shared-a dokunan HER rotaya yayiyor",
+        "KANIT: /, /giris, /kayit, /oda/[kod], /oda/katil rotalarinin baytlari PERF-003 boyunca HIC KIPIRDAMADI — ayni chunk hash, ayni 298132 bayt. Giris sayfasi minimax indiriyor",
+        "PERF-003 NEYI COZDU, NEYI COZMEDI: /oyna/bilgisayar next/dynamic ile 213.61 -> 143.75 kB dustu (kendi payi artik AI buyumesiyle buyumeyecek). Ama ai.ts-e eklenecek her satir bu zincir yuzunden HALA agir besli rotanin 235 kB butcesine yaziliyor",
+        "CORE-AI-001 ICIN KRITIK: AI kodu buyuyecek ve agir rotalarda ~20 kB pay var. Bu kart cozulmezse butce patlar",
+        "OLCULMUS YAKLASIM UYARISI (PERF-003 uc yolu denedi): alt yol export + statik import SIFIR ETKI yapti (bayt bayt ayni) · ham import() KOTULESTIRDI (next start + curl ile dogrulandi, /giris HTML-i minimaxi eagerly servis etti) · ise yarayan tek sey next/dynamic + ssr:false bileşen sinirıydi. Ayni tuzaklara dusme",
+        "SIRA: CTR-BOARD-001 protokol penceresini KAPATTIKTAN sonra. O kart packages/shared/src/** sahibi ve zaten sinirda; import yapisini ayni anda degistirmek onu patlatir",
+        "Duzeltme sonrasi agir butce DUSURULMELI — 235 kB olculen degerden turetilmisti, sizinti kalkinca dogru sayi degil"
       ]
     }
   ]
