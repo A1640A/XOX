@@ -1,50 +1,72 @@
 /* apps/web/app/globals.css — ÜRETİLİR, ELLE DÜZENLENMEZ.
- * Kaynak: @xox/ui-tokens themeCss()/cssVariables(). Yeniden üretmek için
- * generate-globals-css.ts'teki generateGlobalsCss() çıktısını buraya yapıştır
- * (globals.css.test.ts ikisinin eşitliğini kilitler). Tailwind v4 CSS-first;
+ * Kaynak: @xox/ui-tokens themeCss()/cssVariables()/boardCssVariables()/motionCssVariables().
+ * Yeniden üretmek için generate-globals-css.ts'teki generateGlobalsCss() çıktısını buraya
+ * yapıştır (globals.css.test.ts ikisinin eşitliğini kilitler). Tailwind v4 CSS-first;
  * tailwind.config.js YOK. */
 @import 'tailwindcss';
 
 @theme {
-  --color-bg: #faf9f7;
+  --color-bg: #f7f4ee;
   --color-surface: #ffffff;
-  --color-border: #857f79;
-  --color-text: #1c1917;
-  --color-text-muted: #78716c;
-  --color-accent: #2563eb;
-  --color-player-x: #2563eb;
-  --color-player-o: #be123c;
-  --color-win: #15803d;
-  --color-danger: #dc2626;
+  --color-surface-raised: #fbf9f5;
+  --color-border: #8a8478;
+  --color-text: #241f1a;
+  --color-text-muted: #6b6255;
+  --color-accent: #1d4ed8;
+  --color-player-x: #243b5c;
+  --color-player-o: #7a2e2e;
+  --color-win: #2f6b3a;
+  --color-danger: #a13d2c;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+:root {
+  --xox-grid-line: 2px;
+  --xox-board-max: 480px;
+  --xox-focus-ring-width: 2px;
+  --xox-focus-ring-offset: 2px;
+  --xox-winning-outline-width: 3px;
+  --xox-faded-opacity: 0.55;
+  --xox-mark-stroke-x: 3px;
+  --xox-mark-stroke-o: 2px;
+  --xox-move-duration: 150ms;
+  --xox-win-duration: 200ms;
+  --xox-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-tema='acik'] {
-  --color-bg: #faf9f7;
+  --color-bg: #f7f4ee;
   --color-surface: #ffffff;
-  --color-border: #857f79;
-  --color-text: #1c1917;
-  --color-text-muted: #78716c;
-  --color-accent: #2563eb;
-  --color-player-x: #2563eb;
-  --color-player-o: #be123c;
-  --color-win: #15803d;
-  --color-danger: #dc2626;
+  --color-surface-raised: #fbf9f5;
+  --color-border: #8a8478;
+  --color-text: #241f1a;
+  --color-text-muted: #6b6255;
+  --color-accent: #1d4ed8;
+  --color-player-x: #243b5c;
+  --color-player-o: #7a2e2e;
+  --color-win: #2f6b3a;
+  --color-danger: #a13d2c;
 }
 
 [data-tema='koyu'] {
-  --color-bg: #17161a;
-  --color-surface: #211f26;
-  --color-border: #78727e;
-  --color-text: #f5f4f2;
-  --color-text-muted: #a8a29e;
-  --color-accent: #60a5fa;
-  --color-player-x: #60a5fa;
-  --color-player-o: #fb7185;
-  --color-win: #4ade80;
-  --color-danger: #f87171;
+  --color-bg: #14120f;
+  --color-surface: #1e1b17;
+  --color-surface-raised: #262220;
+  --color-border: #786d5f;
+  --color-text: #f2ede4;
+  --color-text-muted: #b3a998;
+  --color-accent: #93b4ff;
+  --color-player-x: #aac0ea;
+  --color-player-o: #e6a8a2;
+  --color-win: #8ccb98;
+  --color-danger: #e2897c;
 }
 
 body {
   background: var(--color-bg);
   color: var(--color-text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
 }

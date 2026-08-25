@@ -15,6 +15,7 @@ const ALL_THEMES = Object.keys(themes) as Theme[]
 const EXPECTED_COLOR_TOKENS_RECORD: Record<ColorToken, true> = {
   bg: true,
   surface: true,
+  surfaceRaised: true,
   border: true,
   text: true,
   textMuted: true,

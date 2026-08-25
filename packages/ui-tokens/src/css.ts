@@ -1,11 +1,7 @@
 import { type ColorToken, type Theme, themes } from './colors'
+import { toKebabCase } from './casing'
 
 const CSS_VAR_PREFIX = '--color-'
-
-/** `textMuted` -> `text-muted`, `playerX` -> `player-x`. CSS custom property adları kebab-case ister. */
-function toKebabCase(token: string): string {
-  return token.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
-}
 
 /** `--color-text-muted` -> `textMuted`. `toKebabCase`'in tersi; anahtar eşitlik testleri için. */
 function fromCssVariableName(name: string): string {
