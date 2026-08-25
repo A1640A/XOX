@@ -84,3 +84,27 @@ yeniden ölçülür.
 `won` durumu `line: WinLine | null` + `reason: 'line'|'resign'|'timeout'|'abandon'` olur,
 `move:rejected.reason` ve `error.code` enum'a daralır. Bu değişiklikler **tek dalgada** toplandı;
 sonraki dalgalar protokol değiştirmez.
+
+## `RoomDoc.result` (W1-02, Dalga 1)
+
+`packages/db`'deki `rooms` koleksiyonuna `result: RoomResult | null` alanı eklendi —
+`{ kind, winner, line, reason }`, `ADR-0001`'in taşıma `TransportStatus` şekliyle BİREBİR aynı.
+`state:'finished'` ile AYNI CAS'ta yazılır (pes/süre-aşımı/terk dahil TÜM sonlanma yolları).
+`apps/web/lib/game/room-view.ts` sonucu ÖNCELİKLE bu alandan okur (yalnız normal biten oyunlarda
+tahtadan `evaluateStatus`e düşer) — sonuç `games` koleksiyonundan OKUNMAZ (bkz. decisions.md,
+R1/tek-okuma-kaynağı gerekçesi).
+
+## `ConnectionBadge` `data-durum` — DÖRT değer (W1-03, spec §2.0'ın yerini alır)
+
+`docs/superpowers/specs/2026-08-24-xox-teknik-tasarim.md` §2.0'ın üçlü tablosu (`bagli`/`kopuk`/
+`bekliyor`) GERİDE KALDI. Güncel dört değer:
+
+| Değer        | Ne zaman                                          | İstemci davranışı                                                             |
+| ------------ | ------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `bagli`      | WS açık, oturum aktif                             | —                                                                             |
+| `kopuk`      | Ağ kesintisi (1006 vb.), grace penceresi sürüyor  | Üstel geri çekilmeyle otomatik yeniden bağlan, "Tekrar dene" gösterilir       |
+| `bekliyor`   | Rakip henüz katılmadı                             | —                                                                             |
+| `devredildi` | Bu oturum `SESSION_TAKEOVER` (4409) ile kapatıldı | Yeniden bağlanma DENENMEZ, düğme gösterilmez (sonsuz takeover savaşını önler) |
+
+`kopuk` ve `devredildi` davranışça TAM TERSTİR (biri yeniden dener, diğeri asla) — tek bir DOM
+değerine sıkıştırılamaz, bkz. `decisions.md`.

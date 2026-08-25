@@ -89,3 +89,43 @@ için (henüz yazılmadı) şu kural bağlayıcıdır:
 Doğrulama başarısızsa `/` gibi güvenli bir varsayılana düş. Bu iki kontrol olmadan, `donus`
 gelecekte bir yerde kullanıcı girdisinden türetilirse (örn. bir deep-link/e-posta bağlantısı)
 sessizce açık yönlendirmeye dönüşür.
+
+## Mutasyon sondası disiplini: önce commit, sonra sonda, sonra geri al
+
+Bir mutasyon sondası uygulamadan ÖNCE dosyadaki gerçek düzeltmeleri commit et. Sıra her zaman:
+**düzeltmeyi commit et → sondayı uygula → `diff -q` ile GERÇEKTEN değiştiğini doğrula → testi
+koş → `git checkout --` ile geri al → `git status --porcelain` BOŞ mu kontrol et.** Commit
+edilmemiş bir dosyaya sonda uygulayıp `git checkout --` ile geri almak, aynı dosyada duran
+commit'lenmemiş gerçek düzeltmeleri de siler (ROOM-API-001'de tam bu oldu — sonda geri alınırken
+bir güvenlik düzeltmesi de kayboldu, ajan diff'te fark edip kurtardı). `diff -q` adımını atlama:
+bazı `perl -0pi`/`grep` kalıpları sessizce hiçbir şey değiştirmez, o zaman "test yeşil kaldı"
+sonucu yanlıştır — kalıp tutmadı demektir, davranış doğrulandı demek değildir.
+
+## Negatif kontrol zorunluluğu: "yokluk" iddiasının yanında DOLU bir liste olmalı
+
+Bir olayın/mesajın ÜRETİLMEDİĞİNİ (`expect(x.types()).not.toContain('opponent:left')`,
+`expect(sentMoveFrames.length).toBe(0)`) iddia eden her test, AYNI akışta aynı aktörün BOŞ
+OLMAYAN bir liste ürettiğini de göstermeli — aksi hâlde "hiçbir mesaj hiç gelmedi, o yüzden
+aranan da yok" gibi anlamsız bir yeşil olabilir. W1-03 ve SEC-002'de bu ikili birlikte
+kullanıldı: `ada.types()` doluydu (takeover başka bir olay ürettiği için) VE aranan olay
+yoktu; SEC-002'de "kurban kilitlenmedi" iddiasının yanında "decoy zaten kilitlendi" pozitif
+kanıtı vardı. Tek başına "yokluk" iddiası hem örüntü #2'nin hem "kaynağı okuyan test"in bir
+türevidir.
+
+## Gerçek Atlas'a koşan testlerde `MONGODB_DB` KOŞULSUZ zorlanır
+
+`packages/db` ve gerçek `@xox/db` otoritesine karşı koşan `apps/web` testleri (ör.
+`presence.test.ts`) `process.env['MONGODB_DB'] = 'xox_test'`i test dosyasının kendisinde
+koşulsuz set eder — ortam değişkeninden miras ALMAZ. Yanlışlıkla `xox_dev`/`xox_prod`'a
+bağlanıp veri yazma riskini modül yükleme anında kapatır. Yeni bir Atlas'a-koşan test dosyası
+eklerken bu satırı ilk satır yap.
+
+## Casus bileşenle prop iddiası — dondurulmuş dosyaları açmadan davranışı kilitleme
+
+`RoomScreen.tsx` gibi dondurulmuş bir dosyaya yeni bir alt bileşen (ör. `ConnectionBadge`,
+`ResultPanel`) davranışını sınamak için DOKUNULAMIYORSA, o bileşenin YERİNE geçen bir "casus"
+(`vi.mock` ile değiştirilmiş, aldığı prop'ları kaydeden sahte bileşen) mount edilip gerçek
+`RoomScreen`in ona hangi prop'ları geçtiği iddia edilir — dosyanın kendisi hiç açılmaz,
+kaynak metni okunmaz. UI-SKEL-001'in inceleme turunda "iskeletler casus bileşene çevrilip
+prop'lar iddia ediliyor" kalıbı budur; bir sonraki dalganın aynı dosyayı açmasını gereksiz kılan
+mount noktaları bu sayede hem var olduğu hem doğru prop aldığı ispatlanarak bırakılabiliyor.

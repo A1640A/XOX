@@ -190,3 +190,69 @@ CDN önbelleğini kaybetmesi bu iki sayfa için kabul edilebilir maliyet.
 kabuğu korumak — iki sayfa için kök layout'a Suspense karmaşıklığı eklemeye değmez.
 **Geri dönüş yolu:** Ölçülen bir maliyet çıkarsa (Vercel fonksiyon çağrısı hacmi) reddedilen
 seçenek hâlâ geçerli; `layout.tsx` dondurulmuş dosya olduğu için ayrı bir kart gerekir.
+
+## 2026-08-25 · `rooms` dokümanına `result` alanı eklendi — sonuç `games`ten değil `rooms`tan okunur (W1-02)
+
+**Karar:** Pes/süre-aşımı/terk sonucunun kazananı `RoomDoc.result: RoomResult { kind, winner,
+line, reason }` alanına, `state:'finished'` ile AYNI CAS'ta yazılır. `apps/web/lib/game/room-view.ts`
+önce `result`i okur (varsa `transportStatusSchema` ile doğrulanıp döner), yoksa tahtadan
+`evaluateStatus` (yalnız normal biten/berabere oyun), o da yoksa gürültülü bir `console.error` +
+`{kind:'draw'}` düşer — üçüncü dal artık gerçekten ulaşılamaz ama sessiz değil.
+**Gerekçe:** Canlı katman yalnız `rooms`u görüyor (change stream odayı taşır, `state` mesajı
+odadan üretilir); sonuç tahtadan hesaplanamaz (pes/terk/süre aşımında tahta "bitmiş" görünmez).
+Aynı CAS'ta yazmak, iki ayrı yazma arasına bir change stream olayının düşüp istemcinin bir an
+"kazananı olmayan bitmiş oyun" görmesini engelliyor.
+**Reddedilen:** Sonucu `games`ten okumak — `apps/web` odayı change stream'den alıyor, her olayda
+ikinci bir `games` sorgusu R1'i (tek okuma kaynağı) bozar ve instance başına tek stream
+bütçesine (M0'da 100 işlem/sn) ek Atlas işlemi bindirirdi.
+**Yan etki:** `RoomDoc`e zorunlu alan eklemek `apps/web`de 5 test fixture'ını kırdı (bkz.
+gotchas.md) — paket sınırları donmuş olsa bile tüketen paketin typecheck'i koşulmalı.
+
+## 2026-08-25 · Rövanşta koltuk (`seats`) VE bağlantı geçerliliği (`presence`) BİRLİKTE takas edilir (W1-02)
+
+**Karar:** `startRematch` koltuk sahipliğini takas ederken `presence` ve `disconnected.seat`i de
+aynı CAS'ta takas eder.
+**Gerekçe:** Koltuk sahipliği `seats[*].userId`ye, bağlantı geçerliliği `presence[seat].connId`ye
+bakıyor — ikisi aynı koltuk etiketiyle indeksleniyor ama farklı şeyi temsil ediyor. Yalnız
+`seats` takas edilseydi iki oyuncu da kendi YENİ koltuğunda "başka bir bağlantı" görür ve
+`detectTakeover` İKİSİNİ BİRDEN 4409 ile kapatırdı — rövanş her seferinde iki tarafı da düşürürdü.
+**Reddedilen:** Yalnız `seats`i takas edip `presence`i sonraki bir reconnect'e bırakmak — kısa
+süreli de olsa her rövanşta iki oyuncuyu birden oturumdan düşürüyor, kabul edilemez.
+
+## 2026-08-25 · Durum değiştirmeyen istekler (tekrar teklif, aynı teklifi kabul) YAZMA ÜRETMEZ (W1-02 + WS-001)
+
+**Karar:** `rematch` teklifini tekrarlamak ya da kendi teklifini kabul etmeye çalışmak gibi
+durum değiştirmeyen istekler `rooms`a hiçbir CAS yazması üretmez.
+**Gerekçe:** Instance başına TEK change stream var (bkz. gotchas "her change stream havuzdan bir
+bağlantı tutar"); WS-001'in birleşik inceleme turu `join` çerçevesinde tam bu sınıftan bir hatayı
+(~10× yazma amplifikasyonu) blocker olarak buldu — tek gürültülü soket, o instance'taki BÜTÜN
+odaların olay dağıtımını geciktiriyordu. Aynı riski taşıyan her yeni yazma yolu için aynı kural
+uygulandı.
+**Reddedilen:** Her isteği koşulsuz yazmak ve "zaten aynı değer" idempotansına güvenmek — CAS
+kendisi ucuz olsa bile paylaşılan change stream'in olay hacmini gereksiz büyütür.
+
+## 2026-08-25 · `ConnectionBadge` `data-durum` DÖRT değer yazar — spec §2.0'ın üçlü tablosu genişletildi (W1-03)
+
+**Karar:** `data-durum` artık `bagli` / `kopuk` / `bekliyor` / `devredildi` (dört değer). Kaynak
+spec §2.0'ın üçlü tablosu bu haliyle GERİDE KALDI, `docs/memory/api-contract.md` güncel kaynak.
+**Gerekçe:** İskelet `devredildi`yi `kopuk`a eşliyordu ve bir test bunu YANLIŞLIKLA kilitliyordu.
+Bu eşleme davranışı TAM TERS olan iki durumu tek DOM değerine sıkıştırıyor: `kopuk` → üstel geri
+çekilmeyle yeniden bağlan + "Tekrar dene" göster; `devredildi` → hiçbir yeniden bağlanma
+denenmemeli, düğme yok (sonsuz takeover savaşını önler). Ayrım DOM'a yazılmazsa E2E "yeniden
+bağlanma denenmedi"yi ekrandan hiç doğrulayamaz.
+**Reddedilen:** Mevcut üçlü tabloyu korumak — iki farklı davranışı aynı görünür duruma
+sıkıştırmak, hem kullanıcıyı (yanlış "tekrar dene" beklentisi) hem E2E'yi (ayrımı gözlemleyemez)
+yanıltırdı. Yanlış davranışı kilitleyen eski test, düzeltmeyle BİRLİKTE güncellendi.
+
+## 2026-08-25 · `detachConnection` kaybedilen CAS yarışında SINIRLI sayıda yeniden dener (W1-03)
+
+**Karar:** Okuma ile CAS yazması arasına başka bir yazma girip `expectedVersion`'ı düşürürse,
+sahiplik koşulu (`presence[seat].connId === connId`) her denemede YENİDEN kontrol edilerek 3
+kez yeniden denenir; hepsi tükenirse sessizce pes eder (istisna fırlatmaz).
+**Gerekçe:** Sahiplik koşulu korumanın TAMAMI; `expectedVersion` yalnız `casUpdateRoom`un
+tek-geçiş disiplini için var. Yeniden deneme olmadan, alakasız bir yazma (rakibin hamlesi) bu
+detach'i sessizce iptal ediyordu — sonuç: terk eden taraf hiç damgalanmıyor, rakip 30 sn sonunda
+kazanamıyor, oyun sonsuza dek "rakip düşünüyor"da donuyordu.
+**Reddedilen:** `casUpdateRoom`u atlayıp tek atomik aggregation-pipeline güncellemesi yazmak —
+`cas.ts`'nin "koşulsuz yazma yasak, tek geçiş noktası burası" disiplinini delerdi ve `cas.ts` bu
+görevin çakışma kümesinde değildi.

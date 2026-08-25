@@ -4,8 +4,8 @@
 
 ## Tekrar eden örüntüler
 
-Aşağıdaki beş örüntü, alttaki maddelerin çoğunu kapsar. Yeni bir sınıfta tuzağa düşmeden önce
-önce burayı tara, sonra başlığı eşleşen maddeye in — 70+ maddeyi baştan sona okumak zorunda kalma.
+Aşağıdaki altı örüntü, alttaki maddelerin çoğunu kapsar. Yeni bir sınıfta tuzağa düşmeden önce
+önce burayı tara, sonra başlığı eşleşen maddeye in — 80+ maddeyi baştan sona okumak zorunda kalma.
 
 **1. Kural yazılmış ama ateşlenmiyor** — statik kural (lint/boundary/hook) kodda duruyor, "yeşil"
 görünüyor, ama gerçek bir ihlalde hiç çalışmıyor:
@@ -36,6 +36,23 @@ kurulmaz, pre-commit kapıları sessizce devre dışı kalır.
 gerçek CLI kırık · `next-auth`'un derlenmiş çıktısı Vitest'in native ESM yükleyicisinde hiç
 import edilemez (environment fark etmez) · `jose` jsdom'un ayrı `Uint8Array` realm'inde patlar
 ama gerçek Node çalışma zamanında sorun yok — iki yönde de "test ortamı = üretim" varsayımı yanlış.
+
+**6. Kapı YANLIŞ KAPSAMI ölçüyor** — doğrulama koşuyor, yeşil dönüyor, ama ölçtüğü şey iddia
+edilenle aynı değil: Turbo cache merge sonrası `pnpm gates`i **branch'in eski yeşilini** replay
+eder, birleşmiş ağacı hiç çalıştırmaz · yerel `pnpm gates` yeşildi ama CI'da `MONGODB_URI` yok —
+**yerel kapı CI'ın gerçeğini ölçmüyordu**, CI 5 saat kırmızı kaldı ve kimse `gh run list`
+çalıştırmadı · Vercel'de her route ayrı fonksiyon/instance/modül kapsamı — `/api/health`'ten
+`/api/rooms/[code]/ws`'in modül-içi singleton'ını okumaya çalışmak daima sıfır döner, "değişmez
+korundu" gibi sahte bir güven verir. Ortak reçete: doğrulamayı ÖLÇTÜĞÜ İDDİA EDİLEN KAPSAMDA
+(birleşmiş ağaç, CI runner'ının kendisi, aynı route/instance) koştur; başka bir yerden alınan
+"yeşil" kanıt sayılmaz.
+
+> **Nüans (örüntü 2'ye ek):** hayatta kalan bir mutant/kapsanmayan bir dal HER ZAMAN test
+> boşluğu değildir — bazen dal GERÇEKTEN ulaşılamaz hâle gelmiştir (ör. bir alan artık başka bir
+> yerde garanti ediliyor). Fark ettirici soru testin kırmızı olup olmaması değil, o dalın SESSİZ
+> mi (hiçbir iz bırakmadan atlanıyor) yoksa GÜRÜLTÜLÜ mü (log/hata ile kendini ele veriyor)
+> olduğu — W1-02'de `room-view.ts`'in üçüncü dalı ulaşılamaz hâle geldi ama bilerek bir
+> `console.error` ile gürültülü bırakıldı, sessizce silinmedi.
 
 ## 2026-08-25 · ⚠️ Turbo cache merge sonrasi kapiyi SAHTE YESIL gosterir
 
@@ -179,6 +196,10 @@ sirali cift degismezi `updateOne(..., {upsert:true})` ile atlandi ve ayni cift i
 dokuman olustu.
 **Yapilacak:** Degismezi yazma yoluna degil VERIYE bagla (tek giris kapisi yardimcisi) ya da
 query hook-larini da ekle. Ve degismezi `updateOne` ile ihlal etmeyi DENEYEN bir test yaz.
+**Yeni örnek (2026-08-25, W1-02):** `finishGame` de `findOneAndUpdate` kullandığı için
+`Game`'in `pre('validate')` çapraz tutarlılık hook'u (isDraw⇒winner null vb.) burada da hiç
+çalışmıyor — tutarlılık "yapı gereği" (tek doğrulanmış `TransportStatus`tan türetme) +
+`runValidators: true` ile sağlanıyor, hook'a güvenilmiyor.
 
 ## 2026-08-24 · `Stop` hook-u "su an harekete gecemem" durumlarini modellemeli
 
@@ -891,3 +912,89 @@ atlamak (bu, örüntü #2'yi CI seviyesine taşımaktır — kapı yeşil yanar,
 
 **Doğru çözüm:** CI'a REPLICA SET olarak gerçek MongoDB ver. Standalone mongod yetmez —
 `packages/db` ve `presence.test.ts` change stream kullanıyor, change stream replica set ister.
+
+## 2026-08-25 · ⚠️ Okuma+CAS deseninde `expectedVersion` sahiplik koşulunun YERİNE geçmez — araya giren ALAKASIZ bir yazma sessizce iptal ettirir (örüntü #4)
+
+`detachConnection` önce odayı okuyup sahiplik kontrolü (`presence[seat].connId === connId`)
+yapıyor, sonra `expectedVersion` ile CAS yazıyordu. Okuma ile yazma arasına giren HERHANGİ bir
+yazma (rakibin hamlesi, tembel `settleDeadlines`, rakibin `join`i — hepsi `version`'ı artırır)
+CAS'ı düşürüyordu ve fonksiyon **sessizce hiçbir şey yapmadan dönüyordu**. Sonuç görünmez ama
+ölümcül: `presence[seat]` ölü bir `connId`'yle takılı kalıyor, `disconnected` hiç damgalanmıyor,
+rakip ne `opponent:left` görüyor ne de 30 sn sonunda terk galibiyetini alıyor — oyun sonsuza
+kadar "rakip düşünüyor"da donuyor. Pencere küçük (~10-50ms) ama "bağlantı koptuğu an rakip
+hamle yaptı" tamamen olağan bir senaryo.
+**Yapılacak:** `rooms/` altındaki her okuma-sonra-CAS fonksiyonu için sor: "bu yazma
+kaybedilirse SESSİZCE ne olmaz?" Cevap ciddiyse (bir tarafın hiç sinyal alamaması gibi) sınırlı
+sayıda yeniden deneme ekle (sahiplik koşulu her denemede yeniden kontrol edildiği sürece güvenlik
+zayıflamaz). `casUpdateRoom`u atlayıp tek atomik pipeline güncellemesi düşünme — `cas.ts`'nin
+"tek geçiş noktası" disiplinini deler.
+
+## 2026-08-25 · Mongoose query middleware MODEL DERLENMEDEN önce kayıtlı olmalı — `beforeAll` içinde eklenen hook hiç ateşlenmez
+
+Bir okuma/yazma yarışını enjekte etmek için `Room.schema.pre('findOneAndUpdate', …)` testin
+`beforeAll`'ında kayıt edildi. Model `models/room.ts` import edildiği anda derleniyor; sonradan
+eklenen middleware o modele hiç bağlanmıyor. Hata SESSİZ: test "yarış olmadı" senaryosunu
+doğruladı ama yanlış sebeple (yarış hiç enjekte edilmemişti), yeşil de değildi ama YANLIŞ
+kırmızıydı — teşhisi kolay değildi.
+**Ek tuzak:** `vitest.shared.ts`'teki `restoreMocks: true` her testten SONRA tüm spy'ları geri
+alıyor; `beforeAll`da kurulan bir spy yalnız İLK testte yaşıyor, sonrakiler onu göremiyor.
+**Yapılacak:** çalışma zamanı yarış enjeksiyonu için `vi.spyOn(Model, 'findOneAndUpdate')` ile
+GERÇEK sorguyu sarmala (mock değil, yalnız zamanlama), ve kalıcı casusları `beforeEach`'te kur.
+
+## 2026-08-25 · `@sinonjs/fake-timers`: bir tick İÇİNDE kurulan 0 ms zamanlayıcı aynı `tickAsync(0)`/`advanceTimersByTimeAsync(0)` ile çalışmaz
+
+`advanceTimersByTimeAsync(20_000)` bir rotasyonu ateşledi, istemci `setTimeout(connect, 0)`
+kurdu; hemen ardından `advanceTimersByTimeAsync(0)` bunu KOŞTURMADI (soket açılmadı) —
+`(1)` koşturdu. "Gecikmesiz yeniden bağlanma" iddiasını soket SAYIMINA dayandıran bir test bu
+yüzden yanlış kırmızı verir.
+**Yapılacak:** iddiayı soket sayımı yerine gözlenebilir GECİKME değerine dayandır — istemcinin
+zamanlayıcıya verdiği `ms`i kaydet (planlı rotasyon → 0, sınıflandırılmamış kopma →
+`WS_RECONNECT_BASE_MS`), sonra yalnızca akışı ilerletmek için 1 ms daha geç.
+
+## 2026-08-25 · Koltuk takası (`seats`) `presence` ile BİRLİKTE takas edilmezse İKİ oyuncuyu birden 4409 ile düşürür
+
+`seats` (kim oturuyor) ve `presence` (hangi bağlantı geçerli) aynı koltuk etiketiyle indeksleniyor
+ama farklı şeyleri temsil ediyor. Rövanşta yalnız `seats` takas edilip `presence` bırakılırsa
+her iki bağlantı da "presence.connId benim değil" görür ve `detectTakeover` İKİSİNİ BİRDEN
+`SESSION_TAKEOVER` (4409) ile kapatır — `seat-lost` (4403) dalı hiç tetiklenmez çünkü `seatOf`
+hâlâ bir koltuk buluyor. Belirti "oda boşaldı" değil "iki oyuncu da devredildi sanıp salt-okunura
+düştü" olur, teşhisi zor.
+**Yapılacak:** Bir alanı takas ederken onunla AYNI koltuk etiketine bağlı diğer tüm alanları
+(`presence`, `disconnected.seat`) da aynı CAS'ta takas et. Negatif kontrol yaz: presence takası
+kaldırılınca test 4409 üretmeli.
+
+## 2026-08-25 · Bir pakete yeni ZORUNLU alan eklemek başka bir paketin test FIXTURE'larını kırar — kaynak kodu değil
+
+`RoomDoc`e `result` alanı eklenince `packages/db` typecheck'i temiz kaldı ama `apps/web`'de 5
+ayrı `makeRoom` test fixture'ı literali TS2322/TS2741 verdi (room-view, connection,
+handlers/index, room-hub, session testleri) — üretim kodu hiç kırılmadı. "Bir pakete alan eklemek
+ucuz, yalnız o paketin typecheck'ine bakarım" varsayımı yanıltıcı: alan ekleyen görev TÜKETEN
+paketin (`apps/web`) typecheck'ini de koşmak zorunda, `packages/**` donmuş olsa bile.
+
+## 2026-08-25 · `join.ts`'in sınırsız CAS yazması tek soketin BÜTÜN odalarını geciktiriyordu (~10× amplifikasyon)
+
+WS-001 birleşik inceleme turu: join çerçevesi her tekrarında (kendi teklifini/hamlesini
+tekrarlamak gibi) sınırsız bir CAS yazması + change stream olayı üretiyordu. Instance başına TEK
+change stream olduğu için (bkz. yukarıdaki "her change stream havuzdan bir bağlantı tutar")
+tek bir gürültülü soket, O INSTANCE'TAKİ BÜTÜN ODALARIN olay dağıtımını geciktiriyordu — bir
+odadaki kötü davranış, alakasız başka odalardaki oyunculara sızıyordu.
+**Yapılacak:** Durumu değiştirmeyen bir isteğin (aynı teklifi tekrarlamak, zaten seçili olanı
+seçmek) YAZMA ÜRETMEMESİ mimari bir gereklilik — instance başına paylaşılan tek kaynak (change
+stream) varsa, "zararsız" bir tekrar bile paylaşılan kaynağı tüketir. `rooms/`e yeni bir yazma
+yolu eklerken sor: "bu istek durumu değiştirmiyorsa yine de yazıyor mu?"
+
+## 2026-08-25 · Stop hook paralelliği EKSİK sayıyor — ekip işi board'da görünmüyor
+
+`night-continue.sh` "ŞİMDİ dispatch edilebilir mi" sorusunu doğru soruyor ama `running`
+sayımını yalnız `board.json`'daki `in_wave`/`reviewing` kartlarından yapıyor. **Reviewer,
+security, integrator ve memory-curator ajanlarının board kartı YOK** — dolayısıyla üç ajan
+uçarken hook ikisini sayıp "bir slot boş" diyor ve dördüncüyü istiyor.
+
+Gece başında düzeltilen livelock'un kalan kenarı bu (o zaman `in_wave`'in actionable
+sayılması, `pausedUntil` ve `maxParallel` eklenmişti — eksik olan ekip işinin görünürlüğü).
+
+**Çözüm seçenekleri:** ekip ajanlarını da board'a geçici kart olarak yazmak · `nightRun`
+altına bir sayaç koyup dispatch/return'de güncellemek · hook'a bir "ekip meşgul" bayrağı.
+Hangisi seçilirse seçilsin, **lead'in hook'a körü körüne uymaması gerektiği** de bir kural:
+deadline'a kalan süre bir kartın build+inceleme+düzeltme+merge döngüsünden kısaysa yeni kart
+açmak sabahki tabloyu iyileştirmez, karmaşıklaştırır.

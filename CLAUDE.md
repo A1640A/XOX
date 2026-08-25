@@ -74,6 +74,11 @@ birleşmiş ağacın sonucu yerine branch'in eski yeşilini replay edebilir. Mer
 `pnpm exec turbo run typecheck --force && pnpm exec turbo run test:coverage --force` —
 çıktıda `Cached: 0 cached` görmeden yeşil sayma.
 
+**`pnpm gates` yeşil + `Cached: 0` de YETMEZ — CI'ın KENDİSİ yeşil olmalı.** Bu hepsi
+yerel ağaçta koşar; yerelde var olup CI'da olmayan şey (ör. `MONGODB_URI`) sessizce farklı
+sonuç üretir (2026-08-25: CI 5 saat kırmızı kaldı, kimse fark etmedi). Merge sonrası
+doğrulama listesine ekle: `gh run list --workflow=CI --limit 3`.
+
 1. Kırmızı test önce yazıldı, sonra yeşile döndü
 2. `pnpm gates` temiz
 3. Kapsam eşiği aşıldı (`game-core` ayrıca `pnpm mutation`)
