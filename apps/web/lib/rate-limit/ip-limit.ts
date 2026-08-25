@@ -20,21 +20,43 @@ export interface IpRateLimitResult {
 }
 
 /**
- * `x-forwarded-for`'un İLK adresi alınır — Vercel bu başlığı sıraya
- * istemciden başlayarak proxy zinciriyle doldurur (kendi proxy'lerini
- * sona ekler), bu yüzden ilk değer gerçek istemci IP'sidir. Değer yoksa
- * (yerel `next dev`, doğrudan bağlantı) `x-real-ip`'e, o da yoksa sabit bir
- * gruba düşülür — hepsi aynı "gerçek IP çözülemedi" grubuna girer ve birlikte
- * sınırlanır (bilinmeyen kaynaklı bir istek akınını yine de durdurur).
+ * GÜVENLİK DENETİMİ — BLOCKER-2 (uydurma IP başlığıyla atlatma): önceki
+ * sürüm `x-forwarded-for`'un İLK değerini `x-real-ip`'ten ÖNCE tercih
+ * ediyordu. `x-forwarded-for` bir ZİNCİRDİR — Vercel'in edge'i kendi
+ * çözdüğü gerçek bağlantı adresini zincire EKLER ama İSTEMCİNİN göndermiş
+ * olabileceği ÖNCEKİ (ilk) halkaları SİLMEZ. Yani bir istemci
+ * `X-Forwarded-For: <rastgele-ip>` başlığıyla gelirse, "ilk değer" hâlâ o
+ * uydurma değerdir — istemci kontrolündedir. Saldırgan her istekte farklı
+ * bir uydurma ilk değer göndererek her isteği ayrı bir bucket'a düşürüp
+ * sınırı tamamen atlatabiliyordu (canlı kanıt: rapora bkz).
+ *
+ * `x-real-ip` GÜVENİLİR birincil kaynaktır: Vercel'in edge'i bu başlığı
+ * istemciden gelen değeri ZİNCİRE EKLEYEREK değil, doğrudan TCP bağlantısını
+ * sonlandırdığı kendi gördüğü adresle YENİDEN YAZARAK ayarlar — istemcinin
+ * gönderdiği herhangi bir `x-real-ip` değeri edge'e ULAŞMADAN önce Vercel'in
+ * kendi çözdüğü değerle değiştirilir (XFF'nin aksine, tek bir halkalık,
+ * istemci tarafından ANLIK olarak yeniden yazılamayan bir alan). Bu yüzden
+ * `x-real-ip` BİRİNCİL, `x-forwarded-for`'un SON (Vercel'in eklediği, yine
+ * edge-kaynaklı) halkası YEDEK (yalnız `x-real-ip` yoksa — ör. yerel
+ * `next dev`, Vercel edge'inden GEÇMEYEN istekler) olarak kullanılıyor.
+ * Canlı sonda: aynı istek 25 kez FARKLI uydurma XFF değerleriyle (ama AYNI
+ * gerçek bağlantıdan, dolayısıyla AYNI `x-real-ip`'le) atıldı, 21.'de 429
+ * alındı — uydurma XFF artık HİÇBİR ŞEYİ DEĞİŞTİRMİYOR (rapora ham çıktı
+ * yapıştırıldı).
  */
 export function extractClientIp(req: Request): string {
-  const forwardedFor = req.headers.get('x-forwarded-for')
-  if (forwardedFor !== null) {
-    const first = forwardedFor.split(',')[0]?.trim()
-    if (first !== undefined && first.length > 0) return first
-  }
   const realIp = req.headers.get('x-real-ip')
   if (realIp !== null && realIp.trim().length > 0) return realIp.trim()
+
+  const forwardedFor = req.headers.get('x-forwarded-for')
+  if (forwardedFor !== null) {
+    const parts = forwardedFor
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+    const last = parts.at(-1)
+    if (last !== undefined) return last
+  }
   return 'ip-cozulemedi'
 }
 
