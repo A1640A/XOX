@@ -31,13 +31,6 @@ jobs:
   gates:
     name: Kalite kapıları
     runs-on: ubuntu-latest
-    # Buradaki MONGODB_URI/MONGODB_DB job genelinde geçerli — yalnız @xox/db
-    # değil, aynı `test:coverage` koşusunda çalışan her paket (apps/web dahil,
-    # ör. change-stream tabanlı presence testleri) aynı yerel replica set'i
-    # görür. Atlas kimliği CI'a HİÇ girmez (repo public — bkz. gotchas.md).
-    env:
-      MONGODB_URI: 'mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true'
-      MONGODB_DB: xox_test
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
@@ -87,6 +80,21 @@ jobs:
             fi
             sleep 1
           done
+      - name: '.env.local yaz (sır İÇERMEZ — sadece yerel replica set adresi)'
+        # `packages/db/src/load-env.ts` `MONGODB_URI` process.env'de ZATEN
+        # varsa dosyayı hiç okumadan döner (dokümantasyonu: "CI ortam
+        # değişkeni... dokunulmaz") — o yüzden değeri burada job-level `env:`
+        # ile değil, geliştiricinin yerelde kullandığı AYNI `.env.local`
+        # mekanizmasıyla veriyoruz. Aksi halde loadEnvLocal'ın dosya-okuma
+        # dallari (satır ayrıştırma, existsSync vb.) CI'da hiç çalışmaz ve
+        # @xox/db'nin branch coverage eşiği (%85) gerçek bir regresyonla
+        # değil, salt bu mekanizma farkıyla kırmızıya döner (yerelde ölçülüp
+        # doğrulanmıştı — bkz. CI-002 raporu).
+        run: |
+          cat > .env.local <<'EOF'
+          MONGODB_URI=mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true
+          MONGODB_DB=xox_test
+          EOF
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
