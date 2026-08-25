@@ -129,9 +129,21 @@ tek satırlık precedented bir ekleme.
 
 ## CI koşusu (gerçek)
 
-Dal push edildi: `feat/PERF-002`. Sonuç aşağıda — `gh run list --branch feat/PERF-002` çıktısı
-rapora eklenecek (bu bölüm push sonrası güncellendi, ayrıntı için commit sonrası CI çalıştırma
-loguna bakın).
+`feat/PERF-002` push edildi, CI'ı tetiklemek için #2 nolu (draft) PR açıldı
+(`pull_request` event'i olmadan CI hiç tetiklenmiyor — `.github/workflows/ci.yml`
+`on: push: branches: [main]` + `pull_request`). Sonuç:
+<https://github.com/A1640A/XOX/actions/runs/32805562975> — **SUCCESS**, tüm işler yeşil:
+
+- ✅ Kalite kapıları (2m27s) — `typecheck`, `lint`, `format:check`, `test:coverage`, `knip` DAHİL.
+  Önemli: `@xox/db seed.test.ts` burada da koştu ve **YEŞİL geçti** — bu, yerelde gördüğüm
+  `wins:5/losses:10` hatasının benim değişikliğimden değil, yerel makinemdeki PAYLAŞILAN Mongo
+  test DB'sinin başka bir eşzamanlı çalıştırmadan kalan kirli state'inden kaynaklandığını
+  DOĞRULUYOR (CI izole/temiz bir Mongo ile çalışıyor).
+- ✅ **Derleme (1m18s)** — `pnpm build` + `pnpm --filter @xox/mobile build` + `pnpm exec
+size-limit` — kartın hedeflediği iş, **kırmızıdan yeşile döndü**.
+- ✅ Secret taraması, Playwright izolasyon kontrolü, game-core mutasyon testi.
+
+PR draft olarak kaldı, main'e merge/push YAPILMADI (kart talimatı).
 
 ## Gerçek bir şişme bulundu mu?
 
