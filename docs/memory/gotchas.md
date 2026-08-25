@@ -867,3 +867,27 @@ uçtan servis edilmez. Aynı sebeple `globalThis` hilesi de bunu çözmez — s�
 
 Doğru ölçüm böyle yapıldı ve değişmez CANLIDA kanıtlandı: üç eşzamanlı bağlantı →
 `openStreams=1`, `watchCalls=1`.
+
+## 2026-08-25 · ⚠️ CI 5 SAAT KIRMIZI KALDI ve lead fark etmedi — yerel kapı CI kapısı DEĞİLDİR
+
+`.github/workflows/ci.yml`'nin `gates` işi `pnpm test:coverage` koşuyor ama `MONGODB_URI`
+tanımlı değil. `packages/db` testleri gerçek Atlas'a bağlandığı için `@xox/db#test:coverage`
+her koşuda düştü. Son yeşil CI **18:36Z**, ilk kırmızı **20:08Z** — DB-002'nin Atlas'a koşan
+testlerinin indiği an. Son 30 koşuda 11 failure, 3 success.
+
+**Neden görünmedi:** lead merge sonrası disiplini kurmuştu (`turbo run … --force`, çıktıda
+`Cached: 0` görmeden yeşil sayma) ve üç ayrı integrator'a tek tek doğrulattı. Hepsi **yerel
+ağaçta** koştu ve yerelde `.env.local` var. Yani kapı yereldeki gerçeği ölçüyordu, CI'ın
+gerçeğini değil. Kimse `gh run list` çalıştırmadı.
+
+**Kural:** merge sonrası doğrulama listesine **`gh run list --workflow=CI --limit 3`** eklenir.
+`pnpm gates` yeşil + `Cached: 0` **yetmez**; CI'ın kendisi yeşil olmalı. Yerelde var olup CI'da
+olmayan her şey (ortam değişkeni, servis, ağ erişimi, dosya) bu boşluğu üretir.
+
+**Yanlış çözümler** (kart CI-002'de açıkça yasaklandı): Atlas kimliğini GitHub Secrets'a koymak
+(repo PUBLIC, paylaşılan DB'ye paralel koşular birbirini bozar) · `MONGODB_URI` yoksa testleri
+atlamak (bu, örüntü #2'yi CI seviyesine taşımaktır — kapı yeşil yanar, hiçbir şey korumaz) ·
+`hookTimeout` büyütmek (hata bağlantı yokluğu, yavaşlık değil).
+
+**Doğru çözüm:** CI'a REPLICA SET olarak gerçek MongoDB ver. Standalone mongod yetmez —
+`packages/db` ve `presence.test.ts` change stream kullanıyor, change stream replica set ister.
