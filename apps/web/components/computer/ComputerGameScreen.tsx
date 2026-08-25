@@ -14,7 +14,7 @@ import { useComputerGame } from './use-computer-game'
  * hamlesi `use-computer-game.ts` üzerinden `game-engine.ts`'e, oradan da
  * `@xox/game-core`'a delege edilir (KK-022). Sayfa hiçbir ağ isteği yapmaz —
  * `@xox/db`, `use-room`/`ws-client` importu yok, `fetch` çağrısı yok
- * (`ComputerGameScreen.network.test.ts` bunu modül grafiğinde doğrular).
+ * (`network-graph.test.ts` bunu modül grafiğinde ALLOWLIST ile doğrular).
  */
 export function ComputerGameScreen(): React.ReactElement {
   const { state, difficulty, setDifficulty, playMove, reset } = useComputerGame()
