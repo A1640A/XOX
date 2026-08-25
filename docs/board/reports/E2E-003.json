@@ -1,0 +1,93 @@
+{
+  "wave": 2,
+  "task": "E2E-003",
+  "previewUrl": "https://xox-q529pfs9c-izrandevu.vercel.app",
+  "previewDeploymentId": "dpl_DwodDfXGWTpoTAPemfHzpoKMQYFD",
+  "mainSha": "4823618",
+  "healthCheck": { "ok": true, "db": "xox_test" },
+  "passed": 10,
+  "failed": 0,
+  "notRun": 0,
+  "runs": 3,
+  "flaky": 0,
+  "commits": ["a727aec", "ae8f91f"],
+  "newSpecFiles": ["apps/e2e/tests/reconnect.spec.ts", "apps/e2e/tests/result-rematch.spec.ts"],
+  "criteria": [
+    {
+      "id": "kriter-9-takeover",
+      "kk": null,
+      "severity": "none",
+      "result": "PASS",
+      "description": "Aynı bağlamda ikinci sekme => eski sekme 'devredildi', salt-okunur, yeniden bağlanmaz; rakip hiçbir opponent:left çerçevesi görmez.",
+      "test": "reconnect.spec.ts > kriter 9 · oturum devralma (takeover)"
+    },
+    {
+      "id": "kriter-6-7-8-kopma-resync",
+      "kk": ["KK-062", "KK-063"],
+      "severity": "none",
+      "result": "PASS",
+      "description": "setOffline(true) => data-durum=kopuk (istemci nabzı ~50sn); kopukken rakip hamle yapar; geri bağlanınca 9 hücre + sıra göstergesi rakiple eşitlenir.",
+      "test": "reconnect.spec.ts > kriter 6/7/8 · kopma ve resync"
+    },
+    {
+      "id": "kriter-3-resign",
+      "kk": ["KK-054"],
+      "severity": "none",
+      "result": "PASS",
+      "description": "Onaylanmadan pes etmez (dialog.dismiss no-op); onaylanınca oyun biter; Atlas'ta games.endReason='resign', winner='O' doğrulandı.",
+      "test": "result-rematch.spec.ts > kriter 3 · pes etme + onay"
+    },
+    {
+      "id": "kriter-1-2-result",
+      "kk": ["KK-050 (kısmen)"],
+      "severity": "minor",
+      "result": "PASS_PARTIAL",
+      "description": "Kazanan çizginin 3 hücresi her iki ekranda data-kazanan=true (+ negatif kontrol). 'Kazandın!'/'Kaybettin.' METİN doğrulaması yapılmadı (yalnız data attribute).",
+      "test": "result-rematch.spec.ts > kriter 1/2 · sonuç"
+    },
+    {
+      "id": "kriter-4-rematch",
+      "kk": ["KK-055", "KK-056"],
+      "severity": "none",
+      "result": "PASS",
+      "description": "Teklif <=2sn karşıda görünür; kabul sonrası tahta boşalır ve koltuklar kalıcı olarak yer değiştirir (iki ayrı hamleyle doğrulandı).",
+      "test": "result-rematch.spec.ts > kriter 4 · rövanş"
+    },
+    {
+      "id": "kriter-5-optimistic",
+      "kk": ["KK-046 (kısmen)"],
+      "severity": "minor",
+      "result": "PASS_PARTIAL",
+      "description": "move:applied yolu doğrulandı (data-bekliyor=true -> kalkar). move:rejected + hata-mesaji yolu bu görevde koşulmadı.",
+      "test": "result-rematch.spec.ts > kriter 5 · iyimser hamle"
+    },
+    {
+      "id": "kk-065-pending-across-reconnect",
+      "kk": ["KK-065"],
+      "severity": "major",
+      "result": "NOT_RUN",
+      "description": "Bekleyen (data-bekliyor) hamle varken bağlantı koparsa, dönen state'in bunu 2 sn içinde kabul/iptal etmesi ayrıca koşulmadı — zaman bütçesi yetmedi."
+    },
+    {
+      "id": "kk-011-logout",
+      "kk": ["KK-011"],
+      "severity": "major",
+      "result": "NOT_RUN",
+      "description": "Repoda hiçbir E2E/BİRİM test dosyasında KK-011 referansı yok (grep 0 sonuç) — çıkış sonrası /profil -> /giris yönlendirmesi hiç test edilmemiş."
+    },
+    {
+      "id": "kk-051-draw",
+      "kk": ["KK-051"],
+      "severity": "major",
+      "result": "NOT_RUN",
+      "description": "Berabere senaryosu (9 hücre dolar, kazanan yok) için repoda hiçbir test yok (grep 0 sonuç)."
+    },
+    {
+      "id": "w1-02-rematch-cancelled-debt",
+      "kk": [],
+      "severity": "major",
+      "result": "NOT_IMPLEMENTED",
+      "description": "rematch:cancelled{reason:'opponent-left'} uygulanmadı (W1-02 borcu, lead talimatıyla test EDİLMEDİ)."
+    }
+  ]
+}
