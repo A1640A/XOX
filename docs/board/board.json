@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T22:28:09.000Z",
+  "updatedAt": "2026-08-25T22:31:05.100Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1564,9 +1564,9 @@
       "id": "DESIGN-001b",
       "title": "Yon A'nin bilesenlere uygulanmasi — board/** HARIC, yeni token TANIMLANMAZ",
       "tier": "P1",
-      "wave": "B2",
+      "wave": "B5b",
       "agent": "xox-designer",
-      "deps": ["DESIGN-001a"],
+      "deps": ["DESIGN-001a", "UI-CFG-001", "UI-COMP-001"],
       "conflictSet": [
         "apps/web/components/**",
         "!apps/web/components/board/**",
@@ -1580,6 +1580,7 @@
       "branch": null,
       "report": null,
       "acceptance": [
+        "SIRA DUZELTILDI (lead): ADR-0017 §10 ile tasarim §10.2 celisiyordu; ADR dogru. Bu kart B2-den B5b-ye alindi — UI-BOARD-001, UI-CFG-001 ve UI-COMP-001 BITTIKTEN SONRA. Gerekce: aksi halde RoomScreen.tsx ve ComputerGameScreen.tsx UC DALGADA UC KEZ yazilacakti. Bitmis olani cilalarsin, degismek uzere olani degil.",
         "BOLUNME NOTU: DESIGN-001'in ikinci yarisi (ADR-0017 §10). Bu kart yalniz BILESEN katmanidir. YENI TOKEN TANIMLANMAZ — hepsi DESIGN-001a'dan gelir; packages/ui-tokens/**, apps/web/app/globals.css ve generate-globals-css.ts bu kartta ACILMAZ.",
         "apps/web/components/board/** BU KARTIN KAPSAMI DISINDADIR — tahtanin gorsel dili UI-BOARD-001'in isidir. Tek satir bile dokunulmaz; yoksa iki kart ayni agacta bulusur (ADR-0017 §10'un tum amaci budur).",
         "RoomScreen.tsx ve ComputerGameScreen.tsx'te yalniz GORSEL KABUK degisir; Board'un PROP SOZLESMESI ve prop baglamasi UI-BOARD-001'e (B3) aittir ve bu kartta ONCEDEN yazilmaz.",
@@ -1650,6 +1651,8 @@
       "branch": null,
       "report": null,
       "acceptance": [
+        "BU KART CORE-AI-001-I BEKLETMEZ. Olcum gelmezse varsayimla devam, ama varsayim GORUNUR kalir — sessizce dogru sanilmaz.",
+        "LEAD KARARI — MANUEL ADIM BLOKLAMAZ: (a) adimi (Omerin gercek Androidinde olcum) yapilamazsa kart DURMAZ. Muhafazakar bir varsayimla ilerlenir: CDP CPU kisitlamasi 6x, orta sinif Android icin yaygin bir vekil. R=6 SECILDI ve ACIKCA DOGRULANMAMIS olarak isaretlenir — hem kartin raporunda hem ai-config.ts yorumunda. Omer olcum yapinca R yeniden kalibre edilir ve butun esikler o carpanla tazelenir.",
         "PROTOTIP BIRLESTIRILMEZ (ADR-0013 §9). Ayri bir dalda kalir; main'e giren TEK sey docs/board/reports/AI-SPIKE-001.md'dir. packages/** ve apps/** altinda hicbir dosya merge edilmez — cakisma kumesi bu yuzden yalniz rapor dosyasidir.",
         "AS-B01 bu kartla kapanir. Bugun 'AI_BUDGET_MS = 800' bir ONERIDIR, olcum DEGILDIR. TAHMIN EDILMEYECEK.",
         "KORPUS: {6,4} {6,5} {11,4} {11,5} {11,6} icin TAS SAYISINA GORE KATMANLANMIS 200 pozisyonluk sabit korpus (0 / 4 / 12 / 30 / 60 / 100 tas). En kotu durum bos tahta DEGILDIR — aday sayisinin en yuksek oldugu orta oyundur. Korpus tohumlu ureteclerle sabit ve yeniden uretilebilir.",
@@ -1758,7 +1761,8 @@
         "ADR-0016 / SB-11: testids.ts'e 5 TESTID (tahta-boyut-3, tahta-boyut-6, tahta-boyut-11, kazanma-uzunlugu, oyun-ayari-ozeti) + 3 DATA_ATTR (data-boyut, data-kazanma, data-son-hamle). cellTestId(index) KODU DEGISMEZ, yalniz yorumu ('0..8' -> '0..N^2-1'). zorluk-unbeatable, tahta, durum-metni, sira-gostergesi, data-tas, data-kazanan, data-bekliyor AYNEN kalir. TESTID/DATA_ATTR sayilari ciplak yazilan testlerle guncellenir.",
         "CTR-003 BORCUNUN SHARED PAYI BU PENCEREDE KAPANIR (tasarim §12.5 — pencere acikken ucretsiz, kapandiktan sonra yeni bir unfreeze karti): shared `canJoinRoom(state, seats): boolean` export eder + iki operandi tek tek olduren iki mutasyon testi (playing + bos koltuk; waiting + iki koltuk dolu). YALNIZ fonksiyon ve testi bu kartta; route baglamasi CTR-003'te kalir ve o kart ARTIK UNFREEZE GEREKTIRMEZ.",
         "apps/mobile/messages/tr.ts DEGISIR ama MOBIL EKRAN YAZILMAZ (D3: apps/mobile bugun bir oyun ekrani icermiyor). AS-B02'nin karari W2-03'undur.",
-        "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0` ve `gh run list --workflow=CI --limit 3` yesil."
+        "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0` ve `gh run list --workflow=CI --limit 3` yesil.",
+        "BOYUT UYARISI (planner): bu kart tek oturum icin SINIRDA — primitives + errors + rest-contract + ws-protocol + room-client + 24 mesaj anahtari + iki tr.ts + testids + tuketici sondasi + canJoinRoom. ADR-0015 tek pencereyi zorunlu kildigi icin BOLUNMUYOR. Ilk denemede yarim kalirsa attempts harcanmaz; lead karti (shared semalari) / (metin agaci + testids) diye ikiye ayirir ve AYNI DALGADA seri kosturur — ardisik dalgaya DEGIL, pencere kapanmamali."
       ],
       "blockedReason": null
     },
