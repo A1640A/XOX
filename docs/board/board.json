@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T03:00:26.535Z",
+  "updatedAt": "2026-08-25T03:02:46.259Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1310,10 +1310,10 @@
     },
     {
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/PERF-002",
       "report": null,
       "blockedReason": null,
-      "status": "todo",
+      "status": "in_wave",
       "id": "PERF-002",
       "title": "size-limit butcesi asiliyor — glob TUM rotalari tek butcede topluyor",
       "tier": "P1",
