@@ -64,8 +64,18 @@ export function toTransportStatus(status: GameStatus): TransportStatus {
   return status
 }
 
-/** Pes / süre aşımı / terk galibiyeti — kazanan çizgi yoktur. */
-export function forfeitStatus(winner: Player, reason: ForfeitReason): TransportStatus {
+/**
+ * Pes / süre aşımı / terk galibiyeti — kazanan çizgi yoktur.
+ *
+ * Dönüş tipi bilerek `'won'` varyantına DARALTILMIŞ: bu fonksiyonun sonucu
+ * daima bir galibiyettir ve çağıranın onu `TransportStatus`tan yeniden
+ * daraltmak için ölü bir `kind !== 'won'` dalı yazmasına gerek kalmamalı
+ * (W1-02: `rooms/resign.ts` sonucu doğrudan `rooms.result` alanına yazıyor).
+ */
+export function forfeitStatus(
+  winner: Player,
+  reason: ForfeitReason,
+): Extract<TransportStatus, { kind: 'won' }> {
   return { kind: 'won', winner, line: null, reason }
 }
 

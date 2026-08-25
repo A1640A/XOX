@@ -1,4 +1,4 @@
-import type { Cell, Player, SeatOccupant } from '@xox/shared'
+import type { Cell, EndReason, Player, SeatOccupant, WinLineCells } from '@xox/shared'
 import { ROOM_TTL_SECONDS } from '@xox/shared'
 import type { Model } from 'mongoose'
 import mongoose from 'mongoose'
@@ -7,7 +7,7 @@ import mongoose from 'mongoose'
 // (`does not provide an export named 'models'`). Vitest calisir cunku Vite
 // CJS interop-u farkli yapar — yani birim testler bu kirikligi GIZLER.
 const { Schema, model, models } = mongoose
-import { hasAtMostLength, hasExactLength } from './validators'
+import { hasAtMostLength, hasExactLength, isNullOrExactLength } from './validators'
 
 const BOARD_SIZE = 9
 
@@ -43,6 +43,32 @@ export interface RoomRematch {
   expiresAt: Date
 }
 
+/**
+ * Oyunun KESİNLEŞMİŞ sonucu — `state:'finished'` yazan CAS ile **aynı**
+ * güncellemede damgalanır (W1-02).
+ *
+ * Neden odada? `games` biten oyunun kalıcı kaydıdır (§3.1) ama canlı bağlantı
+ * katmanı yalnız `rooms` dokümanını görür: change stream odayı taşır, `state`
+ * mesajı odadan üretilir. Sonuç odada YOKKEN pes/süre/terk ile biten bir oyunun
+ * KAZANANI taşınamıyordu — `apps/web/lib/game/room-view.ts` tahtaya bakıp
+ * "berabere" demek zorunda kalıyordu (WS-001 incelemesinin bıraktığı borç).
+ *
+ * Alanlar `@xox/shared`'ın `TransportStatus`'unun (ADR-0001) birebir
+ * karşılığıdır — yeni bir eşleme tipi TANIMLANMADI, çünkü iki ayrı şekil iki
+ * ayrı dönüştürücü ve sessizce sapabilen iki kopya demekti. Okuma tarafı
+ * `transportStatusSchema` ile doğrular; `reason === 'line' ⟺ line !== null`
+ * değişmezi böylece çalışma zamanında da korunur.
+ */
+export interface RoomResult {
+  kind: 'won' | 'draw'
+  /** Beraberlikte `null`. */
+  winner: Player | null
+  /** Yalnız `reason === 'line'` iken dolu (ADR-0001). */
+  line: WinLineCells | null
+  /** Beraberlikte `null`. */
+  reason: EndReason | null
+}
+
 /** Son emoji — version ARTIRMAZ, yalnız bir sonraki yayında bir kez okunur (P2). */
 export interface RoomEmoji {
   from: Player
@@ -62,6 +88,8 @@ export interface RoomDoc {
   turnDeadline: Date | null
   disconnected: RoomDisconnected | null
   rematch: RoomRematch | null
+  /** Oyun sürerken `null`; `state:'finished'` ile aynı yazmada dolar (W1-02). */
+  result: RoomResult | null
   lastEmoji: RoomEmoji | null
   gameId: string | null
   /** Her durum değiştiren yazmada artar — emoji istisna (§5.5). */
@@ -103,6 +131,23 @@ const rematchSchema = new Schema<RoomRematch>(
   {
     by: { type: String, enum: ['X', 'O'], required: true },
     expiresAt: { type: Date, required: true },
+  },
+  { _id: false },
+)
+
+const resultSchema = new Schema<RoomResult>(
+  {
+    kind: { type: String, enum: ['won', 'draw'], required: true },
+    winner: { type: String, enum: ['X', 'O', null], default: null },
+    line: {
+      type: [Number],
+      default: null,
+      validate: {
+        validator: isNullOrExactLength(3),
+        message: 'line tam olarak 3 indeks içermelidir',
+      },
+    },
+    reason: { type: String, enum: ['line', 'resign', 'timeout', 'abandon', null], default: null },
   },
   { _id: false },
 )
@@ -158,6 +203,7 @@ const roomSchema = new Schema<RoomDoc>(
     turnDeadline: { type: Date, default: null },
     disconnected: { type: disconnectedSchema, default: null },
     rematch: { type: rematchSchema, default: null },
+    result: { type: resultSchema, default: null },
     lastEmoji: { type: emojiSchema, default: null },
     gameId: { type: String, default: null },
     version: { type: Number, default: 0 },
