@@ -32,3 +32,7 @@ export {
   type RoomEvent,
   type TransitionResult,
 } from './rooms'
+// `rooms/index.ts` DB-002'den beri DONUK (bkz. o dosyanın başlığı) — bu export
+// bilinçli olarak üst barrelde ve dosyanın kendisinden geliyor, donmuş barrel'e
+// dokunulmadı (DB-003).
+export { getRoomSummary, type RoomSummary } from './rooms/summary'
