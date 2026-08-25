@@ -1,4 +1,4 @@
-import { connectDb, Room } from '@xox/db'
+import { connectDb, getRoomSummary } from '@xox/db'
 import {
   roomCodeSchema,
   roomStateResponseSchema,
@@ -36,6 +36,11 @@ function errorJson(code: ErrorCode, message: string, status: number): Response {
  * Kod **sunucu tarafında** normalleştirilir (trim + büyük harf) — istemci
  * doğrulaması tek savunma hattı değildir. Normalleştirme sonrası
  * `roomCodeSchema` dışı kalan her değer `400 INVALID_CODE` alır.
+ *
+ * Projeksiyon dizesi ve koltuk şekli bilgisi burada YOKTUR — `@xox/db`'nin
+ * `getRoomSummary`'sine devredilmiştir (DB-003). Bu route yalnız `RoomSummary`
+ * dar tipini görür ve `canJoin`'i ondan türetir; Mongoose modeline (`Room`)
+ * doğrudan erişmez.
  */
 export async function GET(req: Request, { params }: RouteContext): Promise<Response> {
   try {
@@ -53,7 +58,7 @@ export async function GET(req: Request, { params }: RouteContext): Promise<Respo
     const code = parsed.data
 
     await connectDb()
-    const room = await Room.findOne({ code }).select('code state seats').lean()
+    const room = await getRoomSummary(code)
     if (room === null) {
       return errorJson('ROOM_NOT_FOUND', 'Oda bulunamadı.', 404)
     }

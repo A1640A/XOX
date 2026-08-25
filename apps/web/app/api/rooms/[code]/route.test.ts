@@ -3,22 +3,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * Yalnız `@/auth`'un `auth()` fonksiyonu ve `@xox/db`'nin `connectDb`/
- * `Room.findOne` çağrıları mock'lanır — `resolveIdentity`, `verifyToken`
+ * `getRoomSummary` çağrıları mock'lanır — `resolveIdentity`, `verifyToken`
  * GERÇEK kodla çalışır (aynı disiplin: `apps/web/app/api/rooms/route.test.ts`).
  * Güvenlik incelemesi bulgusu sonrası bu uç nokta kimlik istiyor; testin
  * kendisi de artık bunu GERÇEK `resolveIdentity` üzerinden kanıtlıyor.
+ *
+ * DB-003: route artık `Room` modeline doğrudan erişmiyor, projeksiyon/koltuk
+ * şekli bilgisi `@xox/db`'nin `getRoomSummary`'sinde yaşıyor — o yüzden bu
+ * testler `Room.findOne().select().lean()` zincirini DEĞİL, `getRoomSummary`'yi
+ * mock'lar. Projeksiyon dizesinin doğruluğu artık `packages/db`'nin
+ * `rooms/summary.test.ts`'inin sorumluluğu.
  */
 const mockAuth = vi.fn()
 vi.mock('@/auth', () => ({ auth: mockAuth }))
 
 const mockConnectDb = vi.fn()
-const mockLean = vi.fn()
-const mockSelect = vi.fn(() => ({ lean: mockLean }))
-const mockFindOne = vi.fn(() => ({ select: mockSelect }))
+const mockGetRoomSummary = vi.fn()
 
 vi.mock('@xox/db', () => ({
   connectDb: mockConnectDb,
-  Room: { findOne: mockFindOne },
+  getRoomSummary: mockGetRoomSummary,
 }))
 
 const ORIGINAL_AUTH_SECRET = process.env['AUTH_SECRET']
@@ -35,9 +39,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
   beforeEach(() => {
     mockAuth.mockReset()
     mockConnectDb.mockReset().mockResolvedValue(undefined)
-    mockFindOne.mockClear()
-    mockSelect.mockClear()
-    mockLean.mockReset()
+    mockGetRoomSummary.mockReset()
     process.env['AUTH_SECRET'] = 'test-secret-en-az-32-karakter-uzunlugunda-olmali'
   })
 
@@ -52,7 +54,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
 
   it(
     'GÜVENLİK: oturumsuzsa (çerez yok, Bearer yok) 401 UNAUTHENTICATED döner — ' +
-      'kimlik reddedilince Room.findOne HİÇ ÇAĞRILMAZ (kod geçerliliği bile sızmaz)',
+      'kimlik reddedilince getRoomSummary HİÇ ÇAĞRILMAZ (kod geçerliliği bile sızmaz)',
     async () => {
       mockAuth.mockResolvedValue(null)
 
@@ -64,7 +66,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
         code: 'UNAUTHENTICATED',
         message: 'Oturum bulunamadı.',
       })
-      expect(mockFindOne).not.toHaveBeenCalled()
+      expect(mockGetRoomSummary).not.toHaveBeenCalled()
     },
   )
 
@@ -78,13 +80,13 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       const response = await GET(makeRequest('abc!23'), context('abc!23'))
 
       expect(response.status).toBe(401)
-      expect(mockFindOne).not.toHaveBeenCalled()
+      expect(mockGetRoomSummary).not.toHaveBeenCalled()
     },
   )
 
   it('Auth.js çerezi ile 200 + { code, state, seats, canJoin } döner', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-    mockLean.mockResolvedValue({
+    mockGetRoomSummary.mockResolvedValue({
       code: 'ABC234',
       state: 'waiting',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
@@ -106,7 +108,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
     mockAuth.mockResolvedValue(null)
     const { signToken } = await import('@/lib/auth/tokens')
     const { token } = await signToken('mobile-access', 'bearer-kullanici', { name: 'Zeynep' })
-    mockLean.mockResolvedValue({
+    mockGetRoomSummary.mockResolvedValue({
       code: 'ABC234',
       state: 'waiting',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
@@ -124,10 +126,10 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
 
   it(
     'AC5: kod SUNUCU tarafında normalleştirilir — " abc234 " -> "ABC234" ile sorgulanır ' +
-      '(gerçek çıktı: findOne çağrısına giden argüman)',
+      '(gerçek çıktı: getRoomSummary çağrısına giden argüman)',
     async () => {
       mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-      mockLean.mockResolvedValue({
+      mockGetRoomSummary.mockResolvedValue({
         code: 'ABC234',
         state: 'waiting',
         seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
@@ -137,7 +139,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       const response = await GET(makeRequest(' abc234 '), context(' abc234 '))
 
       expect(response.status).toBe(200)
-      expect(mockFindOne).toHaveBeenCalledWith({ code: 'ABC234' })
+      expect(mockGetRoomSummary).toHaveBeenCalledWith('ABC234')
       expect(await response.json()).toStrictEqual({
         code: 'ABC234',
         state: 'waiting',
@@ -149,7 +151,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
 
   it('AC4: { code, state, seats, canJoin } döner — bekleyen + boş koltuklu oda canJoin:true', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-    mockLean.mockResolvedValue({
+    mockGetRoomSummary.mockResolvedValue({
       code: 'ABC234',
       state: 'waiting',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
@@ -167,7 +169,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       '— "state===waiting" kontrolü düşerse bu test kırmızı olur',
     async () => {
       mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-      mockLean.mockResolvedValue({
+      mockGetRoomSummary.mockResolvedValue({
         code: 'ABC234',
         state: 'playing',
         seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
@@ -186,7 +188,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       '— "boş koltuk var" kontrolü düşerse bu test kırmızı olur',
     async () => {
       mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-      mockLean.mockResolvedValue({
+      mockGetRoomSummary.mockResolvedValue({
         code: 'ABC234',
         state: 'waiting',
         seats: { X: { userId: 'u1', name: 'Ayşe' }, O: { userId: 'u2', name: 'Mehmet' } },
@@ -202,7 +204,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
 
   it('canJoin: bitmiş oda ve her iki koltuk doluysa da false döner (iki operand birden false)', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-    mockLean.mockResolvedValue({
+    mockGetRoomSummary.mockResolvedValue({
       code: 'ABC234',
       state: 'finished',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: { userId: 'u2', name: 'Mehmet' } },
@@ -217,7 +219,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
 
   it('AC4: var olmayan (ya da TTL ile silinmiş) kod 404 ROOM_NOT_FOUND döner', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-    mockLean.mockResolvedValue(null)
+    mockGetRoomSummary.mockResolvedValue(null)
 
     const { GET } = await import('./route')
     const response = await GET(makeRequest('ABC234'), context('ABC234'))
@@ -240,7 +242,7 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       code: 'INVALID_CODE',
       message: 'Geçersiz oda kodu.',
     })
-    expect(mockFindOne).not.toHaveBeenCalled()
+    expect(mockGetRoomSummary).not.toHaveBeenCalled()
   })
 
   it('AC5: yanlış uzunluktaki kod 400 INVALID_CODE döner', async () => {
@@ -251,31 +253,26 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
 
     expect(response.status).toBe(400)
     expect(await response.json()).toMatchObject({ code: 'INVALID_CODE' })
-    expect(mockFindOne).not.toHaveBeenCalled()
+    expect(mockGetRoomSummary).not.toHaveBeenCalled()
   })
 
-  it(
-    'MINOR-4 fix: projeksiyon güvenlik açısından yük taşır — select TAM OLARAK ' +
-      "'code state seats' ile çağrılır ve connectDb çağrılır",
-    async () => {
-      mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-      mockLean.mockResolvedValue({
-        code: 'ABC234',
-        state: 'waiting',
-        seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
-      })
+  it('connectDb() DB sorgusundan ÖNCE çağrılır', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
+    mockGetRoomSummary.mockResolvedValue({
+      code: 'ABC234',
+      state: 'waiting',
+      seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
+    })
 
-      const { GET } = await import('./route')
-      await GET(makeRequest('ABC234'), context('ABC234'))
+    const { GET } = await import('./route')
+    await GET(makeRequest('ABC234'), context('ABC234'))
 
-      expect(mockConnectDb).toHaveBeenCalled()
-      expect(mockSelect).toHaveBeenCalledWith('code state seats')
-    },
-  )
+    expect(mockConnectDb).toHaveBeenCalled()
+  })
 
   it('DB hatası fırlatırsa 500 SERVER_ERROR döner, sürücü ayrıntısı sızmaz', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
-    mockLean.mockRejectedValue(new Error('ECONNREFUSED 127.0.0.1:27017'))
+    mockGetRoomSummary.mockRejectedValue(new Error('ECONNREFUSED 127.0.0.1:27017'))
 
     const { GET } = await import('./route')
     const response = await GET(makeRequest('ABC234'), context('ABC234'))
