@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T02:29:35.897Z",
+  "updatedAt": "2026-08-25T02:40:53.941Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -597,9 +597,9 @@
       "agent": "xox-qa-e2e",
       "deps": ["W1-02", "W1-03"],
       "conflictSet": ["apps/e2e/tests/result-rematch.spec.ts", "apps/e2e/tests/reconnect.spec.ts"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/E2E-003",
       "report": null,
       "acceptance": [
         "KK-050 yeşil: kazananda 'Kazandın!', kaybedende 'Kaybettin.'; HER İKİ ekranda da kazanan çizginin 3 hücresi data-kazanan=\"true\" taşır",

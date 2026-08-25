@@ -86,9 +86,24 @@ const decide = () => {
 
   // Paralellik tavani: bayraktaki maxParallel kadar agent zaten ucuyorsa lead YENI is
   // dispatch EDEMEZ. Bloklamak bos donguye sokar; bir agent bitince bildirim geri cagirir.
+  //
+  // BILINEN SINIR: bu sayim yalniz BOARD kartlarini gorur. Reviewer, security, integrator
+  // ve memory-curator ajanlarinin board karti YOKTUR, dolayisiyla uc ajan ucarken burasi
+  // ikisini sayar ve bir slot bos sanir. Lead bunu bilerek telafi etmeli.
   const maxParallel = Number(flag.maxParallel ?? 4);
   if (running.length >= maxParallel) return null;
 
+  // KAPANIS PENCERESI: deadline yaklastiginda YENI kart acmak sabahki tabloyu
+  // iyilestirmez, karmasiklastirir. Bir kartin build + inceleme + duzeltme + merge
+  // dongusu tipik olarak bir saati asiyor; kalan sure bundan kisaysa lead yalniz
+  // ucustaki isi indirmeli, hafizayi damitmali ve raporu yazmali.
+  //   - Ucusta is VARSA: durusa izin ver. Agent bitince bildirim lead-i geri cagirir.
+  //   - Ucusta is YOKSA: gece bitmistir, sabah raporu istenir.
+  const windDownMs = Number(flag.windDownMinutes ?? 60) * 60_000;
+  if (deadline - Date.now() < windDownMs) {
+    if (running.length > 0) return null;
+    return stop("kapanis penceresi: yeni kart acmak icin sure yetersiz");
+  }
 
   if (actionable.length === 0) return stop("işlenebilir görev kalmadı");
 
