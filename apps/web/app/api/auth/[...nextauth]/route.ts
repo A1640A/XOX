@@ -6,7 +6,7 @@ import {
   recordLoginFailure,
   recordLoginSuccess,
 } from '@/lib/rate-limit/credential-lockout'
-import { checkIpRateLimit } from '@/lib/rate-limit/ip-limit'
+import { checkIpRateLimit, extractClientIp } from '@/lib/rate-limit/ip-limit'
 import { rateLimitedResponse } from '@/lib/rate-limit/response'
 
 export { GET }
@@ -22,7 +22,11 @@ export { GET }
  *     GET'leri ETKİLENMEZ, onlar zaten argon2 çalıştırmıyor).
  * (b) `/api/auth/callback/credentials`e ÖZEL kimlik başına kilit — argon2id
  *     ÇALIŞMADAN ÖNCE kilitli kimlik kısa devre yapılır (KK: kilitli bir
- *     hesaba yağan istek artık pahalı hash'i hiç ödemiyor).
+ *     hesaba yağan istek artık pahalı hash'i hiç ödemiyor). İKİ KATMANLI
+ *     (hesap-geneli + e-posta+IP bileşik, HIGH-2 — bkz. `credential-
+ *     lockout.ts` dosya başı yorumu); `ip` bu yüzden `checkIpRateLimit`ten
+ *     BAĞIMSIZ ayrıca hesaplanıyor (`extractClientIp`, aynı BLOCKER-2
+ *     düzeltmesini paylaşıyor — uydurma XFF'e karşı bağışık).
  *
  * Başarı/başarısızlık ayrımı `authorize()`ın DÖNÜŞ DEĞERİNE değil, gerçek
  * NextAuth yanıtının `set-cookie` başlığına bakılarak yapılır (bkz.
@@ -46,9 +50,10 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const bodyText = await req.text()
   const email = extractEmailFromBody(bodyText, req.headers.get('content-type'))
+  const ip = extractClientIp(req)
 
   if (email !== null) {
-    const lock = await getLoginLockStatus(email)
+    const lock = await getLoginLockStatus(email, ip)
     if (lock.locked) {
       /**
        * Mesaj var-olmayan/var-olan hesap arasında AYIRT ETMEZ — sayaç
@@ -71,9 +76,9 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   if (email !== null) {
     if (hasSessionCookie(response)) {
-      await recordLoginSuccess(email)
+      await recordLoginSuccess(email, ip)
     } else {
-      await recordLoginFailure(email)
+      await recordLoginFailure(email, ip)
     }
   }
 
