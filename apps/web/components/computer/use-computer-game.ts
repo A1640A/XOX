@@ -51,8 +51,14 @@ export function useComputerGame(): UseComputerGameResult {
     setState((current) => applyHumanMove(current, index))
   }
 
-  /** Zorluk değişimi KK-026'nın simetriği: yeni zorlukla SIFIRDAN bir oyun başlar. */
+  /**
+   * Zorluk değişimi KK-026'nın simetriği: yeni zorlukla SIFIRDAN bir oyun
+   * başlar. `next === difficulty` iken erken döner — ZATEN SEÇİLİ zorluğa
+   * tekrar tıklamak (ör. teyit amaçlı) süren oyunu uyarısız silmemeli
+   * (inceleme MINOR bulgusu).
+   */
   function setDifficulty(next: Difficulty): void {
+    if (next === difficulty) return
     setDifficultyState(next)
     setState(createInitialState())
   }
