@@ -1,13 +1,14 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T22:31:05.100Z",
+  "updatedAt": "2026-08-25T22:40:29.654Z",
   "nightRun": {
     "active": true,
     "deadline": null,
-    "wave": 1,
+    "wave": "B0",
     "consecutiveFailures": 0,
-    "tokenBudgetUsedPct": 0
+    "tokenBudgetUsedPct": 0,
+    "maxParallel": 3
   },
   "tiers": {
     "P0": "Yürüyen iskelet ve çekirdek",
@@ -1417,9 +1418,9 @@
         "packages/game-core/package.json",
         ".size-limit.mjs"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/PERF-003",
       "report": null,
       "blockedReason": null,
       "acceptance": [
@@ -1538,9 +1539,9 @@
         "apps/web/lib/generate-globals-css.ts",
         "docs/design/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/DESIGN-001a",
       "report": null,
       "acceptance": [
         "BOLUNME NOTU: DESIGN-001 bu kart ile DESIGN-001b'ye AYRILDI (ADR-0017 §10 — katmana gore bolme). 001a yalniz TASARIM DILI + TOKEN katmanidir. apps/web/components/** bu kartta ACILMAZ — tek satir bile. Aksi halde UI-BOARD-001 ile ayni agacta bulusur ve paralellik olur.",
@@ -1646,9 +1647,9 @@
       "agent": "xox-perf",
       "deps": [],
       "conflictSet": ["docs/board/reports/AI-SPIKE-001.md"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/AI-SPIKE-001",
       "report": null,
       "acceptance": [
         "BU KART CORE-AI-001-I BEKLETMEZ. Olcum gelmezse varsayimla devam, ama varsayim GORUNUR kalir — sessizce dogru sanilmaz.",

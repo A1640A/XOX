@@ -1070,3 +1070,4 @@
 {"ts":"2026-08-25T22:10:30Z","event":"subagent.stop"}
 {"ts":"2026-08-25T22:27:59Z","event":"file.touched","path":"/private/tmp/claude-501/-Users-omerdursun-PROJELER-XOX/02ee006c-b5d2-4e00-837b-bd8913dc4c5a/scratchpad/plan_board.py"}
 {"ts":"2026-08-25T22:29:59Z","event":"subagent.stop"}
+{"ts":"2026-08-25T22:45:00Z","event":"wave.start","wave":"B0","tasks":["PERF-003","DESIGN-001a","AI-SPIKE-001"],"note":"Gece kosusu 2. gece basladi, deadline 07:30, maxParallel 3, 72 kart. ON UCUSTA BULGU: apps/mobile/tsconfig.json oturumun basindan beri degisikti ve BICIM DEGISIKLIGI DEGILDI — include listesinden .expo/types/** ve expo-env.d.ts dusmustu, yani mobile:typecheck yesil yanarken DAHA AZINI kontrol ediyordu. Geri alindi. Uc kart paralel, cakisma kumeleri ayrik"}
