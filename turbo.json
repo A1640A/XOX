@@ -11,8 +11,12 @@
     "dev": { "cache": false, "persistent": true },
     "typecheck": { "dependsOn": ["^build"], "outputs": [] },
     "lint": { "outputs": [] },
-    "test": { "dependsOn": ["^build"], "outputs": [] },
-    "test:coverage": { "dependsOn": ["^build"], "outputs": ["coverage/**"] },
+    "test": { "dependsOn": ["^build"], "outputs": [], "env": ["MONGODB_URI", "MONGODB_DB"] },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "env": ["MONGODB_URI", "MONGODB_DB"]
+    },
     "mutation": { "dependsOn": ["^build"], "outputs": ["reports/mutation/**"], "cache": false }
   }
 }
