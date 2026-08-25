@@ -24,8 +24,19 @@ const BEKLENEN_MESAJ_TIPLERI = [
   'ping',
 ] as const
 
-/** WS-001'de gerçekten yazılan handler'lar. Kalanlar iskelet (SERVER_ERROR). */
-const UYGULANAN = new Set<string>(['join', 'move', 'ping'])
+/**
+ * Gerçekten yazılan handler'lar. Kalanlar iskelet (SERVER_ERROR).
+ * WS-001: `join`/`move`/`ping` · W1-02: `resign`/`rematch:*` (kendi test
+ * dosyalarında ayrıca sınanıyor) · geriye `chat:emoji` kaldı (W3-03).
+ */
+const UYGULANAN = new Set<string>([
+  'join',
+  'move',
+  'ping',
+  'resign',
+  'rematch:offer',
+  'rematch:accept',
+])
 
 function makeRoom(overrides: Partial<RoomDoc> = {}): RoomDoc {
   return {
@@ -41,6 +52,7 @@ function makeRoom(overrides: Partial<RoomDoc> = {}): RoomDoc {
     turnDeadline: null,
     disconnected: null,
     rematch: null,
+    result: null,
     lastEmoji: null,
     gameId: null,
     version: 10,
@@ -188,10 +200,11 @@ describe('iskelet handler`lar', () => {
   })
 
   it('iskelet handler `@xox/db`nin fırlatan iskeletine DOKUNMAZ', async () => {
-    const resign = vi.fn(() => Promise.reject(new Error('çağrılmamalıydı')))
-    const f = fixture({ resign })
-    await dispatchMessage(f.context, { type: 'resign' })
-    expect(resign).not.toHaveBeenCalled()
+    // `chat:emoji` — `pushEmoji` hâlâ fırlatan bir iskelet (W3-03 doldurur).
+    const pushEmoji = vi.fn(() => Promise.reject(new Error('çağrılmamalıydı')))
+    const f = fixture({ pushEmoji })
+    await dispatchMessage(f.context, { type: 'chat:emoji', emoji: '👏' })
+    expect(pushEmoji).not.toHaveBeenCalled()
   })
 })
 

@@ -11,6 +11,7 @@ import { toTransportStatus } from '@xox/shared'
 import type { MoveRejectionReason } from '@xox/shared'
 import { Room } from '../models/room'
 import { casUpdateRoom } from './cas'
+import { finishGame, toRoomResult } from './finish'
 import { seatOf } from './seat'
 import type { RoomEvent, TransitionResult } from './types'
 
@@ -59,13 +60,20 @@ export async function applyMove(
 
   const nextBoard = applyMoveCore(board, index, seat)
   const status = evaluateStatus(nextBoard)
+  const transport = toTransportStatus(status)
 
   const set: Record<string, unknown> = {
     board: [...nextBoard],
     // P0: MOVE_TIMEOUT_SECONDS uygulanmaz — deadline daima null (AS-08).
     turnDeadline: null,
   }
-  if (status.kind !== 'playing') set['state'] = 'finished'
+  if (transport.kind !== 'playing') {
+    set['state'] = 'finished'
+    // Sonuç, `state:'finished'` ile AYNI yazmada damgalanır (W1-02): odayı
+    // gören her okuyucu (change stream dâhil) kazananı tek dokümandan öğrenir
+    // ve tahtayı yeniden değerlendirmek zorunda kalmaz.
+    set['result'] = toRoomResult(transport)
+  }
 
   const updated = await casUpdateRoom({
     code,
@@ -80,8 +88,12 @@ export async function applyMove(
   if (updated === null) return { ok: false, code: 'not-your-turn' }
 
   const events: RoomEvent[] = [{ kind: 'moved', index, by: seat }]
-  if (status.kind !== 'playing') {
-    events.push({ kind: 'finished', status: toTransportStatus(status) })
+  if (transport.kind !== 'playing') {
+    // `games` CAS'ı + `users.stats` (KK-052/053). Oda yazması ZATEN
+    // kesinleşti; `finishGame` kendi CAS'ıyla idempotenttir, iki instance
+    // aynı bitişi görse de sayaç bir kez artar (tasarım §9).
+    await finishGame(updated, transport)
+    events.push({ kind: 'finished', status: transport })
   }
   return { ok: true, room: updated, events }
 }

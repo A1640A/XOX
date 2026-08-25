@@ -1,7 +1,9 @@
 'use client'
 
 import { TESTID, type Player, type RematchOffer, type TransportStatus } from '@xox/shared'
+import Link from 'next/link'
 import { tr } from '@/messages/tr'
+import { statusText } from './status-text'
 
 export interface ResultPanelProps {
   readonly status: TransportStatus
@@ -12,12 +14,22 @@ export interface ResultPanelProps {
 }
 
 /**
- * Rövanş aksiyonlarının minimum hâli (KK-055/056, P0 — §9 katman tablosu).
- * Sonuç METNİ zaten `durum-metni` üzerinden (`RoomScreen`) gösteriliyor; bu
- * panel yalnız `btn-rovans-teklif`/`btn-rovans-kabul` düğmelerini taşır.
- * Zengin sonuç kartı (kazanan çizgi animasyonu, paylaşım vb.) W1-02'de
- * buraya eklenir — DONDURMA #1'in "gövdesi boş/pasif" niteliği bu genişlemeyi
- * kapsar, temel testid sözleşmesini kapsamaz.
+ * Oyun sonucu + rövanş aksiyonları (KK-050/054/055/056).
+ *
+ * Sonuç metni `statusText`ten gelir — yani `tr.game.*` ve **`you`** üzerinden
+ * (ADR-0001: `reason` dört ayrı Türkçe metni ayırt ettirir, `you` "Kazandın /
+ * Kaybettin" ayrımını yapar). Metin `RoomScreen`in `durum-metni` canlı
+ * bölgesinde de var; orası oyun SÜRERKEN de konuşan `aria-live` satırıdır,
+ * burası ise sonuç kartının başlığıdır. Testid sözleşmesi dondurulmuş
+ * (`durum-metni` tekil olmalı), bu yüzden başlık kendi kancasını taşımaz.
+ *
+ * Kazanan çizginin `data-kazanan="true"` işaretini `Board` yazar
+ * (`status.line` → `RoomScreen` → `Board.winningLine`); sonuç kartı tahtayı
+ * ikinci kez çizmez.
+ *
+ * "Ana sayfa" bilinçli olarak HER sonuçta duruyor: rakip rövanşa yanıt
+ * vermezse (ya da ayrılırsa) kullanıcının odadan çıkış yolu olmalı — sonuç
+ * ekranında tek eylem "Rövanş iste" olursa kullanıcı kilitlenir.
  */
 export function ResultPanel({
   status,
@@ -29,20 +41,30 @@ export function ResultPanel({
   if (status.kind === 'playing') return null
 
   const offeredByOpponent = rematch !== null && rematch.by !== you
+  const waitingForOpponent = rematch !== null && !offeredByOpponent
 
   return (
-    <div>
+    <section className="flex flex-col gap-2">
+      <h2 className="text-2xl font-bold">{statusText(status, you)}</h2>
+
       {rematch === null ? (
         <button type="button" data-testid={TESTID.btnRovansTeklif} onClick={onOfferRematch}>
           {tr.rematch.offer}
         </button>
       ) : null}
+
       {offeredByOpponent ? (
-        <button type="button" data-testid={TESTID.btnRovansKabul} onClick={onAcceptRematch}>
-          {tr.rematch.accept}
-        </button>
+        <>
+          <p>{tr.rematch.offered}</p>
+          <button type="button" data-testid={TESTID.btnRovansKabul} onClick={onAcceptRematch}>
+            {tr.rematch.accept}
+          </button>
+        </>
       ) : null}
-      {rematch !== null && !offeredByOpponent ? <p>{tr.rematch.waiting}</p> : null}
-    </div>
+
+      {waitingForOpponent ? <p>{tr.rematch.waiting}</p> : null}
+
+      <Link href="/">{tr.common.home}</Link>
+    </section>
   )
 }

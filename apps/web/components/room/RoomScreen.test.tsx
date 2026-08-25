@@ -146,7 +146,14 @@ describe('RoomScreen', () => {
 
     expect(screen.getByTestId('sira-gostergesi')).toHaveAttribute('data-sira', 'yok')
     expect(screen.getByTestId('durum-metni')).toHaveTextContent('Kazandın!')
-    expect(screen.getByTestId('hucre-0')).toHaveAttribute('data-kazanan', 'true')
+    // Kriter 12: kazanan çizginin TAM ÜÇ hücresi işaretlenir, fazlası değil.
+    for (const index of [0, 1, 2]) {
+      expect(screen.getByTestId(`hucre-${String(index)}`)).toHaveAttribute('data-kazanan', 'true')
+    }
+    const isaretli = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter((index) =>
+      screen.getByTestId(`hucre-${String(index)}`).hasAttribute('data-kazanan'),
+    )
+    expect(isaretli).toStrictEqual([0, 1, 2])
     expect(screen.getByTestId('btn-pes-et')).toBeDisabled()
 
     await user.click(screen.getByTestId('btn-rovans-teklif'))

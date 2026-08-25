@@ -29,6 +29,7 @@ function makeRoom(overrides: Partial<RoomDoc> = {}): RoomDoc {
     turnDeadline: null,
     disconnected: null,
     rematch: null,
+    result: null,
     lastEmoji: null,
     gameId: null,
     version: 10,
