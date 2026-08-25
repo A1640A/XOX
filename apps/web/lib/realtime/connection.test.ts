@@ -407,6 +407,70 @@ describe('connection · takeover ve oda kaybı', () => {
   })
 })
 
+describe('connection · sürüm gerilemesi (yarış koruması)', () => {
+  it('ESKİ sürümlü bir olay YOK SAYILIR — tahta geriye alınmaz', () => {
+    const h = harness()
+    const v11 = makeRoom({
+      version: 11,
+      board: cells('X........'),
+      moves: [{ index: 0, by: 'X', at: new Date(NOW) }],
+    })
+    h.conn.onRoomChange(v11)
+    h.sent.length = 0
+
+    // Geç gelen v10 (yeniden açılış okuması ile canlı olay yarıştı)
+    h.conn.onRoomChange(makeRoom({ version: 10 }))
+    expect(h.sent).toStrictEqual([])
+  })
+
+  it('zorunlu resync ESKİ doküman getirirse tam state GÖNDERİLMEZ', () => {
+    const h = harness()
+    h.conn.onRoomChange(
+      makeRoom({
+        version: 11,
+        board: cells('X........'),
+        moves: [{ index: 0, by: 'X', at: new Date(NOW) }],
+      }),
+    )
+    h.sent.length = 0
+
+    h.conn.onForcedState(makeRoom({ version: 10 }))
+    expect(h.sent).toStrictEqual([])
+  })
+
+  it('AYNI sürümlü zorunlu resync HÂLÂ gönderilir (sessizce sağır kalmak yasak)', () => {
+    const h = harness()
+    h.conn.onForcedState(makeRoom({ version: 10 }))
+    expect(h.sent[0]).toMatchObject({ type: 'state', version: 10 })
+  })
+})
+
+describe('connection · koltuk kaybı (4403)', () => {
+  it('koltuklar başka kullanıcılara geçmişse olayda 4403 seat-lost ile kapanır', () => {
+    const h = harness()
+    h.conn.onRoomChange(
+      makeRoom({
+        version: 11,
+        seats: { X: { userId: 'baska1', name: 'Zeynep' }, O: { userId: 'baska2', name: 'Efe' } },
+      }),
+    )
+    expect(h.closes).toStrictEqual([{ code: 4403, reason: 'seat-lost' }])
+    expect(h.sent).toStrictEqual([])
+  })
+
+  it('zorunlu resync koltuksuz oda getirirse 4403 seat-lost ile kapanır', () => {
+    const h = harness()
+    h.conn.onForcedState(
+      makeRoom({
+        version: 40,
+        seats: { X: { userId: 'baska1', name: 'Zeynep' }, O: null },
+      }),
+    )
+    expect(h.closes).toStrictEqual([{ code: 4403, reason: 'seat-lost' }])
+    expect(h.sent).toStrictEqual([])
+  })
+})
+
 describe('connection · protokol ihlali sayacı (KK-048)', () => {
   it('üçüncü ardışık ihlalde kapatma sinyali verir', () => {
     const h = harness()

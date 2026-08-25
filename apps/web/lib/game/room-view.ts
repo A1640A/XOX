@@ -22,7 +22,15 @@ export type StatusInput = Pick<RoomDoc, 'state' | 'board'>
 export function roomTransportStatus(room: StatusInput): TransportStatus {
   const status = evaluateStatus(boardFromCells(room.board))
   if (status.kind !== 'playing') return toTransportStatus(status)
-  if (room.state === 'finished') return { kind: 'draw' }
+  if (room.state === 'finished') {
+    // Sessiz kalmıyor: bu dal P0'da ULAŞILAMAZ olmalı. W1-02 `resign` yazdığı
+    // gün buraya düşülürse pes eden oyuncu `game:over {kind:'draw'}` görür ve
+    // hiçbir kapı kırılmaz — o yüzden değişmez ihlali GÜRÜLTÜ çıkarsın.
+    console.error(
+      '[room-view] oda finished ama tahta bitmemiş — sonuç `rooms`ta taşınmıyor (TODO W1-02)',
+    )
+    return { kind: 'draw' }
+  }
   return status
 }
 

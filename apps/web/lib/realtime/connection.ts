@@ -33,6 +33,11 @@ export interface RoomConnection extends RoomSubscriber {
   primeState(room: RoomDoc): boolean
   /** En son görülen oda dokümanı — süre zamanlayıcısını beslemek için. */
   lastRoom(): RoomDoc | null
+  /**
+   * Kayan pencere hız kapısı (güvenlik denetimi HIGH). `'ok'` işle,
+   * `'limited'` reddet ama bağlantıyı koru, `'abusive'` bağlantıyı kapat.
+   */
+  checkRate(now: number): RateVerdict
   /** zod ihlali; `MAX_PROTOCOL_VIOLATIONS`e ulaşıldıysa `true` (kapat). */
   noteProtocolViolation(): boolean
   /** Geçerli mesaj — ARDIŞIK ihlal sayacını sıfırlar. */
@@ -43,6 +48,27 @@ export interface RoomConnection extends RoomSubscriber {
 
 /** KK-048: **ardışık** üç ihlal. Çıplak sayı bilerek (sabitten türetilmiş test kör olur). */
 const MAX_CONSECUTIVE_VIOLATIONS = 3
+
+type RateVerdict = 'ok' | 'limited' | 'abusive'
+
+/**
+ * Bağlantı başına kayan pencere. `MAX_CONSECUTIVE_VIOLATIONS` bunu KAPATMIYOR:
+ * `noteValidMessage()` sayacı sıfırladığı için `bozuk, bozuk, ping, bozuk…`
+ * sonsuza kadar sürebilir; `armIdle()` her çerçevede tazelendiği için 4408 de
+ * hiç ateşlenmez.
+ *
+ * Asıl zarar kendi odasında değil: geçerli ama tekrarlanan `join` çerçeveleri
+ * yazma + change stream olayı üretir ve change stream instance başına TEKTİR
+ * (ADR-0002) — tek soketin seli o instance'taki BÜTÜN odaların olay dağıtımını
+ * geciktirir, kurban başkasının oyunu olur.
+ *
+ * Bütçe oyun temposuna göre cömert: nabız 25 sn'de bir, hamleler seyrek.
+ * Çıplak sayılar bilerek.
+ */
+const RATE_WINDOW_MS = 10_000
+const RATE_MAX_IN_WINDOW = 20
+/** Pencere içinde bu sayıya ulaşan istemci artık bozuk/kötü niyetlidir. */
+const RATE_ABUSIVE_IN_WINDOW = 40
 
 interface Snapshot {
   version: number
@@ -88,6 +114,8 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
   let lastEmojiAt = 0
   let violations = 0
   let closed = false
+  /** Kayan pencere: kabul/ret fark etmeksizin GELEN her çerçevenin damgası. */
+  const frameTimestamps: number[] = []
   /**
    * Anlık görüntü kurulmadan ÖNCE gelen olay burada bekler. Abonelik `join`
    * yazımından önce kurulduğu için (session.ts) o pencerede rakibin olayı
@@ -243,7 +271,11 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
 
       latestRoom = room
       emitEmoji(room)
-      if (room.version === previous.version) return
+      // ⚠️ SÜRÜM GERİLEMESİ. `===` yerine `<=`: `forceStateToAll`ın okuduğu
+      // doküman ile canlı stream olayı YARIŞABİLİR (okuma v10'u getirirken
+      // stream v11'i taşıyabilir). Eski bir dokümanı işlemek anlık görüntüyü
+      // GERİYE alır ve istemcinin tahtasından son hamleyi siler.
+      if (room.version <= previous.version) return
 
       const seat = seatOf(room, deps.userId)
       if (seat === null) {
@@ -267,6 +299,11 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
         close(WS_CLOSE.NOT_FOUND, 'room-gone')
         return
       }
+      // Zorunlu resync, canlı akışın GERİSİNDE kalmış bir okumayla gelebilir
+      // (hub oda dokümanını yeniden açılıştan sonra okuyor; bu sırada bir
+      // olay daha düşebilir). Eşit sürüm hâlâ gönderilir — "sessizce sağır
+      // kalmak yasak" garantisi odur; ama ESKİ sürüm yok sayılır.
+      if (snapshot !== null && room.version < snapshot.version) return
       const seat = seatOf(room, deps.userId)
       if (seat === null) {
         close(WS_CLOSE.FORBIDDEN, 'seat-lost')
@@ -283,6 +320,17 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
 
     onRoomDeleted(): void {
       close(WS_CLOSE.NOT_FOUND, 'room-deleted')
+    },
+
+    checkRate(now: number): RateVerdict {
+      const cutoff = now - RATE_WINDOW_MS
+      while (frameTimestamps.length > 0 && (frameTimestamps[0] ?? 0) <= cutoff) {
+        frameTimestamps.shift()
+      }
+      frameTimestamps.push(now)
+      if (frameTimestamps.length > RATE_ABUSIVE_IN_WINDOW) return 'abusive'
+      if (frameTimestamps.length > RATE_MAX_IN_WINDOW) return 'limited'
+      return 'ok'
     },
 
     noteProtocolViolation(): boolean {

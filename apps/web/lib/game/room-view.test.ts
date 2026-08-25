@@ -1,6 +1,6 @@
 import type { RoomDoc } from '@xox/db'
 import { type Cell, stateMessageSchema } from '@xox/shared'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { roomTransportStatus, toStateMessage } from './room-view'
 
 const NOW = 1_700_000_000_000
@@ -62,6 +62,23 @@ describe('roomTransportStatus', () => {
       kind: 'playing',
       turn: 'X',
     })
+  })
+
+  it('state finished ama tahta bitmemişse GÜRÜLTÜ çıkarır (sessiz değişmez ihlali yok)', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    roomTransportStatus(makeRoom({ state: 'finished', board: cells('X........') }))
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(String(spy.mock.calls[0]?.[0])).toContain('W1-02')
+    spy.mockRestore()
+  })
+
+  it('normal yollarda HİÇ gürültü çıkmaz', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    roomTransportStatus(makeRoom())
+    roomTransportStatus(makeRoom({ board: cells('XXXOO....'), state: 'finished' }))
+    roomTransportStatus(makeRoom({ board: cells('XXOOOXXOX'), state: 'finished' }))
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
   })
 
   it('state finished ama tahta bitmemişse draw ile kapatır — sebep odada YAZILI DEĞİL', () => {
