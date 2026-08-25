@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T03:13:11.202Z",
+  "updatedAt": "2026-08-25T03:20:43.748Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -572,9 +572,9 @@
         "apps/e2e/tests/computer.spec.ts",
         "apps/e2e/tests/join.spec.ts"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/E2E-002",
       "report": null,
       "acceptance": [
         "KK-002 yeşil: kayıtlı e-postayla kayıt -> form kalır, 409, hata-mesaji data-kod=\"EMAIL_TAKEN\" ve 'Bu e-posta zaten kayıtlı.'",
