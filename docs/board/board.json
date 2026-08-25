@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T03:31:20.324Z",
+  "updatedAt": "2026-08-25T03:34:35.722Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -598,7 +598,7 @@
       "agent": "xox-qa-e2e",
       "deps": ["W1-02", "W1-03"],
       "conflictSet": ["apps/e2e/tests/result-rematch.spec.ts", "apps/e2e/tests/reconnect.spec.ts"],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/E2E-003",
       "report": "docs/board/reports/E2E-003.md",
@@ -615,7 +615,8 @@
         "apps/e2e/fixtures/** ve playwright.config.ts DEĞİŞTİRİLMEZ",
         "P0 KAPISI: 50 P0 kriterinin (KK-001..011, 020..027, 030..036, 040..048, 050..058, 060..065) durumu rapora TABLO olarak yazılır; kırmızı kalanlar kart id'siyle eşlenir. Dalga 2 bu tablo olmadan başlamaz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "836d493"
     },
     {
       "id": "W2-01",

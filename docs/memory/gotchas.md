@@ -1035,3 +1035,20 @@ olarak göremez.
 
 Teşhis yöntemi doğruydu ve tekrarlanmalı: integrator merge öncesi commit'e dönüp **birebir aynı
 hatayı** aldı, böylece "benim merge'im mi kırdı" sorusunu ölçerek yanıtladı.
+
+## 2026-08-25 · Yetim vitest fork işçileri 27 saat boyunca dört çekirdeği yedi
+
+`E2E-003` integrator'ı fark etti: dört `node ... vitest` fork işçisi `PPID=1` ile, **1 gün 3.5
+saattir**, her biri ~%99 CPU'da koşuyordu. Canlı ebeveynleri yoktu — önceki bir oturumdan
+kalmışlardı. Yük ortalaması: 15 dakikalık **57.85**, öldürdükten sonra 1 dakikalık **8.19**.
+
+Etkisi görünmezdi ama her yere yayılmıştı: gecenin tüm paralel ajanları bu yükün altında koştu,
+ve `@xox/db#test:coverage`'ın bir koşuda verdiği `ENOENT coverage/.tmp/coverage-3.json` hatası
+büyük olasılıkla aç kalan bir işçinin kendi parçasını hiç yazamamasıydı — yani **kararsızlık
+sanılan bir hata aslında kaynak açlığıydı.**
+
+**Kontrol:** uzun gece koşularında ara ara
+`ps -eo pid,ppid,etime,pcpu,command | awk '$2==1 && /vitest/ && $4>50'`.
+`PPID=1` + yüksek CPU + uzun `etime` = kesin kaçak; öldürmek güvenli ve geri alınabilir.
+Vitest'in fork havuzu bir koşu sert kesildiğinde (kota bitmesi, iptal, çöken üst süreç) işçileri
+arkada bırakabiliyor — bu gece bir kez oturum kotası tükenip üç ajan ölmüştü, kaynağı muhtemelen o.
