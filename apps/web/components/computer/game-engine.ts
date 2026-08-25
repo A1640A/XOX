@@ -66,7 +66,14 @@ export function applyComputerMove(
   return { board, status: evaluateStatus(board) }
 }
 
-/** `sira-gostergesi` `data-sira` değeri: oyun sürerken sıradaki taş, aksi hâlde `yok` (KK-025). */
+/**
+ * `sira-gostergesi` `data-sira` değeri: oyun sürerken sıradaki taş, aksi
+ * hâlde `yok` (KK-025). `components/room/status-text.ts`'teki `turnAttr` ile
+ * gövde gövdeye AYNIDIR — BİLİNÇLİ KOPYA: sözleşme `packages/shared/src/
+ * testids.ts`'te (`DATA_ATTR.sira`) yaşıyor, iki tarafın da BAĞIMSIZ uyması
+ * gereken şey o. Ortak yardımcıya çıkarmak `components/room/**`'a dokunmayı
+ * gerektirir — o dizin bu dalgada W1-02'nin çakışma kümesinde.
+ */
 export function turnAttr(status: GameStatus): Player | 'yok' {
   return status.kind === 'playing' ? status.turn : 'yok'
 }
