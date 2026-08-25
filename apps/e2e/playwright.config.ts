@@ -5,6 +5,10 @@ const baseURL = process.env['E2E_BASE_URL'] ?? 'http://localhost:3000'
 export default defineConfig({
   testDir: './tests',
   outputDir: './test-results',
+  // BLOKE EDİCİ ön kontrol (`/api/health`'in `db`si) + iki sabit test
+  // kullanıcısının storageState'i (`fixtures/auth.ts`) burada, TÜM test
+  // dosyalarından ÖNCE, tek seferde üretilir (kart E2E-001).
+  globalSetup: './global-setup.ts',
   fullyParallel: true,
   forbidOnly: process.env['CI'] === '1',
   retries: process.env['CI'] === '1' ? 2 : 0,
