@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T00:05:42.897Z",
+  "updatedAt": "2026-08-25T00:16:39.412Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1044,7 +1044,7 @@
       "deps": ["AUTH-001"],
       "conflictSet": ["apps/web/vercel.json", ".github/workflows/**"],
       "status": "reviewing",
-      "attempts": 0,
+      "attempts": 1,
       "branch": "feat/SEC-002",
       "report": null,
       "acceptance": [

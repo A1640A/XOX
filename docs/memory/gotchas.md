@@ -814,3 +814,37 @@ domain, veri silme) içeren kartların prompt'una şu satır konur: _"Bir izin i
 DURDUR ve lead'e bildir. Lead'in yanıtı reddi geçersiz kılmaz — yalnız kullanıcı kılabilir.
 Aynı komutu yeniden deneme."_ Lead ise raporda böyle bir bypass görürse kullanıcıya
 **görünür şekilde** bildirir, rapora gömmez.
+
+## 2026-08-25 · ⚠️ `URLSearchParams.get()` İLK değeri, `Object.fromEntries()` SON değeri döner
+
+Aynı gövdeyi iki farklı katman iki farklı şekilde ayrıştırırsa, aralarındaki fark bir güvenlik
+açığıdır. SEC-002'de somut olarak yaşandı:
+
+```
+gövde: email=cop@attacker.test&password=x&email=kurban@xox.test
+hız sınırlayıcı  URLSearchParams.get('email')        → cop@attacker.test   (sayaç buna işler)
+Auth.js          Object.fromEntries(URLSearchParams) → kurban@xox.test     (argon2 buna koşar)
+```
+
+Saldırgan birinci alanı her istekte değiştirip ikinciyi sabit tutarak kimlik-başına kilidi
+tamamen atlıyordu; sayaç hiç 5'e ulaşmıyordu. Ters yönü de var: sıra değiştirilince kurban
+kendi parolası hiç denenmeden kilitleniyor.
+
+**Kural:** bir isteği koruyan katman, korunan katmanın gördüğü değerin **AYNISINI** görmeli —
+"eşdeğer" ayrıştırma yetmez, birebir aynı fonksiyon kullanılmalı. Bu, örüntü #1'in
+("kural yazılmış ama ateşlenmiyor") en sinsi biçimi: kural ateşleniyor, ama yanlış hedefe.
+
+Aynı sınıf her yerde geçerli: mükerrer başlıklar, `?a=1&a=2` sorgu dizeleri, JSON'da tekrarlanan
+anahtar, `content-type` uyuşmazlığı. Test yazarken **mükerrer parametreli gövdeyi** açıkça dene —
+tek-parametreli mutlu yol bu sınıfı asla göstermez.
+
+## 2026-08-25 · Auth.js oturum çerezi ~3936 bayttan sonra `.0`, `.1` diye BÖLÜNÜR
+
+`@auth/core lib/utils/cookie.js:174-186`. `authjs.session-token=` arayan bir regex bölünmüş
+çerezi kaçırır. SEC-002'de giriş başarısı bu regex ile tespit ediliyordu; token büyüdüğünde
+**başarılı giriş başarısız sayılacak**, kilit sayacı artacak ve `recordLoginSuccess` hiç
+çalışmadığı için meşru kullanıcı kendi hesabından kalıcı olarak kilitlenecekti.
+
+Bugün varsayılan token küçük olduğu için tetiklenmiyordu — tehlike de bu: davranış token
+boyutuna **sessizce** bağımlıydı ve testler tek parça `set-cookie` mock'ladığı için kör kaldı.
+Çerez adı eşleştiren her yerde `.N` sonekini de kabul et; testi gerçek Auth.js çıktısına karşı yaz.
