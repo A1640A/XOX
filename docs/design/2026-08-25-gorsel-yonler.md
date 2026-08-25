@@ -261,6 +261,40 @@ tekrarlanabilir — formül `packages/ui-tokens/src/contrast.ts`'in birebir ayn�
 Bu üçü de yalnızca öneri — seçim netleşince ilgili karta (muhtemelen `xox-dev-ui-tokens` veya
 eşdeğeri) devredilir, bu kart hiçbir token dosyasına dokunmadı.
 
+## Uygulama (DESIGN-001a, 2026-08-26) — Ömer Yön A'yı seçti, tokenlar yazıldı
+
+Yukarıdaki üç token önerisi (`surfaceRaised`, `fontFamily`, `motionDuration`) **birebir
+`packages/ui-tokens`'a uygulandı** (bkz. `docs/board/reports/DESIGN-001a.md` — tam token
+listesi, kontrast tablosu, KK-084 sondası). Bu bölüm yalnız ADR-0017'nin (ARCH-002, tahta
+boyutu kartı) Yön A önizlemesinden **BİLİNÇLİ SAPTIĞI** üç noktayı kayda geçirir — amaç,
+tasarımcı ajanın bunları ileride "uygulanmamış, geri getirilmesi gerek" sanmasını önlemek:
+
+1. **Izgara boşluğu 1 px değil, 2 px.** Bu belgenin "Boşluk" bölümü `gap:1px` öneriyordu.
+   ADR-0017 §2 bunu KK-B51'in (komşu dokunma hedefleri arası ≥2 px ayrım) gereğiyle 2 px'e
+   çıkardı — gerekçe: boyuta göre değişen bir `gap` (3×3'te 1px, 11×11'de 2px) tam da bu
+   belgenin altında imzaladığım "tek görsel kod yolu, boyuta göre dallanmaz" ilkesini ihlal
+   ederdi. `packages/ui-tokens/src/board.ts` → `board.gridLine = 2` (`--xox-grid-line: 2px`),
+   TÜM boyutlarda tek değer. 76 px'lik bir hücrede %2.6 — hâlâ hairline okunuyor.
+2. **"Yakınlaştır" düğmesi UYGULANMAZ.** Önizlemedeki pan/zoom demosu bir sözleşme değil,
+   bir demo öğesiydi. ADR-0017 §3 (KK-B50) bunu reddetti: rakibin tehdidini ve kazanan
+   çizgiyi tek bakışta görmek oyunun kendisi; pan/zoom ekran okuyucu ve anahtar-erişim
+   hareketleriyle çakışır. Token katmanında bu maddenin hiçbir karşılığı YOK (bilinçli yokluk).
+3. **`hitSlop` ile 44 pt'a tamamlama REDDEDİLDİ.** Bu belgenin "dokunma hedefi dürüstlüğü"
+   notu 11×11'de görünür hücrenin (~34pt) dokunma alanını `hitSlop` ile 44pt'a tamamlamayı
+   öneriyordu. ADR-0017 §4 bunun **geometrik olarak imkânsız** olduğunu gösterdi: hücre
+   merkezleri ~30px arayla dizilirken 44px'lik hedefler zorunlu olarak çakışır, çakışan
+   hedef dokunmayı yanlış hücreye düşürür — 28px'lik doğru hedeften kesin olarak kötü.
+   Karar: 11×11'de dokunma hedefi hücrenin KENDİSİDİR (WCAG 2.2 SC 2.5.8 eşiği 24×24, ölçülen
+   ≥28px payla geçer). Token katmanı bu yüzden `minCellSize`/`hitSlop` GİBİ bir token
+   TANIMLAMAZ — `board.test.ts` bunu açıkça kilitler ("hiçbir token için alt sınır
+   TANIMLANMAZ").
+
+Yeni token'lar (bu belgenin önerdiklerinin ötesinde, uygulama sırasında ihtiyaç çıktı):
+`board.boardMax` (`--xox-board-max: 480px` — önizlemedeki kart genişliğiyle aynı),
+`board.focusRingWidth/Offset`, `board.winningOutlineWidth` (ADR-0017 §8c, renkten bağımsız
+kazanan sinyali), `board.fadedOpacity` (ADR-0017 §8b, kazanan olmayan hücreler), `board.markStrokeX/O`
+(X/O'yu yalnızca renkle değil kalınlıkla da ayırt etmek için — X=3px, O=2px).
+
 ## Öneri
 
 Üçü de üretime çıkarılabilir kalitede; seçim Ömer'e ait. Benim eğilimim **Yön C (Sistem/Veri
