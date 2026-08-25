@@ -1057,3 +1057,16 @@
 {"ts":"2026-08-25T21:25:21Z","event":"subagent.stop"}
 {"ts":"2026-08-25T21:25:58Z","event":"subagent.stop"}
 {"ts":"2026-08-25T09:30:00Z","event":"user.decision","note":"OMER YON A-yi SECTI (Kagit & Murekkep). Teknik avantaji: 11x11-de hicbir dekoru sokmek zorunda kalmiyor, yalniz olcu kuculuyor — boyuta gore dallanan ikinci gorsel kod yolu riski yok. B reddedildi cunku n>=6-da kose yuvarlama/golge/parlama kural geregi sokuluyor (121 kart golgesi gorsel camur). C tasarimcinin kendi onerisiydi ama Omer A-nin tonunu tercih etti. Kontrastlar tahmin degil, WCAG formuluyle hesaplandi; B-koyu ve C-koyu kenarliklari ilk denemede esigi gecemeyip duzeltilmisti. SPEC de indi: 73 kabul kriteri, migration YOK (rooms TTL 7200 kendini bosaltiyor), K araliklari gerekceli (3x3:{3}, 6x6:{4,5}, 11x11:{4,5,6}). Mimar dispatch edildi"}
+{"ts":"2026-08-25T21:46:58Z","event":"file.touched","path":"docs/adr/0010-tahta-konfigurasyonu-tek-kaynak.md"}
+{"ts":"2026-08-25T21:48:17Z","event":"file.touched","path":"docs/adr/0011-board-markali-dizi-ve-winline-genislemesi.md"}
+{"ts":"2026-08-25T21:49:48Z","event":"file.touched","path":"docs/adr/0012-kazanma-hatlari-uretimi-ve-freestyle.md"}
+{"ts":"2026-08-25T21:52:50Z","event":"file.touched","path":"docs/adr/0013-buyuk-tahta-yapay-zeka-mimarisi.md"}
+{"ts":"2026-08-25T21:54:55Z","event":"file.touched","path":"docs/adr/0014-kalicilik-opsiyonel-alanlar-ve-tek-yazma-kapisi.md"}
+{"ts":"2026-08-25T21:56:35Z","event":"file.touched","path":"docs/adr/0015-protokol-genislemesi-tek-pencere.md"}
+{"ts":"2026-08-25T21:57:36Z","event":"file.touched","path":"docs/adr/0016-testid-sozlesmesinin-acilmasi.md"}
+{"ts":"2026-08-25T21:59:59Z","event":"file.touched","path":"docs/adr/0017-tahta-sunumu-olcekle-kaydirma-ve-tek-izgara-kod-yolu.md"}
+{"ts":"2026-08-25T22:02:05Z","event":"file.touched","path":"docs/adr/0018-yayin-sirasi-surum-egriligi-ve-geri-alma.md"}
+{"ts":"2026-08-25T22:08:37Z","event":"file.touched","path":"docs/superpowers/specs/2026-08-25-xox-tahta-boyutu-tasarim.md"}
+{"ts":"2026-08-25T22:10:30Z","event":"subagent.stop"}
+{"ts":"2026-08-25T22:27:59Z","event":"file.touched","path":"/private/tmp/claude-501/-Users-omerdursun-PROJELER-XOX/02ee006c-b5d2-4e00-837b-bd8913dc4c5a/scratchpad/plan_board.py"}
+{"ts":"2026-08-25T22:29:59Z","event":"subagent.stop"}
