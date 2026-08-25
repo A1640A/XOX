@@ -73,7 +73,7 @@ describe('resolveIdentity — KK-010 tek çözücü', () => {
         mockAuth.mockResolvedValue(null)
         const { signToken } = await import('./tokens')
         const { resolveIdentity } = await import('./identity')
-        const { token } = await signToken('ws-ticket', 'saldirgan-hedefi')
+        const { token } = await signToken('ws-ticket', 'saldirgan-hedefi', { room: 'ABC234' })
         const req = makeRequest(`https://xox.test/api/ws/ticket?ticket=${token}`)
 
         await expect(resolveIdentity(req)).resolves.toBeNull()
@@ -84,11 +84,15 @@ describe('resolveIdentity — KK-010 tek çözücü', () => {
       mockAuth.mockResolvedValue(null)
       const { signToken } = await import('./tokens')
       const { resolveIdentity } = await import('./identity')
-      const { token } = await signToken('ws-ticket', 'user-ticket', { name: 'Bilet Kullanıcı' })
+      const { token } = await signToken('ws-ticket', 'user-ticket', {
+        name: 'Bilet Kullanıcı',
+        room: 'ABC234',
+      })
       const req = makeRequest(`https://xox.test/api/rooms/ABC234/ws?ticket=${token}`)
       await expect(resolveIdentity(req, { allowTicket: true })).resolves.toStrictEqual({
         userId: 'user-ticket',
         name: 'Bilet Kullanıcı',
+        room: 'ABC234',
       })
     })
 
@@ -105,22 +109,25 @@ describe('resolveIdentity — KK-010 tek çözücü', () => {
       })
     })
 
-    it("bilette `room` claim'i YOKSA sonuçta `room` alanı da YOK (opsiyonel alan sızmaz)", async () => {
+    it("bilette `room` claim'i YOKSA bilet HİÇ kabul edilmez (fail-open kapandı)", async () => {
+      // ⚠️ Bu test daha önce TERS davranışı kilitliyordu ("room yoksa identity
+      // yine dönsün, yalnız alan olmasın"). O biçim fail-open'dı: `room`
+      // taşımayan bir ws-ticket üreten ikinci bir yol eklendiği an o bilet
+      // HER odada geçerli olurdu ve hiçbir kapı çalmazdı. Artık kapsam
+      // eksikliği bir DOĞRULAMA HATASI (güvenlik denetimi bulgusu).
       mockAuth.mockResolvedValue(null)
       const { signToken } = await import('./tokens')
       const { resolveIdentity } = await import('./identity')
       const { token } = await signToken('ws-ticket', 'user-odasiz')
       const req = makeRequest(`https://xox.test/x?ticket=${token}`)
-      const identity = await resolveIdentity(req, { allowTicket: true })
-      expect(identity).not.toBeNull()
-      expect(identity).not.toHaveProperty('room')
+      await expect(resolveIdentity(req, { allowTicket: true })).resolves.toBeNull()
     })
 
     it('`allowTicket: false` AÇIKÇA geçilse de ticket yok sayılır (varsayılanla aynı davranış)', async () => {
       mockAuth.mockResolvedValue(null)
       const { signToken } = await import('./tokens')
       const { resolveIdentity } = await import('./identity')
-      const { token } = await signToken('ws-ticket', 'user-x')
+      const { token } = await signToken('ws-ticket', 'user-x', { room: 'ABC234' })
       const req = makeRequest(`https://xox.test/x?ticket=${token}`)
       await expect(resolveIdentity(req, { allowTicket: false })).resolves.toBeNull()
     })
@@ -140,7 +147,7 @@ describe('resolveIdentity — KK-010 tek çözücü', () => {
     mockAuth.mockResolvedValue({ user: { id: 'cerez-kullanici', name: 'Çerez' } })
     const { signToken } = await import('./tokens')
     const { resolveIdentity } = await import('./identity')
-    const { token } = await signToken('ws-ticket', 'bilet-kullanici')
+    const { token } = await signToken('ws-ticket', 'bilet-kullanici', { room: 'ABC234' })
     const req = makeRequest(`https://xox.test/api/rooms/ABC234/ws?ticket=${token}`)
     const identity = await resolveIdentity(req, { allowTicket: true })
     expect(identity?.userId).toBe('cerez-kullanici')
@@ -161,7 +168,7 @@ describe('resolveIdentity — KK-010 tek çözücü', () => {
     const viaCookie = await resolveIdentity(makeRequest('https://xox.test/x'))
 
     mockAuth.mockResolvedValue(null)
-    const { token: ticket } = await signToken('ws-ticket', userId)
+    const { token: ticket } = await signToken('ws-ticket', userId, { room: 'ABC234' })
     const viaTicket = await resolveIdentity(makeRequest(`https://xox.test/x?ticket=${ticket}`), {
       allowTicket: true,
     })
@@ -182,11 +189,12 @@ describe('resolveIdentity — KK-010 tek çözücü', () => {
     mockAuth.mockResolvedValue(null)
     const { signToken } = await import('./tokens')
     const { resolveIdentity } = await import('./identity')
-    const { token } = await signToken('ws-ticket', 'yedek-kullanici')
+    const { token } = await signToken('ws-ticket', 'yedek-kullanici', { room: 'ABC234' })
     const req = makeRequest(`https://xox.test/x?ticket=${token}`)
     await expect(resolveIdentity(req, { allowTicket: true })).resolves.toStrictEqual({
       userId: 'yedek-kullanici',
       name: '',
+      room: 'ABC234',
     })
   })
 })

@@ -169,6 +169,72 @@ describe('joinRoom', () => {
     },
   )
 
+  describe('yazma amplifikasyonu kapısı (güvenlik denetimi HIGH)', () => {
+    it('AYNI connId ile tekrarlanan join HİÇ yazma yapmaz — version SABİT kalır', async () => {
+      const code = freshCode()
+      const x = seat()
+      await Room.create({
+        code,
+        state: 'playing',
+        seats: { X: x, O: seat() },
+        presence: { X: { connId: 'ayni-conn', since: new Date() }, O: null },
+        version: 12,
+      })
+
+      // 10 kez üst üste: kısa devre yoksa version 12 -> 22 olurdu ve her adım
+      // bir change stream olayı + odadaki her bağlantıya tam `state` üretirdi.
+      for (let i = 0; i < 10; i += 1) {
+        const result = await joinRoom(code, x, 'ayni-conn')
+        expect(result.ok).toBe(true)
+      }
+
+      const after = await Room.findOne({ code }).lean()
+      // Çıplak sayı bilerek (sabitten türetilmiş beklenti bu dalı göremez).
+      expect(after?.version).toBe(12)
+      expect(after?.presence.X?.connId).toBe('ayni-conn')
+    })
+
+    it('FARKLI connId hâlâ yazar — takeover kısa devreye takılmaz', async () => {
+      const code = freshCode()
+      const x = seat()
+      await Room.create({
+        code,
+        state: 'playing',
+        seats: { X: x, O: seat() },
+        presence: { X: { connId: 'eski-conn', since: new Date() }, O: null },
+        version: 12,
+      })
+
+      const result = await joinRoom(code, x, 'yeni-conn')
+      expect(result.ok).toBe(true)
+
+      const after = await Room.findOne({ code }).lean()
+      expect(after?.version).toBe(13)
+      expect(after?.presence.X?.connId).toBe('yeni-conn')
+    })
+
+    it('aynı connId olsa BİLE grace temizlenecekse YAZAR (opponent:returned kaybolmasın)', async () => {
+      const code = freshCode()
+      const x = seat()
+      const now = new Date()
+      await Room.create({
+        code,
+        state: 'playing',
+        seats: { X: x, O: seat() },
+        presence: { X: { connId: 'ayni-conn', since: now }, O: null },
+        disconnected: { seat: 'X', at: now, graceEndsAt: new Date(now.getTime() + 30_000) },
+        version: 12,
+      })
+
+      const result = await joinRoom(code, x, 'ayni-conn')
+      expect(result.ok).toBe(true)
+
+      const after = await Room.findOne({ code }).lean()
+      expect(after?.version).toBe(13)
+      expect(after?.disconnected).toBeNull()
+    })
+  })
+
   it('waiting durumunda kurucu dönerse oda waiting kalır, oyun BAŞLAMAZ (§4)', async () => {
     const code = freshCode()
     const x = seat()

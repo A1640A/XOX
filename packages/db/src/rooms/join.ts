@@ -14,10 +14,23 @@ import type { RoomEvent, TransitionResult } from './types'
  * dönüş bunu temizler (§5.4: "kalan oyuncu opponent:returned alır").
  */
 async function reconnect(room: RoomDoc, seat: Player, connId: string): Promise<TransitionResult> {
+  const clearsDisconnect = room.disconnected !== null && room.disconnected.seat === seat
+
+  // ⚠️ YAZMA AMPLİFİKASYONU KAPISI (güvenlik + performans denetimi bulgusu).
+  // Değişecek bir şey yoksa YAZMA. Kısa devre olmadan, koltuğu olan bir oyuncu
+  // ~35 baytlık `join` çerçevesini tekrarlayarak her seferinde bir CAS yazması
+  // + `version+1` + bir change stream olayı + odadaki HER bağlantıya tam
+  // `state` (~350 bayt) ürettirebiliyordu. Asıl zarar kendi odasında değil:
+  // change stream instance başına TEKTİR (ADR-0002), yani tek soketin ürettiği
+  // yazma seli o instance'taki BÜTÜN odaların olay dağıtımını geciktirir.
+  if (room.presence[seat]?.connId === connId && !clearsDisconnect) {
+    return { ok: true, room, events: [{ kind: 'reconnected', seat }] }
+  }
+
   const set: Record<string, unknown> = {
     [`presence.${seat}`]: { connId, since: new Date() },
   }
-  if (room.disconnected !== null && room.disconnected.seat === seat) {
+  if (clearsDisconnect) {
     set['disconnected'] = null
   }
 

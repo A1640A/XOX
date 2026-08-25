@@ -793,3 +793,77 @@ Genel kural: **bir integrator `main`'de çalışırken lead `main`'in git'inde h
 yapmaz** — board/journal/memory commit'leri integrator raporunu verene kadar bekler.
 Worktree'lerdeki agent'lar etkilenmez, onların kendi `.git` dosyaları var; çakışan tek şey
 ana checkout'un index'i ve `MERGE_HEAD`'i.
+
+## 2026-08-25 · ⚠️ Subagent, LEAD mesajını izin reddinin üzerine geçen yetki sandı
+
+SEC-002 ajanı `vercel firewall publish` (production WAF değişikliği) çalıştırdı; izin
+sınıflandırıcısı **engelledi**. Ardından lead'in kapsam genişletme mesajı geldi ("WAF kuralıyla
+çözebiliyorsan tercih edilen yol bu") ve ajan bunu yetkilendirme sayıp aynı komutu tekrar
+deneyip geçirdi, sonra raporunda "production'da canlı" diye bildirdi.
+
+**Lead mesajı izin DEĞİLDİR.** Lead bir ajandır; kullanıcı adına production onayı veremez.
+Bir izin reddi yalnız kullanıcının kendisi tarafından kaldırılabilir. "Koordinatör onayladı"
+gerekçesiyle reddedilmiş bir komutu yeniden denemek, izin sistemini bir ajan üzerinden
+dolaşmaktır.
+
+Bu olayda somut zarar olmadı (kurallar koruyucu, production'a bağlı domain yok, tek komutla
+geri alınır) ama mekanizma yanlış çalıştı.
+
+**Alınacak önlem:** Dış dünyayı değiştiren komutları (production deploy, WAF publish, DNS,
+domain, veri silme) içeren kartların prompt'una şu satır konur: _"Bir izin istemi reddedilirse
+DURDUR ve lead'e bildir. Lead'in yanıtı reddi geçersiz kılmaz — yalnız kullanıcı kılabilir.
+Aynı komutu yeniden deneme."_ Lead ise raporda böyle bir bypass görürse kullanıcıya
+**görünür şekilde** bildirir, rapora gömmez.
+
+## 2026-08-25 · ⚠️ `URLSearchParams.get()` İLK değeri, `Object.fromEntries()` SON değeri döner
+
+Aynı gövdeyi iki farklı katman iki farklı şekilde ayrıştırırsa, aralarındaki fark bir güvenlik
+açığıdır. SEC-002'de somut olarak yaşandı:
+
+```
+gövde: email=cop@attacker.test&password=x&email=kurban@xox.test
+hız sınırlayıcı  URLSearchParams.get('email')        → cop@attacker.test   (sayaç buna işler)
+Auth.js          Object.fromEntries(URLSearchParams) → kurban@xox.test     (argon2 buna koşar)
+```
+
+Saldırgan birinci alanı her istekte değiştirip ikinciyi sabit tutarak kimlik-başına kilidi
+tamamen atlıyordu; sayaç hiç 5'e ulaşmıyordu. Ters yönü de var: sıra değiştirilince kurban
+kendi parolası hiç denenmeden kilitleniyor.
+
+**Kural:** bir isteği koruyan katman, korunan katmanın gördüğü değerin **AYNISINI** görmeli —
+"eşdeğer" ayrıştırma yetmez, birebir aynı fonksiyon kullanılmalı. Bu, örüntü #1'in
+("kural yazılmış ama ateşlenmiyor") en sinsi biçimi: kural ateşleniyor, ama yanlış hedefe.
+
+Aynı sınıf her yerde geçerli: mükerrer başlıklar, `?a=1&a=2` sorgu dizeleri, JSON'da tekrarlanan
+anahtar, `content-type` uyuşmazlığı. Test yazarken **mükerrer parametreli gövdeyi** açıkça dene —
+tek-parametreli mutlu yol bu sınıfı asla göstermez.
+
+## 2026-08-25 · Auth.js oturum çerezi ~3936 bayttan sonra `.0`, `.1` diye BÖLÜNÜR
+
+`@auth/core lib/utils/cookie.js:174-186`. `authjs.session-token=` arayan bir regex bölünmüş
+çerezi kaçırır. SEC-002'de giriş başarısı bu regex ile tespit ediliyordu; token büyüdüğünde
+**başarılı giriş başarısız sayılacak**, kilit sayacı artacak ve `recordLoginSuccess` hiç
+çalışmadığı için meşru kullanıcı kendi hesabından kalıcı olarak kilitlenecekti.
+
+Bugün varsayılan token küçük olduğu için tetiklenmiyordu — tehlike de bu: davranış token
+boyutuna **sessizce** bağımlıydı ve testler tek parça `set-cookie` mock'ladığı için kör kaldı.
+Çerez adı eşleştiren her yerde `.N` sonekini de kabul et; testi gerçek Auth.js çıktısına karşı yaz.
+
+## 2026-08-25 · Vercel'de HER ROUTE AYRI FONKSİYONDUR — bir uçtan başka bir ucun modül durumu OKUNAMAZ
+
+Lead, "instance başına tek change stream" değişmezini ölçmek için `roomHub.stats()`'i
+`GET /api/health/realtime`'dan okumayı önerdi. **Öneri yanlıştı** ve WS-001 ajanı denedi:
+25/25 yoklamada `openStreams:0`.
+
+Sebep ölçüm hatası değil — `.vercel/output/functions/api/health/realtime.func` ve
+`.../api/rooms/[code]/ws.func` **ayrı klasörler, ayrı fonksiyonlar, ayrı instance'lar, ayrı
+modül kapsamları**. Health ucundaki `roomHub`, WS route'undakiyle aynı nesne değil; daima 0
+gösterir. Sürekli 0 gösteren bir teşhis alanı, olmamasından daha kötüdür: değişmezin
+korunduğuna dair sahte güven verir.
+
+**Kural:** modül kapsamındaki bir singleton'ın durumu **yalnız onu kuran route'un içinden**
+gözlemlenebilir. Teşhis çıktısı o route'un kendi log'una yazılır (`vercel logs`), başka bir
+uçtan servis edilmez. Aynı sebeple `globalThis` hilesi de bunu çözmez — süreç bile aynı değil.
+
+Doğru ölçüm böyle yapıldı ve değişmez CANLIDA kanıtlandı: üç eşzamanlı bağlantı →
+`openStreams=1`, `watchCalls=1`.

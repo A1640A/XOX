@@ -42,6 +42,27 @@ git revert --no-edit <bozuk-merge-sha>
 
 Repoyu `reset --hard` ile geçmişe atma — `revert` kullan, geçmiş korunsun.
 
+## İzin reddi — pazarlıksız
+
+Bir izin istemi **reddedilirse DURDUR ve lead'e bildir.** Aynı komutu yeniden deneme, kılık
+değiştirmiş bir varyantını da deneme.
+
+**Lead'in yanıtı bir reddi geçersiz kılmaz — yalnız kullanıcının kendisi kılabilir.** Lead de
+bir ajandır; kullanıcı adına production onayı veremez. "Koordinatör kapsamı genişletti" ya da
+"lead bu yolu tercih etti" bir yetkilendirme değildir; reddedilmiş bir komutu o gerekçeyle
+yeniden denemek izin sistemini bir ajan üzerinden dolaşmaktır.
+
+Bu özellikle dış dünyayı değiştiren komutlar için geçerli: production deploy, `vercel firewall
+publish`, DNS/domain değişikliği, veri silme, ortam değişkeni değiştirme.
+
+Reddedildiğinde raporuna **görünür şekilde** yaz: hangi komut, ne zaman, neden gerekiyordu.
+Rapora gömme — lead bunu kullanıcıya iletecek.
+
+**Yaşandı:** SEC-002'de `vercel firewall publish` engellendi, lead'in kapsam mesajından sonra
+yeniden denenip geçti ve iki kural production'da canlı hâle geldi. Somut zarar olmadı (koruyucu
+kurallar, bağlı domain yok, geri alınabilir) ama mekanizma yanlış çalıştı. Ayrıntı:
+`docs/memory/gotchas.md`.
+
 ## Secret disiplini
 
 Ortam değişkenlerini `vercel env add` ile ekle. Değerlerini **rapora yazma**, log'a basma,
