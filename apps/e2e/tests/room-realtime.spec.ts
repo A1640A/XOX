@@ -11,17 +11,11 @@ import {
 import { expect, test } from '../fixtures/two-players'
 
 /**
- * AŞAMA 2 — YAZILDI, HENÜZ KOŞULMADI. `GET /api/rooms/[code]/ws` (WS-001)
- * bu yazıldığı anda `main`'de YOK; bu dosyanın tamamı bilerek `skip` edilir.
- * WS-001 merge olup preview'a yansıdığında: `test.describe.skip(` satırındaki
- * `.skip`'i KALDIR ve şu şekilde koştur:
- *
- *   E2E_BASE_URL=<yeni-preview> pnpm --filter @xox/e2e e2e --grep "KK-03[2]|KK-04[01]"
- *
- * Kararsız çıkarsa (`flaky`) İKİ KEZ daha tekrarla, tek koşuya bakıp
- * `blocker` etiketi VERME (kart kuralı).
+ * AŞAMA 2 — `GET /api/rooms/[code]/ws` (WS-001) `main`'e merge edildi
+ * (`ae25322`); `.skip` KALDIRILDI, bu dosya artık gerçek preview'a karşı
+ * koşuyor.
  */
-test.describe.skip('AŞAMA 2 · gerçek zamanlı senaryolar (WS-001 bekleniyor)', () => {
+test.describe('AŞAMA 2 · gerçek zamanlı senaryolar', () => {
   test('KK-032: ikinci istemci kodu girip katılır, iki istemcide de rakip adı ≤2 sn içinde görünür', async ({
     twoPlayers,
   }) => {
@@ -96,14 +90,27 @@ test.describe.skip('AŞAMA 2 · gerçek zamanlı senaryolar (WS-001 bekleniyor)'
   test('KK-041: sıra karşı taraftayken tıklama hücreyi değiştirmez ve sunucuya move mesajı gitmez', async ({
     twoPlayers,
   }) => {
+    // `captureWsFrames` NAVİGASYONDAN ÖNCE takılır: `page.on('websocket')`
+    // yalnız kendinden SONRA açılan soketleri görür — `joinRoom`'dan sonra
+    // takmak bu odanın soketini (zaten açılmış) KAÇIRIRDI, test sessizce
+    // hiçbir şey doğrulamayan bir "0 çerçeve" iddiasına dönüşürdü.
     const code = await createRoom(twoPlayers.playerOne)
+    const frames = captureWsFrames(twoPlayers.playerTwo)
     await joinRoom(twoPlayers.playerTwo, code)
     await waitForOpponentName(twoPlayers.playerOne, TEST_USERS.playerTwo.name)
 
-    // Sıra X'te (playerOne) başlar → O (playerTwo) beklemede, tıklama etkisiz
-    // kalmalı VE hiçbir `move` çerçevesi sunucuya gitmemeli.
-    const frames = captureWsFrames(twoPlayers.playerTwo)
-    await playMove(twoPlayers.playerTwo, 0)
+    // Katman 1 (UI): hücre gerçekten `disabled` — bu, bir kullanıcının GERÇEK
+    // bir tıklamayla `onCellPress`i asla tetikleyemeyeceğinin kanıtı.
+    await expect(twoPlayers.playerTwo.getByTestId(cellTestId(0))).toBeDisabled()
+
+    // Sıra X'te (playerOne) başlar → O (playerTwo) beklemede, hücre
+    // `disabled`dır. `force: true`: Playwright'ın normal `.click()`'i
+    // "enabled olmasını bekle" kontrolüne takılıp zaman aşımına uğrardı
+    // (element hiç enabled olmayacak) — `force` bunu atlayıp GERÇEK bir
+    // tıklamayı dener; tarayıcı yine de `disabled` `<button>`a `click`
+    // olayını dağıtmaz (HTML spesifikasyonu), yani bu "fiziksel bir tıklama
+    // gerçekten hiçbir şey yapmıyor mu" sorusunu gerçek bir tıklamayla sınar.
+    await playMove(twoPlayers.playerTwo, 0, { force: true })
 
     await expectCell(twoPlayers.playerTwo, 0, null)
     await expect(twoPlayers.playerTwo.getByTestId(cellTestId(0))).not.toHaveAttribute(

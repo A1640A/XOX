@@ -39,9 +39,26 @@ export async function joinRoom(page: Page, code: RoomCode): Promise<void> {
   await page.waitForURL(new RegExp(`/oda/${code}$`))
 }
 
-/** `hucre-<i>`'ye tıklar — WS-001 öncesi bu her zaman etkileşimsiz kalabilir, çağıran bunu bilir. */
-export async function playMove(page: Page, index: number): Promise<void> {
-  await page.getByTestId(cellTestId(index)).click()
+export interface PlayMoveOptions {
+  /**
+   * KK-041: sıra karşı taraftayken hücre `disabled`dır — Playwright'ın
+   * normal `.click()`'i "enabled olmasını bekle" aktörlük kontrolüne takılıp
+   * zaman aşımına uğrar (element hiç enabled olmayacağı için). `force: true`
+   * bu kontrolü atlayıp gerçek bir tıklamayı fiziksel olarak dener; tarayıcı
+   * `disabled` bir `<button>`a JS `click` olayını YİNE DE dağıtmaz (HTML
+   * spesifikasyonu) — yani bu, "gerçekten tıklansa bile hiçbir şey olmuyor
+   * mu" sorusunu gerçek bir tıklamayla sınayan tek yol.
+   */
+  readonly force?: boolean
+}
+
+/** `hucre-<i>`'ye tıklar. */
+export async function playMove(
+  page: Page,
+  index: number,
+  options?: PlayMoveOptions,
+): Promise<void> {
+  await page.getByTestId(cellTestId(index)).click({ force: options?.force ?? false })
 }
 
 /** `hucre-<i>`'nin `data-tas` değerinin beklenen taşa (ya da boşa, `null`) eriştiğini doğrular. */
