@@ -131,9 +131,31 @@ export async function GET(
         // ADR-0007: süre KODA GÖMÜLMEZ; plan değişince bu dosya değişmez.
         getDeadline: () => getDeadline(),
         logError: (message, error) => {
-          console.error(`[ws ${roomCode}] ${message}`, error)
+          // Oda kodu log'a YAZILMAZ (güvenlik denetimi MEDIUM): tek yetki
+          // anahtarı odur. Bağlantı kimliği teşhis için yeterli ve tahmin
+          // edilemez bir UUID.
+          console.error(`[ws ${connId.slice(0, 8)}] ${message}`, error)
         },
       })
+
+      // ⚠️ ADR-0002'nin "instance başına EN FAZLA BİR change stream"
+      // değişmezinin TEK canlı ölçüm yolu. `/api/health/realtime`ten
+      // okunamıyor: Vercel'de her route AYRI BİR FONKSİYONDUR, yani ayrı
+      // instance ve ayrı modül kapsamı — o uçtaki `roomHub` bu route'unkiyle
+      // AYNI NESNE DEĞİLDİR ve daima 0 gösterir (canlıda 25/25 yoklamada
+      // doğrulandı). Ölçüm buradan, `vercel logs` üzerinden yapılır.
+      //
+      // Oda kodu BİLEREK yazılmıyor: oda kodu bu sistemde odanın tek yetki
+      // anahtarıdır (kodu bilen + boş koltuk = odaya girer) ve log erişimi
+      // olan birine canlı oyunlara katılma yeteneği vermek istemiyoruz.
+      if (process.env['VERCEL_ENV'] !== 'production') {
+        const stats = roomHub.stats()
+        console.warn(
+          `[ws-hub] openStreams=${String(stats.openStreams)} subscribers=${String(
+            stats.subscribers,
+          )} rooms=${String(stats.rooms)} watchCalls=${String(stats.watchCalls)}`,
+        )
+      }
 
       // `session` kendi içinde sıraya alıyor: `start` bitmeden gelen çerçeve
       // de, art arda gelen iki hamle de sırayla işlenir.
