@@ -1,11 +1,11 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T00:41:26.682Z",
+  "updatedAt": "2026-08-25T01:04:18.479Z",
   "nightRun": {
     "active": true,
     "deadline": null,
-    "wave": 3,
+    "wave": 1,
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0
   },
@@ -414,10 +414,10 @@
       "agent": "xox-qa-e2e",
       "deps": ["WS-001", "ROOM-API-001", "UI-SKEL-001"],
       "conflictSet": ["apps/e2e/**"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/E2E-001",
-      "report": null,
+      "report": "docs/board/reports/E2E-001.md",
       "acceptance": [
         "SICAK DOSYA DONDURMA: apps/e2e/fixtures/ ve playwright.config.ts SON HÂLİNİ alır — storageState tabanlı auth fixture'ı (kayıt/giriş bir kez yapılır, state yeniden kullanılır), mevcut twoPlayers fixture'ı bunun üzerine kurulur, oda yardımcıları (createRoom, joinRoom, playMove, expectCell). Sonraki E2E kartları bu dosyalara DOKUNMAZ, yalnız tests/ altına spec ekler",
         "KK-001 preview'da yeşil: /kayit'te geçerli e-posta + >=8 karakter parola + görünen ad -> kullanıcı oluşur, oturum açılır, / adresine yönlenir ve görünen ad sayfada görünür",
@@ -432,7 +432,8 @@
         "BLOKE EDICI ON KONTROL: herhangi bir yazmadan ONCE preview /api/health cagrilir ve db === 'xox_test' assert edilir. Yanlissa test hicbir sey yazmadan durur. Gerekce: preview yanlislikla xox_prod-a bakiyorsa e2e temizligi production verisini siler.",
         "ASAMA 1 YESIL (2026-08-25 00:06, preview xox-pn4xwvpb1): KK-001, KK-006, KK-030+031, Playwright duvari — 3 tam kosu 7/7 kararsizlik yok. Bloke edici health kontrolu global-setup.ts-e gomuldu. Fixture-lar donduruldu. ASAMA 2 (KK-032/040/041) yazildi ama test.describe.skip ile bekliyor — WS-001 merge sonrasi skip kaldirilip kosulacak"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "d29734e"
     },
     {
       "id": "W1-01",
@@ -1045,17 +1046,18 @@
       "agent": "xox-devops",
       "deps": ["AUTH-001"],
       "conflictSet": ["apps/web/vercel.json", ".github/workflows/**"],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 1,
       "branch": "feat/SEC-002",
-      "report": null,
+      "report": "docs/board/reports/SEC-002.md",
       "acceptance": [
         "POST /api/auth/* icin IP basina hiz siniri kurulur (Vercel WAF kurali ya da uygulama ici sayac).",
         "Gerekce olculdu: argon2id m=19456 (19 MiB) t=2 p=1, hash 36ms / verify 31ms yerelde, Vercel vCPU-da ~2-4x. Vercel WAF hiz siniri ve Attack Challenge Mode VARSAYILAN KAPALI ve apps/web/vercel.json-da hicbir firewall ayari yok — yani platform bu ucu KORUMUYOR.",
         "Iki ayri etki kapatilmali: (a) kaynak — kimliksiz istek yagmuru 19 MiB x eszamanlilik pinliyor, Fluid in-function eszamanliligiyla ~100 istek ~2 GB; (b) kimlik — Credentials girisinde deneme sayaci/kilit/gecikme YOK, 36ms argon2 tek basina cevrimici tahmini engellemiyor, MIN_PASSWORD_LENGTH=8 + karmasiklik kurali yok = credential stuffing acik.",
         "Kural gercekten calistigi KANITLANIR: esigin ustunde istek atilir ve 429 alindigi gosterilir."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "dc8eb8a"
     },
     {
       "id": "PERF-001",
@@ -1144,7 +1146,7 @@
         "packages/db/src/index.ts",
         "apps/web/app/api/rooms/[code]/route.ts"
       ],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/DB-003",
       "report": "docs/board/reports/DB-003.md",
@@ -1155,7 +1157,8 @@
         "GET /api/rooms/[code] artık Room modelini doğrudan import etmez; apps/web içinde mongoose modeline uzanan tek yer kapanır",
         "Projeksiyon daraltması packages/db testinde yakalanır — sonda: select daraltılınca kırmızı döner (bugün route testi bunu göremiyordu)",
         "pnpm gates temiz"
-      ]
+      ],
+      "mergeSha": "8d9e307"
     },
     {
       "id": "CTR-003",
