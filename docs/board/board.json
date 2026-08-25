@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T21:12:46.445Z",
+  "updatedAt": "2026-08-25T21:38:02.179Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1538,7 +1538,9 @@
         "apps/web/components/**"
       ],
       "acceptance": [
-        "ADIM 1 (kesif, UCUSTA): xox-designer UC gorsel yon hazirliyor — docs/design/onizleme/yon-{a,b,c}.html. OMER SECECEK. Uygulama secim yapilmadan BASLAMAZ — yanlis yone emek harcamayalim.",
+        "ADIM 1 TAMAM: uc gorsel yon hazirlandi (docs/design/onizleme/yon-{a,b,c}.html). OMER YON A-yi SECTI — Kagit & Murekkep: sicak, minimal, hairline izgara, dekorasyon yerine bosluk ve tipografi. Gerekce ve reddedilenler decisions.md 2026-08-25-te.",
+        "BAGLAYICI KISITLAR (tasarimci OLCTU, uygulamada korunacak): 11x11-de hucre >=28px (mutlak taban 24) · bosluk >=2px · TAHTA KAYDIRILMAZ, olceklenir · kazanan cizgi RENKTEN BAGIMSIZ >=3px dis cizgi + diger hucrelerde >=%40 opaklik dususu · tum metin tokenlari >=4.5:1, kenarliklar >=3:1, IKI TEMADA DA",
+        "YON A-NIN AVANTAJI KORUNMALI: hairline tabanli oldugu icin 11x11-de hicbir dekor SOKULMUYOR, yalniz olcu kuculuyor (76->52->34px). Boyuta gore dallanan ikinci bir gorsel kod yolu YAZILMAZ — o, B yonunun reddedilme sebebiydi",
         "ONCELIK YUKSELTILDI 2026-08-25 — OMER: \"mevcut maddelere ek olarak tasarimsal iyilestirmeler de yapmani bekliyorum. Suan tasarim oldukca amator gorunuyor, profesyonel olmali.\" Artik sonraki dalgalara ERTELENMIYOR, Dalga 2-de.",
         "OMER ISTEDI: \"Sistemin tasarimini daha iyi hale getirmeliyiz. Profesyonel dursun istiyorum. Bunu sonraki dalgalara saklayabiliriz.\" — yani P0/P1 islevsellik onde, bu kart Dalga 3-te",
         "MEVCUT DURUM: UI-SKEL-001 islevsel bir kabuk kurdu (tokenlar, Board, ARIA, tema) ama gorsel dil MINIMAL — amac calisan iskeletti, estetik degil",
@@ -1548,7 +1550,8 @@
         "DEGISMEZ: erisilebilirlik kazanimlari korunur — Board role=grid/row/gridcell, durum-metni role=status aria-live, klavye ile oynanabilirlik, Turkce aria-label-lar. Gorsel iyilestirme bunlari BOZAMAZ",
         "Web ve mobil TUTARLI olmali — ui-tokens ikisinin ortak kaynagi, tema degisikligi iki hedefte de gecerli",
         "Iki tema (acik/koyu) esit ozenle tasarlanir; koyu tema acik temanin naif tersi OLAMAZ",
-        "KK-084 sondasi: bir bilesene hex literal ekle, lint KIRMIZI donsun, geri al. Kural gercekten atesLeniyor mu"
+        "KK-084 sondasi: bir bilesene hex literal ekle, lint KIRMIZI donsun, geri al. Kural gercekten atesLeniyor mu",
+        "SIRALAMA: bu kart Board.tsx-e dokunuyor, tahta boyutu ozelligi de dokunuyor. Mimar bolumlemede sirayi cozecek — iki kart AYNI DALGADA paralel gitmez"
       ]
     },
     {

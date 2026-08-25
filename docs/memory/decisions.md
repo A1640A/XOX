@@ -256,3 +256,21 @@ kazanamıyor, oyun sonsuza dek "rakip düşünüyor"da donuyordu.
 **Reddedilen:** `casUpdateRoom`u atlayıp tek atomik aggregation-pipeline güncellemesi yazmak —
 `cas.ts`'nin "koşulsuz yazma yasak, tek geçiş noktası burası" disiplinini delerdi ve `cas.ts` bu
 görevin çakışma kümesinde değildi.
+
+## 2026-08-25 · Görsel yön: A — Kağıt & Mürekkep (DESIGN-001)
+
+**Karar:** Ömer üç yön arasından **A**'yı seçti. Sıcak, minimal, hairline ızgaralı editoryal
+tasarım; dekorasyon yerine boşluk ve tipografiye yatırım.
+**Gerekçe (seçim Ömer'in, teknik değerlendirme burada):** A, 11×11'de **hiçbir dekoru sökmek
+zorunda kalmıyor** — hairline tabanlı olduğu için yalnız ölçü küçülüyor (76→52→34 px). Bu,
+boyuta göre dallanan iki ayrı görsel kod yolu riskini ortadan kaldırıyor.
+**Reddedilenler:** **B (Neon Arcade)** — en yüksek vitrin etkisi ama n≥6'da köşe yuvarlama,
+gölge ve parlamayı kural gereği söküyor; 121 kart gölgesi görsel çamura dönüyor. Boyuta bağlı
+dekorasyon disiplini kalıcı bir bakım yükü. **C (Sistem/Veri Izgarası)** — tasarımcının kendi
+önerisiydi (en az mühendislik riski, en geniş kontrast marjı, ELO/sıralamayla örtüşme) ama Ömer
+A'nın tonunu tercih etti.
+**Bağlayıcı kısıtlar (tasarımcının ölçtüğü, uygulamada korunacak):** 11×11'de hücre ≥28 px
+(mutlak taban 24, WCAG 2.2 SC 2.5.8'in 24×24 AA eşiği) · boşluk ≥2 px · **tahta kaydırılmaz**,
+ölçeklenir · kazanan çizgi renkten bağımsız ≥3 px dış çizgi + diğer hücrelerde ≥%40 opaklık
+düşüşü · tüm metin token'ları ≥4.5:1, kenarlıklar ≥3:1, iki temada da.
+**Not:** kontrastlar tahmin edilmedi, `contrast.ts` ile aynı WCAG formülüyle hesaplandı.
