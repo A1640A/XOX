@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-24T23:58:22.276Z",
+  "updatedAt": "2026-08-25T00:00:28.614Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -413,9 +413,9 @@
       "agent": "xox-qa-e2e",
       "deps": ["WS-001", "ROOM-API-001", "UI-SKEL-001"],
       "conflictSet": ["apps/e2e/**"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/E2E-001",
       "report": null,
       "acceptance": [
         "SICAK DOSYA DONDURMA: apps/e2e/fixtures/ ve playwright.config.ts SON HÂLİNİ alır — storageState tabanlı auth fixture'ı (kayıt/giriş bir kez yapılır, state yeniden kullanılır), mevcut twoPlayers fixture'ı bunun üzerine kurulur, oda yardımcıları (createRoom, joinRoom, playMove, expectCell). Sonraki E2E kartları bu dosyalara DOKUNMAZ, yalnız tests/ altına spec ekler",
@@ -1207,6 +1207,26 @@
         "GEREKÇE (güvenlik denetimi SEC-WS-04/09): bilet ?ticket= ile URL sorgu dizesinde taşınıyor — Vercel access log, proxy log, tarayıcı geçmişi ve Referer bunu görür. 30 sn içinde okuyan biri kurbanın odasına KURBAN OLARAK bağlanır, joinRoom seatOf()!==null görür, reconnect() presence.connId-i saldırgana yazar ve kurban 4409 SESSION_TAKEOVER alır. 4409 ws-close.ts:35-40-ta KALICI listede: istemci yeniden bağlanmayı DENEMEZ. Yani 30 saniyelik bir sizinti kalici oyun devralmasina donusuyor ve kurban icin sessiz",
         "Cikis (signOut) elde duran bileti de iptal etmeli — bugun yalnizca Auth.js cerezi siliniyor, bilet TTL sonuna kadar calisiyor",
         "DEGERLENDIR ve karari raporla: bileti URL yerine Sec-WebSocket-Protocol alt-protokol alaninda tasimak mumkun mu? react-native-web ozel baslik gonderemedigi icin sorgu dizesi secilmisti, alt-protokol alani bu kisiti asabilir",
+        "pnpm gates temiz"
+      ]
+    },
+    {
+      "id": "OPS-004",
+      "title": "Next 16: middleware -> proxy dosya konvansiyonu gecisi",
+      "tier": "P2",
+      "wave": "2",
+      "agent": "xox-devops",
+      "deps": ["WS-001", "SEC-002"],
+      "conflictSet": ["apps/web/middleware.ts", "apps/web/proxy.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "Build uyarisi kalkar: \"The <middleware> file convention is deprecated. Please use <proxy> instead.\" (UI-SKEL-001 entegrasyonunda gozlendi, Next 16.3.2 hala onurluyor)",
+        "Oturum korumasi davranisi DEGISMEZ — mevcut middleware testleri dokunulmadan yesil kalir",
+        "DIKKAT: bu dosya next-auth import ediyor, yani Vitest-te calistirilamaz (gotchas). Is mantigi next-auth-suz ayri dosyada kalmali, gecis yalniz dosya adi/konvansiyonu duzeyinde olmali",
         "pnpm gates temiz"
       ]
     }
