@@ -63,6 +63,9 @@ Google/Apple sonradan mevcut hesapları bozmadan eklenebilir.
 
 `experimental_upgradeWebSocket` gerçek bir Vercel preview deploy'unda çalışıyor.
 Kanıt: `wss://<preview>/api/ws/echo` bağlantısı açıldı, `merhaba` gönderildi, `echo:merhaba` döndü.
+(O echo ucu 2026-08-25'te **silindi** — kimlik doğrulaması yoktu ve açık bir yansıtıcıydı; kanıt
+görevi bitmişti. Yerine geçen canlı kanıt: `/api/rooms/[code]/ws` üzerinde 4401/4403/4404
+kapanış kodlarının istemciye ulaşması ve R1 fan-out ölçümü.)
 Aynı deploy'da `/api/health` `{"ok":true,"db":"xox_test"}` verdi — Atlas erişilebilir ve preview
 ortamı doğru veritabanına bakıyor. `apps/e2e` paketinin 4 testinin tamamı preview'a karşı geçti.
 

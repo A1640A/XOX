@@ -306,7 +306,8 @@ Bu kartlar **yazılmadı** çünkü iş bitti:
 - `packages/game-core` — kural motoru + minimax (91 test, %100 kapsam, %98.56 mutasyon, 642 oyunla
   yenilmezlik kanıtı). Hiçbir kart bu pakete dokunmaz; `HRD-001` bile açıkça hariç tutar.
 - Monorepo, kalite kapıları, CI, Vercel projesi, preview/production deploy, harness.
-- `/api/health`, `/api/ws/echo`, `apps/e2e` `twoPlayers` fixture'ı (üzerine inşa edilir).
+- `/api/health`, `apps/e2e` `twoPlayers` fixture'ı (üzerine inşa edilir). (`/api/ws/echo`
+  2026-08-25'te silindi — güvenlik denetimi kimliksiz açık yansıtıcı olarak işaretledi.)
 
 Kapalı kararlar, yeniden açılmaz: Auth Credentials + argon2id (ADR-0009) · Sentry yok ·
 WS + change stream fan-out (ADR-0002; Redis yalnızca `RT-PROBE-001` kötü gelirse).

@@ -848,3 +848,22 @@ tek-parametreli mutlu yol bu sınıfı asla göstermez.
 Bugün varsayılan token küçük olduğu için tetiklenmiyordu — tehlike de bu: davranış token
 boyutuna **sessizce** bağımlıydı ve testler tek parça `set-cookie` mock'ladığı için kör kaldı.
 Çerez adı eşleştiren her yerde `.N` sonekini de kabul et; testi gerçek Auth.js çıktısına karşı yaz.
+
+## 2026-08-25 · Vercel'de HER ROUTE AYRI FONKSİYONDUR — bir uçtan başka bir ucun modül durumu OKUNAMAZ
+
+Lead, "instance başına tek change stream" değişmezini ölçmek için `roomHub.stats()`'i
+`GET /api/health/realtime`'dan okumayı önerdi. **Öneri yanlıştı** ve WS-001 ajanı denedi:
+25/25 yoklamada `openStreams:0`.
+
+Sebep ölçüm hatası değil — `.vercel/output/functions/api/health/realtime.func` ve
+`.../api/rooms/[code]/ws.func` **ayrı klasörler, ayrı fonksiyonlar, ayrı instance'lar, ayrı
+modül kapsamları**. Health ucundaki `roomHub`, WS route'undakiyle aynı nesne değil; daima 0
+gösterir. Sürekli 0 gösteren bir teşhis alanı, olmamasından daha kötüdür: değişmezin
+korunduğuna dair sahte güven verir.
+
+**Kural:** modül kapsamındaki bir singleton'ın durumu **yalnız onu kuran route'un içinden**
+gözlemlenebilir. Teşhis çıktısı o route'un kendi log'una yazılır (`vercel logs`), başka bir
+uçtan servis edilmez. Aynı sebeple `globalThis` hilesi de bunu çözmez — süreç bile aynı değil.
+
+Doğru ölçüm böyle yapıldı ve değişmez CANLIDA kanıtlandı: üç eşzamanlı bağlantı →
+`openStreams=1`, `watchCalls=1`.

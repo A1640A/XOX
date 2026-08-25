@@ -15,9 +15,20 @@ Kaynak şemalar: `packages/shared/src/ws-protocol.ts`. Bu doküman onu **anlatı
 
 ## WebSocket
 
-| Yol            | Açıklama                                 |
-| -------------- | ---------------------------------------- |
-| `/api/ws/echo` | Harness kanıt uç noktası. `x` → `echo:x` |
+| Yol                    | Açıklama                                                                                                                                                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/rooms/[code]/ws` | Oyun WS upgrade'i. **Kimlik zorunlu** (çerez ya da `?ticket=`). `maxPayload` 8 KiB. Kapanış kodları aşağıda.                                                                                               |
+| ~~`/api/ws/echo`~~     | **SİLİNDİ** (2026-08-25, WS-001 inceleme turu). Kimlik doğrulaması olmayan, sınırsız, açık echo ucuydu; `maxPayload` varsayılan 256 KiB'da 1:1 yansıtıcı olarak kullanılabiliyordu. Kanıt görevi bitmişti. |
+
+**Kapanış kodları — preview'da istemciye ULAŞTIĞI ölçüldü** (ADR-0006'nın HTTP 401 geri çekilme
+planına gerek kalmadı):
+
+| Kod    | `reason`               | Ne zaman                       |
+| ------ | ---------------------- | ------------------------------ |
+| `4401` | `unauthenticated`      | kimliksiz ya da geçersiz bilet |
+| `4403` | `ticket-room-mismatch` | bilet başka bir odaya ait      |
+| `4404` | `invalid-code`         | oda kodu şemaya uymuyor        |
+| `4404` | `room-not-found`       | oda yok ya da TTL ile silindi  |
 
 Oyun uç noktaları Dalga 0+ ile eklenecek; her ekleme bu tabloyu günceller.
 
