@@ -7,6 +7,8 @@ import {
   type RegisterBody,
 } from '@xox/shared'
 import { hashPassword } from '@/lib/auth/password'
+import { checkIpRateLimit } from '@/lib/rate-limit/ip-limit'
+import { rateLimitedResponse } from '@/lib/rate-limit/response'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +50,21 @@ function isDuplicateKeyError(error: unknown): boolean {
  * doğrudan Mongo sorgu nesnesine girmez.
  */
 export async function POST(req: Request): Promise<Response> {
+  /**
+   * SEC-002 (a) — IP başına kaba hız sınırı, gövdeyi ayrıştırmadan/DB'ye
+   * dokunmadan ÖNCE. Kayıt argon2id hash'ini ÖDER (var olan e-posta ön
+   * kontrolü hariç); bu satır o maliyete ULAŞMADAN önce IP akınını keser.
+   */
+  const ipLimit = await checkIpRateLimit(req, 'auth-write')
+  if (!ipLimit.allowed) {
+    return rateLimitedResponse({
+      message: 'Çok fazla istek. Lütfen biraz bekleyip tekrar deneyin.',
+      retryAfterSeconds: ipLimit.retryAfterSeconds,
+      limit: ipLimit.limit,
+      remaining: ipLimit.remaining,
+    })
+  }
+
   let body: unknown
   try {
     body = await req.json()
