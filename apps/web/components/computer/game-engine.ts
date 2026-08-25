@@ -1,6 +1,5 @@
 import {
   applyMove,
-  chooseMove,
   EMPTY_BOARD,
   evaluateStatus,
   isValidMove,
@@ -9,6 +8,12 @@ import {
   type GameStatus,
   type Player,
 } from '@xox/game-core'
+// PERF-003: hesaplama gerektiren arama kodu ana barrel'dan DEĞİL, ayrı bir
+// alt yoldan (`@xox/game-core/ai`) alınır. Tek başına bu satır Turbopack'in
+// paylaşılan-chunk birleştirmesini ENGELLEMEZ (ölçüldü) — asıl ayrıştırmayı
+// `ComputerGameScreen.tsx`'teki `next/dynamic` sınırı yapar; bu alt yol
+// yalnız o sınırın İÇİNDE kalan modül grafiğini netleştirir (bkz. rapor).
+import { chooseMove } from '@xox/game-core/ai'
 
 /**
  * Bilgisayara karşı oyunun saf durum makinesi (kart §oyna/bilgisayar, KK-022).

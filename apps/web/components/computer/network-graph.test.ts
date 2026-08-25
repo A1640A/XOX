@@ -111,6 +111,11 @@ const ALLOWED_BARE_SPECIFIER_PATTERNS: readonly RegExp[] = [
   /^react\/.*$/,
   /^next\/.*$/,
   /^@xox\/game-core$/,
+  // PERF-003: minimax (`chooseMove`/`bestMove`) TEK barrel'dan (`index.ts`)
+  // ayrı bir alt yoldan (`@xox/game-core/ai`) çekiliyor ki Turbopack'in
+  // paylaşılan-chunk sezgisi onu `/`, `/giris`, `/kayit`'e sızdırmasın
+  // (bkz. docs/board/reports/PERF-003.md). `@xox/shared/*` ile aynı kalıp.
+  /^@xox\/game-core\/.*$/,
   /^@xox\/shared$/,
   /^@xox\/shared\/.*$/,
   /^@xox\/ui-tokens$/,
