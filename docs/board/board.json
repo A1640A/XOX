@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T03:39:44.714Z",
+  "updatedAt": "2026-08-25T03:49:06.012Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1315,7 +1315,7 @@
       "branch": "feat/PERF-002",
       "report": "docs/board/reports/PERF-002.md",
       "blockedReason": null,
-      "status": "reviewing",
+      "status": "done",
       "id": "PERF-002",
       "title": "size-limit butcesi asiliyor — glob TUM rotalari tek butcede topluyor",
       "tier": "P1",
@@ -1329,7 +1329,8 @@
         "BUTCEYI SESSIZCE YUKSELTME. Bu, gecenin 6. oruntusu olur: kapiyi gecirmek icin hedef diregini oynatmak. Yukseltilecekse rota bazinda ayrilmis butcelerle ve her birinin gerekcesiyle yukseltilir",
         "Rota bazinda olcum: hangi rota ne kadar? /oyna/bilgisayar minimax tasiyor mu yoksa game-core lazy mi geliyor?",
         "Duzeltmeden sonra CI build isi YESIL donmeli — gercek CI kosusuyla kanitla"
-      ]
+      ],
+      "mergeSha": "e0f9f28"
     },
     {
       "attempts": 0,
@@ -1395,7 +1396,8 @@
         "DUZELTME: stats/elo/ratedGames $setOnInsert-ten $set-e tasinir. Kimlik alanlari (email, passwordHash olusturma) $setOnInsert-te KALIR — parola her seed-de yeniden hashlenmemeli",
         "CI BUNU GOREMEZ: CI-002 CI-a kendi temiz mongod-unu verdi, her kosu bos DB ile basliyor. Yani kusur YALNIZ yerelde gorunuyor ve her ajanin pnpm gates-ini kiriyor. Bu, 6. oruntunun tersi: bu kez CI yanlis kapsami olcuyor (fazla temiz), yerel gercegi soyluyor",
         "SONDA: seed -> oyun oyna (stats kirlet) -> seed tekrar -> stats SIFIR olmali. Bugun degil, duzeltmeden sonra",
-        "DIKKAT: duzeltmeyi test ederken paylasilan xox_test-e E2E ajani kosuyor olabilir. Once kontrol et"
+        "DIKKAT: duzeltmeyi test ederken paylasilan xox_test-e E2E ajani kosuyor olabilir. Once kontrol et",
+        "SEMPTOM KAYBOLDU AMA KUSUR DURUYOR (PERF-002 merge-i, 2026-08-25 06:48): o kosuda seed.test.ts 4/4 GECTI cunku paylasilan xox_test-teki stats E2E-002-nin akisiyla degisti. $setOnInsert hala orada, yani kusur yapisal. KART KAPANMAZ — semptomun gecmesini duzelme saymak bu gecenin ogrettigi hatanin ta kendisi. Kapanma sarti: $set-e tasima + seed->oyna->seed sondasi"
       ]
     },
     {
