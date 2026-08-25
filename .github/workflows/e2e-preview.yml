@@ -6,12 +6,20 @@ on:
 
 jobs:
   e2e:
-    # Yalnızca PREVIEW deploy'ları. deployment_status production için de tetiklenir;
-    # e2e paketi veritabanını sıfırlıyor ve canlı URL'e karşı koşmanın anlamı yok.
+    # Yalnızca PREVIEW deploy'ları. `deployment_status` production için de tetiklenir ve
+    # e2e paketi ilk adımda veritabanını SIFIRLIYOR — yanlış tetiklenme veri kaybı demek.
+    #
+    # ⚠️ 2026-08-25: burası ALLOWLIST'e çevrildi. Önceki hâli iki DENYLIST karşılaştırmasıydı
+    # (`!= 'Production' && != 'production'`) ve Vercel `Production – xox` (uzun tire + proje
+    # eki) etiketi yollayınca filtre GEÇİLDİ; iş production URL'ine karşı koştu. Yalnızca
+    # `apps/e2e/global-setup.ts`'teki veritabanı guard'ı (db !== 'xox_test' ise BLOKE)
+    # production veritabanının silinmesini engelledi.
+    #
+    # Ders: bir kapının izin verdiği şeyi saymak, yasakladığı şeyi saymaktan güvenlidir.
+    # Beklenmeyen bir etiket artık ÇALIŞTIRMAZ, atlar.
     if: >-
       github.event.deployment_status.state == 'success' &&
-      github.event.deployment_status.environment != 'Production' &&
-      github.event.deployment_status.environment != 'production'
+      startsWith(github.event.deployment_status.environment, 'Preview')
     runs-on: ubuntu-latest
     env:
       CI: '1'

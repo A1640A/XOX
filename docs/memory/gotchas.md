@@ -1110,3 +1110,29 @@ değildi; artık canlı ve yarım (sayfalar 200, `/api/health` 503 — env yok).
 **Kural:** production branch üzerindeyken yerel deploy alma. Ya ayrı bir dala geç, ya
 `--target=preview` gibi hedefi AÇIKÇA belirt, ya da deploy'u CI'a bırak. "`--prod` yazmadım"
 koruma değildir.
+
+## 2026-08-25 · ⚠️ `deployment_status.environment` DENYLIST'i `Production – xox` etiketiyle atlandı
+
+`e2e-preview.yml` "yalnız preview" filtresini iki **denylist** karşılaştırmasıyla yapıyordu:
+`environment != 'Production' && environment != 'production'`. Vercel bazı deploy'larda
+**`Production – xox`** (uzun tire + proje eki) etiketi yolluyor — bu string ikisine de eşit
+değil, filtre **geçildi** ve E2E işi **production URL'lerine karşı koştu**:
+
+```
+success  Production – xox  https://xox-cdae296lb-omeerdursunn.vercel.app
+```
+
+`apps/e2e` paketinin ilk adımı `pnpm --filter @xox/db reset`. Production veritabanının
+silinmesini engelleyen tek şey **ikinci savunma hattı** oldu: `global-setup.ts`'teki
+`assertTestDatabase` guard'ı `db !== 'xox_test'` görüp hiçbir test koşturmadan durdu.
+
+**Düzeltme:** koşul allowlist'e çevrildi — `startsWith(environment, 'Preview')`. Beklenmeyen
+bir etiket artık **çalıştırmaz, atlar**.
+
+**Genel ders (PERF-002'nin `.size-limit` glob'uyla ve W1-01'in ağ sondasıyla aynı):** bir
+kapının **izin verdiği** şeyi saymak, **yasakladığı** şeyi saymaktan güvenlidir. Denylist,
+listeye girmeyen her yeni değeri sessizce geçirir; allowlist yeni değeri sessizce durdurur.
+Bu gece bu ders üç ayrı yerde bağımsız olarak çıktı.
+
+**İkinci ders — katmanlı savunma işe yarar:** birinci kapı atlandı, ikincisi tuttu. Tek kapıya
+güvenen bir tasarımda production veritabanı silinmiş olurdu.

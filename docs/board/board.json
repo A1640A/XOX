@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T07:57:59.846Z",
+  "updatedAt": "2026-08-25T08:29:47.829Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -23,15 +23,16 @@
       "agent": "xox-devops",
       "deps": ["OPS-006"],
       "conflictSet": [],
-      "status": "blocked",
+      "status": "done",
       "attempts": 1,
       "branch": null,
       "report": null,
       "acceptance": [
         "xox.omerdursun.com izrandevu/xox projesine bağlı ve doğrulanmış",
-        "https://xox.omerdursun.com production deploy'a çözülüyor"
+        "https://xox.omerdursun.com production deploy'a çözülüyor",
+        "KAPANDI 2026-08-25: OPS-006 tasimasiyla cozuldu. xox.omerdursun.com verified:true ve canli, HTTP 200, /api/health {ok:true,db:xox_prod}."
       ],
-      "blockedReason": "COZUM YOLU BULUNDU: proje yanlis takimdaydi. omeerdursunn hesabi omerdursun.com domaininin sahibi ve oturum ZATEN o hesapta. OPS-006 projeyi oraya tasiyor; tasima bitince DNS yazma yetkisi olacak ve domain dogrulanabilecek. Bu kart OPS-006 ile kapanir."
+      "blockedReason": null
     },
     {
       "id": "CTR-001",
@@ -1453,7 +1454,7 @@
       "branch": "feat/AUTH-002",
       "report": "docs/board/reports/AUTH-002.md",
       "blockedReason": null,
-      "status": "reviewing",
+      "status": "done",
       "id": "AUTH-002",
       "title": "Basarisiz giriste HTTP durumu her zaman 200 — hicbir zaman 401",
       "tier": "P1",
@@ -1467,7 +1468,8 @@
         "ONCE KARAR VER: spec mi yanlis, kod mu? KK-005 401 sart kosuyorsa ya sarmalayici durumu duzeltmeli ya spec Auth.js gercegine uyarlanmali. Ucuncu secenek: spec-i 401 yerine govde/kod bazli tanimlamak",
         "DIKKAT: SEC-002-nin hiz sinirlayicisi ayni route-u sarmaliyor ve giris basarisini set-cookie basligindan tespit ediyor. Durum kodunu degistirirsen o mantigi KIRMA — birlikte test et",
         "Karar ne olursa olsun decisions.md-ye gerekcesiyle yazilir"
-      ]
+      ],
+      "mergeSha": "2679111"
     },
     {
       "attempts": 0,
@@ -1496,8 +1498,8 @@
       "attempts": 0,
       "branch": null,
       "report": "docs/board/reports/OPS-006.md",
-      "blockedReason": "OMERDEN IZIN GEREKIYOR. Yapilanlar: yeni proje omeerdursunn takiminda kuruldu (prj_f0d1nL13M3enOi5BYRcFC92YYS2n), fra1 bolgesi, apps/web kok dizini, GitHub baglantisi kuruldu, xox.omerdursun.com EKLENDI ve verified:true, Development ortaminin 3 degiskeni tasindi, 2 WAF kurali staged. YAPILAMAYAN: (a) vercel env add --value Preview/Production icin REDDEDILDI — 10 degisken/ortam cifti yazilamadi (b) vercel firewall publish REDDEDILDI — kurallar staged, canli degil. Ajan protokole uydu: durdu, yeniden denemedi, kilik degistirmis varyant denemedi. LEAD REDDI GECERSIZ KILAMAZ. ACIL SONUC: preview ortami MONGODB_DB olmadigi icin xox_prod gosteriyor ve E2E guard-i PRODUCTION VERITABANI SILINMESINI ENGELLEDI. Ayrica kazara production deploy oldu (Production Branch-ten vercel deploy --prod olmadan da prod-a gidiyor), domain canli ama yarim: sayfalar 200, /api/health 503.",
-      "status": "blocked",
+      "blockedReason": null,
+      "status": "done",
       "id": "OPS-006",
       "title": "Vercel projesini izrandevu -> omeerdursunn hesabina tasi",
       "tier": "P0",
@@ -1512,7 +1514,8 @@
         "Bolge fra1 PAZARLIKSIZ: iad1-de p95 98.6ms, fra1-de 8.7ms, 11x fark (Atlas Avrupa-da). vercel.json regions Hobby/Pro-da yurumuyor, proje ayari kullanilir",
         "Domain xox.omerdursun.com eklenir ve DOGRULANDIGI gosterilir — OPS-001-in kapanma sarti",
         "WAF kurallari yeni projede yeniden kurulur: POST /api/auth/* 60/60sn (ayni), GET /api/rooms/*/ws 60/60sn (30-dan yukseltildi, OMER ONAYLADI)",
-        "Eski proje SILINMEZ — once yenisi calistigi kanitlanir, sonra lead-e sorulur. GitHub baglantisi kesilir ki cift deploy olmasin"
+        "Eski proje SILINMEZ — once yenisi calistigi kanitlanir, sonra lead-e sorulur. GitHub baglantisi kesilir ki cift deploy olmasin",
+        "TAMAMLANDI 2026-08-25: proje omeerdursunn takiminda, fra1, xox.omerdursun.com verified ve CANLI (health -> {ok:true, db:xox_prod}), xox_prod indeksleri kuruldu, 13 ortam degiskeni tanimlandi (deger komut satirina yazilmadi, stdin ile gecirildi). AUTH_SECRET ve MIGRATION_SECRET eski proje silindigi icin kayipti — ortam basina TAZE ve AYRI degerler uretildi, gercek kullanici yok. izrandevu projesi Omer tarafindan silindi. KALAN: WAF kurallari hala staged, firewall publish reddedildi, panodan yayinlanmali."
       ]
     },
     {
@@ -1565,6 +1568,27 @@
         "DUZELTILECEK SEY TESTIN ESIGI DEGIL, ORTAM DEGISKENIDIR: yeni Vercel projesinde Preview icin MONGODB_DB=xox_test tanimlanir",
         "Ortam duzeltildikten sonra E2E (preview) YESIL donmeli — ve bu kart o kaniti bekler",
         "YAN KAZANIM: CI-003 kismen cozuldu. E2E (preview) daha once hep skipped donuyordu (main Production Branch, gercek Preview olayi dogmuyordu). Yeni proje gercek preview olaylari uretiyor, is ARTIK GERCEKTEN KOSUYOR"
+      ]
+    },
+    {
+      "id": "CI-004",
+      "title": "e2e-preview ortam filtresi DENYLIST idi ve atlandi — allowlist yapildi",
+      "tier": "P0",
+      "wave": "2",
+      "agent": "xox-devops",
+      "deps": [],
+      "conflictSet": [".github/workflows/e2e-preview.yml"],
+      "status": "reviewing",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "OLAY: filtre environment != Production && != production seklinde IKI DENYLIST karsilastirmasiydi. Vercel Production – xox (uzun tire + proje eki) etiketi yollayinca ikisine de esit olmadi, filtre GECILDI ve E2E isi PRODUCTION URL-lerine karsi kostu",
+        "apps/e2e ilk adimi pnpm --filter @xox/db reset. Production veritabanini kurtaran sey IKINCI savunma hatti oldu: global-setup.ts assertTestDatabase guard-i db !== xox_test gorup hicbir test kosturmadan durdu",
+        "DUZELTILDI (lead, dogrudan): kosul allowlist-e cevrildi — startsWith(environment, Preview). Beklenmeyen etiket artik CALISTIRMAZ, atlar. YAML gecerliligi ve yorumsuz dosyada denylist kalmadigi dogrulandi",
+        "DOGRULANACAK: bir PR preview deploy-u ile is GERCEKTEN kosmali. Allowlist fazla dar olursa is hic kosmaz ve bu SESSIZ bir kayiptir — skipped gormek yeterli degil, YESIL gormek gerekir",
+        "GENEL DERS: kapinin IZIN VERDIGI seyi saymak, YASAKLADIGI seyi saymaktan guvenlidir. Ayni ders bu gece uc ayri yerde cikti (PERF-002 size-limit glob, W1-01 ag sondasi, bu)"
       ]
     }
   ]
