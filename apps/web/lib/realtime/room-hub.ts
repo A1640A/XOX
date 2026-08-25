@@ -71,6 +71,8 @@ const PIPELINE: Record<string, unknown>[] = [
 /** ADR-0002: 500 ms → 10 sn üstel geri çekilme. Çıplak sayı bilerek. */
 const REOPEN_BASE_MS = 500
 const REOPEN_MAX_MS = 10_000
+/** Bu kadar ardışık başarısız yeniden açılıştan sonra `resumeToken` düşürülür. */
+const MAX_ATTEMPTS_BEFORE_TOKEN_DROP = 3
 
 interface ChangePayload {
   operationType: string
@@ -142,7 +144,13 @@ export function createRoomHub(deps: RoomHubDeps): RoomHub {
   }
 
   function dispatch(payload: ChangePayload): void {
-    if (payload.id !== null && payload.code !== null) codeById.set(payload.id, payload.code)
+    // Eşleme yalnız ABONESİ OLAN odalar için tutulur. Koşulsuz yazsaydık bu
+    // instance'ın gördüğü HER odanın `_id → code` kaydı birikir ve uzun ömürlü
+    // bir Fluid instance'ında sınırsız büyürdü — abonesi olmayan bir odanın
+    // `delete` olayını zaten kimseye iletmiyoruz.
+    if (payload.id !== null && payload.code !== null && subscribers.has(payload.code)) {
+      codeById.set(payload.id, payload.code)
+    }
 
     if (payload.operationType === 'delete') {
       if (payload.id === null) return
@@ -157,6 +165,39 @@ export function createRoomHub(deps: RoomHubDeps): RoomHub {
     for (const subscriber of subscribers.get(payload.code) ?? []) {
       subscriber.onRoomChange(payload.room)
     }
+  }
+
+  /**
+   * Oplog penceresi aşıldığında (Atlas election, uzun kopma) sürücü
+   * `ChangeStreamHistoryLost` (286) / `ChangeStreamFatalError` (280) atar.
+   * Bu hatalar TOKEN'IN KENDİSİNDEN kaynaklanır: aynı `startAfter` ile
+   * yeniden denemek sonsuza dek aynı hatayı üretir.
+   */
+  function isFatalResumeError(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) return false
+    const candidate = error as { code?: unknown; codeName?: unknown; message?: unknown }
+    if (candidate.code === 286 || candidate.code === 280) return true
+    const label = typeof candidate.codeName === 'string' ? candidate.codeName : ''
+    if (label === 'ChangeStreamHistoryLost' || label === 'ChangeStreamFatalError') return true
+    const message = typeof candidate.message === 'string' ? candidate.message : ''
+    return /ChangeStreamHistoryLost|ChangeStreamFatalError|resume token/i.test(message)
+  }
+
+  /**
+   * ⚠️ **ZEHİRLİ TOKEN.** `resumeToken` yalnız `closeStream()`te temizlenseydi,
+   * dolu bir odada (yani `closeStream` hiç çağrılmazken) geçersizleşen bir
+   * token o instance'ı KALICI OLARAK SAĞIR bırakırdı: her yeniden açılış aynı
+   * `startAfter` ile aynı hatayı alır, `reopenAttempts` 10 sn tavanına yapışır.
+   * Belirti tam da R1'in bedelidir — oyuncular hamle yazabilir (`applyMove`
+   * başarılı, `version` artar) ama YAZAN DÂHİL kimse hiçbir şey görmez.
+   *
+   * Doğruluk kaybı yok: taze açılıştan sonra `forceStateToAll` kaçırılan
+   * olayların yerine tam `state` yayınlıyor.
+   */
+  function dropPoisonedToken(reason: string): void {
+    if (resumeToken === undefined) return
+    resumeToken = undefined
+    deps.logError(`resume token düşürüldü (${reason}) — taze stream açılacak`, null)
   }
 
   function attach(current: ChangeStreamLike): void {
@@ -187,6 +228,7 @@ export function createRoomHub(deps: RoomHubDeps): RoomHub {
     current.on('error', (error: unknown) => {
       if (!isCurrent()) return
       deps.logError('change stream hatası', error)
+      if (isFatalResumeError(error)) dropPoisonedToken('ölümcül resume hatası')
       failCurrent(current)
     })
 
@@ -207,6 +249,12 @@ export function createRoomHub(deps: RoomHubDeps): RoomHub {
     if (reopenTimer !== null) return
     const delay = Math.min(REOPEN_BASE_MS * 2 ** reopenAttempts, REOPEN_MAX_MS)
     reopenAttempts += 1
+    // Hata sınıfı tanınmasa bile: art arda bu kadar başarısızlıktan sonra
+    // token'dan şüphelen ve taze aç. Sürücüler hata kodunu her sürümde aynı
+    // yerde taşımıyor; sınıf tanıma tek savunma hattı olamaz.
+    if (reopenAttempts >= MAX_ATTEMPTS_BEFORE_TOKEN_DROP) {
+      dropPoisonedToken(`${String(reopenAttempts)} ardışık başarısızlık`)
+    }
     reopenTimer = deps.setTimer(() => {
       reopenTimer = null
       void reopen()
@@ -242,7 +290,10 @@ export function createRoomHub(deps: RoomHubDeps): RoomHub {
   }
 
   async function openStream(): Promise<void> {
-    if (stream !== null) return
+    // Tek-stream değişmezinin TEK bekçisi `ensureStream`tir. Burada ikinci bir
+    // `if (stream !== null) return` vardı; tek çağıran `ensureStream` aynı
+    // senkron tikte aynı koşulu zaten kontrol ettiği için ULAŞILAMAZ dal
+    // oluyordu ve mutasyon sondasını yanıltıyordu (inceleme bulgusu).
     try {
       await deps.connect()
       if (totalSubscribers() === 0) return
@@ -332,7 +383,16 @@ export function createRoomHub(deps: RoomHubDeps): RoomHub {
  * `ChangeStreamLike`a daraltılıyor — tipin vaat ettiği alanlara değil,
  * gerçekten var olan olaylara bağlıyız.
  */
-export const roomHub: RoomHub = createRoomHub({
+const globalForHub = globalThis as unknown as { __xoxRoomHub?: RoomHub }
+
+/**
+ * `packages/db/src/client.ts`in `__xoxMongoose` kalıbı. Modül kapsamı TEK
+ * BAŞINA yetmez: hot-reload, iki ayrı bundle chunk'ı ya da aynı modülün iki
+ * yoldan çözülmesi hub'ı **ikizler** ve o anda instance'ta iki `Room.watch`
+ * açılır — ADR-0002'nin en sert değişmezi tam da bu şekilde sessizce delinir
+ * (havuz `maxPoolSize: 10`). `globalThis` bunu kapatır.
+ */
+export const roomHub: RoomHub = (globalForHub.__xoxRoomHub ??= createRoomHub({
   connect: async () => {
     await connectDb()
   },
@@ -345,4 +405,4 @@ export const roomHub: RoomHub = createRoomHub({
   logError: (message, error) => {
     console.error(`[room-hub] ${message}`, error)
   },
-})
+}))

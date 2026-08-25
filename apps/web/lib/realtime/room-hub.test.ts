@@ -186,9 +186,43 @@ describe('room-hub · tek stream değişmezi (ADR-0002)', () => {
     expect(h.hub.stats().openStreams).toBe(1)
   })
 
-  it('modül kapsamındaki roomHub tek örnektir', () => {
-    expect(roomHub).toBe(roomHub)
+  it('roomHub İKİ AYRI import yolundan da AYNI örnektir (ikizlenme yok)', async () => {
+    // Eski hâli `expect(roomHub).toBe(roomHub)` idi — özdeşlik iddiası, hiçbir
+    // koşulda kırılmaz (gotchas "test yeşil ama hiçbir şey doğrulamıyor").
+    // Anlamlı iddia: modül grafiğinde iki yoldan çözülünce de tek örnek.
+    // `globalThis.__xoxRoomHub` koruması bunu bundle sınırları arasında da
+    // garantiliyor.
+    const viaRelative = await import('./room-hub')
+    const viaAlias = await import('@/lib/realtime/room-hub')
+    expect(viaAlias.roomHub).toBe(viaRelative.roomHub)
+    expect(viaRelative.roomHub).toBe(roomHub)
     expect(roomHub.stats().openStreams).toBe(0)
+  })
+
+  it('eşzamanlılık penceresi GERÇEKTEN dar değilken bile tek watch (opening tekilleştirmesi)', async () => {
+    // "Eşzamanlı üç subscribe" testi `connect` anında çözüldüğü için pencereyi
+    // neredeyse hiç açmıyordu. Burada `connect` ELDE tutuluyor: ilk subscribe
+    // askıdayken ikincisi geliyor.
+    const gate: (() => void)[] = []
+    const h = harness({
+      connect: () =>
+        new Promise<void>((resolve) => {
+          gate.push(resolve)
+        }),
+    })
+
+    const first = h.hub.subscribe(recorder('AAA222'))
+    await vi.waitFor(() => {
+      expect(gate).toHaveLength(1)
+    })
+    const second = h.hub.subscribe(recorder('BBB333'))
+
+    expect(h.watchArgs).toHaveLength(0)
+    gate[0]?.()
+    await Promise.all([first, second])
+
+    expect(h.watchArgs).toHaveLength(1)
+    expect(h.hub.stats()).toMatchObject({ watchCalls: 1, openStreams: 1, subscribers: 2 })
   })
 })
 
@@ -251,6 +285,68 @@ describe('room-hub · süreç içi oda filtresi', () => {
 
     h.streams[0]?.emit('change', changeEvent('delete', null, 'bilinmeyen'))
     expect(a.deleted).toBe(0)
+  })
+
+  it('GERÇEK sürücü biçimi: _id bir ObjectId ise (toHexString) delete yine eşleşir', async () => {
+    // ⚠️ Sahte sürücü `_id`yi string veriyordu; gerçek sürücü `ObjectId`
+    // veriyor. Yani üretimde koşan dal hiç test edilmemişti. Regresyonu:
+    // silinen odadaki oyuncular `4404 room-deleted` almaz, soket açık kalır.
+    const h = harness()
+    const a = recorder('AAA222')
+    await h.hub.subscribe(a)
+
+    const objectId = { toHexString: (): string => 'aabbccddeeff001122334455' }
+    h.streams[0]?.emit('change', {
+      operationType: 'update',
+      documentKey: { _id: objectId },
+      fullDocument: makeRoom('AAA222', 2),
+    })
+    h.streams[0]?.emit('change', {
+      operationType: 'delete',
+      documentKey: { _id: objectId },
+      fullDocument: null,
+    })
+
+    expect(a.changes).toHaveLength(1)
+    expect(a.deleted).toBe(1)
+  })
+
+  it('anahtar üretilemeyen _id (ne string ne toHexString) delete yayınlamaz', async () => {
+    const h = harness()
+    const a = recorder('AAA222')
+    await h.hub.subscribe(a)
+
+    h.streams[0]?.emit('change', {
+      operationType: 'update',
+      documentKey: { _id: { garip: true } },
+      fullDocument: makeRoom('AAA222', 2),
+    })
+    h.streams[0]?.emit('change', {
+      operationType: 'delete',
+      documentKey: { _id: { garip: true } },
+      fullDocument: null,
+    })
+
+    expect(a.changes).toHaveLength(1)
+    expect(a.deleted).toBe(0)
+  })
+
+  it('_id→kod eşlemesi yalnız ABONESİ OLAN oda için tutulur', async () => {
+    const h = harness()
+    await h.hub.subscribe(recorder('AAA222'))
+
+    // BBB333'ün olayı, henüz abonesi yokken görüldü: eşleme YAZILMAMALI.
+    h.streams[0]?.emit('change', changeEvent('update', makeRoom('BBB333', 4), 'oid-b'))
+
+    const b = recorder('BBB333')
+    await h.hub.subscribe(b)
+    h.streams[0]?.emit('change', changeEvent('delete', null, 'oid-b'))
+    expect(b.deleted).toBe(0)
+
+    // Abone olduktan SONRA görülen olay eşlemeyi kurar; delete artık ulaşır.
+    h.streams[0]?.emit('change', changeEvent('update', makeRoom('BBB333', 5), 'oid-b'))
+    h.streams[0]?.emit('change', changeEvent('delete', null, 'oid-b'))
+    expect(b.deleted).toBe(1)
   })
 
   it('bozuk olay (fullDocument yok, kod yok) hiçbir aboneyi çökertmez', async () => {
@@ -401,6 +497,66 @@ describe('room-hub · kopma, resume token ve zorunlu resync', () => {
 
     await h.hub.subscribe(recorder('AAA222'))
     expect(h.watchArgs[1]?.options).toStrictEqual({ fullDocument: 'updateLookup' })
+  })
+
+  it('ÜÇ ardışık başarısız yeniden açılıştan sonra resumeToken DÜŞÜRÜLÜR', async () => {
+    // ZEHİRLİ TOKEN: oplog penceresi aşılınca aynı `startAfter` sonsuza dek
+    // aynı hatayı üretir; oda dolu olduğu için `closeStream` hiç çağrılmaz ve
+    // instance KALICI OLARAK SAĞIR kalır.
+    const h = harness()
+    await h.hub.subscribe(recorder('AAA222'))
+    h.streams[0]?.emit('resumeTokenChanged', { _data: 'zehirli' })
+
+    for (let i = 0; i < 3; i += 1) {
+      h.streams[h.streams.length - 1]?.emit('error', new Error('yine düştü'))
+      h.timers[h.timers.length - 1]?.callback()
+      await vi.waitFor(() => {
+        expect(h.streams).toHaveLength(i + 2)
+      })
+    }
+
+    // 1. ve 2. yeniden açılış hâlâ token'ı taşır; 3. deneme onu düşürür.
+    expect(h.watchArgs[1]?.options).toStrictEqual({
+      fullDocument: 'updateLookup',
+      startAfter: { _data: 'zehirli' },
+    })
+    expect(h.watchArgs[3]?.options).toStrictEqual({ fullDocument: 'updateLookup' })
+    expect(h.hub.stats().hasResumeToken).toBe(false)
+  })
+
+  it('ÖLÜMCÜL resume hatası (286) token`ı DERHAL düşürür — üç deneme beklenmez', async () => {
+    const h = harness()
+    await h.hub.subscribe(recorder('AAA222'))
+    h.streams[0]?.emit('resumeTokenChanged', { _data: 'zehirli' })
+
+    const fatal = Object.assign(new Error('Resume of change stream was not possible'), {
+      code: 286,
+      codeName: 'ChangeStreamHistoryLost',
+    })
+    h.streams[0]?.emit('error', fatal)
+    h.runTimer(0)
+
+    await vi.waitFor(() => {
+      expect(h.watchArgs).toHaveLength(2)
+    })
+    expect(h.watchArgs[1]?.options).toStrictEqual({ fullDocument: 'updateLookup' })
+  })
+
+  it('token düşürüldükten sonra abonelere zorunlu tam state yine gider', async () => {
+    const h = harness()
+    const a = recorder('AAA222')
+    h.rooms.set('AAA222', makeRoom('AAA222', 77))
+    await h.hub.subscribe(a)
+    h.streams[0]?.emit('resumeTokenChanged', { _data: 'zehirli' })
+
+    const fatal = Object.assign(new Error('history lost'), { code: 286 })
+    h.streams[0]?.emit('error', fatal)
+    h.runTimer(0)
+
+    await vi.waitFor(() => {
+      expect(a.forced).toHaveLength(1)
+    })
+    expect(a.forced[0]?.version).toBe(77)
   })
 
   it('watch fırlatırsa subscribe patlamaz, geri çekilmeye girer', async () => {
