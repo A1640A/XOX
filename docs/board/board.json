@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T03:20:43.748Z",
+  "updatedAt": "2026-08-25T03:31:20.324Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -544,7 +544,7 @@
       "status": "done",
       "attempts": 0,
       "branch": "feat/W1-04",
-      "report": "docs/board/reports/W1-04.md",
+      "report": null,
       "acceptance": [
         "/oda/katil 6 haneli kod girişi, btn-odaya-katil ve hata-mesaji gösterir; ana sayfadaki alanın derin bağlanabilir eşidir (spec §4.1)",
         "JoinCodeField girişi normalleştirir: küçük harf büyüğe çevrilir, baştaki/sondaki boşluk kırpılır — ' abc234 ' -> ABC234 (KK-034 birim testi)",
@@ -557,7 +557,7 @@
         "pnpm gates temiz",
         "ROOM_CODE_ALPHABET degistirilirse roomCodeSchema regex-i de turetilmis olmali (CTR-001 duzeltiyor). Alfabeye karakter eklenip regex guncellenmezse oda KURULUR ama KATILINAMAZ."
       ],
-      "blockedReason": null,
+      "blockedReason": "DoD 5 EKSIK: docs/board/reports/W1-04.md HIC YAZILMAMIS (git log --all o yolda bos). Ajan raporunda dosyayi listelemisti, lead dogrulamadan boarda isledi — lead hatasi. Kod merge edildi ve dogrulandi (dort mutasyon sondasi kirmizi, inceleme temiz), eksik olan yalniz teslim raporu. W1-01/02/03 hepsinde var.",
       "mergeSha": "fa6ffd7"
     },
     {
@@ -1371,7 +1371,30 @@
         "HomeActions kendi oda-kur hatasini, JoinCodeField kendi katilma hatasini ayri ErrorBanner-larda gosteriyor; ikisi ayni anda gorunebiliyor",
         "Sonuc: getByTestId(\"hata-mesaji\") \"found multiple elements\" ile patlar. E2E yazildiginda ilk kurbani bu olur",
         "Kusur W1-04-ten ONCE de vardi; W1-04 JoinCodeField-in hata yuzeyini genislettigi icin olasiligi artirdi",
-        "Cozum: ya JoinCodeField-in banner-ini cagirana kaldir, ya da tek bir hata bolgesi olsun. E2E selector-unu kapsamlandirmak ikinci tercih — asil sorun iki dugumun ayni anda var olabilmesi"
+        "Cozum: ya JoinCodeField-in banner-ini cagirana kaldir, ya da tek bir hata bolgesi olsun. E2E selector-unu kapsamlandirmak ikinci tercih — asil sorun iki dugumun ayni anda var olabilmesi",
+        "EK (W1-04 merge): HomeActions.test.tsx 6/6 gecyor ama join akisina HIC dokunmuyor — yani W1-04-un ekledigi GET /api/rooms/[code] on kontrolu ana sayfada HIC test edilmeden gecti. Yesil olmasi calistigin kaniti DEGIL. Bu kart o kapsam boslugunu da kapatmali."
+      ]
+    },
+    {
+      "id": "DB-005",
+      "title": "seedTestUsers $setOnInsert kullaniyor — istatistikler HIC sifirlanmiyor",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-dev-backend",
+      "deps": [],
+      "conflictSet": ["packages/db/src/seed.ts", "packages/db/src/seed.test.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "KANITLANDI (W1-04 integrator, A/B ile): seed.test.ts yerelde {wins:0,losses:0,draws:0} bekliyor, {wins:5,losses:10,draws:0} aliyor. Merge oncesi commit-te BIREBIR AYNI hata — yani W1-04-un sucu degil, mevcut kusur",
+        "KOK NEDEN: seedTestUsers stats/elo/ratedGames alanlarini $setOnInsert ile yaziyor. e2e-user-1/2 bir kez var olduktan sonra bu alanlar HIC guncellenmiyor; E2E kosulari paylasilan Atlas xox_test-te gercek oyunlar oynayinca kirlenmis stats kaliciyor",
+        "DUZELTME: stats/elo/ratedGames $setOnInsert-ten $set-e tasinir. Kimlik alanlari (email, passwordHash olusturma) $setOnInsert-te KALIR — parola her seed-de yeniden hashlenmemeli",
+        "CI BUNU GOREMEZ: CI-002 CI-a kendi temiz mongod-unu verdi, her kosu bos DB ile basliyor. Yani kusur YALNIZ yerelde gorunuyor ve her ajanin pnpm gates-ini kiriyor. Bu, 6. oruntunun tersi: bu kez CI yanlis kapsami olcuyor (fazla temiz), yerel gercegi soyluyor",
+        "SONDA: seed -> oyun oyna (stats kirlet) -> seed tekrar -> stats SIFIR olmali. Bugun degil, duzeltmeden sonra",
+        "DIKKAT: duzeltmeyi test ederken paylasilan xox_test-e E2E ajani kosuyor olabilir. Once kontrol et"
       ]
     }
   ]

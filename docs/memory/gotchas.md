@@ -1016,3 +1016,22 @@ sarı bile yanmıyor, sadece yok sayılıyor.
 
 **Ders:** bir CI işinin `skipped` dönmesi "geçti" değildir. `gh run list` çıktısında `skipped`
 gören biri onu yeşil sanmamalı; koşması BEKLENEN bir işin atlanması bir bulgudur.
+
+## 2026-08-25 · `$setOnInsert` ile yazılan seed alanları BİR DAHA güncellenmez
+
+`seedTestUsers` `stats`/`elo`/`ratedGames`'i `$setOnInsert` ile yazıyor. `e2e-user-1/2` bir kez
+var olduktan sonra bu alanlar **hiç sıfırlanmıyor**; E2E koşuları paylaşılan Atlas `xox_test`'te
+gerçek oyunlar oynadığı için kirlenmiş istatistik kalıcı oluyor ve `seed.test.ts` yerelde
+kırmızıya dönüyor (`{wins:0}` bekliyor, `{wins:5,losses:10}` alıyor).
+
+Kimlik alanları (`email`, parola hash'i) `$setOnInsert`'te **kalmalı** — parola her seed'de
+yeniden hash'lenmemeli. Sıfırlanması gereken durum alanları `$set`'e taşınır.
+
+**Asıl ders — 6. örüntünün TERSİ:** bu kusuru **CI göremiyor**, çünkü CI-002'den sonra CI her
+koşuya temiz bir mongod ile başlıyor. Yani bu kez _yerel_ gerçeği söylüyor, _CI_ yanlış kapsamı
+ölçüyor (fazla temiz bir dünya). "CI yeşil" de tek başına kanıt değildir: CI'ın ortamı üretimden
+ya da geliştiricinin ortamından **daha steril** olabilir ve paylaşılan-durum hatalarını yapısal
+olarak göremez.
+
+Teşhis yöntemi doğruydu ve tekrarlanmalı: integrator merge öncesi commit'e dönüp **birebir aynı
+hatayı** aldı, böylece "benim merge'im mi kırdı" sorusunu ölçerek yanıtladı.
