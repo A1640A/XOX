@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T03:49:06.012Z",
+  "updatedAt": "2026-08-25T03:55:32.950Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -572,10 +572,10 @@
         "apps/e2e/tests/computer.spec.ts",
         "apps/e2e/tests/join.spec.ts"
       ],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/E2E-002",
-      "report": null,
+      "report": "docs/board/reports/E2E-002.md",
       "acceptance": [
         "KK-002 yeşil: kayıtlı e-postayla kayıt -> form kalır, 409, hata-mesaji data-kod=\"EMAIL_TAKEN\" ve 'Bu e-posta zaten kayıtlı.'",
         "KK-005 yeşil: yanlış parola -> 401 ve 'E-posta veya parola hatalı.'; kayıtsız e-posta AYNI metni ve AYNI kodu verir",
@@ -588,7 +588,7 @@
         "Flake tespit edilirse retries ile GİZLENMEZ: kök neden bulunur, rapora ve gotcha adayı olarak yazılır",
         "Kırmızı kalan her kriter için rapor sorumlu kart id'sini belirtir"
       ],
-      "blockedReason": null
+      "blockedReason": "MERGE BEKLETILDI (lead karari): 21 testin 4-u KIRMIZI ve ucu GERCEK URUN HATASI (W1-05, AUTH-002, UI-003). Testler DOGRU, kod yanlis. Kirmizi testleri isaretlemeden main-e almak suiti kalici kirmiziya cevirir; test.fail() ile isaretlemek de hatayi normallestirir. Dal commit-li ve guvende. Sabah karari: once uc hatayi duzelt, sonra yesil merge et."
     },
     {
       "id": "E2E-003",
@@ -1424,6 +1424,70 @@
         "COZUM SECENEKLERI (olcup karar ver): dinamik import ile /oyna/bilgisayar-a ertele · game-core-a alt yol export-lari ekleyip yalniz gerekeni cekmek · sunucu tarafina tasimak MUMKUN DEGIL, KK-027 sayfanin hic ag istegi yapmamasini sart kosuyor",
         "MUMKUN DEGIL diyorsan gerekcesini yaz. Bu kart olcumle kapanabilir de — sizinti kaciniLmazsa nedenini bilmek de bir sonuc",
         "Duzeltme sonrasi rota bazli bütceler DUSURULMELI: PERF-002 bütceleri olculen degerden turetti (heavy 235 kB), sizinti kalkarsa o sayi artik dogru degil. Yeni olcum + yeni bütce + gerekce"
+      ]
+    },
+    {
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "status": "todo",
+      "id": "W1-05",
+      "title": "Yapistirmada maxLength normallestirmeden ONCE kirpiyor — kod bir karakter eksik",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-dev-web",
+      "deps": [],
+      "conflictSet": ["apps/web/components/JoinCodeField.tsx"],
+      "acceptance": [
+        "OLCULDU (E2E-002, gercek Chromium): \" abc234 \" yapistirilinca beklenen \"ABC234\", gercek \"ABC23\". Bir karakter kayip",
+        "KOK NEDEN (lead kod okumasiyla dogruladi): maxLength={ROOM_CODE_LENGTH} input uzerinde (JoinCodeField.tsx:111), normalizeInput ise onChange-de (:107). Tarayici HAM metni React gormeden 6 karaktere kirpiyor: \" abc234 \" -> \" abc23\" -> normalize -> \"ABC23\". Bastaki bosluk bir karakter yiyor",
+        "BIRIM TESTI BUNU YAPISAL OLARAK GOREMEZ: jsdom-un yapistirma davranisi gercek tarayicidan farkli. W1-04 ajani bunu bana kanitla anlatmisti ve jsdom konusunda HAKLIYDI — eksik olan katmandi. Duzeltmeyi hem birim hem E2E ile kilitle",
+        "COZUM YONU: native maxLength kaldirilip uzunluk sinirini normalizeInput uygulasin (slice zaten var), ya da maxLength daha genis birakilip normalize kirpsin. Hangisi secilirse gerekcesi yazilir",
+        "REGRESYON: E2E-002-nin join.spec.ts testi yesile donmeli"
+      ]
+    },
+    {
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "status": "todo",
+      "id": "AUTH-002",
+      "title": "Basarisiz giriste HTTP durumu her zaman 200 — hicbir zaman 401",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-dev-backend",
+      "deps": [],
+      "conflictSet": ["apps/web/app/api/auth/[...nextauth]/route.ts", "docs/superpowers/specs"],
+      "acceptance": [
+        "OLCULDU (E2E-002, curl ile canli dogrulandi): hata mesaji ve kodu DOGRU ama HTTP durumu her zaman 200. KK-005 401 bekliyor",
+        "SEBEP: Auth.js v5 redirect:false + X-Auth-Return-Redirect sozlesmesi — hatayi govdede/yonlendirmede tasiyor, durum kodunda degil. Yani bu Auth.js-in tasarimi",
+        "ONCE KARAR VER: spec mi yanlis, kod mu? KK-005 401 sart kosuyorsa ya sarmalayici durumu duzeltmeli ya spec Auth.js gercegine uyarlanmali. Ucuncu secenek: spec-i 401 yerine govde/kod bazli tanimlamak",
+        "DIKKAT: SEC-002-nin hiz sinirlayicisi ayni route-u sarmaliyor ve giris basarisini set-cookie basligindan tespit ediyor. Durum kodunu degistirirsen o mantigi KIRMA — birlikte test et",
+        "Karar ne olursa olsun decisions.md-ye gerekcesiyle yazilir"
+      ]
+    },
+    {
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "status": "todo",
+      "id": "UI-003",
+      "title": "SessionProvider session prop-u almiyor — her sayfa /api/auth/session cagiriyor",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-dev-web",
+      "deps": [],
+      "conflictSet": ["apps/web/app/layout.tsx"],
+      "acceptance": [
+        "OLCULDU (E2E-002 ag casusu, gercek tarayici): /oyna/bilgisayar oyunu boyunca 2x GET /api/auth/session yakalandi. KK-027 sayfanin HIC ag istegi yapmamasini sart kosuyor",
+        "KOK NEDEN: apps/web/app/layout.tsx-teki SessionProvider-a session prop-u gecilmiyor, bu yuzden istemci oturumu ucdan cekiyor. Sayfaya ozgu DEGIL, uygulama geneli",
+        "W1-01 REGRESYONU DEGIL: W1-01-in network-graph.test.ts-i kendi modul grafigini koruyor ve dogru calisiyor — ama layout-un davranisini yapisal olarak goremez. Iki katman farkli sey gorur, E2E olmasaydi bu bulunmazdi",
+        "ETKI: Atlas-a hicbir sey yazilmiyor (E2E dogrulamasi ayrica yesil), yani veri butunlugu sorunu yok. Sorun KK-027 sozlesmesinin ihlali ve gereksiz istek",
+        "DIKKAT: layout.tsx DONDURULMUS dosya (UI-SKEL-001). Bu kart onu bilerek aciyor, degisiklik session prop-u ile SINIRLI kalmali",
+        "REGRESYON: E2E-002-nin ag casusu testi yesile donmeli — sifir /api istegi"
       ]
     }
   ]

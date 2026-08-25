@@ -1052,3 +1052,24 @@ sanılan bir hata aslında kaynak açlığıydı.**
 `PPID=1` + yüksek CPU + uzun `etime` = kesin kaçak; öldürmek güvenli ve geri alınabilir.
 Vitest'in fork havuzu bir koşu sert kesildiğinde (kota bitmesi, iptal, çöken üst süreç) işçileri
 arkada bırakabiliyor — bu gece bir kez oturum kotası tükenip üç ajan ölmüştü, kaynağı muhtemelen o.
+
+## 2026-08-25 · Native `maxLength` normalleştirmeden ÖNCE kırpar — jsdom bunu gizler
+
+`JoinCodeField`'da `maxLength={6}` input'un üzerinde, `normalizeInput` ise `onChange`'de.
+Tarayıcı ham metni React görmeden 6 karaktere kırpıyor: `" abc234 "` → `" abc23"` → normalize
+(trim + filtre) → **`"ABC23"`**. Baştaki boşluk bir karakter yiyor.
+
+**Birim testi bunu yapısal olarak göremez.** jsdom da `maxLength`'i uyguluyor, ama W1-04'ün
+testleri bu sırayı değil sonucu ölçüyordu ve boşluklu bir yapıştırma denenmemişti. Ajan bana
+"`user.paste()` de jsdom'da maxLength'e uyuyor" diye **doğru** bir düzeltme yapmıştı — eksik olan
+onun bilgisi değil, **katmandı**: gerçek tarayıcıda boşlukla başlayan bir yapıştırma.
+
+**Kural:** girdi normalleştirmesi ile native kısıt (`maxLength`, `pattern`, `type=number`) aynı
+alanda birlikte kullanılıyorsa, **hangisinin önce çalıştığı** bir davranış kararıdır ve
+gerçek tarayıcıda sınanmalıdır. Ya native kısıtı kaldırıp her şeyi normalleştirmeye bırak, ya
+kısıtı normalleştirmenin üretebileceği en uzun değerden geniş tut.
+
+Aynı sınıfın ikinci örneği aynı gece: `SessionProvider`'a `session` prop'u geçilmediği için
+`/oyna/bilgisayar` oyun boyunca 2× `GET /api/auth/session` çağırıyordu — sayfanın kendi modül
+grafiğini koruyan birim testi doğru çalışıyordu ama **layout'un davranışını göremezdi.**
+İki katman farklı şey görür; biri diğerinin yerine geçmez.
