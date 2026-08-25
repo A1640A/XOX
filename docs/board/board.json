@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T23:24:26.685Z",
+  "updatedAt": "2026-08-25T23:28:08.600Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -669,9 +669,9 @@
         "apps/web/app/api/profile/**",
         "apps/web/components/profile/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W2-02",
       "report": null,
       "acceptance": [
         "GET /api/profile { name, email, stats, elo, theme } döner; PATCH { name? } / { theme? } kabul eder ve gövdeler rest-contract şemalarından geçer",
@@ -728,9 +728,9 @@
         "apps/web/lib/log.ts",
         "apps/web/app/api/health/route.ts"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W2-04",
       "report": null,
       "acceptance": [
         "KK-104: @vercel/analytics ve @vercel/speed-insights app/layout.tsx'e eklenir ve production build çıktısında yüklü oldukları doğrulanır (bundle grep + Vercel paneli ekran kanıtı rapora)",
