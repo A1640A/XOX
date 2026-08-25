@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T01:04:18.479Z",
+  "updatedAt": "2026-08-25T01:08:11.006Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -443,9 +443,9 @@
       "agent": "xox-dev-web",
       "deps": ["E2E-001"],
       "conflictSet": ["apps/web/app/oyna/**", "apps/web/components/computer/**"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W1-01",
       "report": null,
       "acceptance": [
         "/oyna/bilgisayar üç zorluk düğmesi (zorluk-easy/-medium/-unbeatable) gösterir; varsayılan seçili olan zorluk-medium'dur (KK-020)",
@@ -476,9 +476,9 @@
         "apps/web/lib/realtime/handlers/rematch.ts",
         "apps/web/components/room/ResultPanel.tsx"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W1-02",
       "report": null,
       "acceptance": [
         "finishGame CAS'tır: Game.findOneAndUpdate({ _id: gameId, finishedAt: null }, {...}) — null dönerse HİÇBİR ŞEY yapılmaz. Yarışın tek kazananı bu CAS'tır (tasarım §9)",
@@ -512,9 +512,9 @@
         "apps/web/lib/realtime/rotate.ts",
         "apps/web/components/room/ConnectionBadge.tsx"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W1-03",
       "report": null,
       "acceptance": [
         "detachConnection koşullu yazar: yalnız presence[seat].connId === kapanan connId ise presence[seat]=null ve (state==='playing' ise) disconnected={seat,at,graceEndsAt=now+DISCONNECT_GRACE_SECONDS} yazılır, version 1 artar",
