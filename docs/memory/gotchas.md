@@ -1073,3 +1073,40 @@ Aynı sınıfın ikinci örneği aynı gece: `SessionProvider`'a `session` prop'
 `/oyna/bilgisayar` oyun boyunca 2× `GET /api/auth/session` çağırıyordu — sayfanın kendi modül
 grafiğini koruyan birim testi doğru çalışıyordu ama **layout'un davranışını göremezdi.**
 İki katman farklı şey görür; biri diğerinin yerine geçmez.
+
+## 2026-08-25 · 🛡️ E2E guard'ı PRODUCTION VERİTABANINI KURTARDI — ve o kırmızı GEVŞETİLMEZ
+
+`OPS-006` Vercel projesini `izrandevu` → `omeerdursunn` taşırken yeni projenin **Preview**
+ortamına `MONGODB_DB` yazılamadı (izin reddi). Sonuç: preview `/api/health` **`xox_prod`**
+raporladı. `apps/e2e` paketinin ilk adımı `pnpm --filter @xox/db reset` — yani veritabanını
+**düşürmek**.
+
+`E2E-001`'de şart koşulan bloke edici ön kontrol tam burada devreye girdi:
+
+```
+BLOKE: /api/health 'db' alani 'xox_test' DEGIL (alinan: '"xox_prod"')
+  at assertTestDatabase (apps/e2e/global-setup.ts:24)
+```
+
+**Hiçbir test çalıştırılmadan durdu.** Guard olmasaydı production veritabanı silinecekti.
+
+**En büyük risk artık teknik değil, insani:** biri bu kırmızıyı "CI yeşil olsun" diye
+gevşetebilir. **GEVŞETİLMEZ.** Bu kırmızı doğru davranıştır; düzeltilecek şey testin eşiği
+değil, **ortam değişkenidir**. Guard'ı `global-setup.ts`'ten çıkarmak, eşiği esnetmek ya da
+"yalnız bu koşuda atla" demek — üçü de yasaktır.
+
+**Yan not:** aynı olay `CI-003`'ü kısmen çözdü. `E2E (preview)` daha önce hep `skipped`
+dönüyordu çünkü `main` Production Branch'ti ve gerçek bir "Preview" olayı doğmuyordu. Yeni
+proje gerçek preview olayları üretiyor, iş **artık gerçekten koşuyor** — ve ilk koştuğunda
+işe yaradı.
+
+## 2026-08-25 · Production Branch'ten yerel `vercel deploy`, `--prod` OLMADAN da production'a gider
+
+`OPS-006` ajanı yalnız preview doğrulaması için `vercel deploy --archive=tgz` çalıştırdı,
+`--prod` **kullanmadı**. Yerel dal `main` ve `main` Vercel'de Production Branch olduğu için CLI
+bunu **production'a** deploy edip `xox.omerdursun.com`'a aliasladı. Domain o ana kadar hiç canlı
+değildi; artık canlı ve yarım (sayfalar 200, `/api/health` 503 — env yok).
+
+**Kural:** production branch üzerindeyken yerel deploy alma. Ya ayrı bir dala geç, ya
+`--target=preview` gibi hedefi AÇIKÇA belirt, ya da deploy'u CI'a bırak. "`--prod` yazmadım"
+koruma değildir.

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T07:35:59.760Z",
+  "updatedAt": "2026-08-25T07:57:59.846Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -1429,9 +1429,9 @@
     {
       "attempts": 0,
       "branch": "feat/W1-05",
-      "report": null,
+      "report": "docs/board/reports/W1-05.md",
       "blockedReason": null,
-      "status": "in_wave",
+      "status": "done",
       "id": "W1-05",
       "title": "Yapistirmada maxLength normallestirmeden ONCE kirpiyor — kod bir karakter eksik",
       "tier": "P1",
@@ -1445,14 +1445,15 @@
         "BIRIM TESTI BUNU YAPISAL OLARAK GOREMEZ: jsdom-un yapistirma davranisi gercek tarayicidan farkli. W1-04 ajani bunu bana kanitla anlatmisti ve jsdom konusunda HAKLIYDI — eksik olan katmandi. Duzeltmeyi hem birim hem E2E ile kilitle",
         "COZUM YONU: native maxLength kaldirilip uzunluk sinirini normalizeInput uygulasin (slice zaten var), ya da maxLength daha genis birakilip normalize kirpsin. Hangisi secilirse gerekcesi yazilir",
         "REGRESYON: E2E-002-nin join.spec.ts testi yesile donmeli"
-      ]
+      ],
+      "mergeSha": "493bd28"
     },
     {
       "attempts": 0,
       "branch": "feat/AUTH-002",
-      "report": null,
+      "report": "docs/board/reports/AUTH-002.md",
       "blockedReason": null,
-      "status": "in_wave",
+      "status": "reviewing",
       "id": "AUTH-002",
       "title": "Basarisiz giriste HTTP durumu her zaman 200 — hicbir zaman 401",
       "tier": "P1",
@@ -1471,9 +1472,9 @@
     {
       "attempts": 0,
       "branch": "feat/W1-05",
-      "report": null,
+      "report": "docs/board/reports/W1-05.md",
       "blockedReason": null,
-      "status": "in_wave",
+      "status": "done",
       "id": "UI-003",
       "title": "SessionProvider session prop-u almiyor — her sayfa /api/auth/session cagiriyor",
       "tier": "P1",
@@ -1488,14 +1489,15 @@
         "ETKI: Atlas-a hicbir sey yazilmiyor (E2E dogrulamasi ayrica yesil), yani veri butunlugu sorunu yok. Sorun KK-027 sozlesmesinin ihlali ve gereksiz istek",
         "DIKKAT: layout.tsx DONDURULMUS dosya (UI-SKEL-001). Bu kart onu bilerek aciyor, degisiklik session prop-u ile SINIRLI kalmali",
         "REGRESYON: E2E-002-nin ag casusu testi yesile donmeli — sifir /api istegi"
-      ]
+      ],
+      "mergeSha": "493bd28"
     },
     {
       "attempts": 0,
       "branch": null,
-      "report": null,
-      "blockedReason": null,
-      "status": "in_wave",
+      "report": "docs/board/reports/OPS-006.md",
+      "blockedReason": "OMERDEN IZIN GEREKIYOR. Yapilanlar: yeni proje omeerdursunn takiminda kuruldu (prj_f0d1nL13M3enOi5BYRcFC92YYS2n), fra1 bolgesi, apps/web kok dizini, GitHub baglantisi kuruldu, xox.omerdursun.com EKLENDI ve verified:true, Development ortaminin 3 degiskeni tasindi, 2 WAF kurali staged. YAPILAMAYAN: (a) vercel env add --value Preview/Production icin REDDEDILDI — 10 degisken/ortam cifti yazilamadi (b) vercel firewall publish REDDEDILDI — kurallar staged, canli degil. Ajan protokole uydu: durdu, yeniden denemedi, kilik degistirmis varyant denemedi. LEAD REDDI GECERSIZ KILAMAZ. ACIL SONUC: preview ortami MONGODB_DB olmadigi icin xox_prod gosteriyor ve E2E guard-i PRODUCTION VERITABANI SILINMESINI ENGELLEDI. Ayrica kazara production deploy oldu (Production Branch-ten vercel deploy --prod olmadan da prod-a gidiyor), domain canli ama yarim: sayfalar 200, /api/health 503.",
+      "status": "blocked",
       "id": "OPS-006",
       "title": "Vercel projesini izrandevu -> omeerdursunn hesabina tasi",
       "tier": "P0",
@@ -1541,6 +1543,28 @@
         "Web ve mobil TUTARLI olmali — ui-tokens ikisinin ortak kaynagi, tema degisikligi iki hedefte de gecerli",
         "Iki tema (acik/koyu) esit ozenle tasarlanir; koyu tema acik temanin naif tersi OLAMAZ",
         "KK-084 sondasi: bir bilesene hex literal ekle, lint KIRMIZI donsun, geri al. Kural gercekten atesLeniyor mu"
+      ]
+    },
+    {
+      "id": "OPS-007",
+      "title": "E2E guard kirmizisi GEVSETILMEZ — nobetci kart",
+      "tier": "P0",
+      "wave": "2",
+      "agent": "xox-qa-e2e",
+      "deps": ["OPS-006"],
+      "conflictSet": ["apps/e2e/global-setup.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "Bu kart bir NOBETCI: apps/e2e/global-setup.ts:24-teki assertTestDatabase guard-i GEVSETILEMEZ",
+        "OLAY: OPS-006 tasimasinda preview ortami MONGODB_DB olmadigi icin xox_prod gosterdi. E2E paketinin ilk adimi pnpm --filter @xox/db reset — yani veritabanini DUSURMEK. Guard hicbir test kosmadan durdurdu ve PRODUCTION VERITABANINI KURTARDI",
+        "YASAK: guard-i cikarmak · esigi esnetmek · yalniz bu kosuda atla demek · CI isini disable etmek. Uc de yasak",
+        "DUZELTILECEK SEY TESTIN ESIGI DEGIL, ORTAM DEGISKENIDIR: yeni Vercel projesinde Preview icin MONGODB_DB=xox_test tanimlanir",
+        "Ortam duzeltildikten sonra E2E (preview) YESIL donmeli — ve bu kart o kaniti bekler",
+        "YAN KAZANIM: CI-003 kismen cozuldu. E2E (preview) daha once hep skipped donuyordu (main Production Branch, gercek Preview olayi dogmuyordu). Yeni proje gercek preview olaylari uretiyor, is ARTIK GERCEKTEN KOSUYOR"
       ]
     }
   ]

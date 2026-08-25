@@ -1029,3 +1029,18 @@
 {"ts":"2026-08-25T03:58:00Z","event":"task.built","task":"E2E-002","note":"21 test, 17 yesil 4 kirmizi, IKI bagimsiz kosuda birebir ayni (kararsizlik yok). UC GERCEK URUN HATASI bulundu ve gizlenmedi: (1) W1-05 yapistirmada maxLength normallestirmeden once kirpiyor, bir karakter kayip — lead kod okumasiyla dogruladi (2) AUTH-002 basarisiz giriste HTTP her zaman 200, Auth.js v5 redirect:false sozlesmesi (3) UI-003 SessionProvider session prop-u almadigi icin oyun boyunca 2x /api/auth/session — KK-027 ihlali. UCU DE E2E OLMASAYDI BULUNAMAZDI: birim testleri kendi katmanlarinda dogru calisiyordu. SUREC IHLALI: ajan main-e iki dogrudan commit atti (0c51932, 737d977), push yasakti. Icerik zararsiz (kendi raporu), geri alinmadi, kayda gecti. MERGE BEKLETILDI: kirmizi testler dogru, kod yanlis"}
 {"ts":"2026-08-25T07:35:36Z","event":"file.touched","path":"/private/tmp/claude-501/-Users-omerdursun-PROJELER-XOX/02ee006c-b5d2-4e00-837b-bd8913dc4c5a/scratchpad/cards6.cjs"}
 {"ts":"2026-08-25T04:15:00Z","event":"user.decisions","note":"OMER UC KARARI VERDI: (1) WAF onerileri UYGULANSIN — WS upgrade esigi 30->60 (2) proje YANLIS TAKIMDA, omeerdursunn hesabina tasinmali, omerdursun.com domaini orada — OPS-006 acildi, OPS-001 artik ona bagli (3) Atlas parolasini kendisi degistirecek, SEC-001 lead tarafinda is yok. AYRICA: tasarim profesyonel olmali ama sonraki dalgalara — DESIGN-001 Dalga 3-e yazildi. AYRICA: bitmis worktreeler temizlensin — 14 worktree + dal silindi, E2E-002 korundu (merge edilmedi)"}
+{"ts":"2026-08-25T07:36:37Z","event":"file.touched","path":".claude/worktrees/W1-05/apps/web/components/JoinCodeField.tsx"}
+{"ts":"2026-08-25T07:37:00Z","event":"file.touched","path":".claude/worktrees/W1-05/apps/web/components/JoinCodeField.test.tsx"}
+{"ts":"2026-08-25T07:37:11Z","event":"file.touched","path":".claude/worktrees/W1-05/apps/web/components/JoinCodeField.test.tsx"}
+{"ts":"2026-08-25T07:37:47Z","event":"file.touched","path":"apps/web/app/api/auth/[...nextauth]/route.ts"}
+{"ts":"2026-08-25T07:38:02Z","event":"file.touched","path":"apps/web/app/api/auth/[...nextauth]/route.test.ts"}
+{"ts":"2026-08-25T07:39:11Z","event":"file.touched","path":".claude/worktrees/W1-05/apps/web/app/layout.tsx"}
+{"ts":"2026-08-25T07:39:30Z","event":"file.touched","path":".claude/worktrees/W1-05/apps/web/app/layout.test.tsx"}
+{"ts":"2026-08-25T07:43:01Z","event":"file.touched","path":".claude/worktrees/W1-05/docs/board/reports/W1-05.md"}
+{"ts":"2026-08-25T07:43:50Z","event":"subagent.stop"}
+{"ts":"2026-08-25T07:47:22Z","event":"file.touched","path":"docs/board/reports/AUTH-002.md"}
+{"ts":"2026-08-25T07:49:15Z","event":"subagent.stop"}
+{"ts":"2026-08-25T07:52:46Z","event":"file.touched","path":"docs/board/reports/OPS-006.md"}
+{"ts":"2026-08-25T07:53:21Z","event":"subagent.stop"}
+{"ts":"2026-08-25T07:56:25Z","event":"subagent.stop"}
+{"ts":"2026-08-25T08:10:00Z","event":"guard.saved_production","severity":"critical-averted","note":"E2E GUARD-I PRODUCTION VERITABANINI KURTARDI. OPS-006 tasimasinda yeni projenin Preview ortamina MONGODB_DB yazilamadi (izin reddi), preview /api/health xox_prod raporladi. apps/e2e ilk adimi pnpm --filter @xox/db reset — veritabanini dusurmek. E2E-001-de sart kosulan bloke edici on kontrol hicbir test kosmadan durdurdu. EN BUYUK RISK ARTIK TEKNIK DEGIL INSANI: biri bu kirmiziyi CI yesil olsun diye gevsetebilir. OPS-007 nobetci karti acildi. YAN KAZANIM: E2E (preview) artik GERCEKTEN kosuyor (eskiden hep skipped), CI-003 kismen cozuldu"}
