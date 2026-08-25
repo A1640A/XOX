@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T02:48:22.847Z",
+  "updatedAt": "2026-08-25T03:00:26.535Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -541,10 +541,10 @@
       "agent": "xox-dev-web",
       "deps": ["E2E-001"],
       "conflictSet": ["apps/web/app/oda/katil/**", "apps/web/components/JoinCodeField.tsx"],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/W1-04",
-      "report": null,
+      "report": "docs/board/reports/W1-04.md",
       "acceptance": [
         "/oda/katil 6 haneli kod girişi, btn-odaya-katil ve hata-mesaji gösterir; ana sayfadaki alanın derin bağlanabilir eşidir (spec §4.1)",
         "JoinCodeField girişi normalleştirir: küçük harf büyüğe çevrilir, baştaki/sondaki boşluk kırpılır — ' abc234 ' -> ABC234 (KK-034 birim testi)",
@@ -1274,10 +1274,10 @@
       "agent": "xox-devops",
       "deps": [],
       "conflictSet": [".github/workflows/ci.yml"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/CI-002",
-      "report": null,
+      "report": "docs/board/reports/CI-002.md",
       "blockedReason": null,
       "acceptance": [
         "gates isi GERCEK bir CI kosusuyla yesil kanitlanir — YAML-in dogru gorunmesi kanit degil",
@@ -1286,7 +1286,8 @@
         "SONDA: kasitli kirilan bir test CI-i KIRMIZI yapiyor mu? Kapinin gercekten atesLendiginin kaniti bu",
         "YASAK: Atlas kimligini GitHub Secrets-a koymak (repo PUBLIC) · MONGODB_URI yoksa testleri atlamak (oruntu #2-yi CI seviyesine tasir) · hookTimeout buyutmek",
         "E2E (preview) is akisi surekli skipped donuyor — teshis edilip raporlanir, duzeltilmez"
-      ]
+      ],
+      "mergeSha": "2a5121b"
     },
     {
       "id": "OPS-005",
