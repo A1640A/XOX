@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T03:02:46.259Z",
+  "updatedAt": "2026-08-25T03:13:11.202Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -541,7 +541,7 @@
       "agent": "xox-dev-web",
       "deps": ["E2E-001"],
       "conflictSet": ["apps/web/app/oda/katil/**", "apps/web/components/JoinCodeField.tsx"],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W1-04",
       "report": "docs/board/reports/W1-04.md",
@@ -557,7 +557,8 @@
         "pnpm gates temiz",
         "ROOM_CODE_ALPHABET degistirilirse roomCodeSchema regex-i de turetilmis olmali (CTR-001 duzeltiyor). Alfabeye karakter eklenip regex guncellenmezse oda KURULUR ama KATILINAMAZ."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "fa6ffd7"
     },
     {
       "id": "E2E-002",
@@ -597,10 +598,10 @@
       "agent": "xox-qa-e2e",
       "deps": ["W1-02", "W1-03"],
       "conflictSet": ["apps/e2e/tests/result-rematch.spec.ts", "apps/e2e/tests/reconnect.spec.ts"],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/E2E-003",
-      "report": null,
+      "report": "docs/board/reports/E2E-003.md",
       "acceptance": [
         "KK-050 yeşil: kazananda 'Kazandın!', kaybedende 'Kaybettin.'; HER İKİ ekranda da kazanan çizginin 3 hücresi data-kazanan=\"true\" taşır",
         "KK-051 yeşil: 9 hücre dolar ve kazanan yoksa iki ekranda da 'Berabere.'",
