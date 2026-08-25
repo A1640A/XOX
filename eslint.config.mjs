@@ -252,7 +252,7 @@ export default tseslint.config(
 
   // Konfig dosyaları — tip bilgisi gerektirmeyen
   {
-    files: ['**/*.config.{js,mjs,ts}', '**/*.setup.ts', 'vitest.shared.ts'],
+    files: ['**/*.config.{js,mjs,ts}', '**/*.setup.ts', 'vitest.shared.ts', '.size-limit.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
 
