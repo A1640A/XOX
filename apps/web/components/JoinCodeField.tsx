@@ -67,6 +67,16 @@ export function JoinCodeField(): React.ReactElement {
         setError('SERVER_ERROR')
         return
       }
+      // İnceleme: `canJoin === false` KÖRLEMESİNE ROOM_FULL'e eşlenemez —
+      // `waiting` durumunda koltuklar dolu OLABİLİR ama oda `finished` iken
+      // de `canJoin` false döner ve o oda dolu değil, oyun BİTMİŞTİR (KK-033).
+      // `playing` durumunda ise `join.ts`'in tek yazımlı geçişi (`state:
+      // 'playing'` yalnız ikinci koltuk dolarken YAZILIR) iki koltuğun da
+      // dolu olduğunu garanti eder — bu yüzden `ROOM_FULL` orada da doğrudur.
+      if (parsedRoom.data.state === 'finished') {
+        setError('GAME_OVER')
+        return
+      }
       if (!parsedRoom.data.canJoin) {
         setError('ROOM_FULL')
         return
