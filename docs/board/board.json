@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T01:49:40.031Z",
+  "updatedAt": "2026-08-25T02:26:43.844Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -443,10 +443,10 @@
       "agent": "xox-dev-web",
       "deps": ["E2E-001"],
       "conflictSet": ["apps/web/app/oyna/**", "apps/web/components/computer/**"],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W1-01",
-      "report": null,
+      "report": "docs/board/reports/W1-01.md",
       "acceptance": [
         "/oyna/bilgisayar üç zorluk düğmesi (zorluk-easy/-medium/-unbeatable) gösterir; varsayılan seçili olan zorluk-medium'dur (KK-020)",
         "Bilgisayar hamlesi YALNIZ @xox/game-core'un chooseMove/bestMove fonksiyonundan gelir; apps/web içinde minimax ya da kural yeniden implementasyonu YOK (KK-022 — boundaries + kod incelemesi)",
@@ -459,7 +459,8 @@
         "Tüm metinler tr.computer.*'tan gelir; bileşende Türkçe string literal yok. 'Bilgisayara karşı oyunlar istatistiklere ve puana sayılmaz.' notu ekranda görünür",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "eb0a06d"
     },
     {
       "id": "W1-02",
@@ -476,10 +477,10 @@
         "apps/web/lib/realtime/handlers/rematch.ts",
         "apps/web/components/room/ResultPanel.tsx"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W1-02",
-      "report": null,
+      "report": "docs/board/reports/W1-02.md",
       "acceptance": [
         "finishGame CAS'tır: Game.findOneAndUpdate({ _id: gameId, finishedAt: null }, {...}) — null dönerse HİÇBİR ŞEY yapılmaz. Yarışın tek kazananı bu CAS'tır (tasarım §9)",
         "İDEMPOTANS (KK-053, zorunlu test): aynı gameId ikinci kez işlendiğinde users.stats sayaçları DEĞİŞMEZ. Test iki ardışık finishGame çağrısı yapar ve doküman farkını karşılaştırır",
@@ -497,7 +498,8 @@
         "Testler xox_test'e karşı yeşil; pnpm gates temiz",
         "BORC (WS-001 incelemesi): apps/web/lib/game/room-view.ts:25 — \"finished ama tahta bitmemis\" dali {kind:draw} donuyor. P0-da ULASILAMAZ (dogrulandi: applyMove finished-i yalniz terminal tahtada yaziyor, resign/settle/finishGame iskeletleri firlatiyor ve handler-lar onlari cagirmiyor). AMA resign yazildigi gun pes eden oyuncu ve rakibi game:over {kind:draw} gorecek ve HICBIR kapi kirilmayacak. Bu kart sonucu (kazanan + EndReason) tasiyacak bir alan acmali; rooms dokumaninda bugun boyle bir alan YOK."
       ],
-      "blockedReason": null
+      "blockedReason": "KRITER 11 ACIK: rematch:cancelled{reason:opponent-left} uretilmiyor. Birlesik inceleme UC DEGIL DORT katman gerektigini buldu: (1) detach.ts CAS DONGUSU ICINDE rematch:null (W1-03 sonrasi yeri degisti) (2) connection.ts:205-208 sebep sabit kodlu expired (3) ResultPanel sinyali — DIKKAT: handoff graceEndsAt onerdi ama W1-03 finished odada disconnected damgalamiyor, o sinyal DAIMA null (4) YENI: packages/shared/src/room-client.ts:329 indirgeyici rematch:cancelled-in reason-ini TAMAMEN ATIYOR. Dorduncusu olmadan digerleri calissa bile ekran expired ile opponent-left-i ayirt edemez. Ayrica detach.test.ts:160-179 finished odada disconnected YAZILMAZ diye kilitliyor — o test W1-03 kapsami icin dogru, kriter 11 cozumu rematch:null uzerinden gitmeli, disconnected uzerinden DEGIL.",
+      "mergeSha": "2288183"
     },
     {
       "id": "W1-03",
@@ -512,10 +514,10 @@
         "apps/web/lib/realtime/rotate.ts",
         "apps/web/components/room/ConnectionBadge.tsx"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W1-03",
-      "report": null,
+      "report": "docs/board/reports/W1-03.md",
       "acceptance": [
         "detachConnection koşullu yazar: yalnız presence[seat].connId === kapanan connId ise presence[seat]=null ve (state==='playing' ise) disconnected={seat,at,graceEndsAt=now+DISCONNECT_GRACE_SECONDS} yazılır, version 1 artar",
         "İKİ YÖNLÜ TEST: devredilmiş (takeover edilmiş) eski bağlantının kapanışı HİÇBİR ŞEY yazmaz — aksi halde takeover anında sahte bir 'rakip koptu' yayınlanır (spec §3.2, klasik yarış hatası)",
@@ -528,7 +530,8 @@
         "connection.ts, handlers/index.ts ve lib/client/use-room.ts AÇILMAZ (delta ve eylem yüzeyi Dalga 0'da tamamlandı)",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "643c97a"
     },
     {
       "id": "W1-04",
@@ -1283,6 +1286,25 @@
         "SONDA: kasitli kirilan bir test CI-i KIRMIZI yapiyor mu? Kapinin gercekten atesLendiginin kaniti bu",
         "YASAK: Atlas kimligini GitHub Secrets-a koymak (repo PUBLIC) · MONGODB_URI yoksa testleri atlamak (oruntu #2-yi CI seviyesine tasir) · hookTimeout buyutmek",
         "E2E (preview) is akisi surekli skipped donuyor — teshis edilip raporlanir, duzeltilmez"
+      ]
+    },
+    {
+      "id": "OPS-005",
+      "title": "rescue tag temizligi + danger.log hic yazmiyor",
+      "tier": "P2",
+      "wave": "2",
+      "agent": "xox-devops",
+      "deps": [],
+      "conflictSet": [".claude/hooks/destructive-snapshot.sh"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "82 adet rescue/* tag-i birikti (yalniz yerel, push edilmedi). Eskilerini buda, saklama politikasi tanimla",
+        "MEKANIZMANIN YARISI OLU: .claude/danger.log HIC OLUSMAMIS. Yani kurtarma noktasi var ama NEYIN yapilmak uzere oldugu kayitli degil — geri donebilirsin ama neye ve neden donduugunu bilemezsin",
+        "SONDA: yikici bir islem tetikle, hem tag hem danger.log satirinin olustugunu GOSTER. Bu gecenin 1 numarali oruntusu (mekanizma var ama atesLenmiyor) tam olarak burada, ustelik harness-in kendisinde"
       ]
     }
   ]
