@@ -108,7 +108,25 @@ export function JoinCodeField(): React.ReactElement {
           }}
           placeholder={tr.home.codePlaceholder}
           className="border-border flex-1 border p-2"
-          maxLength={ROOM_CODE_LENGTH}
+          // DÜZELTME (W1-05, E2E-002'nin bulduğu gerçek hata): native `maxLength`
+          // BURADA KASITLI OLARAK KULLANILMIYOR. Tarayıcı `maxLength`'i React'in
+          // `onChange`'i devreye girmeden ÖNCE, ham (normalize edilmemiş) metin
+          // üzerinde uygular — yapıştırılan " abc234 " (baştaki boşlukla) önce
+          // 6 ham karaktere (" abc23") kırpılır, SONRA `normalizeInput` boşluğu
+          // atınca sondaki '4' hiç görülmeden "ABC23" kalır: bir karakter kaybı.
+          // Uzunluk sınırı artık YALNIZ `normalizeInput`'un sonundaki
+          // `.slice(0, ROOM_CODE_LENGTH)` tarafından, SÜZÜLMÜŞ (alfabe dışı
+          // karakterler atılmış) metin üzerinde uygulanıyor — bu sıra farkı
+          // hatayı ortadan kaldırıyor.
+          //
+          // Erişilebilirlik notu: `maxLength` kaldırılınca ekran okuyucuya
+          // alan uzunluğu native nitelik üzerinden bildirilmiyor olabilir, ama
+          // bu bilgi zaten KAYBOLMUYOR — görünür `<label>` metni ("Oda kodu (6
+          // hane)", `tr.home.codePlaceholder`) `htmlFor`/`id` ile input'a
+          // bağlı ve uzunluğu açıkça söylüyor; ekran okuyucu her odaklanmada
+          // bunu okur. Ayrıca sunucu tarafı `roomCodeSchema` zaten tam 6
+          // karakter dışını reddediyor, yani biçim doğrulaması native
+          // niteliğe hiçbir zaman tek başına dayanmıyordu.
         />
         <button type="submit" data-testid={TESTID.btnOdayaKatil} disabled={pending}>
           {tr.home.joinRoom}
