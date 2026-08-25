@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  COMPUTER_MOVE_DELAY_MS,
   DISCONNECT_GRACE_SECONDS,
   DISPLAY_NAME_MAX,
   DISPLAY_NAME_MIN,
@@ -130,5 +131,10 @@ describe('tasarım §2.7 yeni sabitleri', () => {
 
   it('ROOM_CREATE_MAX_ATTEMPTS 5', () => {
     expect(ROOM_CREATE_MAX_ATTEMPTS).toBe(5)
+  })
+
+  it('COMPUTER_MOVE_DELAY_MS 400 — KK-023 1000 ms üst sınırının altında', () => {
+    expect(COMPUTER_MOVE_DELAY_MS).toBe(400)
+    expect(COMPUTER_MOVE_DELAY_MS).toBeLessThanOrEqual(1000)
   })
 })
