@@ -1,17 +1,35 @@
+'use client'
+
 import type { RoomCode } from '@xox/shared'
+import { tr } from '@/messages/tr'
+import { CopyButton } from './CopyButton'
 
 export interface InviteLinkProps {
   readonly roomCode: RoomCode
 }
 
 /**
- * İSKELET (kart §4c, inceleme MAJOR #4) — W3-03 "Emoji tepkileri, hız sınırı
- * ve davet linki" görevi KK-120'yi ("Linki kopyala" → `<origin>/davet/<KOD>`,
- * `data-kopyalandi`) burada uygular; `components/room/CopyButton.tsx` (bu
- * görevde "Kodu kopyala" için zaten yazıldı) doğrudan tüketilebilir.
- * `roomCode` prop'u BİLEREK gerçek değere bağlı mount edilir.
+ * KK-120 — "Linki kopyala": panoya `<origin>/davet/<KOD>` yazar,
+ * `data-kopyalandi="true"` 2 sn görünür (davranış `CopyButton`da, tek yerde).
+ *
+ * **Neden `/davet/` ve `/oda/` değil:** `/oda/:path*` middleware korumasındadır
+ * (`auth.config.ts`), yani linki açan oturumsuz kullanıcı `/giris`e düşer.
+ * `/davet/*` bilerek MUAFTIR ve kendisi yönlendirir — oturumsuz kullanıcıyı
+ * `?donus=/oda/<KOD>` ile `/giris`e, oturumluyu doğrudan odaya yollar. Oda kodu
+ * bu sayede giriş turunda KAYBOLMAZ (`app/davet/invite-target.ts`).
+ *
+ * URL çalışma zamanında, YALNIZ tıklamada (`getValue`) hesaplanır — render
+ * sırasında `window.location`a bakılsaydı sunucu ve istemci farklı metin
+ * üretir ve hidrasyon uyuşmazlığı çıkardı.
  */
-export function InviteLink(props: InviteLinkProps): React.ReactElement | null {
-  void props
-  return null
+export function InviteLink({ roomCode }: InviteLinkProps): React.ReactElement {
+  return (
+    <section className="flex flex-col gap-1">
+      <p>{tr.room.shareHint}</p>
+      <CopyButton
+        label={tr.room.copyLink}
+        getValue={() => `${window.location.origin}/davet/${roomCode}`}
+      />
+    </section>
+  )
 }
