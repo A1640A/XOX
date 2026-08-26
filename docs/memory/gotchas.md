@@ -1317,3 +1317,27 @@ hatasına düşürmek tipe hiç yansımaz — `route.ts` derleniyordu, sadece HT
 
 **Kural:** bir dalın durumunu bildirmeden önce `typecheck` **ve** `test` koş. Tek kelimeyle
 "yeşil" demeden önce hangisini ölçtüğünü söyle.
+
+## 2026-08-26 · Kapsam eşiği, testin kendisini zayıflatmaya baskı yapabilir
+
+`game-core` %100 kapsam istiyor. `CORE-AI-001` sonrası eşik kırıldı: 99.79 stmt / 99.6 branch.
+Açıktaki tek yer **ürün kodu değildi** — `corpus.fixture.ts:105`:
+
+```ts
+if (board[result.move] !== null) illegal += 1
+```
+
+Bu bir **iddia sayacı**: doğru dalı ASLA çalışmamalı, çünkü arama geçersiz hamle döndürmüyor.
+Yani kapsam aracı, "hiç gerçekleşmemesi gereken hata dalı"nı eksik sayıyordu. O dalı
+kapatmanın tek yolu **aramayı bozmaktı** — kapsam metriği, testi zayıflatmaya doğru bir
+baskı üretiyordu.
+
+**Yanlış çözümler:** eşiği 99'a düşürmek (bütün ürün kodunu da gevşetir) ya da guard'ı
+silmek (testin iddiasını yok eder).
+
+**Doğru çözüm:** `*.fixture.ts`'i kapsam ölçümünden çıkarmak — `*.test.ts` zaten çıkarılmıştı
+ve fixture aynı kategori: test iskelesi, ürün değil. Ürün dosyalarının tamamı %100'de kaldı.
+
+**Genel ders:** bir kapı kırıldığında önce **neyi ölçtüğünü** sor. Eksik kapsam ürün kodunda
+mı, yoksa ölçümün sınırı mı yanlış çizilmiş? İkincisiyse eşiği düşürmek, doğru olan testi
+cezalandırır. Ölçümün kapsamını düzelt, eşiği değil.

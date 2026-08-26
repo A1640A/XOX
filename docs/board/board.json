@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T21:30:09.764Z",
+  "updatedAt": "2026-08-26T21:43:54.348Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1802,10 +1802,10 @@
         "packages/game-core/src/index.ts",
         "packages/game-core/stryker.config.mjs"
       ],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/CORE-AI-001",
-      "report": null,
+      "report": "docs/board/reports/CORE-AI-001.md",
       "acceptance": [
         "URUN GERCEGI (AI-SPIKE-001): 11x11-in HICBIR K degeri derinlik 3-u gercekci butcede tamamlayamiyor (tutucu tahmin 3.2-6.2 sn). Derinlik 2 her yerde <=260 ms guvenli. Yani 11x11-de iteratif derinlesme pratikte derinlik 2-de kalacak — bu bir KUSUR DEGIL, olculmus bir sinir. Raporda ACIKCA yaz, kullanici beklentisi buna gore kurulsun.",
         "AI-SPIKE-001 OLCTU — bu sayilari kullan, yeniden tahmin etme: CANDIDATE_RADIUS=2 (r=1->2 gercek sicrama, r=2->3 getirisi dusuk) · MAX_SEARCH_DEPTH=6 · AI_NODE_BUDGET=30000 dugum/hamle (Vitest, deterministik) · AI_BUDGET_MS=1000 (tarayici). AI_BUDGET_MS DOGRULANMAMIS: R=6 varsayimina DOGRUSAL bagli, gercek olcum gelince x(gercek_R/6) ile tazelenir. Bu damgayi ai-config.ts yorumuna DA yaz.",
@@ -1831,7 +1831,9 @@
         "KALIBRASYON SAPMASI: AI-SPIKE-001 basit prototiple olctu ve x3 tutucu duzeltme uyguladi. Gercek kod yazilinca AI_BUDGET_MS YENIDEN OLCULMELI. AI_NODE_BUDGET dugum bazli oldugu icin bu duzeltmeden etkilenmiyor — once onu kilitle.",
         "CORE-CFG-001 BIRAKTI: ai.ts yorumundaki WIN_SCORE > BOARD_SIZE degismezi artik OLMAYAN bir ada atif yapiyor (KK-B48). ai.ts-e hic dokunulmadi."
       ],
-      "blockedReason": "AJAN OTURUM LIMITINE TAKILIP DUSTU (API hatasi, sifirlanma 14:10). Kod BITMIS gorunuyor, is KAYBOLMADI: agac temiz, 5 commit, main icine merge edildi. BENIM DOGRULADIKLARIM: typecheck+lint sessiz, 241 test yesil (mainde 179 idi, +62). ai.test.ts HIC DEGISMEMIS ve geciyor -> 3x3 yolu korunmus; ai.ts ADR-0013 §1-in iki-kod-yolu ayrimini acikca yapiyor (config.size===3 -> bestMove, aksi -> searchMove). AI_BUDGET_MS-in DOGRULANMAMIS damgasi ai-config.ts:102-de DURUYOR. EKSIK IKI SEY: (1) mutasyon skoru %95.10, esik %98 — ajan hayatta kalanlari oldurmeye calisirken dustu; su an kendim olcuyorum. (2) docs/board/reports/CORE-AI-001.md HIC YAZILMADI — 11x11 derinlik sinirinin acik ifadesi de orada olacakti."
+      "blockedReason": null,
+      "mergeSha": "1c5ad3c",
+      "note": "Ajan oturum limitinde dustu ama isi COMMITLEMISTI; raporu lead yazdi ve her sayiyi kendisi olctu. Mutasyon %98.02 (esik %98), 241 test, ai.ts %100. OLCUM KARTI YANLISLADI: kartta 11x11 derinlik 3 imkansiz/derinlik 2 ~260ms yaziyordu (spike projeksiyonu); gercek 11x11 derinlik 4 @ ~100-133ms. Bes kosunun besi de TAM 30000 dugumde durdu -> baglayici kisit dugum butcesi, duvar saati DEGIL; AI_BUDGET_MS DOGRULANMAMIS damgasi yerinde kaliyor ve pratikte baglayici degil."
     },
     {
       "id": "DB-BOARD-001",
