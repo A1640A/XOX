@@ -1159,3 +1159,20 @@ Parametrenin sıfır **olmadığı** bir konfigürasyonda (ör. `(6,4)`) da **el
 
 Genel kural: bir parametreyi sınarken, o parametrenin **nötr elemanı olmadığı** en az bir vaka
 seç. Varsayılan konfigürasyon çoğu zaman nötr elemandır ve tam da bu yüzden hiçbir şey ölçmez.
+
+## 2026-08-26 · Ajanlar worktree'ye GEÇMEDEN yazmaya başlıyor — üç kez oldu
+
+`DESIGN-001a`, `W3-04` ve daha önce `AUTH-002` ilk dosyalarını **ana checkout'a** yazdı, sonra
+fark edip `git stash`/`mv`/`cp` ile doğru worktree'ye taşıdı ve `main`'i temizledi. Üçü de
+dürüstçe bildirdi, hiçbirinde kalıcı zarar olmadı — ama üç kez tekrarlanan bir şey tesadüf değil.
+
+**Kök neden:** kart prompt'u `git worktree add` + `cd` bloğunu veriyor, ama ajan önce dosya
+okumaya/yazmaya başlayıp `cd`'yi sonraya bırakabiliyor. Araçların çalışma dizini ana checkout.
+
+**Önlem (kart yazarken):** worktree kurulum bloğunu prompt'un **en başına** koy ve şu cümleyi
+ekle: _"Herhangi bir dosya okumadan/yazmadan ÖNCE worktree'yi kur ve içine geç. İlk `Write`/`Edit`
+çağrından önce `pwd` ile doğrula."_
+
+**Lead tarafında:** merge öncesi `git status --porcelain` ana checkout'ta **her zaman** kontrol
+edilir. Bu gece üç kez temiz çıktı çünkü ajanlar kendileri temizledi — ama temizlemeselerdi
+kör bir `git add` onları merge edilmemiş iş olarak `main`'e sokardı (CLAUDE.md kural 6).

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T00:32:45.276Z",
+  "updatedAt": "2026-08-26T06:19:25.286Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -892,10 +892,10 @@
         "apps/web/app/api/friends/**",
         "apps/web/components/room/FriendAddButton.tsx"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W3-04",
-      "report": null,
+      "report": "docs/board/reports/W3-04.md",
       "acceptance": [
         "friendships kaydı her zaman userA < userB sıralı yazılır; {userA:1,userB:1} unique indeksi çift kaydı ve ters yönlü kopyayı engeller (test)",
         "KK-126: POST /api/friends YALNIZ birlikte BİTMİŞ bir oyunu olan kullanıcıya istek gönderebilir; uygunluk games{pairKey, finishedAt} indeksinden sorgulanır. Başka bir userId için istek HTTP 403 + NOT_FRIENDS_ELIGIBLE döner (kullanıcı numaralandırma yüzeyi yok)",
@@ -906,7 +906,8 @@
         "FriendAddButton yalnız kendi dosyasında doldurulur; ResultPanel.tsx ve RoomScreen.tsx AÇILMAZ (slot UI-SKEL-001'de mount edildi)",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "bda8608"
     },
     {
       "id": "E2E-006",
@@ -2080,9 +2081,9 @@
       "id": "CORE-AI-002",
       "title": "3x3 minimax 1000ms tavanini IKI KAT asiyor — alfa-beta ekle",
       "tier": "P1",
-      "wave": "B2",
+      "wave": "B2b",
       "agent": "xox-dev-core",
-      "deps": ["CORE-CFG-001"],
+      "deps": ["CORE-AI-001"],
       "conflictSet": ["packages/game-core/src/ai.ts", "packages/game-core/src/ai.test.ts"],
       "status": "todo",
       "attempts": 0,
@@ -2090,6 +2091,7 @@
       "report": null,
       "blockedReason": null,
       "acceptance": [
+        "SIRA DUZELTILDI (lead): CORE-AI-001 ile AYNI dosyayi (ai.ts) aciyor — paralel gidemezler. B2-den B2b-ye alindi, CORE-AI-001 bittikten SONRA. Ayrica bu kart ADR-0013 §1-in 3x3 yolunu bilerek butcesiz birakma kararini DEGISTIRIYOR; once ana AI yerine otursun, sonra 3x3 optimize edilsin.",
         "OLCULDU (AI-SPIKE-001, gercek uretim bestMove kodu esbuild ile bundle-lanip tarayicida): R=6 kisitlamasinda 1982-2265 ms. KK-023 tavani 1000 ms. IKI KAT asim",
         "BU OZELLIGIN BORCU DEGIL — bugun YAYINLANMIS kodda var. Tahta boyutu ozelligi onu yalnizca GORUNUR kildi",
         "AI_BUDGET_MS BUNU COZEMEZ: ADR-0013 §1 3x3 yolunu bilerek butcesiz birakiyor (yenilmezlik kanitinin kostugu kod aynen kalsin diye)",
