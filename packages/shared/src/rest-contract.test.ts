@@ -12,6 +12,7 @@ import {
   profileUpdateBodySchema,
   registerBodySchema,
   registerResponseSchema,
+  roomCreateBodySchema,
   roomCreateResponseSchema,
   roomStateResponseSchema,
   wsTicketResponseSchema,
@@ -79,14 +80,44 @@ describe('oda uç noktaları', () => {
     expect(roomCreateResponseSchema.safeParse({ code: 'ab2c3d' }).success).toBe(false)
   })
 
-  it('GET /api/rooms/[code] yanıtı durum, koltuklar ve katılabilirlik taşır', () => {
+  it('GET /api/rooms/[code] yanıtı durum, koltuklar, katılabilirlik VE boyut/K taşır (SB-09, US-B03)', () => {
     const result = roomStateResponseSchema.safeParse({
       code: 'AB2C3D',
       state: 'waiting',
       seats: { X: { userId: 'u1', name: 'Ömer' }, O: null },
       canJoin: true,
+      size: 11,
+      winLength: 5,
     })
     expect(result.success).toBe(true)
+  })
+
+  it('size veya winLength eksikse reddeder (CTR-BOARD-001 tüketici sondası)', () => {
+    const taban = {
+      code: 'AB2C3D',
+      state: 'waiting' as const,
+      seats: { X: null, O: null },
+      canJoin: true,
+      size: 3 as const,
+      winLength: 3,
+    }
+    expect(roomStateResponseSchema.safeParse({ ...taban, size: undefined }).success).toBe(false)
+    expect(roomStateResponseSchema.safeParse({ ...taban, winLength: undefined }).success).toBe(
+      false,
+    )
+  })
+
+  it('bilinmeyen boyutu reddeder', () => {
+    expect(
+      roomStateResponseSchema.safeParse({
+        code: 'AB2C3D',
+        state: 'waiting',
+        seats: { X: null, O: null },
+        canJoin: true,
+        size: 9,
+        winLength: 3,
+      }).success,
+    ).toBe(false)
   })
 
   it('canJoin değişmezi: yalnız waiting + boş koltuk varsa true', () => {
@@ -98,6 +129,8 @@ describe('oda uç noktaları', () => {
         state: 'finished',
         seats: dolu,
         canJoin: true,
+        size: 3,
+        winLength: 3,
       }).success,
     ).toBe(false)
     // Ters yön: katılınabilir oda canJoin:false diyemez.
@@ -107,6 +140,8 @@ describe('oda uç noktaları', () => {
         state: 'waiting',
         seats: { X: { userId: 'u1', name: 'Ömer' }, O: null },
         canJoin: false,
+        size: 3,
+        winLength: 3,
       }).success,
     ).toBe(false)
     // Oynanan oda: koltuklar dolu, katılınamaz.
@@ -116,6 +151,8 @@ describe('oda uç noktaları', () => {
         state: 'playing',
         seats: dolu,
         canJoin: false,
+        size: 3,
+        winLength: 3,
       }).success,
     ).toBe(true)
   })
@@ -127,8 +164,73 @@ describe('oda uç noktaları', () => {
         state: 'paused',
         seats: { X: null, O: null },
         canJoin: true,
+        size: 3,
+        winLength: 3,
       }).success,
     ).toBe(false)
+  })
+})
+
+/**
+ * CTR-BOARD-001 — TÜKETİCİ SONDASI (ADR-0015 §7, kartın kabul kriteri).
+ *
+ * Katılma ekranının okuduğu alan listesi tasarımın §3.2 tablosundan ELLE
+ * KOPYALANDI; `Object.keys(roomStateResponseSchema.shape)` ya da `z.infer`
+ * üzerinden ÜRETİLMEDİ (gotcha örüntü 2 — kendine-referanslı liste silmeyi
+ * göremez). `gecerliYanit` bu bloğun DIŞINDAN, bağımsız yazılmış bir örnektir.
+ */
+describe('CTR-BOARD-001 — tüketici sondası (ADR-0015 §7, tasarım §3.2)', () => {
+  const katilmaEkraninınOkudugu = ['code', 'state', 'seats', 'canJoin', 'size', 'winLength']
+
+  const gecerliYanit = {
+    code: 'AB2C3D',
+    state: 'waiting' as const,
+    seats: { X: { userId: 'u1', name: 'Ömer' }, O: null },
+    canJoin: true,
+    size: 11 as const,
+    winLength: 5,
+  }
+
+  it('katılma ekranının okuduğu her alan roomStateResponse’ta VARDIR (6 alan)', () => {
+    expect(katilmaEkraninınOkudugu).toHaveLength(6)
+    const sonuc = roomStateResponseSchema.safeParse(gecerliYanit)
+    expect(sonuc.success).toBe(true)
+    if (!sonuc.success) return
+    for (const alan of katilmaEkraninınOkudugu) {
+      expect(Object.prototype.hasOwnProperty.call(sonuc.data, alan)).toBe(true)
+    }
+  })
+
+  it.each(katilmaEkraninınOkudugu.filter((alan) => alan !== 'canJoin'))(
+    '%s eksiltilince şema REDDEDER',
+    (alan) => {
+      const bozuk = Object.fromEntries(
+        Object.entries(gecerliYanit).filter(([anahtar]) => anahtar !== alan),
+      )
+      expect(roomStateResponseSchema.safeParse(bozuk).success).toBe(false)
+    },
+  )
+})
+
+describe('POST /api/rooms gövdesi (KK-B14/B15, ADR-0015 §2)', () => {
+  it('boş nesneyi kabul eder — bugünkü davranış bit düzeyinde korunur', () => {
+    // `req.json()` patlarsa route `{}`'e düşer (tasarım §5.1); şemanın işi
+    // yalnız NESNEYİ doğrulamaktır — ham `undefined`'ı kabul ETMEZ, çağıran
+    // (route) bu dönüşümü kendisi yapar.
+    expect(roomCreateBodySchema.safeParse({}).success).toBe(true)
+  })
+
+  it('yalnız size verilirse kabul eder (winLength opsiyonel)', () => {
+    expect(roomCreateBodySchema.safeParse({ size: 11 }).success).toBe(true)
+  })
+
+  it('geçerli size+winLength çiftini kabul eder', () => {
+    expect(roomCreateBodySchema.safeParse({ size: 6, winLength: 4 }).success).toBe(true)
+  })
+
+  it('bilinmeyen boyutu ve aralık dışı K değerini reddeder', () => {
+    expect(roomCreateBodySchema.safeParse({ size: 4 }).success).toBe(false)
+    expect(roomCreateBodySchema.safeParse({ size: 6, winLength: 2 }).success).toBe(false)
   })
 })
 
