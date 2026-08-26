@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T09:00:29.219Z",
+  "updatedAt": "2026-08-26T09:14:51.113Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2183,12 +2183,13 @@
       "deps": [],
       "report": null,
       "branch": null,
-      "blockedReason": "KULLANICI KARARI GEREKIYOR. Kok neden BENIM: projeyi omeerdursunn takimina tasidim, o takimda Vercel Authentication varsayilan acik (ssoProtection.enabled=true, deploymentType=all_except_custom_domains). Dogrulandi (API). Sonuc: xox.omerdursun.com calisiyor ama TUM *.vercel.app onizlemeleri SSO duvarinin arkasinda; global-setup.ts-in on kontrolu /api/health-ten JSON yerine HTML SSO sayfasi aldi. Dalga 0-daki 11/11 gercek-preview kosusu TASIMADAN ONCEKI takimdaydi — kapiyi ben kapattim, fark etmedim. Sececegimiz yol B (bypass secret) ama secret degerini okumak icin gereken izin reddedildi (Vercel auth.json). Enum-da yalniz production-u koruyan secenek YOK: ya SSO acik (preview bloklu) ya tamamen kapali.",
+      "blockedReason": "KOD TARAFI BITTI ve OLCULDU (5edd998). Kalan tek sey secret DEGERI — kullanici B secenegini secti, degeri panosundan dogrudan GitHub-a koyacak (gh secret set), transcript-e girmeyecek. BAGLANAN: apps/e2e/bypass-headers.ts (tek kaynak), playwright.config.ts use.extraHTTPHeaders, global-setup.ts IKI context (globalSetup use blogunu OKUMAZ — ajanin dustugu nokta), e2e-preview.yml env. KANITLANAN: gercek SSO duvarina karsi her iki teshis dali da doğru mesaji verdi (secret yok → TANIMSIZ; sahte secret → REDDEDILDI). KANITLANMAYAN: gecisin KENDISI — gercek secret gelene kadar acik.",
       "acceptance": [
         "SECENEK B (TERCIH EDILEN): Protection Bypass for Automation secret-i GitHub secret VERCEL_AUTOMATION_BYPASS_SECRET olarak eklenir; playwright.config.ts extraHTTPHeaders-a x-vercel-protection-bypass ve x-vercel-set-bypass-cookie: samesitenone eklenir; e2e-preview.yml env-ine gecirilir. Preview PRIVATE kalir.",
         "SECENEK A: ssoProtection kapatilir. Preview-lar HERKESE ACIK olur — repo PUBLIC ve preview gercek Atlas kumesine (xox_test) baglaniyor. Onerilmiyor.",
         "SECRET REPOYA GIRMEZ. Repo PUBLIC. Yalniz GitHub secret + gerekiyorsa yerel .env.local (gitignore).",
-        "Kapanis kaniti: gercek Vercel preview URL-ine karsi 21/21 yesil ve /api/health JSON donuyor (HTML DEGIL)."
+        "Kapanis kaniti: gercek Vercel preview URL-ine karsi 21/21 yesil ve /api/health JSON donuyor (HTML DEGIL).",
+        "SSO TESPITI OLCULEREK BULUNDU, varsayilmadi: govde metni (7 aday dizgenin hicbiri yok), durum kodu (duvar 401 degil HTTP 200 donuyor) ve set-cookie (Playwright yonlendirmeyi TAKIP ettigi icin zincirde tukeniyor, headersArray-de 0 adet) ELENDI. Tek kararli iz: yanitin SON ORIGIN-i (vercel.com) istenen origin-den farkli."
       ],
       "conflictSet": ["apps/e2e/playwright.config.ts", ".github/workflows/e2e-preview.yml"]
     }

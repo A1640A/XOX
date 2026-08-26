@@ -1253,3 +1253,31 @@ otomasyona header olarak vermek (`x-vercel-protection-bypass`).
 göründü; kök neden React StrictMode'un mount effect'ini iki kez çalıştırması. **Üretim
 derlemesinde** (`next build && next start`) effect bir kez çalışıyor ve test yeşil. Bir
 E2E kırmızısını koda yazmadan önce dev sunucusunun kendi davranışı olup olmadığını ele.
+
+## 2026-08-26 · Playwright'ta `globalSetup` `use` bloğunu OKUMAZ
+
+`playwright.config.ts` → `use.extraHTTPHeaders` yalnız **testlerin** context'lerine uygulanır.
+`globalSetup` kendi `request.newContext()` / `browser.newContext()` çağrılarını yapar ve
+**`use`'tan hiçbir şey miras almaz.** OPS-008'de tam bu yüzden atlatma başlığı testlere
+gitti ama ön kontrol duvara çarptı — hata da testlerden değil setup'tan geldiği için
+"config doğru, öyleyse bağlandı" varsayımı yanlıştı.
+
+Config'e bir `use` alanı eklerken `globalSetup`'ın da ona ihtiyacı olup olmadığını sor;
+varsa **açıkça** geç ve ortak değeri tek bir modülden üret (`bypass-headers.ts`).
+
+## 2026-08-26 · Bir duvarı tespit ederken önce neyin ölçülebilir olduğunu ölç
+
+Vercel SSO duvarını tanımak için üç makul sinyalin **üçü de** işe yaramadı; hepsi denenip
+elendi:
+
+| Aday                                                               | Sonuç                                                                                                                          |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Gövde metni (`Authentication Required`, `vercel.com/sso`, +5 aday) | **Yok.** Sayfa hash'li sınıf adlarından oluşan bir Next.js kabuğu                                                              |
+| Durum kodu                                                         | **Yanıltıcı.** Duvar `401` değil **`200`** dönüyor                                                                             |
+| `set-cookie: _vercel_sso_nonce`                                    | curl görüyor, **Playwright görmüyor** — yönlendirmeyi takip ettiği için başlık zincirde tükeniyor (`headersArray()`'de 0 adet) |
+| **`response.url()`'in origin'i**                                   | ✅ İstek bizim origin'e gitti, yanıt `vercel.com`'dan döndü                                                                    |
+
+İlk iki denemem yanlış teşhis koyan bir "iyileştirme" üretecekti; ikisini de gerçek duvara
+karşı koşup ıskaladığını gördüğüm için yakalandı. **Teşhis kodu da en az düzelttiği hata
+kadar test edilmeli** — sessizce yanlış teşhis koyan bir hata mesajı, hiç mesaj olmamasından
+daha pahalıdır.
