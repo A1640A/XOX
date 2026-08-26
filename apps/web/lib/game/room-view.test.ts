@@ -214,6 +214,9 @@ describe('toStateMessage', () => {
       graceEndsAt: NOW + 30_000,
       rematch: { by: 'X', expiresAt: NOW + 60_000 },
       serverTime: NOW,
+      size: 3,
+      winLength: 3,
+      lastMove: null,
     })
   })
 
@@ -233,5 +236,75 @@ describe('toStateMessage', () => {
     const room = makeRoom()
     const message = toStateMessage(room, 'X', NOW)
     expect(message.board).not.toBe(room.board)
+  })
+})
+
+/**
+ * DB-BOARD-001 (ADR-0014 §2/§7) — `size`/`winLength`/`lastMove` `resolveBoardConfig`
+ * ve `RoomDoc.moves`'un SON elemanından türetilir; sabitten TÜRETİLMİŞ bir
+ * beklenti değil, ELLE yazılmış çıplak değerlerle sınanır (nötr eleman körlüğüne
+ * karşı: {3,3} DIŞINDA bir vaka da — {11,5} — sınanır).
+ */
+describe('toStateMessage · size/winLength/lastMove (ADR-0014)', () => {
+  it('alan yoksa (eski kayıt) SESSİZCE {3,3} döner ve lastMove null olur', () => {
+    const message = toStateMessage(makeRoom({ size: undefined, winLength: undefined }), 'X', NOW)
+    expect(message.size).toBe(3)
+    expect(message.winLength).toBe(3)
+    expect(message.lastMove).toBeNull()
+  })
+
+  it('sıfır OLMAYAN bir konfigürasyon ({11,5}) birebir taşınır', () => {
+    const room = makeRoom({
+      size: 11,
+      winLength: 5,
+      board: Array.from({ length: 121 }, () => null),
+    })
+    const message = toStateMessage(room, 'X', NOW)
+    expect(message.size).toBe(11)
+    expect(message.winLength).toBe(5)
+    expect(message.board).toHaveLength(121)
+  })
+
+  it('lastMove RoomDoc.moves diziSİNİN SON elemanından üretilir, tamamı GÖNDERİLMEZ', () => {
+    const room = makeRoom({
+      moves: [
+        { index: 0, by: 'X', at: new Date(NOW - 2000) },
+        { index: 4, by: 'O', at: new Date(NOW - 1000) },
+      ],
+    })
+    const message = toStateMessage(room, 'X', NOW)
+    expect(message.lastMove).toStrictEqual({ index: 4, by: 'O' })
+    expect(message).not.toHaveProperty('moves')
+  })
+
+  it('moves boşsa lastMove null olur', () => {
+    const message = toStateMessage(makeRoom({ moves: [] }), 'X', NOW)
+    expect(message.lastMove).toBeNull()
+  })
+
+  it('KK-B70: 11×11 DOLU tahtada state mesajının JSON.stringify çıktısı < 4 KiB olur', () => {
+    const pattern: ('X' | 'O')[] = ['X', 'O']
+    const board = Array.from({ length: 121 }, (_, i) => pattern[i % 2] ?? 'X')
+    const moves = board.map((by, index) => ({
+      index,
+      by,
+      at: new Date(NOW - (121 - index) * 1000),
+    }))
+    const room = makeRoom({
+      size: 11,
+      winLength: 5,
+      board,
+      moves,
+      seats: {
+        X: { userId: 'kullanici-1-uzunca-bir-id', name: 'Çok Uzun Görünen Bir Ad' },
+        O: { userId: 'kullanici-2-uzunca-bir-id', name: 'Diğer Oyuncunun Da Uzun Adı' },
+      },
+    })
+
+    const message = toStateMessage(room, 'X', NOW)
+    const bytes = new TextEncoder().encode(JSON.stringify(message)).length
+    // Ölçüm bu testin kendisidir (kart kabul kriteri) — çıplak sınır 4096 bayt
+    // (WS maxPayload 8 KiB'in yarısı).
+    expect(bytes).toBeLessThan(4096)
   })
 })
