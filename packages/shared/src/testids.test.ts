@@ -8,8 +8,8 @@ import {
   leaderboardRowTestId,
 } from './testids'
 
-describe('TESTID (spec §2.0 kanca sözleşmesi)', () => {
-  it('tablonun tamamını birebir dışa verir', () => {
+describe('TESTID (spec §2.0 kanca sözleşmesi + ADR-0016 CTR-BOARD-001 eki)', () => {
+  it('tablonun tamamını birebir dışa verir (26 -> 31, ADR-0016)', () => {
     expect(TESTID).toEqual({
       tahta: 'tahta',
       durumMetni: 'durum-metni',
@@ -37,7 +37,16 @@ describe('TESTID (spec §2.0 kanca sözleşmesi)', () => {
       istatistikBeraberlik: 'istatistik-beraberlik',
       eloPuani: 'elo-puani',
       emojiBalonu: 'emoji-balonu',
+      tahtaBoyut3: 'tahta-boyut-3',
+      tahtaBoyut6: 'tahta-boyut-6',
+      tahtaBoyut11: 'tahta-boyut-11',
+      kazanmaUzunlugu: 'kazanma-uzunlugu',
+      oyunAyariOzeti: 'oyun-ayari-ozeti',
     })
+  })
+
+  it('tam 31 anahtar taşır (çıplak sayı — gotcha örüntü 2)', () => {
+    expect(Object.keys(TESTID)).toHaveLength(31)
   })
 
   it('kimlikler benzersizdir', () => {
@@ -60,6 +69,10 @@ describe('cellTestId', () => {
       'hucre-8',
     ])
   })
+
+  it('11×11 üst sınırı da çalışır (CTR-BOARD-001: kod DEĞİŞMEDİ, yalnız yorum)', () => {
+    expect(cellTestId(120)).toBe('hucre-120')
+  })
 })
 
 describe('numaralı kancalar', () => {
@@ -77,8 +90,8 @@ describe('numaralı kancalar', () => {
   })
 })
 
-describe('DATA_ATTR', () => {
-  it('spec §2.0 veri niteliklerini tek kaynakta tutar', () => {
+describe('DATA_ATTR (spec §2.0 + ADR-0016 CTR-BOARD-001 eki)', () => {
+  it('spec §2.0 veri niteliklerini tek kaynakta tutar (8 -> 11, ADR-0016)', () => {
     expect(DATA_ATTR).toEqual({
       tas: 'data-tas',
       kazanan: 'data-kazanan',
@@ -88,6 +101,13 @@ describe('DATA_ATTR', () => {
       kod: 'data-kod',
       tema: 'data-tema',
       kopyalandi: 'data-kopyalandi',
+      boyut: 'data-boyut',
+      kazanma: 'data-kazanma',
+      sonHamle: 'data-son-hamle',
     })
+  })
+
+  it('tam 11 anahtar taşır (çıplak sayı)', () => {
+    expect(Object.keys(DATA_ATTR)).toHaveLength(11)
   })
 })
