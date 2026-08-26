@@ -1203,3 +1203,24 @@ Genel bağlantı sınırı (WS-001) ise **kabul + ret** sayıyor ve bu doğru: o
 sayıyor ve bu **ayrım kasıtlı**.
 
 Sonda: sabit pencereye çeviren mutasyon "kalıcı ceza yok" testini kırmızıya döndürmeli.
+
+## 2026-08-26 · Protokol penceresi açıldığında `main` GEÇİCİ olarak kırılır — zincir kur, kırık merge etme
+
+`CTR-BOARD-001` `packages/shared`'ı genişletti (`stateMessageSchema`'ya `size`/`winLength`/
+`lastMove` zorunlu alanları). Sonuç: **altı paket yeşil, `apps/web` kırık** — tüketiciler o
+alanları henüz vermiyor. ADR-0015 §10.5 bunu "bölümlemenin bilinen zayıf noktası" diye
+işaretlemişti.
+
+**Yanlış çözüm:** kırık merge edip "sonraki kart düzeltir" demek. Bu gece CI'ın beş saat kırmızı
+kalması bu projenin en pahalı hatasıydı ve o zaman kimse _bilerek_ kırmamıştı bile.
+
+**Doğru çözüm — zincir:** sonraki kartların dalı `main`'den değil **açık pencerenin dalından**
+kesilir (`git worktree add … -b feat/SONRAKI feat/PENCERE`). Zincir yeşil olunca `main`'e **tek
+seferde** iner. `main` hiçbir an kırık görmez, `git bisect` temiz kalır.
+
+**Bedeli:** dal uzun yaşar ve `main`'e göre kayabilir. Karşılığı: kapı hiç yalan söylemez.
+
+**Ek kontrol:** pencere açıldığında kırılan dosyaların **hepsinin bir sahibi olduğunu** doğrula.
+`use-room.test.tsx` hiçbir bekleyen kartın çakışma kümesinde değildi (kapanmış `UI-SKEL-001`'e
+aitti) — fark edilmeseydi zincir sonuna kadar kırık kalırdı. Kırık dosya listesini çıkar,
+her birini bir karta ata, sahipsiz kalanı açıkça devret.
