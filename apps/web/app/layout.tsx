@@ -1,3 +1,5 @@
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { SessionProvider } from 'next-auth/react'
 import { auth } from '@/auth'
@@ -12,9 +14,11 @@ export const metadata: Metadata = {
 }
 
 /**
- * SICAK DOSYA DONDURMA #2 (kart) — bu dosya bu görevden sonra yalnız W2-04
- * (Analytics/Speed Insights) için açılır; tema değiştirici `components/profile/`
- * altında (W2-02) ayrı bir bileşendir, buraya dönmez.
+ * SICAK DOSYA DONDURMA #2 (kart) — bu görev (W2-04) bu dosyayı yalnız
+ * `<Analytics />`/`<SpeedInsights />` eklemekle sınırlı açtı: tema okuması,
+ * `data-tema`, `SessionProvider`, `TopBar`, `metadata` DEĞİŞMEDİ (karar:
+ * decisions.md "Gözlemlenebilirlik: Vercel'in kendi araçları, Sentry yok").
+ * Bundan sonra tekrar KAPALI sayılır.
  *
  * DÜZELTME (UI-003, E2E-002'nin bulduğu gerçek hata): bu dosyaya dokunuş
  * KASITLI OLARAK yalnız `session` prop'uyla SINIRLI — tema okuması,
@@ -45,6 +49,8 @@ export default async function RootLayout({
           <TopBar />
           {children}
         </SessionProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
