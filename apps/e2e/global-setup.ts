@@ -15,10 +15,33 @@ async function assertTestDatabase(baseURL: string): Promise<void> {
   // OPS-008: `use.extraHTTPHeaders` BURAYA UYGULANMAZ — `globalSetup` config'in
   // `use` bloğunu okumaz, kendi context'ini kurar. Başlığı açıkça vermezsek
   // önizleme SSO duvarına çarpar ve aşağıdaki teşhis dalına düşeriz.
-  const api = await playwrightRequest.newContext({ baseURL, extraHTTPHeaders: bypassHeaders() })
+  // ZAMAN AŞIMI ŞART. Ölçüldü (2026-08-26): varsayılan `baseURL` `http://localhost:3000`
+  // ve o portta BAŞKA bir projenin (izrandevu) iki günlük, KİLİTLENMİŞ dev sunucusu
+  // duruyordu — bağlantıyı kabul edip hiç cevap vermiyor. Zaman aşımı olmadan bu ön
+  // kontrol sonsuza kadar asılıyordu: yanlış hedefte hızla kırmızı vermek yerine
+  // koşu hiç bitmiyordu. `curl` bile asıldı, yani sunucuya özgü değil.
+  // Asılan bir kapı, kırmızı veren bir kapıdan daha kötüdür: kimse sebebini görmez.
+  const api = await playwrightRequest.newContext({
+    baseURL,
+    extraHTTPHeaders: bypassHeaders(),
+    timeout: 15_000,
+  })
   let body: { ok?: unknown; db?: unknown }
   try {
-    const response = await api.get('/api/health')
+    let response
+    try {
+      response = await api.get('/api/health')
+    } catch (cause) {
+      // Ulaşılamadı: zaman aşımı, bağlantı reddi ya da DNS. Ham Playwright hatası
+      // hedefi hiç yazmadığı için "hangi adrese gitmeye çalıştık" bilgisini ekliyoruz —
+      // yanlış porttaki başka bir projeye bakarken en çok bu eksikti.
+      throw new Error(
+        `BLOKE: '${baseURL}/api/health' adresine ulaşılamadı (15 sn). Sunucu ayakta mı, ` +
+          'E2E_BASE_URL doğru mu? Varsayılan http://localhost:3000 BAŞKA bir projenin ' +
+          'dev sunucusu tarafından tutuluyor olabilir.',
+        { cause },
+      )
+    }
     const raw = await response.text()
     try {
       body = JSON.parse(raw) as { ok?: unknown; db?: unknown }
