@@ -28,7 +28,9 @@ export const LARGE_CONFIGS = Object.freeze({
   elevenSix: Object.freeze({ size: 11, winLength: 6 }),
 }) satisfies Readonly<Record<string, BoardConfig>>
 
-export function buildBoard(config: BoardConfig, stones: ReadonlyMap<number, Player>): Board {
+// Dışa VERİLMEZ — `nodeBudgetCorpus` dışında çağıranı yok (knip zincirleme yakaladı:
+// bir dışa verim kalkınca yalnız onun kullandığı bir sonraki de açığa çıkıyor).
+function buildBoard(config: BoardConfig, stones: ReadonlyMap<number, Player>): Board {
   return boardFromCells(
     Array.from({ length: cellCount(config) }, (_unused, i): Cell => stones.get(i) ?? null),
     config,
@@ -52,7 +54,10 @@ function mulberry32(seed: number): () => number {
  * Boş tahta kovası tek örnek verir (hepsi aynı pozisyon olurdu); kalan beş
  * kova 200'ü aşacak şekilde paylaşır.
  */
-export function nodeBudgetCorpus(config: BoardConfig): Board[] {
+// Dışa VERİLMEZ: yalnız aşağıdaki `measureCorpus` çağırıyor, testler `LARGE_CONFIGS`
+// ve `measureCorpus` dışında bir şey import etmiyor. `export` bırakılırsa knip
+// "kullanılmayan dışa verim" diye kapıyı kırar (CI'da 2026-08-26 kırdı).
+function nodeBudgetCorpus(config: BoardConfig): Board[] {
   const total = cellCount(config)
   const buckets = [0, 4, 12, 30, 60, 100].filter((count) => count <= total - 2)
   const perBucket = Math.ceil(199 / (buckets.length - 1))

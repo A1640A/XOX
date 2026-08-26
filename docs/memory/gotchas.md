@@ -1341,3 +1341,25 @@ ve fixture aynı kategori: test iskelesi, ürün değil. Ürün dosyalarının t
 **Genel ders:** bir kapı kırıldığında önce **neyi ölçtüğünü** sor. Eksik kapsam ürün kodunda
 mı, yoksa ölçümün sınırı mı yanlış çizilmiş? İkincisiyse eşiği düşürmek, doğru olan testi
 cezalandırır. Ölçümün kapsamını düzelt, eşiği değil.
+
+## 2026-08-26 · "Kapılar yeşil" derken HANGİ kapıları koştuğunu söyle
+
+Bugün aynı şekilli hatayı **iki kez** yaptım:
+
+1. `CTR-BOARD-001`'i değerlendirirken paket paket **yalnız `typecheck`** koştum ve "altı paket
+   yeşil" dedim. Testi koşmamıştım; gerçekte `apps/web`'de **111 test kırmızıydı**.
+2. `CORE-AI-001`'i merge ettikten sonra `typecheck` + `test:coverage` + `lint`'i `--force` ile
+   koşup yeşil ilan ettim. **`pnpm gates` beş kapıdır**: bunlara ek olarak `format:check` ve
+   `knip`. İkisini de atlamıştım — CI "Kalite kapıları" işi `knip`te kırmızı verdi
+   (`corpus.fixture.ts`'te kullanılmayan bir dışa verim).
+
+Turbo'nun `Cached: 0`'ı yalnız **koştuğun** görevlerin taze olduğunu söyler; **koşmadığın**
+görev hakkında hiçbir şey söylemez. `Cached: 0` gördüğüm için kendimi doğrulanmış saydım.
+
+**Kural:** merge sonrası doğrulama `pnpm gates`'in KENDİSİDİR (ardından `--force` ile
+`typecheck` + `test:coverage` tekrarı). Tek tek görev koşuyorsan, "yeşil" derken hangilerini
+koştuğunu açıkça yaz.
+
+**Yan ders — knip zincirleme çalışır:** bir kullanılmayan dışa verimi kaldırınca, YALNIZ onun
+kullandığı bir sonraki dışa verim açığa çıkar. `nodeBudgetCorpus`'u kapatınca `buildBoard`
+göründü. Tek seferde temizlendi sanma, temiz çıkana kadar tekrarla.
