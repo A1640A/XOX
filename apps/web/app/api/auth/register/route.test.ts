@@ -236,4 +236,48 @@ describe('POST /api/auth/register', () => {
     expect(json).toMatchObject({ code: 'SERVER_ERROR' })
     expect(JSON.stringify(json)).not.toContain('10.0.0.1')
   })
+
+  /**
+   * W2-04 MASKELEME SONDASI (SINIF: parola/e-posta) — bu test kayıt akışının
+   * GERÇEK hata yolunu (`route.ts`'in `catch` bloğu, artık `lib/log.ts`'e
+   * bağlı) çalıştırır ve `console.error`'a giden ÇIKTIYI yakalar. Parolanın
+   * hiçbir zaman `logError`'a context alanı olarak VERİLMEDİĞİ (kod
+   * incelemesiyle sabit) + e-postanın `maskText` tarafından temizlendiği aynı
+   * anda kanıtlanır — "maskeleme ekledim" değil, ateşlenen çağrının çıktısı.
+   */
+  it(
+    'MASKELEME SONDASI: DB hatası logError üzerinden geçer, parola HİÇ ' +
+      'verilmez ve e-posta çıktıda görünmez',
+    async () => {
+      const { User } = await import('@xox/db')
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- yalnız mock kurulumu
+      vi.mocked(User.create).mockRejectedValue(
+        new Error('duplicate key hatası: gizli-alici@xox.test zaten var'),
+      )
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+      const { POST } = await import('./route')
+      const response = await POST(
+        makeRequest({
+          email: 'gizli-alici@xox.test',
+          password: 'ÇokGizliParola123!',
+          displayName: 'Ayşe',
+        }),
+      )
+      expect(response.status).toBe(500)
+
+      const output = spy.mock.calls.flat().map(String).join(' | ')
+      expect(spy).toHaveBeenCalled()
+      // Parola context'e HİÇ verilmediği için (route.ts `logError('...', {}, error)`
+      // çağırır — `password` değişkeni ikinci argümana asla geçilmez) çıktıda
+      // OLAMAZ; bu, regex maskelemesi DEĞİL, API tasarımının garantisidir.
+      expect(output).not.toContain('ÇokGizliParola123!')
+      // E-posta ise `error.message`'ın İÇİNDE geldi — bunu `maskText` temizler.
+      expect(output).not.toContain('gizli-alici@xox.test')
+      expect(output).toContain('[E-POSTA_GİZLİ]')
+
+      console.info('[sonda register/route çıktı]', output)
+      spy.mockRestore()
+    },
+  )
 })

@@ -7,6 +7,7 @@ import {
   type RegisterBody,
 } from '@xox/shared'
 import { hashPassword } from '@/lib/auth/password'
+import { logError } from '@/lib/log'
 import { checkIpRateLimit } from '@/lib/rate-limit/ip-limit'
 import { rateLimitedResponse } from '@/lib/rate-limit/response'
 
@@ -116,6 +117,11 @@ export async function POST(req: Request): Promise<Response> {
     if (isDuplicateKeyError(error)) {
       return errorJson('EMAIL_TAKEN', 'Bu e-posta zaten kayıtlı.', 409)
     }
+    // W2-04: sürücü hatası (host/kimlik ipuçları içerebilir) yalnız `lib/log.ts`
+    // üzerinden Runtime Logs'a gider — `parola`/e-posta ORADA (context'e hiç
+    // verilmez) DEĞİL, `error` metninde yakalanırsa bile maskText onu temizler.
+    // İstemciye her zaman sabit `SERVER_ERROR` döner.
+    logError('POST /api/auth/register hata', {}, error)
     return errorJson('SERVER_ERROR', 'Kayıt sırasında bir hata oluştu.', 500)
   }
 }

@@ -19,6 +19,7 @@ import {
 } from '@vercel/functions'
 import { connection } from 'next/server'
 import { resolveIdentity } from '@/lib/auth/identity'
+import { logError, logWarn } from '@/lib/log'
 import type { RoomTransitions } from '@/lib/realtime/context'
 import { roomHub } from '@/lib/realtime/room-hub'
 import { createRoomSession } from '@/lib/realtime/session'
@@ -131,10 +132,13 @@ export async function GET(
         // ADR-0007: süre KODA GÖMÜLMEZ; plan değişince bu dosya değişmez.
         getDeadline: () => getDeadline(),
         logError: (message, error) => {
-          // Oda kodu log'a YAZILMAZ (güvenlik denetimi MEDIUM): tek yetki
-          // anahtarı odur. Bağlantı kimliği teşhis için yeterli ve tahmin
-          // edilemez bir UUID.
-          console.error(`[ws ${connId.slice(0, 8)}] ${message}`, error)
+          // Oda kodu context'e HİÇ VERİLMEZ (güvenlik denetimi MEDIUM, W2-04
+          // ile kalıcılaştırıldı): tek yetki anahtarı odur, `lib/log.ts`'in
+          // maskelemesi bile ikinci savunma hattıdır — birinci hat hiç
+          // basmamak. `userId` context'e verilir ama `lib/log.ts` onu
+          // AUTH_SECRET tabanlı HMAC ile hash'ler, ham değer çıkmaz. Bağlantı
+          // kimliği (UUID) teşhis için ayrıca yeterli.
+          logError(`[ws ${connId.slice(0, 8)}] ${message}`, { userId: identity.userId }, error)
         },
       })
 
@@ -150,7 +154,7 @@ export async function GET(
       // olan birine canlı oyunlara katılma yeteneği vermek istemiyoruz.
       if (process.env['VERCEL_ENV'] !== 'production') {
         const stats = roomHub.stats()
-        console.warn(
+        logWarn(
           `[ws-hub] openStreams=${String(stats.openStreams)} subscribers=${String(
             stats.subscribers,
           )} rooms=${String(stats.rooms)} watchCalls=${String(stats.watchCalls)}`,
