@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { bypassHeaders } from './bypass-headers'
 
 const baseURL = process.env['E2E_BASE_URL'] ?? 'http://localhost:3000'
 
@@ -25,6 +26,10 @@ export default defineConfig({
   ],
   use: {
     baseURL,
+    // OPS-008 — Vercel SSO atlatma. DİKKAT: `globalSetup` bu `use` bloğunu OKUMAZ,
+    // kendi context'lerini kurar; başlıklar orada AYRICA veriliyor (`global-setup.ts`).
+    // Tek kaynak `bypass-headers.ts`; iki yere kopyalanmıyor.
+    extraHTTPHeaders: bypassHeaders(),
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

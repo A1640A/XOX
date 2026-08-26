@@ -26,6 +26,14 @@ jobs:
       E2E_BASE_URL: '${{ github.event.deployment_status.environment_url }}'
       MONGODB_URI: '${{ secrets.MONGODB_URI }}'
       MONGODB_DB: xox_test
+      # OPS-008 — proje `omeerdursunn` takımına taşınınca o takımın varsayılanı devreye
+      # girdi: Vercel Authentication açık, `all_except_custom_domains`. Yani
+      # `xox.omerdursun.com` muaf (production smoke yeşil kaldı ve sorunu bir gün
+      # gizledi) ama TÜM `*.vercel.app` önizlemeleri SSO duvarının arkasında.
+      # Korumayı kapatmıyoruz: Vercel'de "yalnız production'ı koru" seçeneği yok,
+      # kapatmak repoyu PUBLIC tutarken önizlemeyi gerçek Atlas kümesiyle birlikte
+      # herkese açardı. Otomasyon duvardan bu anahtarla geçiyor.
+      VERCEL_AUTOMATION_BYPASS_SECRET: '${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}'
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
