@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T06:51:11.185Z",
+  "updatedAt": "2026-08-26T08:08:44.430Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1749,9 +1749,9 @@
         "apps/web/messages/tr.ts",
         "apps/mobile/messages/tr.ts"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/CTR-BOARD-001",
       "report": null,
       "acceptance": [
         "SERT UYARI (CORE-CFG-001 merge sonrasi): cellIndexSchema HALA 0..8. winLineSchema artik 3..6 UZUNLUK kabul ediyor ama indeks tavani 8-de — yani 6x6 ve 11x11 hatlari protokolden GECEMEZ. Bu bilincli (pencere senin kartinda) ama SEN INMEDEN hicbir sey 3x3 disini yayinlayamaz. Kartin en kritik tek satiri bu.",
@@ -1795,9 +1795,9 @@
         "packages/game-core/src/index.ts",
         "packages/game-core/stryker.config.mjs"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/CORE-AI-001",
       "report": null,
       "acceptance": [
         "URUN GERCEGI (AI-SPIKE-001): 11x11-in HICBIR K degeri derinlik 3-u gercekci butcede tamamlayamiyor (tutucu tahmin 3.2-6.2 sn). Derinlik 2 her yerde <=260 ms guvenli. Yani 11x11-de iteratif derinlesme pratikte derinlik 2-de kalacak — bu bir KUSUR DEGIL, olculmus bir sinir. Raporda ACIKCA yaz, kullanici beklentisi buna gore kurulsun.",
