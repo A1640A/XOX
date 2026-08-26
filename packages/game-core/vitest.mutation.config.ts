@@ -5,7 +5,14 @@ import baseConfig from './vitest.config'
  * Stryker'ın koştuğu Vitest konfigürasyonu — `stryker.config.mjs` bunu
  * `vitest.configFile` ile gösterir.
  *
- * TEK farkı: `search-corpus-*.test.ts` dosyaları HARİÇTİR. Gerekçe:
+ * İKİNCİ FARK — `testTimeout` 20 sn yerine 60 sn. Stryker DOKUZ test koşucusunu
+ * aynı anda çalıştırır ve enstrümante edilmiş kodda her ifade bir `stryCov`
+ * çağrısı ekler; `ai.test.ts`in 569 oyunluk O-tarafı kanıtı bu iki çarpan
+ * altında 20 sn'yi aşıp mutasyon koşusunu "dry run" aşamasında düşürüyordu
+ * (ölçüldü, iki kez). Takılan mutantı yakalayan asıl kapı Stryker'ın kendi
+ * `timeoutMS`'idir; vitest'in sınırı burada yalnız bir güvenlik ağıdır.
+ *
+ * BİRİNCİ FARK — `search-corpus-*.test.ts` dosyaları HARİÇTİR. Gerekçe:
  *
  * - O beş dosya 1000+ tam bütçeli arama koşar (ölçüldü: yaklaşık 280 sn).
  *   `coverageAnalysis: 'perTest'` altında Stryker, mutantı kapsayan testleri
@@ -26,6 +33,7 @@ export default mergeConfig(
       // `mergeConfig` dizileri BİRLEŞTİRİR: taban konfigürasyonun dışlamaları
       // (`node_modules`, `dist`, `.stryker-tmp`) korunur, üstüne sweep eklenir.
       exclude: ['**/search-corpus-*.test.ts'],
+      testTimeout: 60_000,
     },
   }),
 )

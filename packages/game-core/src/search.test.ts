@@ -9,6 +9,7 @@ import { boardFromCells } from './board'
 import { cellCount, colOf, rowOf } from './config'
 import type { BoardConfig } from './config'
 import { candidateMoves, searchMove } from './search'
+import type { SearchResult } from './search'
 import { evaluateStatus, wouldWin } from './status'
 import type { Board, Cell, Player } from './types'
 
@@ -220,10 +221,24 @@ describe('bütçe — düğüm sayacı YAPISAL, duvar saati enjekte edilir (KK-B
       ]),
     )
 
-  it('donmuş saatte bile AI_NODE_BUDGET aşılmaz', () => {
-    const result = searchMove(midGame(), 'X', { config: ELEVEN_FIVE, now: frozenClock() })
+  /**
+   * Düğüm bütçesi HER düğümde okunur, o yüzden bir tahmin değil YAPISAL bir
+   * üst sınırdır: sayaç sınıra DEĞDİĞİ anda durur, aşmaz. `>=` yerine `>`
+   * yazılsaydı 501 düğüm gezilirdi.
+   *
+   * Bütçe burada ENJEKTE EDİLİYOR (500), çünkü gerçek `AI_NODE_BUDGET`
+   * (30 000) enstrümante edilmiş kodda mutasyon koşusunu dakikalara çıkarıyor.
+   * VARSAYILANIN gerçekten `AI_NODE_BUDGET` olduğunu `search-corpus-*.test.ts`
+   * dosyaları hiçbir bütçe geçirmeden doğrular.
+   */
+  it('düğüm bütçesi YAPISAL üst sınırdır — sınıra DEĞER, aşmaz', () => {
+    const result = searchMove(midGame(), 'X', {
+      config: ELEVEN_FIVE,
+      now: frozenClock(),
+      nodeBudget: 500,
+    })
+    expect(result.nodes).toBe(500)
     expect(result.nodes).toBeLessThanOrEqual(AI_NODE_BUDGET)
-    expect(result.nodes).toBeGreaterThan(0)
   })
 
   it('bütçe 1 msye düşürülünce yine GEÇERLİ bir hamle döner ve hata FIRLATMAZ', () => {
@@ -231,6 +246,7 @@ describe('bütçe — düğüm sayacı YAPISAL, duvar saati enjekte edilir (KK-B
     const result = searchMove(midGame(), 'X', {
       config: ELEVEN_FIVE,
       budgetMs: 1,
+      nodeBudget: 3000,
       now: () => tick++,
     })
     expect(candidateMoves(midGame(), ELEVEN_FIVE)).toContain(result.move)
@@ -240,14 +256,14 @@ describe('bütçe — düğüm sayacı YAPISAL, duvar saati enjekte edilir (KK-B
   /**
    * Sınır DAHİLDİR. Saat ilk çağrıda 0, sonra HER ZAMAN tam olarak `deadline`
    * döner: `>=` ile arama ilk kontrolde (1024. düğüm) durur, `>` ile HİÇ
-   * durmaz ve düğüm bütçesine kadar (30 000) koşardı. Çıplak sayılar bu iki
-   * dünyayı ayırır.
+   * durmaz ve düğüm bütçesine (burada 3000) kadar koşardı.
    */
   it('süre kontrolü SINIRA DAHİLDİR — now() tam olarak deadline ise durur', () => {
     let calls = 0
     const result = searchMove(midGame(), 'X', {
       config: ELEVEN_FIVE,
       budgetMs: 1000,
+      nodeBudget: 3000,
       now: () => (calls++ === 0 ? 0 : 1000),
     })
     expect({ nodes: result.nodes, depth: result.depth }).toEqual({
@@ -256,37 +272,33 @@ describe('bütçe — düğüm sayacı YAPISAL, duvar saati enjekte edilir (KK-B
     })
   })
 
+  /**
+   * YARIM İTERASYON ATILIR. Üç koşu, aynı (6,4) pozisyonu, yalnız bütçe farklı:
+   *
+   *    200 düğüm → derinlik 2 BİTER, hamle 14
+   *   1200 düğüm → derinlik 3'ün ORTASINDA kesilir; ALTI KAT düğüm harcanmış
+   *                olmasına rağmen hamle hâlâ 14 — yarım iterasyon ATILDI
+   *   1400 düğüm → derinlik 3 BİTER ve hamle 15'e döner
+   *
+   * Üçüncü koşu ikincisinin neden önemli olduğunu gösterir: atılan iterasyon
+   * gerçekten BAŞKA bir hamle üretecek iterasyondu.
+   */
   it('YARIM İTERASYON ATILIR — biten en derin iterasyonun hamlesi döner', () => {
-    let early = 0
-    const depthTwo = searchMove(midGame(), 'X', {
-      config: ELEVEN_FIVE,
-      budgetMs: 1,
-      now: () => early++,
-    })
-    expect(depthTwo.depth).toBe(2)
+    const board = fromString('.....X.XO.........................O.', SIX_FOUR)
+    const run = (nodeBudget: number): SearchResult =>
+      searchMove(board, 'X', { config: SIX_FOUR, now: frozenClock(), nodeBudget })
 
-    // Üç kat daha fazla düğüm harcanır, derinlik 3'ün ORTASINDA kesilir ve o
-    // yarım iterasyon ATILIR: dönen hamle hâlâ derinlik 2'nin hamlesidir.
-    let tick = 0
-    const partial = searchMove(midGame(), 'X', {
-      config: ELEVEN_FIVE,
-      budgetMs: 3,
-      now: () => tick++,
-    })
-    expect(partial.depth).toBe(2)
-    expect(partial.nodes).toBeGreaterThan(depthTwo.nodes)
-    expect(partial.move).toBe(depthTwo.move)
-
-    // Saat hiç ilerlemezse derinlik 4 biter ve BAŞKA bir hamle seçilir —
-    // yani atılan iterasyonlar gerçekten fark yaratabilecek iterasyonlardı.
-    const full = searchMove(midGame(), 'X', { config: ELEVEN_FIVE, now: frozenClock() })
-    expect(full.depth).toBe(4)
-    expect(full.depth).toBeLessThanOrEqual(MAX_SEARCH_DEPTH)
-    expect(full.move).not.toBe(partial.move)
+    expect(run(200)).toEqual({ move: 14, nodes: 200, depth: 2 })
+    expect(run(1200)).toEqual({ move: 14, nodes: 1200, depth: 2 })
+    expect(run(1400)).toEqual({ move: 15, nodes: 1400, depth: 3 })
   })
 
   it('varsayılan saat Date.now — enjekte edilmezse gerçek zaman kullanılır', () => {
-    const result = searchMove(midGame(), 'X', { config: ELEVEN_FIVE, budgetMs: 0 })
+    const result = searchMove(midGame(), 'X', {
+      config: ELEVEN_FIVE,
+      budgetMs: 0,
+      nodeBudget: 3000,
+    })
     expect(result.nodes).toBe(NODE_CHECK_INTERVAL)
     expect(candidateMoves(midGame(), ELEVEN_FIVE)).toContain(result.move)
   })
@@ -302,8 +314,9 @@ describe('arama — determinizm ve derinlik cezası', () => {
         [72, 'X'],
       ]),
     )
-    const first = searchMove(board, 'O', { config: ELEVEN_FOUR, now: frozenClock() })
-    const second = searchMove(board, 'O', { config: ELEVEN_FOUR, now: frozenClock() })
+    const options = { config: ELEVEN_FOUR, now: frozenClock(), nodeBudget: 800 }
+    const first = searchMove(board, 'O', options)
+    const second = searchMove(board, 'O', options)
     expect(second).toEqual(first)
   })
 
@@ -316,27 +329,33 @@ describe('arama — determinizm ve derinlik cezası', () => {
     )
     expect(evaluateStatus(board, SIX_FIVE).kind).toBe('playing')
     const result = searchMove(board, 'X', { config: SIX_FIVE, now: frozenClock() })
-    expect(result.move).toBe(35)
+    // Tek aday, tek yaprak: beş düğüm. Derinlik MAX_SEARCH_DEPTH'te DURUR —
+    // döngü `<=` yerine `<` ya da sınır MAX+1 olsaydı bu sayı 5 ya da 7 olurdu.
+    expect(result).toEqual({ move: 35, nodes: 5, depth: MAX_SEARCH_DEPTH })
   })
 
   /**
    * DERİNLİK CEZASI (`TERMINAL_SCORE − ply`): erken kazanç geç kazançtan
    * iyidir. Bu pozisyon sondayla SEÇİLDİ, uydurulmadı — (6,4) korpusunun
    * 202 pozisyonu iki motorla (cezalı / cezası ters çevrilmiş) taranıp
-   * ayrışan 26 pozisyondan biri alındı.
+   * ayrışan pozisyonlardan biri alındı.
    *
    * Taktik tarama burada DEVRE DIŞI: iki tarafın da tek hamlelik kazancı yok,
    * karar tamamen aramanındır ve derinlik 5 tamamlanır. `TERMINAL_SCORE − ply`
-   * `TERMINAL_SCORE + ply` olduğunda motor 22 yerine 2'yi oynuyor (ölçüldü),
+   * `TERMINAL_SCORE + ply` olduğunda motor 8 yerine 1'i oynuyor (ölçüldü),
    * yani aynı kazancı DAHA GEÇE erteliyor.
    */
   it('TERMINAL_SCORE derinlik cezalıdır — geç kazanç erken kazançtan düşüktür', () => {
-    const board = fromString('..........XO....X.................O.', SIX_FOUR)
+    const board = fromString('...X..O....X..OXX.O...X....OO...X.O.', SIX_FOUR)
     expect(candidateMoves(board, SIX_FOUR).some((m) => wouldWin(board, m, 'X', SIX_FOUR))).toBe(
       false,
     )
-    const result = searchMove(board, 'X', { config: SIX_FOUR, now: frozenClock() })
-    expect({ move: result.move, depth: result.depth }).toEqual({ move: 22, depth: 5 })
+    const result = searchMove(board, 'X', {
+      config: SIX_FOUR,
+      now: frozenClock(),
+      nodeBudget: 6000,
+    })
+    expect({ move: result.move, depth: result.depth }).toEqual({ move: 8, depth: 5 })
   })
 
   /**
@@ -348,12 +367,17 @@ describe('arama — determinizm ve derinlik cezası', () => {
    * varsa taktik tarama zaten bloklayıp dönüyor, yani `ply − TERMINAL_SCORE`
    * kökte hiç değerlendirilmiyor. Terim ancak ply 4/6'da — rakip ply 2'de
    * çifte tehdit kurduğunda — ateşleniyor. O yüzden bu pozisyon da sondayla
-   * SEÇİLDİ: işaret ters çevrilmiş motorla taranan 35 ayrışan pozisyondan
-   * biri. Doğru işaretle 9, ters işaretle 13 oynanıyor (ölçüldü).
+   * SEÇİLDİ: işaret ters çevrilmiş motorla taranan ayrışan pozisyonlardan
+   * biri. Doğru işaretle 17 (derinlik 4), ters işaretle 21 (derinlik 3)
+   * oynanıyor (ölçüldü).
    */
   it('kayıp puanı NEGATİFTİR — motor kaybı kovalamaz', () => {
-    const board = fromString('..X.....O..O.......X................', SIX_FOUR)
-    const result = searchMove(board, 'X', { config: SIX_FOUR, now: frozenClock() })
-    expect({ move: result.move, depth: result.depth }).toEqual({ move: 9, depth: 4 })
+    const board = fromString('X...OOX...OX......O....XO.X.....OX..', SIX_FOUR)
+    const result = searchMove(board, 'X', {
+      config: SIX_FOUR,
+      now: frozenClock(),
+      nodeBudget: 3000,
+    })
+    expect({ move: result.move, depth: result.depth }).toEqual({ move: 17, depth: 4 })
   })
 })

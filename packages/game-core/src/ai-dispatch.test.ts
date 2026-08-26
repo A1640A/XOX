@@ -5,7 +5,7 @@ import { cellCount } from './config'
 import type { BoardConfig } from './config'
 import { InvalidMoveError } from './errors'
 import { applyMove } from './moves'
-import { candidateMoves, searchMove } from './search'
+import { searchMove } from './search'
 import { evaluateStatus } from './status'
 import type { Board, Cell, Player } from './types'
 
@@ -23,6 +23,12 @@ const THREE: BoardConfig = { size: 3, winLength: 3 }
 const build = (config: BoardConfig, stones: ReadonlyMap<number, Player>): Board =>
   boardFromCells(
     Array.from({ length: cellCount(config) }, (_unused, i): Cell => stones.get(i) ?? null),
+    config,
+  )
+
+const fromString = (cells: string, config: BoardConfig): Board =>
+  boardFromCells(
+    Array.from(cells).map((c): Cell => (c === '.' ? null : (c as Player))),
     config,
   )
 
@@ -57,55 +63,66 @@ describe('chooseMove — N > 3 searchMoveye gider (KK-B43)', () => {
   const opening = (config: BoardConfig): Board =>
     build(config, new Map<number, Player>([[cellCount(config) - 1, 'O']]))
 
+  /**
+   * Bütçe DÜĞÜM SAYAN sahte saatle daraltılıyor (`budgetMs: 2` → 2048 düğüm).
+   * `chooseMove` düğüm bütçesini AÇMAZ (ADR-0013 §1'in üç alanlı sözleşmesi),
+   * ama `now` zaten açık ve deterministik. Tam bütçeli (30 000 düğüm) arama
+   * Stryker'ın enstrümante ettiği kodda mutasyon koşusunu dakikalara çıkarıyor.
+   */
+  const tickingClock = (): (() => number) => {
+    let tick = 0
+    return () => tick++
+  }
+
   it('unbeatable, 6×6te searchMove ile aynı hamleyi verir', () => {
     const board = opening(SIX_FOUR)
-    const now = (): number => 0
-    expect(chooseMove(board, 'X', 'unbeatable', Math.random, { config: SIX_FOUR, now })).toBe(
-      searchMove(board, 'X', { config: SIX_FOUR, now }).move,
-    )
+    expect(
+      chooseMove(board, 'X', 'unbeatable', Math.random, {
+        config: SIX_FOUR,
+        budgetMs: 2,
+        now: tickingClock(),
+      }),
+    ).toBe(searchMove(board, 'X', { config: SIX_FOUR, budgetMs: 2, now: tickingClock() }).move)
   })
 
   it('unbeatable, 11×11de searchMove ile aynı hamleyi verir', () => {
     const board = opening(ELEVEN_FIVE)
-    const now = (): number => 0
-    expect(chooseMove(board, 'X', 'unbeatable', Math.random, { config: ELEVEN_FIVE, now })).toBe(
-      searchMove(board, 'X', { config: ELEVEN_FIVE, now }).move,
-    )
+    expect(
+      chooseMove(board, 'X', 'unbeatable', Math.random, {
+        config: ELEVEN_FIVE,
+        budgetMs: 2,
+        now: tickingClock(),
+      }),
+    ).toBe(searchMove(board, 'X', { config: ELEVEN_FIVE, budgetMs: 2, now: tickingClock() }).move)
   })
 
-  it('bütçe ve saat searchMovea GEÇİRİLİR — 1 ms bütçe daha sığ bir arama verir', () => {
-    const board = build(
-      ELEVEN_FIVE,
-      new Map<number, Player>([
-        [48, 'X'],
-        [60, 'O'],
-        [62, 'X'],
-        [71, 'O'],
-        [83, 'X'],
-        [39, 'O'],
-      ]),
-    )
-    let tick = 0
-    const tight = chooseMove(board, 'X', 'unbeatable', Math.random, {
-      config: ELEVEN_FIVE,
-      budgetMs: 1,
-      now: () => tick++,
-    })
-    const roomy = chooseMove(board, 'X', 'unbeatable', Math.random, {
-      config: ELEVEN_FIVE,
-      now: (): number => 0,
-    })
-    expect(tight).not.toBe(roomy)
-    expect(candidateMoves(board, ELEVEN_FIVE)).toContain(tight)
-    expect(candidateMoves(board, ELEVEN_FIVE)).toContain(roomy)
+  /**
+   * `budgetMs` ve `now` gerçekten `searchMove`a GEÇİYOR: aynı pozisyonda 1 ms
+   * (1024 düğüm) derinlik 2'de kalıp 14'ü, 2 ms (2048 düğüm) derinlik 3'ü
+   * bitirip 15'i oynuyor. İki alandan biri düşürülse iki çağrı aynı hamleyi
+   * verirdi.
+   */
+  it('bütçe ve saat searchMovea GEÇİRİLİR — dar bütçe daha sığ arama verir', () => {
+    const board = fromString('.....X.XO.........................O.', SIX_FOUR)
+    const pick = (budgetMs: number): number =>
+      chooseMove(board, 'X', 'unbeatable', Math.random, {
+        config: SIX_FOUR,
+        budgetMs,
+        now: tickingClock(),
+      })
+    expect(pick(1)).toBe(14)
+    expect(pick(2)).toBe(15)
   })
 
   it('mediumun "en iyi"si N > 3te searchMovedur; rastgele dalı DEĞİŞMEZ', () => {
     const board = opening(SIX_FOUR)
-    const now = (): number => 0
-    expect(chooseMove(board, 'X', 'medium', seededRng([0.3]), { config: SIX_FOUR, now })).toBe(
-      searchMove(board, 'X', { config: SIX_FOUR, now }).move,
-    )
+    expect(
+      chooseMove(board, 'X', 'medium', seededRng([0.3]), {
+        config: SIX_FOUR,
+        budgetMs: 2,
+        now: tickingClock(),
+      }),
+    ).toBe(searchMove(board, 'X', { config: SIX_FOUR, budgetMs: 2, now: tickingClock() }).move)
 
     // 0.9 → rastgele dal. Sıradaki değer indeks çarpanıdır.
     const moves = availableMoves(board)

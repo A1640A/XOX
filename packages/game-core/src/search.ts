@@ -92,6 +92,20 @@ export interface SearchOptions {
   readonly budgetMs?: number | undefined
   /** Duvar saati ENJEKTE EDİLİR (`rng` konvansiyonu) — testler deterministik. */
   readonly now?: (() => number) | undefined
+  /**
+   * Düğüm bütçesi de ENJEKTE EDİLEBİLİR — `chooseMove` bunu AÇMAZ, yalnız bu
+   * modülün testleri kullanır (ADR-0013 §1'in `ChooseMoveOptions` sözleşmesi
+   * üç alanlı kalır).
+   *
+   * Gerekçe ÖLÇÜM: Stryker enstrümante ettiği kodu ~32× yavaşlatıyor, yani
+   * 30 000 düğümlük tek bir arama mutasyon koşusunda dakikalara çıkıyor ve kapı
+   * pratikte koşulamaz hâle geliyor (iki kez "dry run" zaman aşımıyla düştü).
+   * Bütçenin kendisi bir SAYI olduğu için küçültmek kod yolunu değiştirmez:
+   * 500 düğümde biten arama da 30 000 düğümde biten arama da aynı satırları
+   * koşar. Varsayılanın gerçekten `AI_NODE_BUDGET` olduğunu `search-corpus-*`
+   * dosyaları hiçbir bütçe geçirmeden doğrular.
+   */
+  readonly nodeBudget?: number | undefined
 }
 
 export interface SearchResult {
@@ -119,6 +133,7 @@ interface SearchState {
   readonly root: Player
   readonly now: () => number
   readonly deadline: number
+  readonly nodeBudget: number
   score: number
   nodes: number
   aborted: boolean
@@ -153,7 +168,7 @@ function unmake(state: SearchState, index: number, previous: number): void {
  * çağrısının kendisi ölçülebilir bir maliyettir (ADR-0013 §4).
  */
 function exhausted(state: SearchState): boolean {
-  if (state.nodes >= AI_NODE_BUDGET) return true
+  if (state.nodes >= state.nodeBudget) return true
   return state.nodes % NODE_CHECK_INTERVAL === 0 && state.now() >= state.deadline
 }
 
@@ -347,6 +362,7 @@ export function searchMove(board: Board, player: Player, options: SearchOptions)
     root: player,
     now,
     deadline: now() + (options.budgetMs ?? AI_BUDGET_MS),
+    nodeBudget: options.nodeBudget ?? AI_NODE_BUDGET,
     score: evaluateBoard(board, player, config),
     nodes: 0,
     aborted: false,
