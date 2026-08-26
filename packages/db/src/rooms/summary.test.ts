@@ -44,6 +44,28 @@ describe('getRoomSummary', () => {
     expect(summary.code).toBe(code)
     expect(summary.state).toBe('waiting')
     expect(summary.seats.O).toBeNull()
+    // ADR-0014 §2/SB-09: eski/alansız kayıt {3,3}'e SESSİZCE çözülür.
+    expect(summary.size).toBe(3)
+    expect(summary.winLength).toBe(3)
+  })
+
+  it('SB-09/ADR-0014: explicit size/winLength yazılmış oda ÇÖZÜLMÜŞ (resolved) değerlerle döner', async () => {
+    const code = `S${randomUUID().slice(0, 5).toUpperCase()}`
+    await Room.create({
+      code,
+      state: 'waiting',
+      size: 11,
+      winLength: 6,
+      board: Array.from({ length: 121 }, () => null),
+      seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
+    })
+    createdCodes.push(code)
+
+    const summary = await getRoomSummary(code)
+    if (summary === null) throw new Error('beklenmeyen null')
+
+    expect(summary.size).toBe(11)
+    expect(summary.winLength).toBe(6)
   })
 
   it(

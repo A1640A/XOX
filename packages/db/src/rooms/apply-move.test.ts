@@ -39,18 +39,21 @@ describe('applyMove', () => {
   }
 
   async function makePlayingRoom(
-    options: { board?: Cell[]; version?: number } = {},
+    options: { board?: Cell[]; version?: number; size?: number; winLength?: number } = {},
   ): Promise<string> {
     const code = freshCode()
+    const cellCount = options.size !== undefined ? options.size * options.size : 9
     await Room.create({
       code,
       state: 'playing',
+      size: options.size,
+      winLength: options.winLength,
       seats: { X: xUser, O: oUser },
       presence: {
         X: { connId: 'x-conn', since: new Date() },
         O: { connId: 'o-conn', since: new Date() },
       },
-      board: options.board ?? Array.from({ length: 9 }, () => null),
+      board: options.board ?? Array.from({ length: cellCount }, () => null),
       version: options.version ?? 2,
       startedAt: new Date(),
     })
@@ -193,4 +196,37 @@ describe('applyMove', () => {
       expect(after?.version).toBe((before?.version ?? 0) + 1)
     },
   )
+
+  describe('DB-BOARD-001: odanın KENDİ konfigürasyonu — 3×3 sabit değil', () => {
+    it('11×11 odada 120 geçerli bir indekstir (3×3 sınırıyla out-of-range SAYILMAZ)', async () => {
+      const code = await makePlayingRoom({ size: 11, winLength: 5, version: 4 })
+
+      const result = await applyMove(code, xUser.userId, 120)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      expect(result.room.board[120]).toBe('X')
+      expect(result.room.board).toHaveLength(121)
+      expect(result.room.version).toBe(5)
+    })
+
+    it('11×11 odada 121 (cellCount dışı) out-of-range reddedilir', async () => {
+      const code = await makePlayingRoom({ size: 11, winLength: 5, version: 4 })
+
+      const result = await applyMove(code, xUser.userId, 121)
+
+      expect(result).toEqual({ ok: false, code: 'out-of-range' })
+    })
+
+    it('resolveBoardConfig üzerinden okunan config ile hamle sonrası tahta hâlâ 121 hücre', async () => {
+      const code = await makePlayingRoom({ size: 11, winLength: 5, version: 4 })
+
+      const result = await applyMove(code, xUser.userId, 0)
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      expect(result.room.board).toHaveLength(121)
+      expect(result.room.size).toBe(11)
+      expect(result.room.winLength).toBe(5)
+    })
+  })
 })

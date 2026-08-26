@@ -171,10 +171,28 @@ describe('Game modeli', () => {
     ).rejects.toThrow()
   })
 
-  it('9 hücreden fazla hamle reddedilir', async () => {
+  it('board TAM 121 hücreyle (11×11 üst sınır, ADR-0014 §3/KK-B69) KABUL EDİLİR', async () => {
     const id = track(randomUUID())
-    const extra: MoveDoc[] = Array.from({ length: 10 }, (_, i) => ({
-      index: i % 9,
+    await Game.create({
+      _id: id,
+      roomCode: 'RCBIG01',
+      players: { X: 'u1', O: 'u2' },
+      participants: ['u1', 'u2'],
+      pairKey: 'u1|u2',
+      size: 11,
+      winLength: 5,
+      board: Array.from({ length: 121 }, () => null),
+    })
+    const game = await Game.findById(id).lean()
+    expect(game?.board).toHaveLength(121)
+    expect(game?.size).toBe(11)
+    expect(game?.winLength).toBe(5)
+  })
+
+  it('121 hamleden fazlası (KK-B69 üst sınır) REDDEDİLİR', async () => {
+    const id = track(randomUUID())
+    const extra: MoveDoc[] = Array.from({ length: 122 }, (_, i) => ({
+      index: i % 121,
       by: i % 2 === 0 ? 'X' : 'O',
       at: new Date(),
     }))
@@ -185,6 +203,9 @@ describe('Game modeli', () => {
         players: { X: 'u1', O: 'u2' },
         participants: ['u1', 'u2'],
         pairKey: 'u1|u2',
+        size: 11,
+        winLength: 5,
+        board: Array.from({ length: 121 }, () => null),
         moves: extra,
       }),
     ).rejects.toThrow()

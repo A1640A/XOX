@@ -1,5 +1,4 @@
 import {
-  DEFAULT_BOARD_CONFIG,
   applyMove as applyMoveCore,
   boardFromCells,
   cellCount,
@@ -7,10 +6,11 @@ import {
   isValidMove,
   nextPlayer,
 } from '@xox/game-core'
-import type { Board } from '@xox/game-core'
+import type { Board, BoardConfig } from '@xox/game-core'
 import { toTransportStatus } from '@xox/shared'
 import type { MoveRejectionReason } from '@xox/shared'
 import { Room } from '../models/room'
+import { resolveBoardConfig } from './board-config'
 import { casUpdateRoom } from './cas'
 import { finishGame, toRoomResult } from './finish'
 import { seatOf } from './seat'
@@ -24,11 +24,18 @@ import type { RoomEvent, TransitionResult } from './types'
  * ilkellerle (`cellCount`, `evaluateStatus`) sınıflandırıyoruz — kural
  * MANTIĞI burada yeniden YAZILMIYOR, yalnızca `isValidMove`'un zaten
  * `false` dediği bir durumun HANGİ üç sebepten olduğu okunuyor.
+ *
+ * `config` odanın KENDİ `resolveBoardConfig` sonucudur — 3×3'e sabit bir
+ * `DEFAULT_BOARD_CONFIG` DEĞİL (DB-BOARD-001): 11×11 bir odada geçerli bir
+ * hamle burada yanlışlıkla `out-of-range` sayılmasın.
  */
-function moveRejectionReason(board: Board, index: number): MoveRejectionReason {
-  if (!Number.isInteger(index) || index < 0 || index >= cellCount(DEFAULT_BOARD_CONFIG))
-    return 'out-of-range'
-  if (evaluateStatus(board).kind !== 'playing') return 'game-over'
+function moveRejectionReason(
+  board: Board,
+  index: number,
+  config: BoardConfig,
+): MoveRejectionReason {
+  if (!Number.isInteger(index) || index < 0 || index >= cellCount(config)) return 'out-of-range'
+  if (evaluateStatus(board, config).kind !== 'playing') return 'game-over'
   return 'occupied'
 }
 
@@ -53,19 +60,19 @@ export async function applyMove(
   if (seat === null) return { ok: false, code: 'ROOM_FULL' }
   if (room.state !== 'playing') return { ok: false, code: 'game-over' }
 
-  const board = boardFromCells(room.board)
+  const config = resolveBoardConfig(room)
+  const board = boardFromCells(room.board, config)
   if (nextPlayer(board) !== seat) return { ok: false, code: 'not-your-turn' } // KK-044
 
-  if (!isValidMove(board, index)) {
-    return { ok: false, code: moveRejectionReason(board, index) }
+  if (!isValidMove(board, index, config)) {
+    return { ok: false, code: moveRejectionReason(board, index, config) }
   }
 
-  const nextBoard = applyMoveCore(board, index, seat)
-  const status = evaluateStatus(nextBoard)
+  const nextBoard = applyMoveCore(board, index, seat, config)
+  const status = evaluateStatus(nextBoard, config)
   const transport = toTransportStatus(status)
 
   const set: Record<string, unknown> = {
-    board: [...nextBoard],
     // P0: MOVE_TIMEOUT_SECONDS uygulanmaz — deadline daima null (AS-08).
     turnDeadline: null,
   }
@@ -82,6 +89,7 @@ export async function applyMove(
     expectedVersion: room.version,
     extraFilter: { state: 'playing' },
     set,
+    board: { cells: nextBoard, config },
     push: { moves: { index, by: seat, at: new Date() } },
   })
   // Yarışı kaybettik (KK-045): version zaten değişmişti, 0 doküman güncellendi.

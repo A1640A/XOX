@@ -1,14 +1,14 @@
-import type { Cell, Player } from '@xox/shared'
+import { emptyBoard } from '@xox/game-core'
+import type { Player } from '@xox/shared'
 import { REMATCH_OFFER_TTL_SECONDS } from '@xox/shared'
 import { Game } from '../models/game'
 import { Room } from '../models/room'
 import type { RoomDoc } from '../models/room'
 import { buildPairKey, deriveParticipants } from '../pair'
+import { resolveBoardConfig } from './board-config'
 import { casUpdateRoom } from './cas'
 import { seatOf } from './seat'
 import type { TransitionResult } from './types'
-
-const EMPTY_BOARD: Cell[] = [null, null, null, null, null, null, null, null, null]
 
 function otherSeat(seat: Player): Player {
   return seat === 'X' ? 'O' : 'X'
@@ -44,6 +44,10 @@ async function withoutExpiredRematch(room: RoomDoc, now: number): Promise<RoomDo
  *
  * `version` **SIFIRLANMAZ**: `casUpdateRoom` yalnız artırır (tasarım §5.5
  * kural 3). İstemcinin sürüm boşluğu tespiti rövanş sınırında da çalışmalı.
+ *
+ * Tahta odanın KENDİ `resolveBoardConfig` sonucundan sıfırlanır — `size`/
+ * `winLength` alanlarına DOKUNULMAZ (ADR-0014 §4, KK-B19): rövanş yalnız
+ * tahtayı temizler, konfigürasyonu DEĞİŞTİRMEZ.
  */
 async function startRematch(room: RoomDoc): Promise<TransitionResult> {
   const previousX = room.seats.X
@@ -58,6 +62,7 @@ async function startRematch(room: RoomDoc): Promise<TransitionResult> {
     pairKey: buildPairKey(players.X, players.O),
   })
 
+  const config = resolveBoardConfig(room)
   const updated = await casUpdateRoom({
     code: room.code,
     expectedVersion: room.version,
@@ -72,7 +77,6 @@ async function startRematch(room: RoomDoc): Promise<TransitionResult> {
         room.disconnected === null
           ? null
           : { ...room.disconnected, seat: otherSeat(room.disconnected.seat) },
-      board: [...EMPTY_BOARD],
       moves: [],
       result: null,
       rematch: null,
@@ -81,6 +85,7 @@ async function startRematch(room: RoomDoc): Promise<TransitionResult> {
       gameId: game._id,
       startedAt: new Date(),
     },
+    board: { cells: emptyBoard(config), config },
   })
   if (updated === null) {
     // Yarışı kaybettik: az önce açtığımız oyun YETİM kalmasın (aksi hâlde
