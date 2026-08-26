@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T09:14:51.113Z",
+  "updatedAt": "2026-08-26T09:51:47.462Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1186,12 +1186,15 @@
         "packages/shared/src/rest-contract.ts",
         "apps/web/app/api/rooms/[code]/route.ts"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/CTR-003",
       "report": null,
       "blockedReason": null,
       "acceptance": [
+        "IKINCI KOK NEDEN (12 kirmizinin cogu): roomStateResponseSchema artik size/winLength istiyor, route vermiyor -> ZodError invalid_union -> HTTP 500. Degerleri resolveBoardConfig(doc) ile uret; doc.size ?? 3 YAZMA (sabitin ucuncu kopyasi olur).",
+        "ISIN YARISI HAZIR: canJoinRoom zaten packages/shared/src/rest-contract.ts:77-de (CTR-BOARD-001 pencereyi kapatmadan yazdi) ve superRefine ona bagli (satir 104). Tekrar yazma — route.ts-i o kaynaga BAGLA, satir 72-deki yerel && ifadesini sil.",
+        "ZINCIRIN SON HALKASI. Dal feat/DB-BOARD-001-den kesiliyor. 12 kirmizinin 12-si de yesile donmeli; pnpm gates YEDI pakette yesil (707/707). main bu yesili bekliyor.",
         "packages/shared canJoinRoom(state, seats): boolean export eder",
         "roomStateResponseSchema superRefine ve route AYNI fonksiyonu çağırır; route içinde türetme kalmaz",
         "Böylece superRefine iki kopya arasındaki sapma dedektörü olmaktan çıkıp gerçek bir tüketici doğrulamasına döner — bugün o çağrı noktasında hiç ateşlenemiyor",
@@ -1199,7 +1202,8 @@
         "CTR-001 dondurması bilinçli açılıyor — değişiklik yalnız bu fonksiyonun eklenmesi ve superRefine gövdesiyle sınırlı",
         "pnpm gates temiz",
         "KAPSAM DARALDI (tasarim §12.5): canJoinRoom fonksiyonunun KENDISI ve mutasyon testleri CTR-BOARD-001'in acik shared penceresinde iner. Bu kartta geriye YALNIZ tuketici baglamasi kalir (superRefine + apps/web/app/api/rooms/[code]/route.ts ayni fonksiyonu cagirir) — bu kart ARTIK packages/shared UNFREEZE'I GEREKTIRMEZ."
-      ]
+      ],
+      "priority": "P1"
     },
     {
       "id": "SEC-003",
@@ -1842,10 +1846,10 @@
         "apps/web/lib/realtime/connection.ts",
         "apps/web/lib/client/use-room.test.tsx"
       ],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/DB-BOARD-001",
-      "report": null,
+      "report": "docs/board/reports/DB-BOARD-001.md",
       "acceptance": [
         "SAHIPSIZ DOSYA SANA VERILDI: apps/web/lib/client/use-room.test.tsx hicbir bekleyen kartin kumesinde degildi (UI-SKEL-001-e aitti, kapali) ama size/winLength/lastMove eksikliginden kirik. Mekanik fixture guncellemesi. use-room.ts-in KENDISINE dokunma.",
         "DAL feat/CTR-BOARD-001-DEN kesiliyor, main-den DEGIL. Bitis sarti: pnpm gates YEDI PAKETTE de yesil — zincirin main-e inebilmesi buna bagli.",
@@ -1873,7 +1877,7 @@
         "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0`.",
         "CORE-CFG-001 BIRAKTI: packages/db/src/rooms/rematch.ts icinde 9 elemanli YEREL EMPTY_BOARD dizisi duruyor — konfigurasyondan turetilmeli."
       ],
-      "blockedReason": null
+      "blockedReason": "ZINCIRDE BEKLIYOR. Kendi isini bitirdi: CTR-BOARD-001-in biraktigi 111 web kirmizisinin 99-unu kapatti, packages/db 230/230 yesil. Kalan 12 kirmizi tamamen CTR-003-un kumesinde (canJoin + route.ts + rest-contract.ts) — DOGRULADIM, ajanin sozune guvenmedim."
     },
     {
       "id": "UI-BOARD-001",

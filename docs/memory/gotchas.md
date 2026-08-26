@@ -1301,3 +1301,19 @@ adrese gidildiğini yazmıyor).
 **Genel ders:** bir ön kontrol yazarken "yanlış cevap" kadar **"hiç cevap yok"** hâlini de
 ele. Ağ çağrısı yapan her kapıya açık zaman aşımı koy. Ayrıca `localhost:PORT` varsayılanı
 tek bir makinede birden çok proje çalışırken **sessizce yanlış projeyi** hedefler.
+
+## 2026-08-26 · `typecheck` yeşil ≠ paket yeşil — testi de koş
+
+`CTR-BOARD-001` merge edilir mi diye bakarken paket paket **`typecheck`** koştum ve
+"altı paket yeşil, yalnız `apps/web` kırık" diye rapor ettim. **Testi hiç koşmamıştım.**
+Gerçek tablo: o dalda `apps/web`'de **111 test kırmızıydı**.
+
+Karar (zincir kurmak) yine de doğru çıktı, ama gerekçemin ölçüsü yanlıştı — kırıklığın
+büyüklüğünü on kat küçük bildim ve zincirin **iki değil üç** kart süreceğini geç fark ettim.
+
+Tip hataları ile davranış hataları farklı kümeler: şemaya **zorunlu alan eklemek** çoğu
+tüketiciyi tip düzeyinde kırar (yakalanır), ama bir yanıtı **çalışma zamanında** doğrulama
+hatasına düşürmek tipe hiç yansımaz — `route.ts` derleniyordu, sadece HTTP 500 dönüyordu.
+
+**Kural:** bir dalın durumunu bildirmeden önce `typecheck` **ve** `test` koş. Tek kelimeyle
+"yeşil" demeden önce hangisini ölçtüğünü söyle.
