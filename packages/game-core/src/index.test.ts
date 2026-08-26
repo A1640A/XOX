@@ -23,8 +23,11 @@ import type {
  * `cellAt`, `placeStone` ve `isKnownMode` bilerek BURADA YOK.
  */
 const EXPECTED_VALUE_EXPORTS = [
+  'AI_BUDGET_MS',
   'BOARD_MODES',
+  'CANDIDATE_RADIUS',
   'DEFAULT_BOARD_CONFIG',
+  'MAX_SEARCH_DEPTH',
   'InvalidMoveError',
   'applyMove',
   'availableMoves',
@@ -61,6 +64,14 @@ describe('@xox/game-core yüzeyi — DONMUŞ', () => {
     expect(keys.has('cellAt')).toBe(false)
     expect(keys.has('placeStone')).toBe(false)
     expect(keys.has('isKnownMode')).toBe(false)
+    // Arama motorunun iç yüzeyi: `searchMove`, `evaluateBoard`, `orderMoves`,
+    // `candidateMoves`, `WINDOW_WEIGHT`, `TERMINAL_SCORE`, `AI_NODE_BUDGET`.
+    // Dışarıya YALNIZ üç sabit açılır (ADR-0013 §9); motorun kendisi değil.
+    expect(keys.has('searchMove')).toBe(false)
+    expect(keys.has('evaluateBoard')).toBe(false)
+    expect(keys.has('candidateMoves')).toBe(false)
+    expect(keys.has('WINDOW_WEIGHT')).toBe(false)
+    expect(keys.has('AI_NODE_BUDGET')).toBe(false)
   })
 
   it('tip yüzeyi de derleme zamanında dondurulur', () => {

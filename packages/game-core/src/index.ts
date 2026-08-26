@@ -39,6 +39,7 @@ export { availableMoves, boardFromCells, boardToString, emptyBoard, nextPlayer }
 export { applyMove, isValidMove } from './moves'
 export { evaluateStatus, winLines, wouldWin } from './status'
 export { bestMove, chooseMove } from './ai'
+export { AI_BUDGET_MS, CANDIDATE_RADIUS, MAX_SEARCH_DEPTH } from './ai-config'
 export { InvalidMoveError } from './errors'
 export type { InvalidMoveReason } from './errors'
 export type { Board, Cell, Difficulty, GameStatus, Player, WinLine } from './types'
