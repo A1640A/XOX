@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T23:57:32.999Z",
+  "updatedAt": "2026-08-26T00:11:28.960Z",
   "nightRun": {
     "active": true,
     "deadline": null,
@@ -729,10 +729,10 @@
         "apps/web/lib/log.ts",
         "apps/web/app/api/health/route.ts"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W2-04",
-      "report": null,
+      "report": "docs/board/reports/W2-04.md",
       "acceptance": [
         "KK-104: @vercel/analytics ve @vercel/speed-insights app/layout.tsx'e eklenir ve production build çıktısında yüklü oldukları doğrulanır (bundle grep + Vercel paneli ekran kanıtı rapora)",
         "apps/web/lib/log.ts tek sarmalayıcıdır: console.warn/error yalnız buradan çağrılır, kayıtlar userId ve roomCode ile etiketlenir",
@@ -743,7 +743,8 @@
         "no-console kuralı lib/log.ts dışında hiçbir yerde ihlal edilmiyor (lint çıktısı rapora)",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "81302b4"
     },
     {
       "id": "E2E-004",
@@ -2135,6 +2136,27 @@
         "COZUM: resolveTheme() cerez yoksa DB-den okusun. DIKKAT — bu her istekte bir DB sorgusu demek; kok layout zaten dinamik ama maliyeti OLC ve raporla",
         "layout.tsx DONDURULMUS dosya; degisiklik tema okumasiyla SINIRLI kalmali",
         "Cerez hala hizli yol olmali: DB okumasi yalniz cerez YOKKEN"
+      ]
+    },
+    {
+      "id": "SEC-004",
+      "title": "Bilet maskelemesini hicbir test korumuyor — bugun yalniz JWT deseni kurtariyor",
+      "tier": "P2",
+      "wave": "B4",
+      "agent": "xox-test-writer",
+      "deps": ["W2-04"],
+      "conflictSet": ["apps/web/lib/log.test.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "LEAD SONDASI (W2-04 merge oncesi): TICKET_QUERY_PATTERN kasitli olarak bozuldu, log testlerinin 12-si de YESIL kaldi. Ayni sonda EMAIL_PATTERN-e uygulandiginda 2 test kirmizi dondu — yani e-posta kilitli, bilet DEGIL",
+        "NEDEN BUGUN ZARARSIZ: bilet bir JWT ve JWT_PATTERN onu yine yakaliyor. Ikinci bir ag var",
+        "NEDEN YARIN TEHLIKELI: SEC-003 bileti tek kullanimlik yapmayi planliyor ve format degisebilir. Bilet opak bir token-a donerse TICKET_QUERY_PATTERN tek savunma olur ve onu hicbir test korumaz",
+        "YAP: ?ticket= degerini JWT OLMAYAN bir dize ile (or. rastgele 40 karakter) iceren bir log satiri test et, maskelendigini iddia et",
+        "SONDA: TICKET_QUERY_PATTERN bozuldugunda o test KIRMIZI donmeli. Bugun donmuyor — kartin kapanma sarti bu"
       ]
     }
   ]

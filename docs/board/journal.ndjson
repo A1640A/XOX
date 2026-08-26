@@ -1201,3 +1201,20 @@
 {"ts":"2026-08-25T23:52:23Z","event":"file.touched","path":".claude/worktrees/W2-04/apps/web/app/api/health/route.test.ts"}
 {"ts":"2026-08-25T23:52:25Z","event":"subagent.stop"}
 {"ts":"2026-08-26T01:05:00Z","event":"task.done","task":"W2-02","note":"Profil, gorunen ad, tema. GERCEK BUILD KIRICI BULUNDU: lib/theme.ts next/headers import ediyor, THEME_COOKIE sabitini istemci bileseninden cekmek next build-i kiriyordu (Turbopack sunucu-only modulu istemci bundle-inda reddediyor). Sabit lib/theme-cookie.ts-e cikarildi, tek kaynak korundu, layout.tsx-e dokunulmadi. BOARD DUZELTMESI: W2-02-nin 9. kabul kriteri move:applied/turnDeadline/CTR-002 hakkindaydi ve W2-01-e aitti — ajan fark etti, tasindi. DURUST BOSLUK: tema cihazlar arasi senkron degil, W2-05 acildi. 611 web testi"}
+{"ts":"2026-08-25T23:59:42Z","event":"file.touched","path":".claude/worktrees/W2-04/apps/web/lib/log.test.ts"}
+{"ts":"2026-08-25T23:59:56Z","event":"file.touched","path":".claude/worktrees/W2-04/apps/web/lib/log.test.ts"}
+{"ts":"2026-08-26T00:00:03Z","event":"file.touched","path":".claude/worktrees/W2-04/apps/web/lib/log.test.ts"}
+{"ts":"2026-08-26T00:00:13Z","event":"file.touched","path":".claude/worktrees/W2-04/apps/web/lib/log.test.ts"}
+{"ts":"2026-08-26T00:01:05Z","event":"file.touched","path":".claude/worktrees/W2-04/apps/web/lib/log.test.ts"}
+{"ts":"2026-08-26T00:01:08Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/config.ts"}
+{"ts":"2026-08-26T00:01:20Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.ts"}
+{"ts":"2026-08-26T00:01:27Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.ts"}
+{"ts":"2026-08-26T00:01:47Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
+{"ts":"2026-08-26T00:01:54Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
+{"ts":"2026-08-26T00:02:13Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
+{"ts":"2026-08-26T00:02:30Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
+{"ts":"2026-08-26T00:04:44Z","event":"file.touched","path":"docs/board/reports/W2-04.md"}
+{"ts":"2026-08-26T00:06:18Z","event":"subagent.stop"}
+{"ts":"2026-08-26T00:10:06Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
+{"ts":"2026-08-26T00:10:22Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
+{"ts":"2026-08-26T01:35:00Z","event":"task.done","task":"W2-04","note":"Gozlemlenebilirlik + gunluk maskeleme. HER SINIF ICIN GERCEK CONSOLE CIKTISI raporlandi (uydurma degil). AKILLI KARAR: userId ve roomCode SILINMIYOR, HMAC-leniyor (AUTH_SECRET tabanli) — korelasyon korunuyor, geri dondurulemez. no-console lint kurali eklendi, tek istisna log.ts, sonda ateslendi. BEKLENMEYEN KAZANIM: /api/health artik VERCEL_ENV <-> veritabani uyusmazligini yakaliyor (KK-101) — OPS-006-da production veritabanini kurtaran hata sinifini health-in kendisi de tespit ediyor. LEAD SONDASI BOSLUK BULDU: TICKET_QUERY_PATTERN bozuldugunda 12 testin hicbiri kirilmiyor (e-posta deseninde 2 kirmizi doniyor). Bugun zararsiz cunku bilet JWT ve JWT_PATTERN yakaliyor; SEC-003 formati degistirirse tehlikeli. SEC-004 acildi. size-limit rota basina +2.5 kB, butce icinde"}
