@@ -58,6 +58,13 @@ test.describe('KK-005 · giriş hataları e-posta varlığını ayırt etmez', (
     return { status: response.status() }
   }
 
+  // DÜZELTME (AUTH-002, E2E-002'nin bulduğu gerçek hata — spec DOĞRUYDU):
+  // `apps/web/app/api/auth/[...nextauth]/route.ts` artık `/callback/
+  // credentials` dalını sarıp `hasSessionCookie` sinyaline göre durumu
+  // 401'e çeviriyor (gövde/başlıklar DEĞİŞMİYOR, yalnız durum kodu). Bu iki
+  // test artık YAZILI KK-005'in TAM METNİNİ sınıyor — 200 beklentisi YOKTU,
+  // ilk sürümde gerçek üründeki hatayı yansıtıyordu (bkz. docs/board/
+  // reports/E2E-002.md §4.1, production'da `main`e karşı canlı doğrulandı).
   test('yanlış parola: 401 ve "E-posta veya parola hatalı."', async ({ page }) => {
     const { status } = await attemptLogin(page, TEST_USERS.playerOne.email, 'KesinlikleYanlis1')
     expect(status).toBe(401)
