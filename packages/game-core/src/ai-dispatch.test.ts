@@ -32,14 +32,24 @@ const seededRng = (values: readonly number[]): (() => number) => {
 }
 
 describe('chooseMove — imza sözleşmesi', () => {
+  /**
+   * BOŞ 3×3 tahta BİLEREK kullanılmadı: orada `bestMove` 549 945 düğüm gezer ve
+   * Stryker'ın enstrümante ettiği kodda dokuz koşucu paralel çalışırken 20 sn
+   * sınırını aşıyor (ölçüldü — ilk deneme "dry run" aşamasında patladı). Kısmen
+   * dolu bir tahta AYNI kod yolunu koşar, saniyenin altında.
+   */
+  const partial = boardFromCells(
+    Array.from('XOX.O....').map((c): Cell => (c === '.' ? null : (c as Player))),
+  )
+
   it('rng DÖRDÜNCÜ parametredir, konfigürasyon BEŞİNCİ ve opsiyoneldir', () => {
     // Beşinci argüman hiç verilmezse davranış 3×3'tür — bugünkü sözleşme.
-    expect(chooseMove(emptyBoard(), 'X', 'unbeatable')).toBe(bestMove(emptyBoard(), 'X'))
-    expect(chooseMove(emptyBoard(), 'X', 'easy', seededRng([0.5]))).toBe(4)
-    expect(chooseMove(emptyBoard(), 'X', 'easy', seededRng([0.5]), {})).toBe(4)
-    expect(chooseMove(emptyBoard(), 'X', 'unbeatable', Math.random, { config: THREE })).toBe(
-      bestMove(emptyBoard(), 'X'),
+    expect(chooseMove(partial, 'X', 'unbeatable')).toBe(bestMove(partial, 'X'))
+    expect(chooseMove(partial, 'X', 'unbeatable', Math.random, {})).toBe(bestMove(partial, 'X'))
+    expect(chooseMove(partial, 'X', 'unbeatable', Math.random, { config: THREE })).toBe(
+      bestMove(partial, 'X'),
     )
+    expect(chooseMove(emptyBoard(), 'X', 'easy', seededRng([0.5]))).toBe(4)
   })
 })
 
