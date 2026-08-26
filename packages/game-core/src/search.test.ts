@@ -4,7 +4,6 @@ import {
   CANDIDATE_RADIUS,
   MAX_SEARCH_DEPTH,
   NODE_CHECK_INTERVAL,
-  TERMINAL_SCORE,
 } from './ai-config'
 import { boardFromCells } from './board'
 import { cellCount, colOf, rowOf } from './config'
@@ -35,6 +34,12 @@ const build = (config: BoardConfig, stones: ReadonlyMap<number, Player>): Board 
   )
 
 const emptyOf = (config: BoardConfig): Board => build(config, new Map())
+
+const fromString = (cells: string, config: BoardConfig): Board =>
+  boardFromCells(
+    Array.from(cells).map((c): Cell => (c === '.' ? null : (c as Player))),
+    config,
+  )
 
 /** Duran saat: duvar saati bütçesi ASLA dolmaz, yalnız düğüm bütçesi konuşur. */
 const frozenClock = (): (() => number) => (): number => 0
@@ -314,21 +319,41 @@ describe('arama — determinizm ve derinlik cezası', () => {
     expect(result.move).toBe(35)
   })
 
-  it('TERMINAL_SCORE derinlik cezalıdır — daha çabuk biten kazancı seçer', () => {
-    expect(TERMINAL_SCORE).toBeGreaterThan(0)
-    // X 15'te hemen kazanır; 30 da (O'yu bloklayıp çifte tehdit kurarak)
-    // kazandırır ama bir tur sonra.
-    const board = build(
-      SIX_FOUR,
-      new Map<number, Player>([
-        [12, 'X'],
-        [13, 'X'],
-        [14, 'X'],
-        [6, 'O'],
-        [18, 'O'],
-        [24, 'O'],
-      ]),
+  /**
+   * DERİNLİK CEZASI (`TERMINAL_SCORE − ply`): erken kazanç geç kazançtan
+   * iyidir. Bu pozisyon sondayla SEÇİLDİ, uydurulmadı — (6,4) korpusunun
+   * 202 pozisyonu iki motorla (cezalı / cezası ters çevrilmiş) taranıp
+   * ayrışan 26 pozisyondan biri alındı.
+   *
+   * Taktik tarama burada DEVRE DIŞI: iki tarafın da tek hamlelik kazancı yok,
+   * karar tamamen aramanındır ve derinlik 5 tamamlanır. `TERMINAL_SCORE − ply`
+   * `TERMINAL_SCORE + ply` olduğunda motor 22 yerine 2'yi oynuyor (ölçüldü),
+   * yani aynı kazancı DAHA GEÇE erteliyor.
+   */
+  it('TERMINAL_SCORE derinlik cezalıdır — geç kazanç erken kazançtan düşüktür', () => {
+    const board = fromString('..........XO....X.................O.', SIX_FOUR)
+    expect(candidateMoves(board, SIX_FOUR).some((m) => wouldWin(board, m, 'X', SIX_FOUR))).toBe(
+      false,
     )
-    expect(searchMove(board, 'X', { config: SIX_FOUR, now: frozenClock() }).move).toBe(15)
+    const result = searchMove(board, 'X', { config: SIX_FOUR, now: frozenClock() })
+    expect({ move: result.move, depth: result.depth }).toEqual({ move: 22, depth: 5 })
+  })
+
+  /**
+   * KAYIP PUANI NEGATİFTİR (`ply − TERMINAL_SCORE`). Bu, cezanın simetriği
+   * değil AYRI bir iddiadır: işareti ters çevrilirse motor rakibin kazandığı
+   * dalları EN YÜKSEK puanlı sanar ve kaybı KOVALAR.
+   *
+   * Neden hiçbir taktik test bunu yakalamıyor: rakibin TEK hamlelik kazancı
+   * varsa taktik tarama zaten bloklayıp dönüyor, yani `ply − TERMINAL_SCORE`
+   * kökte hiç değerlendirilmiyor. Terim ancak ply 4/6'da — rakip ply 2'de
+   * çifte tehdit kurduğunda — ateşleniyor. O yüzden bu pozisyon da sondayla
+   * SEÇİLDİ: işaret ters çevrilmiş motorla taranan 35 ayrışan pozisyondan
+   * biri. Doğru işaretle 9, ters işaretle 13 oynanıyor (ölçüldü).
+   */
+  it('kayıp puanı NEGATİFTİR — motor kaybı kovalamaz', () => {
+    const board = fromString('..X.....O..O.......X................', SIX_FOUR)
+    const result = searchMove(board, 'X', { config: SIX_FOUR, now: frozenClock() })
+    expect({ move: result.move, depth: result.depth }).toEqual({ move: 9, depth: 4 })
   })
 })
