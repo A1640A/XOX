@@ -4,7 +4,14 @@ import type { ErrorCode } from './errors'
 import { type MoveRejectionReason, type TransportStatus, toTransportStatus } from './game-status'
 import type { Cell, Player, Players } from './primitives'
 import { WS_CLOSE, isPermanentCloseCode, requiresReauth } from './ws-close'
-import type { ClientMessage, Emoji, RematchOffer, ServerMessage, StateMessage } from './ws-protocol'
+import type {
+  ClientMessage,
+  Emoji,
+  LastMove,
+  RematchOffer,
+  ServerMessage,
+  StateMessage,
+} from './ws-protocol'
 
 /**
  * Oda ekranının **saf** istemci indirgeyicisi (tasarım §5.6). Web ve mobil aynı
@@ -59,6 +66,15 @@ export interface RoomClientState {
   readonly lastError: ErrorCode | null
   /** Üstel geri çekilmenin sayacı; başarılı bağlantı ve 4499 bunu sıfırlar. */
   readonly reconnectAttempt: number
+  /** Tahtanın kenar uzunluğu (CTR-BOARD-001, ADR-0015 §2). */
+  readonly size: number
+  /** Kazanmak için yan yana gereken taş sayısı — `board.length`'ten türetilemez. */
+  readonly winLength: number
+  /**
+   * Rakibin son oynadığı hücre — `data-son-hamle` (KK-B55). `move:applied`
+   * bunu GÜNCELLER, `state` TÜMÜYLE değiştirir (ADR-0015 §3).
+   */
+  readonly lastMove: LastMove | null
 }
 
 /** Arayüzün üretebileceği olaylar — hepsi zamansızdır. */
@@ -125,6 +141,12 @@ export function initialRoomClientState(): RoomClientState {
     inFlight: null,
     lastError: null,
     reconnectAttempt: 0,
+    // 3×3 varsayımı `emptyBoard`'un dokuz `null`'uyla aynı bilinçli seçim:
+    // `game-core`'un `DEFAULT_BOARD_CONFIG`'inden TÜRETİLMEZ (shared game-core'u
+    // import edemez), ilk `state` mesajı gelene kadarki geçici bir başlangıçtır.
+    size: 3,
+    winLength: 3,
+    lastMove: null,
   }
 }
 
@@ -370,6 +392,9 @@ function fromStateMessage(
     rematch: message.rematch,
     serverOffsetMs: message.serverTime - now,
     reconnectAttempt: 0,
+    size: message.size,
+    winLength: message.winLength,
+    lastMove: message.lastMove,
   }
 }
 
@@ -394,6 +419,9 @@ function applyEcho(
     version,
     status: nextStatus(state.status, board),
     pending: state.pending !== null && state.pending.index === index ? null : state.pending,
+    // move:applied lastMove'u GÜNCELLER (state onu TÜMÜYLE değiştirir) — kendi
+    // yankım da dahil: rakip görene kadar benim son taşım da "son hamle"dir.
+    lastMove: { index, by },
   })
 }
 
