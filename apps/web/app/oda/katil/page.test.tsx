@@ -51,6 +51,8 @@ describe('/oda/katil sayfası', () => {
           state: 'waiting',
           seats: { X: null, O: null },
           canJoin: true,
+          size: 3,
+          winLength: 3,
         }),
     })
     vi.stubGlobal('fetch', fetchMock)

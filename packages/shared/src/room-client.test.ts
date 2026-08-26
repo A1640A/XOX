@@ -42,6 +42,9 @@ function tamDurumMesaji(patch: Partial<StateMessage> = {}): StateMessage {
     graceEndsAt: null,
     rematch: null,
     serverTime: 5_000,
+    size: 3,
+    winLength: 3,
+    lastMove: null,
     ...patch,
   }
 }
@@ -154,6 +157,16 @@ describe('§5.6/2 — move:applied, version === state.version + 1', () => {
     expect(state.version).toBe(4)
     expect(state.status).toEqual({ kind: 'playing', turn: 'O' })
     expect(effects).toEqual([])
+  })
+
+  it('lastMove uygulanan hamleye GÜNCELLENİR (ADR-0015 §3) — state gibi TÜMÜYLE değişmez', () => {
+    const durum = bagliDurum({ lastMove: { index: 0, by: 'O' } })
+    const { state } = roomClientReducer(
+      durum,
+      sunucudan({ type: 'move:applied', index: 2, by: 'X', version: 4 }),
+    )
+
+    expect(state.lastMove).toEqual({ index: 2, by: 'X' })
   })
 
   it('başka hücrenin yankısı bekleyen hamleyi temizlemez', () => {
@@ -326,6 +339,9 @@ describe('§5.6/6 — state mesajı', () => {
           graceEndsAt: 60_000,
           rematch: { by: 'O', expiresAt: 70_000 },
           players: { X: { userId: 'u1', name: 'Ayse' }, O: { userId: 'u2', name: 'Veli' } },
+          size: 11,
+          winLength: 5,
+          lastMove: { index: 60, by: 'X' },
         }),
       ),
     )
@@ -336,6 +352,19 @@ describe('§5.6/6 — state mesajı', () => {
     expect(state.graceEndsAt).toBe(60_000)
     expect(state.rematch).toEqual({ by: 'O', expiresAt: 70_000 })
     expect(state.players.O).toEqual({ userId: 'u2', name: 'Veli' })
+    // CTR-BOARD-001: size/winLength/lastMove de state mesajından tümüyle alınır.
+    expect(state.size).toBe(11)
+    expect(state.winLength).toBe(5)
+    expect(state.lastMove).toEqual({ index: 60, by: 'X' })
+  })
+
+  it('lastMove state mesajında yoksa (null) yerel değeri de siler — TÜMÜYLE değiştirme', () => {
+    const { state } = roomClientReducer(
+      bagliDurum({ lastMove: { index: 4, by: 'O' } }),
+      sunucudan(tamDurumMesaji({ lastMove: null })),
+    )
+
+    expect(state.lastMove).toBeNull()
   })
 
   it('saat sapmasını serverTime - now olarak saklar', () => {

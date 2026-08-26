@@ -164,6 +164,9 @@ describe('finishGame — games CAS + stats (KK-052/053, tasarım §9)', () => {
     expect(game.moves).toHaveLength(5)
     expect(game.moves.map((m) => m.index)).toStrictEqual([0, 1, 2, 3, 4])
     expect(game.moves.map((m) => m.by)).toStrictEqual(['X', 'O', 'X', 'O', 'X'])
+    // ADR-0014 §5/KK-B34: yazılır ama HİÇBİR API okumaz — ileriye dönük alan.
+    expect(game.size).toBe(3)
+    expect(game.winLength).toBe(3)
   })
 
   it('kazananın wins, kaybedenin losses alanı TAM 1 artar; draws hiç artmaz', async () => {

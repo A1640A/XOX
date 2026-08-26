@@ -41,6 +41,10 @@ export {
 // bilinçli olarak üst barrelde ve dosyanın kendisinden geliyor, donmuş barrel'e
 // dokunulmadı (DB-003).
 export { getRoomSummary, type RoomSummary } from './rooms/summary'
+// `resolveBoardConfig` DB-BOARD-001'in okuma kapısıdır (ADR-0014 §2) — `rooms/
+// index.ts` DB-002'den beri DONUK olduğu için `getRoomSummary` ile aynı
+// desende doğrudan kendi modülünden dışa verilir.
+export { resolveBoardConfig } from './rooms/board-config'
 export {
   getFriendsView,
   hasFinishedGameTogether,

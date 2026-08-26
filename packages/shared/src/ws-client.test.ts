@@ -67,6 +67,9 @@ function tamDurumMesaji(patch: Partial<StateMessage> = {}): StateMessage {
     graceEndsAt: null,
     rematch: null,
     serverTime: 1_000,
+    size: 3,
+    winLength: 3,
+    lastMove: null,
     ...patch,
   }
 }

@@ -1,5 +1,6 @@
 import { connectDb, getRoomSummary } from '@xox/db'
 import {
+  canJoinRoom,
   roomCodeSchema,
   roomStateResponseSchema,
   type ErrorCode,
@@ -40,8 +41,15 @@ function errorJson(code: ErrorCode, message: string, status: number): Response {
  *
  * Projeksiyon dizesi ve koltuk şekli bilgisi burada YOKTUR — `@xox/db`'nin
  * `getRoomSummary`'sine devredilmiştir (DB-003). Bu route yalnız `RoomSummary`
- * dar tipini görür ve `canJoin`'i ondan türetir; Mongoose modeline (`Room`)
- * doğrudan erişmez.
+ * dar tipini görür; Mongoose modeline (`Room`) doğrudan erişmez.
+ *
+ * `canJoin` BURADA HESAPLANMAZ — tek kaynak `@xox/shared`'ın `canJoinRoom`'u
+ * (CTR-003, `rest-contract.ts`). Route yerel bir `&&` kopyası TUTMAZ; aksi
+ * hâlde bu route ile `roomStateResponseSchema`'nın kendi `superRefine`
+ * değişmezi ayrı ayrı güncellenip birbirinden sapabilir (CTR-001'in kusuru
+ * tam buydu). `size`/`winLength` de kendi tek kaynağından (`resolveBoardConfig`,
+ * `getRoomSummary` içinde zaten uygulanmış) gelir — burada `?? 3` gibi bir
+ * üçüncü kopya YAZILMAZ, `room.size`/`room.winLength` doğrudan aktarılır.
  */
 export async function GET(req: Request, { params }: RouteContext): Promise<Response> {
   try {
@@ -64,12 +72,13 @@ export async function GET(req: Request, { params }: RouteContext): Promise<Respo
       return errorJson('ROOM_NOT_FOUND', 'Oda bulunamadı.', 404)
     }
 
-    const bosKoltukVar = room.seats.X === null || room.seats.O === null
     const body = roomStateResponseSchema.parse({
       code: room.code,
       state: room.state,
       seats: room.seats,
-      canJoin: room.state === 'waiting' && bosKoltukVar,
+      canJoin: canJoinRoom(room.state, room.seats),
+      size: room.size,
+      winLength: room.winLength,
     })
     return Response.json(body)
   } catch (error) {

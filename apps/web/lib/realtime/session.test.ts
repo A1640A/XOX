@@ -267,7 +267,12 @@ describe('session · gelen mesaj', () => {
     await f.session.start()
     f.sent.length = 0
 
-    await f.session.handleMessage(JSON.stringify({ type: 'move', index: 99 }))
+    // DB-BOARD-001/CTR-BOARD-001: `cellIndexSchema` 11×11'i desteklemek için
+    // 0..120'ye genişledi (SB-04) — 99 artık PROTOKOL seviyesinde geçerlidir
+    // (oda başına gerçek sınır `move:rejected{reason:'out-of-range'}` ile
+    // kural motorundan gelir, şemadan değil). Şema dışılığı sınamak için
+    // aralığın GENİŞLEMİŞ üst sınırının da DIŞINA (121) çıkan bir değer gerekir.
+    await f.session.handleMessage(JSON.stringify({ type: 'move', index: 121 }))
     expect(f.sent[0]).toMatchObject({ type: 'error', code: 'INVALID_MESSAGE' })
   })
 

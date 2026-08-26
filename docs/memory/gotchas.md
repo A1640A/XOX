@@ -1203,3 +1203,117 @@ Genel bağlantı sınırı (WS-001) ise **kabul + ret** sayıyor ve bu doğru: o
 sayıyor ve bu **ayrım kasıtlı**.
 
 Sonda: sabit pencereye çeviren mutasyon "kalıcı ceza yok" testini kırmızıya döndürmeli.
+
+## 2026-08-26 · Protokol penceresi açıldığında `main` GEÇİCİ olarak kırılır — zincir kur, kırık merge etme
+
+`CTR-BOARD-001` `packages/shared`'ı genişletti (`stateMessageSchema`'ya `size`/`winLength`/
+`lastMove` zorunlu alanları). Sonuç: **altı paket yeşil, `apps/web` kırık** — tüketiciler o
+alanları henüz vermiyor. ADR-0015 §10.5 bunu "bölümlemenin bilinen zayıf noktası" diye
+işaretlemişti.
+
+**Yanlış çözüm:** kırık merge edip "sonraki kart düzeltir" demek. Bu gece CI'ın beş saat kırmızı
+kalması bu projenin en pahalı hatasıydı ve o zaman kimse _bilerek_ kırmamıştı bile.
+
+**Doğru çözüm — zincir:** sonraki kartların dalı `main`'den değil **açık pencerenin dalından**
+kesilir (`git worktree add … -b feat/SONRAKI feat/PENCERE`). Zincir yeşil olunca `main`'e **tek
+seferde** iner. `main` hiçbir an kırık görmez, `git bisect` temiz kalır.
+
+**Bedeli:** dal uzun yaşar ve `main`'e göre kayabilir. Karşılığı: kapı hiç yalan söylemez.
+
+**Ek kontrol:** pencere açıldığında kırılan dosyaların **hepsinin bir sahibi olduğunu** doğrula.
+`use-room.test.tsx` hiçbir bekleyen kartın çakışma kümesinde değildi (kapanmış `UI-SKEL-001`'e
+aitti) — fark edilmeseydi zincir sonuna kadar kırık kalırdı. Kırık dosya listesini çıkar,
+her birini bir karta ata, sahipsiz kalanı açıkça devret.
+
+## 2026-08-26 · Vercel takımı değiştirmek E2E kapısını sessizce kapattı (OPS-008)
+
+Projeyi `omeerdursunn` takımına taşıdım. O takımda **Vercel Authentication varsayılan açık**:
+`ssoProtection.enabled = true`, `deploymentType = "all_except_custom_domains"`.
+
+Sonuç ikiye bölündü ve **yarısı yeşil kaldığı için gizlendi**:
+
+- `xox.omerdursun.com` (özel alan adı) → muaf, çalışıyor. Production smoke yeşil.
+- Tüm `*.vercel.app` önizlemeleri → SSO duvarının arkasında.
+
+E2E `global-setup.ts` `/api/health`'ten JSON yerine **HTML SSO sayfası** aldı ve
+`Unexpected token '<'` ile düştü. Hata mesajı sebebi hiç göstermiyor.
+
+**Ders:** bir Vercel projesini takım değiştirmek yalnız faturalandırmayı taşımaz — **hedef
+takımın güvenlik varsayılanlarını uygular.** Taşımadan sonra `deployment-protection`
+ayarlarını açıkça oku; production özel alan adından yeşil dönüyor diye önizleme yolunun
+sağlam olduğunu varsayma. Taşıma ile kapının kırıldığını fark etmem arasında **bir gün** geçti.
+
+**Enum tuzağı:** `ssoProtection.deploymentType` yalnız `all` · `preview` ·
+`prod_deployment_urls_and_all_previews` kabul ediyor. **"Yalnız production'ı koru" seçeneği YOK.**
+Yani "önizlemeleri aç ama production'ı koru" ayarla ifade edilemiyor — ya hepsi korumalı ya
+hiçbiri. Doğru çözüm ayarı gevşetmek değil, **Protection Bypass for Automation** secret'ını
+otomasyona header olarak vermek (`x-vercel-protection-bypass`).
+
+**Yan ders — ölçüm aracı yanılttı:** ajan aynı testi `next dev` ile koşunca KK-027 kırmızı
+göründü; kök neden React StrictMode'un mount effect'ini iki kez çalıştırması. **Üretim
+derlemesinde** (`next build && next start`) effect bir kez çalışıyor ve test yeşil. Bir
+E2E kırmızısını koda yazmadan önce dev sunucusunun kendi davranışı olup olmadığını ele.
+
+## 2026-08-26 · Playwright'ta `globalSetup` `use` bloğunu OKUMAZ
+
+`playwright.config.ts` → `use.extraHTTPHeaders` yalnız **testlerin** context'lerine uygulanır.
+`globalSetup` kendi `request.newContext()` / `browser.newContext()` çağrılarını yapar ve
+**`use`'tan hiçbir şey miras almaz.** OPS-008'de tam bu yüzden atlatma başlığı testlere
+gitti ama ön kontrol duvara çarptı — hata da testlerden değil setup'tan geldiği için
+"config doğru, öyleyse bağlandı" varsayımı yanlıştı.
+
+Config'e bir `use` alanı eklerken `globalSetup`'ın da ona ihtiyacı olup olmadığını sor;
+varsa **açıkça** geç ve ortak değeri tek bir modülden üret (`bypass-headers.ts`).
+
+## 2026-08-26 · Bir duvarı tespit ederken önce neyin ölçülebilir olduğunu ölç
+
+Vercel SSO duvarını tanımak için üç makul sinyalin **üçü de** işe yaramadı; hepsi denenip
+elendi:
+
+| Aday                                                               | Sonuç                                                                                                                          |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| Gövde metni (`Authentication Required`, `vercel.com/sso`, +5 aday) | **Yok.** Sayfa hash'li sınıf adlarından oluşan bir Next.js kabuğu                                                              |
+| Durum kodu                                                         | **Yanıltıcı.** Duvar `401` değil **`200`** dönüyor                                                                             |
+| `set-cookie: _vercel_sso_nonce`                                    | curl görüyor, **Playwright görmüyor** — yönlendirmeyi takip ettiği için başlık zincirde tükeniyor (`headersArray()`'de 0 adet) |
+| **`response.url()`'in origin'i**                                   | ✅ İstek bizim origin'e gitti, yanıt `vercel.com`'dan döndü                                                                    |
+
+İlk iki denemem yanlış teşhis koyan bir "iyileştirme" üretecekti; ikisini de gerçek duvara
+karşı koşup ıskaladığını gördüğüm için yakalandı. **Teşhis kodu da en az düzelttiği hata
+kadar test edilmeli** — sessizce yanlış teşhis koyan bir hata mesajı, hiç mesaj olmamasından
+daha pahalıdır.
+
+## 2026-08-26 · Asılan bir kapı, kırmızı veren bir kapıdan daha kötüdür
+
+`assertTestDatabase` (OPS-007 nöbetçisi) `/api/health`'e **zaman aşımısız** istek atıyordu.
+Kazara keşfedildi: `playwright.config.ts`'in varsayılan `baseURL`'i `http://localhost:3000`
+ve o portta **başka bir projenin** (`PROJELER/izrandevu`) iki günlük, **kilitlenmiş** dev
+sunucusu duruyordu — bağlantıyı kabul edip hiç cevap vermiyor. `curl` de asıldı, yani
+istemciye özgü değil.
+
+Sonuç: `E2E_BASE_URL` vermeden `pnpm e2e` koşmak **sonsuza kadar asılıyordu**. Kapı
+yanlış hedefi tespit edip kırmızı vermiyordu; hiç sonuçlanmıyordu. Kırmızı bir kapı sebebi
+söyler, asılan bir kapı hiçbir şey söylemez ve "yavaş" sanılıp beklenir.
+
+**Düzeltme:** `newContext({ timeout: 15_000 })` + ulaşılamama dalını okunabilir bir
+`BLOKE:` mesajına sarmak (hedef adresi mesaja yazarak — ham Playwright hatası hangi
+adrese gidildiğini yazmıyor).
+
+**Genel ders:** bir ön kontrol yazarken "yanlış cevap" kadar **"hiç cevap yok"** hâlini de
+ele. Ağ çağrısı yapan her kapıya açık zaman aşımı koy. Ayrıca `localhost:PORT` varsayılanı
+tek bir makinede birden çok proje çalışırken **sessizce yanlış projeyi** hedefler.
+
+## 2026-08-26 · `typecheck` yeşil ≠ paket yeşil — testi de koş
+
+`CTR-BOARD-001` merge edilir mi diye bakarken paket paket **`typecheck`** koştum ve
+"altı paket yeşil, yalnız `apps/web` kırık" diye rapor ettim. **Testi hiç koşmamıştım.**
+Gerçek tablo: o dalda `apps/web`'de **111 test kırmızıydı**.
+
+Karar (zincir kurmak) yine de doğru çıktı, ama gerekçemin ölçüsü yanlıştı — kırıklığın
+büyüklüğünü on kat küçük bildim ve zincirin **iki değil üç** kart süreceğini geç fark ettim.
+
+Tip hataları ile davranış hataları farklı kümeler: şemaya **zorunlu alan eklemek** çoğu
+tüketiciyi tip düzeyinde kırar (yakalanır), ama bir yanıtı **çalışma zamanında** doğrulama
+hatasına düşürmek tipe hiç yansımaz — `route.ts` derleniyordu, sadece HTTP 500 dönüyordu.
+
+**Kural:** bir dalın durumunu bildirmeden önce `typecheck` **ve** `test` koş. Tek kelimeyle
+"yeşil" demeden önce hangisini ölçtüğünü söyle.

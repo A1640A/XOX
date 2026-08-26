@@ -61,6 +61,23 @@ describe('createRoom', () => {
     expect(result.room.board).toStrictEqual(Array.from({ length: 9 }, () => null))
     expect(result.room.moves).toStrictEqual([])
     expect(result.events).toEqual([{ kind: 'created' }])
+    // ADR-0014 §4/KK-B19: config verilmese bile TEK yazma yolu size/winLength'i
+    // AÇIKÇA yazar — varsayılan davranış bit düzeyinde {3,3}'e eşittir.
+    expect(result.room.size).toBe(3)
+    expect(result.room.winLength).toBe(3)
+  })
+
+  it('ADR-0014 §4/KK-B19: config verilirse size/winLength ve cellCount(config) uzunluğunda boş tahta yazılır', async () => {
+    const seatOwner = owner()
+    const result = await createRoom(seatOwner, { size: 11, winLength: 5 })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+    createdCodes.push(result.room.code)
+
+    expect(result.room.size).toBe(11)
+    expect(result.room.winLength).toBe(5)
+    expect(result.room.board).toStrictEqual(Array.from({ length: 121 }, () => null))
   })
 
   it('kod çakışmasında (E11000) yeniden dener ve nihayetinde başarılı olur (KK-035/036)', async () => {

@@ -100,8 +100,12 @@ describe('winLineSchema', () => {
     expect(winLineSchema.safeParse([0, 4, 8]).success).toBe(true)
   })
 
-  it('aralık dışı indeksi reddeder', () => {
-    expect(winLineSchema.safeParse([0, 4, 9]).success).toBe(false)
+  // cellIndexSchema'nın üst sınırı artık 120'dir (CTR-BOARD-001, 11×11 desteği) —
+  // bu testin sorumluluğu SADECE dizi uzunluğunu (3..6) doğrulamaktır, hücre
+  // aralığı `primitives.test.ts`'in işidir (bkz. yukarıdaki yorum, ADR-0015 §4).
+  it('9 artık aralık İÇİNDEDİR (11×11) — yalnız 120 üstü reddedilir', () => {
+    expect(winLineSchema.safeParse([0, 4, 9]).success).toBe(true)
+    expect(winLineSchema.safeParse([0, 4, 121]).success).toBe(false)
   })
 
   it.each([

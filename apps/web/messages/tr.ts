@@ -61,6 +61,29 @@ export const tr: MessageTree = {
     thinking: 'Bilgisayar düşünüyor…',
     playAgain: 'Yeniden oyna',
     notCounted: 'Bilgisayara karşı oyunlar istatistiklere ve puana sayılmaz.',
+    hard: 'Zor',
+    strengthNote:
+      '3×3 tahtada bilgisayar yenilmezdir. Daha büyük tahtalarda güçlü oynar ama yenilmez değildir.',
+    thinkingBig: 'Bilgisayar büyük tahtada düşünüyor…',
+  },
+
+  boardConfig: {
+    title: 'Oyun ayarı',
+    size: 'Tahta boyutu',
+    size3: '3×3',
+    size6: '6×6',
+    size11: '11×11',
+    winLength: 'Kazanma uzunluğu',
+    winLengthOption: '{n} taş',
+    winLengthFixed: '3 taş (3×3 tahtada sabit)',
+    summary: '{boyut} tahta · {n} taş yan yana',
+    hint11: '11×11 tahtada 5 taş standart gomoku kuralıdır.',
+    hint6: '6×6 tahtada 4 taş hızlı ve kararlı bir oyun verir.',
+    narrowScreen: 'Tahtayı daha rahat görmek için cihazını yatay çevir.',
+    boardLabel: '{boyut} oyun tahtası, kazanmak için {n} taş yan yana',
+    cellPosition: '{satir}. satır {sutun}. sütun, {icerik}',
+    cellEmpty: 'boş',
+    cellStone: '{tas} taşı',
   },
 
   room: {
@@ -92,6 +115,11 @@ export const tr: MessageTree = {
     wonByAbandon: 'Rakibin oyunu terk etti — kazandın!',
     timeLeft: 'Kalan süre: {saniye} sn',
     hurry: 'Acele et!',
+    opponentPlayed: 'Rakip {satir}. satır {sutun}. sütuna oynadı.',
+    youPlayed: '{satir}. satır {sutun}. sütuna oynadın.',
+    winningLineAnnounce:
+      '{n} taş: {baslangicsatir}. satır {baslangicsutun}. sütundan {bitissatir}. satır {bitissutun}. sütuna.',
+    lastMove: 'Son hamle',
   },
 
   connection: {
@@ -195,5 +223,6 @@ export const tr: MessageTree = {
     NOT_FRIENDS_ELIGIBLE: 'Yalnızca birlikte oyun bitirdiğin oyuncuları ekleyebilirsin.',
     SERVER_ERROR: 'Sunucuda bir sorun oluştu. Tekrar dene.',
     NETWORK: 'Bağlantı sorunu. İnternetini kontrol et.',
+    INVALID_BOARD_CONFIG: 'Seçilen tahta boyutu ve kazanma uzunluğu birlikte geçerli değil.',
   },
 }

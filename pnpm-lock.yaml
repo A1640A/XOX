@@ -108,6 +108,9 @@ importers:
       '@types/ws':
         specifier: 8.18.1
         version: 8.18.1
+      mongodb:
+        specifier: 7.5.0
+        version: 7.5.0(socks@2.8.9)
       ws:
         specifier: 8.21.3
         version: 8.21.3

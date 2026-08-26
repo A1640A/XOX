@@ -1,6 +1,7 @@
 import type { SeatOccupant } from '@xox/shared'
 import { Room } from '../models/room'
 import type { RoomState } from '../models/room'
+import { resolveBoardConfig } from './board-config'
 
 /**
  * `getRoomSummary`'nin GERÇEKTE döndürdüğü alanları taşıyan dar tip.
@@ -12,21 +13,31 @@ import type { RoomState } from '../models/room'
  * bu tip VE aşağıdaki `PROJECTION` sabiti BİRLİKTE güncellenmeli; `summary.test.ts`
  * bunun tek koruyucusu (bkz. o dosyadaki yorum — TypeScript projeksiyon
  * daraltmasını YAKALAMAZ, yalnız çalışma zamanı testi yakalar).
+ *
+ * `size`/`winLength` ZORUNLU alanlardır (SB-09, US-B03): katılan oyuncu
+ * odaya girmeden önce hangi oyunu oynayacağını görebilmelidir. Değerler
+ * `resolveBoardConfig`'ten geçirilmiş, ÇÖZÜLMÜŞ (resolved) değerlerdir — eski
+ * (alan yok) ya da bozuk bir dokümanda bile `{3,3}`'ten daha az bir şey asla
+ * dönmez (ADR-0014 §2).
  */
 export interface RoomSummary {
   code: string
   state: RoomState
   seats: { X: SeatOccupant | null; O: SeatOccupant | null }
+  size: number
+  winLength: number
 }
 
 /**
- * Mongo projeksiyon dizesi — `RoomSummary`'nin alan listesiyle BİRE BİR
- * eşleşmek zorunda. Bu string TypeScript'e görünmez: `Room.findOne(...).select(x)`
- * `x` daraltılsa da (`'code'` gibi) derleme zamanı hiçbir hata vermez, dönen
- * belge sessizce eksik alanlarla gelir (`seats` → `undefined`). Tek koruma
+ * Mongo projeksiyon dizesi — `RoomSummary`'nin `Room` dokümanından OKUNAN
+ * alan listesiyle BİRE BİR eşleşmek zorunda (`size`/`winLength` `resolveBoardConfig`
+ * girdisi olarak da seçilmek ZORUNDA, aksi hâlde çözücü onları hep `undefined`
+ * görür ve her oda {3,3} sanılır). Bu string TypeScript'e görünmez:
+ * `Room.findOne(...).select(x)` `x` daraltılsa da derleme zamanı hiçbir hata
+ * vermez, dönen belge sessizce eksik alanlarla gelir. Tek koruma
  * `summary.test.ts`'teki çalışma zamanı sondası.
  */
-const PROJECTION = 'code state seats'
+const PROJECTION = 'code state seats size winLength'
 
 /**
  * Oda özeti — WS upgrade ÖNCESİ salt-okunur ön kontrol için (tasarım §5.1/§7,
@@ -48,5 +59,8 @@ const PROJECTION = 'code state seats'
  * özetini döner, türetme çağıranın işi olarak kalır.
  */
 export async function getRoomSummary(code: string): Promise<RoomSummary | null> {
-  return Room.findOne({ code }).select(PROJECTION).lean()
+  const room = await Room.findOne({ code }).select(PROJECTION).lean()
+  if (room === null) return null
+  const config = resolveBoardConfig(room)
+  return { code: room.code, state: room.state, seats: room.seats, ...config }
 }

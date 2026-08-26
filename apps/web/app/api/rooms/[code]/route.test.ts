@@ -84,12 +84,14 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
     },
   )
 
-  it('Auth.js çerezi ile 200 + { code, state, seats, canJoin } döner', async () => {
+  it('Auth.js çerezi ile 200 + { code, state, seats, canJoin, size, winLength } döner', async () => {
     mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
     mockGetRoomSummary.mockResolvedValue({
       code: 'ABC234',
       state: 'waiting',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
+      size: 3,
+      winLength: 3,
     })
 
     const { GET } = await import('./route')
@@ -101,6 +103,8 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       state: 'waiting',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
       canJoin: true,
+      size: 3,
+      winLength: 3,
     })
   })
 
@@ -112,6 +116,8 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       code: 'ABC234',
       state: 'waiting',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
+      size: 3,
+      winLength: 3,
     })
 
     const { GET } = await import('./route')
@@ -126,13 +132,17 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
 
   it(
     'AC5: kod SUNUCU tarafında normalleştirilir — " abc234 " -> "ABC234" ile sorgulanır ' +
-      '(gerçek çıktı: getRoomSummary çağrısına giden argüman)',
+      '(gerçek çıktı: getRoomSummary çağrısına giden argüman); size/winLength de ' +
+      'DEFAULT (3/3) OLMAYAN bir değerle geçirilir — route bu alanları sabitlemiyor, ' +
+      '`getRoomSummary`den geldiği gibi taşıyor kanıtı (nötr eleman körlüğüne karşı)',
     async () => {
       mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
       mockGetRoomSummary.mockResolvedValue({
         code: 'ABC234',
         state: 'waiting',
         seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
+        size: 6,
+        winLength: 4,
       })
 
       const { GET } = await import('./route')
@@ -145,6 +155,8 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
         state: 'waiting',
         seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
         canJoin: true,
+        size: 6,
+        winLength: 4,
       })
     },
   )
@@ -155,6 +167,8 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       code: 'ABC234',
       state: 'waiting',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
+      size: 3,
+      winLength: 3,
     })
 
     const { GET } = await import('./route')
@@ -173,6 +187,8 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
         code: 'ABC234',
         state: 'playing',
         seats: { X: { userId: 'u1', name: 'Ayşe' }, O: null },
+        size: 3,
+        winLength: 3,
       })
 
       const { GET } = await import('./route')
@@ -192,6 +208,8 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
         code: 'ABC234',
         state: 'waiting',
         seats: { X: { userId: 'u1', name: 'Ayşe' }, O: { userId: 'u2', name: 'Mehmet' } },
+        size: 3,
+        winLength: 3,
       })
 
       const { GET } = await import('./route')
@@ -208,6 +226,8 @@ describe('GET /api/rooms/[code] — gerçek resolveIdentity, yalnız auth()+@xox
       code: 'ABC234',
       state: 'finished',
       seats: { X: { userId: 'u1', name: 'Ayşe' }, O: { userId: 'u2', name: 'Mehmet' } },
+      size: 3,
+      winLength: 3,
     })
 
     const { GET } = await import('./route')
