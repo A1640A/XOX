@@ -25,9 +25,10 @@ const BEKLENEN_MESAJ_TIPLERI = [
 ] as const
 
 /**
- * Gerçekten yazılan handler'lar. Kalanlar iskelet (SERVER_ERROR).
- * WS-001: `join`/`move`/`ping` · W1-02: `resign`/`rematch:*` (kendi test
- * dosyalarında ayrıca sınanıyor) · geriye `chat:emoji` kaldı (W3-03).
+ * Gerçekten yazılan handler'lar. WS-001: `join`/`move`/`ping` · W1-02:
+ * `resign`/`rematch:*` · W3-03: `chat:emoji` — hepsinin kendi test dosyası var.
+ * **Artık iskelet KALMADI**; aşağıdaki "iskelet kalmadı" testi bunu kilitliyor,
+ * yani bu küme bir gün sessizce kısalırsa test kırmızı olur.
  */
 const UYGULANAN = new Set<string>([
   'join',
@@ -36,6 +37,21 @@ const UYGULANAN = new Set<string>([
   'resign',
   'rematch:offer',
   'rematch:accept',
+  'chat:emoji',
+])
+
+/**
+ * Başarı yolunda İSTEMCİYE HİÇBİR ŞEY göndermemesi gereken handler'lar (R1).
+ * ELLE yazılır — önceki sürüm bu listeyi `!UYGULANAN.has(...)`'tan TÜRETİYORDU,
+ * yani bir handler yazıldıkça R1 sondasının kapsamından sessizce DÜŞÜYORDU.
+ * `join` ve `ping` bilerek dışarıda: ikisi doğrudan yanıt üretir.
+ */
+const YAZAN_HANDLERLAR = new Set<string>([
+  'move',
+  'resign',
+  'rematch:offer',
+  'rematch:accept',
+  'chat:emoji',
 ])
 
 function makeRoom(overrides: Partial<RoomDoc> = {}): RoomDoc {
@@ -147,9 +163,8 @@ describe('handlers kayıt defteri · DONDURULMUŞ', () => {
 
 describe('R1 SONDASI · yazan bağlantıya süreç içi kısayol YOK', () => {
   it('BAŞARILI bir geçişten sonra hiçbir yazma handler`ı mesaj göndermez', async () => {
-    const yazanHandlerlar = ORNEK_MESAJLAR.filter(
-      (m) => !UYGULANAN.has(m.type) || m.type === 'move',
-    )
+    const yazanHandlerlar = ORNEK_MESAJLAR.filter((m) => YAZAN_HANDLERLAR.has(m.type))
+    expect(yazanHandlerlar).toHaveLength(YAZAN_HANDLERLAR.size)
 
     for (const message of yazanHandlerlar) {
       const f = fixture()
@@ -188,23 +203,34 @@ describe('R1 SONDASI · yazan bağlantıya süreç içi kısayol YOK', () => {
   })
 })
 
-describe('iskelet handler`lar', () => {
-  it('yazılmamış her handler SERVER_ERROR döner ve bağlantıyı KAPATMAZ', async () => {
-    for (const message of ORNEK_MESAJLAR.filter((m) => !UYGULANAN.has(m.type))) {
-      const f = fixture()
-      await dispatchMessage(f.context, message)
-      expect(f.sent, message.type).toHaveLength(1)
-      expect(f.sent[0], message.type).toMatchObject({ type: 'error', code: 'SERVER_ERROR' })
-      expect(f.closes, message.type).toStrictEqual([])
-    }
+describe('iskelet handler kalmadı (W3-03 sonuncusunu kapattı)', () => {
+  it('protokoldeki HER mesaj tipinin gerçek bir handler`ı var', () => {
+    const iskeletler = ORNEK_MESAJLAR.map((m) => m.type).filter((type) => !UYGULANAN.has(type))
+
+    expect(iskeletler).toStrictEqual([])
+    // "Yokluk" iddiasının yanında DOLU liste: küme gerçekten yedi tipi sayıyor,
+    // boş bir `UYGULANAN` da yukarıdaki iddiayı sessizce yeşil yapardı.
+    expect(UYGULANAN.size).toBe(7)
+    expect([...UYGULANAN].toSorted()).toStrictEqual([...BEKLENEN_MESAJ_TIPLERI].toSorted())
   })
 
-  it('iskelet handler `@xox/db`nin fırlatan iskeletine DOKUNMAZ', async () => {
-    // `chat:emoji` — `pushEmoji` hâlâ fırlatan bir iskelet (W3-03 doldurur).
-    const pushEmoji = vi.fn(() => Promise.reject(new Error('çağrılmamalıydı')))
-    const f = fixture({ pushEmoji })
-    await dispatchMessage(f.context, { type: 'chat:emoji', emoji: '👏' })
-    expect(pushEmoji).not.toHaveBeenCalled()
+  it('mutlu yolda hiçbir handler SERVER_ERROR yazmıyor (iskelet cevabı yok)', async () => {
+    const gorulen: string[] = []
+
+    for (const message of ORNEK_MESAJLAR) {
+      const f = fixture()
+      f.context.connection.primeState(makeRoom())
+      f.sent.length = 0
+
+      await dispatchMessage(f.context, message)
+      gorulen.push(message.type)
+
+      const sunucuHatalari = f.sent.filter((m) => m.type === 'error' && m.code === 'SERVER_ERROR')
+      expect(sunucuHatalari, message.type).toStrictEqual([])
+    }
+
+    // Döngü GERÇEKTEN yedi tipi dolaştı — boş bir dizi de yukarıyı yeşil yapardı.
+    expect(gorulen).toHaveLength(7)
   })
 })
 
