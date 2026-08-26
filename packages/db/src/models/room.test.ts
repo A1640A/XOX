@@ -104,11 +104,36 @@ describe('Room modeli', () => {
     await expect(Room.create({ code })).rejects.toMatchObject({ code: 11000 })
   })
 
-  it('board tam olarak 9 hücreden farklı bir uzunlukta ise reddedilir', async () => {
+  // ADR-0014 §3 — İKİNCİ KEMER: `Model.create` yolunda `9..121` aralığına
+  // genişledi (KK-B69). Oda BAŞINA gerçek sınır (`size²`) burada DAYATILMAZ,
+  // onu kural motoru (`isValidMove`) ve `casUpdateRoom`'un `board` kanalı
+  // sağlar — bu yüzden 8 ve 122 SINIR DEĞERLERİ sınanır, 9 ve 121 DEĞİL.
+  it('board 8 hücreyle (alt sınırın altı) REDDEDİLİR', async () => {
     const code = freshCode()
     await expect(
-      Room.create({ code, board: Array.from({ length: 12 }, () => null) }),
+      Room.create({ code, board: Array.from({ length: 8 }, () => null) }),
     ).rejects.toThrow()
+  })
+
+  it('board 122 hücreyle (üst sınırın üstü, KK-B69) REDDEDİLİR', async () => {
+    const code = freshCode()
+    await expect(
+      Room.create({ code, board: Array.from({ length: 122 }, () => null) }),
+    ).rejects.toThrow()
+  })
+
+  it('board TAM 121 hücreyle (11×11 üst sınır) KABUL EDİLİR', async () => {
+    const code = freshCode()
+    await Room.create({
+      code,
+      size: 11,
+      winLength: 5,
+      board: Array.from({ length: 121 }, () => null),
+    })
+    const room = await Room.findOne({ code }).lean()
+    expect(room?.board).toHaveLength(121)
+    expect(room?.size).toBe(11)
+    expect(room?.winLength).toBe(5)
   })
 
   it('boş board dizisi reddedilir — nextPlayer(board) tanımsız davranmasın', async () => {
@@ -116,14 +141,54 @@ describe('Room modeli', () => {
     await expect(Room.create({ code, board: [] })).rejects.toThrow()
   })
 
-  it('9 hücreden fazla hamle reddedilir', async () => {
+  it('121 hamleden fazlası (KK-B69 üst sınır) REDDEDİLİR', async () => {
     const code = freshCode()
-    const extra: RoomMove[] = Array.from({ length: 10 }, (_, i) => ({
-      index: i % 9,
+    const extra: RoomMove[] = Array.from({ length: 122 }, (_, i) => ({
+      index: i % 121,
       by: i % 2 === 0 ? 'X' : 'O',
       at: new Date(),
     }))
-    await expect(Room.create({ code, moves: extra })).rejects.toThrow()
+    await expect(
+      Room.create({
+        code,
+        size: 11,
+        winLength: 5,
+        board: Array.from({ length: 121 }, () => null),
+        moves: extra,
+      }),
+    ).rejects.toThrow()
+  })
+
+  it('hamle index alanı 120e kadar (11×11 üst sınır, KK-B69) KABUL EDİLİR, 121 REDDEDİLİR', async () => {
+    const accepted = freshCode()
+    await Room.create({
+      code: accepted,
+      size: 11,
+      winLength: 5,
+      board: Array.from({ length: 121 }, () => null),
+      moves: [{ index: 120, by: 'X', at: new Date() }],
+    })
+    const room = await Room.findOne({ code: accepted }).lean()
+    expect(room?.moves[0]).toMatchObject({ index: 120 })
+
+    await expect(
+      Room.create({
+        code: freshCode(),
+        size: 11,
+        winLength: 5,
+        board: Array.from({ length: 121 }, () => null),
+        moves: [{ index: 121, by: 'X', at: new Date() }],
+      }),
+    ).rejects.toThrow()
+  })
+
+  it('size/winLength verilmezse dokümanda ALAN OLARAK bile bulunmaz (ADR-0014 kural 1 — default YOK)', async () => {
+    const code = freshCode()
+    await Room.create({ code })
+    const raw = await Room.collection.findOne({ code })
+    expect(raw).not.toBeNull()
+    expect(Object.hasOwn(raw ?? {}, 'size')).toBe(false)
+    expect(Object.hasOwn(raw ?? {}, 'winLength')).toBe(false)
   })
 
   // `result.line` doğrulayıcısı "tam 3"ten "3..6"ya genişledi (ADR-0011 §4):

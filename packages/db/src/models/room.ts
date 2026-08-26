@@ -8,16 +8,19 @@ import mongoose from 'mongoose'
 // (`does not provide an export named 'models'`). Vitest calisir cunku Vite
 // CJS interop-u farkli yapar — yani birim testler bu kirikligi GIZLER.
 const { Schema, model, models } = mongoose
-import { hasAtMostLength, hasExactLength, isNullOrLengthBetween } from './validators'
+import { hasAtMostLength, hasLengthBetween, isNullOrLengthBetween } from './validators'
 
 /**
- * Varsayılan tahta HÜCRE sayısı. KK-B36: yerel `const BOARD_SIZE = 9` SİLİNDİ —
- * o ad üç dosyada iki farklı birimi (9 hücre / 3 kenar) taşıyordu ve "9" burada
- * `game-core`'dan bağımsız İKİNCİ bir kopyaydı. Değer artık tek kaynaktan
- * türetilir; `size`/`winLength` alanları ve `9..121` aralığı DB-BOARD-001'in
- * işidir, bu kartta davranış bit düzeyinde aynı kalır.
+ * Varsayılan tahta HÜCRE sayısı — yalnız şema `default` üretici fonksiyonları
+ * için (dokümanı doğrudan `Room.create({})` ile açan savunmacı/eski yol).
+ * `size`/`winLength` OPSİYONEL olduğu için (ADR-0014 kural 1) gerçek oda
+ * oluşturma yolu (`rooms/create.ts`) tahtayı KENDİ `cellCount(config)`'inden
+ * hesaplar; bu sabit onu GEÇERSİZ KILMAZ, yalnız "hiç config verilmedi" savunma
+ * hattıdır. Üst sınır artık `121`dir (KK-B69) — ikinci kemer, bkz. `hasLengthBetween`.
  */
 const DEFAULT_CELL_COUNT = cellCount(DEFAULT_BOARD_CONFIG)
+/** Şema doğrulayıcılarının İKİNCİ KEMER üst sınırı — 11×11 = 121 hücre (ADR-0014 §3). */
+const MAX_CELL_COUNT = 121
 
 export type RoomState = 'waiting' | 'playing' | 'finished'
 
@@ -87,6 +90,15 @@ export interface RoomEmoji {
 export interface RoomDoc {
   code: string
   state: RoomState
+  /**
+   * Tahta konfigürasyonu — OPSİYONEL (ADR-0014 kural 1, KK-B30). `required`
+   * DEĞİL, `default` DA YOK: `.lean()`/`aggregate` yollarında mongoose
+   * varsayılanı uygulanmaz (gotcha örüntü 3), okuma tarafı zaten TEK kapıdan
+   * (`resolveBoardConfig`) geçiyor. Alan yoksa `{3,3}` anlamına gelir.
+   */
+  size?: number | undefined
+  /** bkz. `size`. Alan yoksa odanın boyutunun varsayılan K'sı anlamına gelir. */
+  winLength?: number | undefined
   /** Koltuk sahibi: kimlik + görünen ad (KK-032 — tek round-trip). */
   seats: { X: SeatOccupant | null; O: SeatOccupant | null }
   /** Aktif WS bağlantısı — takeover ve grace bunun üzerinden çalışır. */
@@ -119,7 +131,9 @@ const presenceSchema = new Schema<RoomPresence>(
 
 const moveSchema = new Schema<RoomMove>(
   {
-    index: { type: Number, required: true, min: 0, max: 8 },
+    // İkinci kemer üst sınırı 120 (0 tabanlı, 121 hücre — KK-B69). Oda BAŞINA
+    // gerçek sınır kural motorundan gelir (`isValidMove`), şemadan değil.
+    index: { type: Number, required: true, min: 0, max: MAX_CELL_COUNT - 1 },
     by: { type: String, enum: ['X', 'O'], required: true },
     at: { type: Date, required: true },
   },
@@ -184,6 +198,11 @@ const roomSchema = new Schema<RoomDoc>(
       enum: ['waiting', 'playing', 'finished'],
       default: 'waiting',
     },
+    // `default` BİLEREK YOK (ADR-0014 kural 1) — `.lean()`/`aggregate` yolunda
+    // uygulanmaz, "alan hep dolu" yanılsaması üretirdi. Okuma tarafı
+    // `resolveBoardConfig`'ten geçer.
+    size: { type: Number },
+    winLength: { type: Number },
     seats: {
       X: { type: seatOccupantSchema, default: null },
       O: { type: seatOccupantSchema, default: null },
@@ -195,17 +214,21 @@ const roomSchema = new Schema<RoomDoc>(
     board: {
       type: [{ type: String, enum: ['X', 'O', null] }],
       default: (): null[] => Array.from({ length: DEFAULT_CELL_COUNT }, () => null),
+      // İKİNCİ KEMER (ADR-0014 §3): `Model.create` yolunda kaba bozulmayı
+      // yakalar. `board.length === size²` DEĞİŞMEZİ burada DAYATILMAZ — o,
+      // `casUpdateRoom`'un tipli `board` kanalındadır (çapraz-alan doğrulaması
+      // `findOneAndUpdate`'te zaten çalışmaz).
       validate: {
-        validator: hasExactLength(DEFAULT_CELL_COUNT),
-        message: `board tam olarak ${String(DEFAULT_CELL_COUNT)} hücre içermelidir`,
+        validator: hasLengthBetween(DEFAULT_CELL_COUNT, MAX_CELL_COUNT),
+        message: `board ${String(DEFAULT_CELL_COUNT)} ile ${String(MAX_CELL_COUNT)} arasında hücre içermelidir`,
       },
     },
     moves: {
       type: [moveSchema],
       default: (): RoomMove[] => [],
       validate: {
-        validator: hasAtMostLength(DEFAULT_CELL_COUNT),
-        message: `moves en fazla ${String(DEFAULT_CELL_COUNT)} kayıt içerebilir`,
+        validator: hasAtMostLength(MAX_CELL_COUNT),
+        message: `moves en fazla ${String(MAX_CELL_COUNT)} kayıt içerebilir`,
       },
     },
     turnDeadline: { type: Date, default: null },

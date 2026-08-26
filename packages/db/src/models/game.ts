@@ -9,16 +9,15 @@ import mongoose from 'mongoose'
 // CJS interop-u farkli yapar — yani birim testler bu kirikligi GIZLER.
 const { Schema, model, models } = mongoose
 import { buildPairKey, deriveParticipants } from '../pair'
-import { hasAtMostLength, hasExactLength, isNullOrLengthBetween } from './validators'
+import { hasAtMostLength, hasLengthBetween, isNullOrLengthBetween } from './validators'
 
 /**
- * Varsayılan tahta HÜCRE sayısı. KK-B36: yerel `const BOARD_SIZE = 9` SİLİNDİ —
- * o ad üç dosyada iki farklı birimi (9 hücre / 3 kenar) taşıyordu ve "9" burada
- * `game-core`'dan bağımsız İKİNCİ bir kopyaydı. Değer artık tek kaynaktan
- * türetilir; `size`/`winLength` alanları ve `9..121` aralığı DB-BOARD-001'in
- * işidir, bu kartta davranış bit düzeyinde aynı kalır.
+ * Varsayılan tahta HÜCRE sayısı — yalnız şema `default` üretici fonksiyonu
+ * için (bkz. `models/room.ts`ün aynı sabitteki gerekçesi).
  */
 const DEFAULT_CELL_COUNT = cellCount(DEFAULT_BOARD_CONFIG)
+/** Şema doğrulayıcılarının İKİNCİ KEMER üst sınırı — 11×11 = 121 hücre (ADR-0014 §3). */
+const MAX_CELL_COUNT = 121
 
 export interface MoveDoc {
   index: number
@@ -35,6 +34,15 @@ export interface GameDoc {
   participants: string[]
   /** Sıralı `${a}|${b}` — KK-113 / KK-126. Yalnız oyun oluşturulurken yazılır. */
   pairKey: string
+  /**
+   * Tahta konfigürasyonu — OPSİYONEL, YAZILIR ama HİÇBİR API tarafından
+   * OKUNMAZ (ADR-0014 §5, KK-B34). `GET /api/matches`, ELO hesabı ve sıralama
+   * bu alanlara hiç bakmaz; "eski kayıtlar bayt bayt aynı" iddiası bir uyum
+   * testiyle değil, hiç okunmayarak YAPISAL olarak sağlanır. Alanların TEK
+   * yazıldığı yer `finishGame`dir (ileriye dönük — AS-B04 (b)).
+   */
+  size?: number | undefined
+  winLength?: number | undefined
   board: Cell[]
   moves: MoveDoc[]
   winner: Player | null
@@ -55,7 +63,7 @@ export interface GameDoc {
 
 const moveSchema = new Schema<MoveDoc>(
   {
-    index: { type: Number, required: true, min: 0, max: 8 },
+    index: { type: Number, required: true, min: 0, max: MAX_CELL_COUNT - 1 },
     by: { type: String, enum: ['X', 'O'], required: true },
     at: { type: Date, required: true },
   },
@@ -72,20 +80,23 @@ const gameSchema = new Schema<GameDoc>(
     },
     participants: { type: [String], required: true },
     pairKey: { type: String, required: true },
+    // `default` BİLEREK YOK (ADR-0014 kural 1) — bkz. `models/room.ts`.
+    size: { type: Number },
+    winLength: { type: Number },
     board: {
       type: [{ type: String, enum: ['X', 'O', null] }],
       default: (): null[] => Array.from({ length: DEFAULT_CELL_COUNT }, () => null),
       validate: {
-        validator: hasExactLength(DEFAULT_CELL_COUNT),
-        message: `board tam olarak ${String(DEFAULT_CELL_COUNT)} hücre içermelidir`,
+        validator: hasLengthBetween(DEFAULT_CELL_COUNT, MAX_CELL_COUNT),
+        message: `board ${String(DEFAULT_CELL_COUNT)} ile ${String(MAX_CELL_COUNT)} arasında hücre içermelidir`,
       },
     },
     moves: {
       type: [moveSchema],
       default: (): MoveDoc[] => [],
       validate: {
-        validator: hasAtMostLength(DEFAULT_CELL_COUNT),
-        message: `moves en fazla ${String(DEFAULT_CELL_COUNT)} kayıt içerebilir`,
+        validator: hasAtMostLength(MAX_CELL_COUNT),
+        message: `moves en fazla ${String(MAX_CELL_COUNT)} kayıt içerebilir`,
       },
     },
     winner: { type: String, enum: ['X', 'O', null], default: null },

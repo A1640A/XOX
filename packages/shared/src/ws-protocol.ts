@@ -4,11 +4,13 @@ import { errorCodeSchema } from './errors'
 import { moveRejectionReasonSchema, transportStatusSchema } from './game-status'
 import {
   boardSchema,
+  boardSizeSchema,
   cellIndexSchema,
   epochMsSchema,
   playerSchema,
   playersSchema,
   roomCodeSchema,
+  winLengthSchema,
 } from './primitives'
 
 /**
@@ -29,6 +31,15 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
 ])
 
 export const rematchOfferSchema = z.object({ by: playerSchema, expiresAt: epochMsSchema })
+
+/**
+ * Rakibin son oynadığı hücre (ADR-0015 §3, KK-B55) — spec'te YOKTU, tasarım
+ * turunda eklendi. `state`'te olmayan her şey Z2 rotasyonundan (en geç 300 sn)
+ * sonra kaybolur; `data-son-hamle` 121 hücrede "rakibin hamlesini anında gör"ün
+ * tek görsel dayanağıdır. `RoomDoc.moves`'un son elemanından üretilir — `moves`
+ * dizisinin tamamı yük bütçesi (KK-B70) yüzünden gönderilmez.
+ */
+export const lastMoveSchema = z.object({ index: cellIndexSchema, by: playerSchema })
 
 /**
  * Tam durum yayını (tasarım §2.4). Yeniden bağlanan istemcinin gördüğü **tek**
@@ -57,6 +68,15 @@ export const stateMessageSchema = z.object({
   rematch: rematchOfferSchema.nullable(),
   /** İstemci saat sapmasını düzeltir (spec §3.10). */
   serverTime: epochMsSchema,
+  /**
+   * Tahtanın kenar uzunluğu — istemci `board.length`'ten türetebilir ama
+   * ayrı taşınır, ayrıştırma anında ikisinin tutarlılığı burada değil
+   * SUNUCUDA (yazma kapısında) dayatılır (ADR-0015 §4).
+   */
+  size: boardSizeSchema,
+  /** Kazanmak için yan yana gereken taş sayısı — istemci `board.length`'ten TÜRETEMEZ. */
+  winLength: winLengthSchema,
+  lastMove: lastMoveSchema.nullable(),
 })
 
 export const serverMessageSchema = z.discriminatedUnion('type', [
@@ -108,6 +128,7 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
 
 export type Emoji = z.infer<typeof emojiSchema>
 export type RematchOffer = z.infer<typeof rematchOfferSchema>
+export type LastMove = z.infer<typeof lastMoveSchema>
 export type StateMessage = z.infer<typeof stateMessageSchema>
 export type ClientMessage = z.infer<typeof clientMessageSchema>
 export type ServerMessage = z.infer<typeof serverMessageSchema>

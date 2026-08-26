@@ -12,6 +12,18 @@ export function hasExactLength(length: number) {
 }
 
 /**
+ * Değerin uzunluğu `min..max` (iki uç DAHİL) aralığında olmalıdır.
+ *
+ * `board` alanı için: bu, ŞEMA seviyesindeki İKİNCİ KEMERDİR (ADR-0014 §3) —
+ * `Model.create` yolunda çalışır ve kaba bozulmayı yakalar. Oda BAŞINA gerçek
+ * sınır (`size²`) burada DAYATILMAZ; onu `casUpdateRoom`'un tipli `board`
+ * kanalı (yazma kapısı) ve kural motoru (`isValidMove`) sağlar.
+ */
+export function hasLengthBetween(min: number, max: number) {
+  return (value: readonly unknown[]): boolean => value.length >= min && value.length <= max
+}
+
+/**
  * `null` geçer; değer varsa uzunluğu `min..max` (iki uç DAHİL) aralığında
  * olmalıdır (ör. winLine = 3..6 indeks).
  *

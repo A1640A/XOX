@@ -3,6 +3,7 @@ import { Game } from '../models/game'
 import type { GameDoc } from '../models/game'
 import type { RoomDoc, RoomResult } from '../models/room'
 import { User } from '../models/user'
+import { resolveBoardConfig } from './board-config'
 
 /** Terminal taşıma durumu — `finishGame`'in gerçekten işleyebildiği daralma. */
 type FinishedStatus = Extract<TransportStatus, { kind: 'won' | 'draw' }>
@@ -69,10 +70,19 @@ export async function finishGame(room: RoomDoc, status: TransportStatus): Promis
   const gameId = room.gameId
   if (gameId === null) return
 
+  // ADR-0014 §5/KK-B34: `games.size`/`winLength` BURADA yazılır ama HİÇBİR API
+  // OKUMAZ (GET /api/matches, ELO, sıralama). Amaç tamamen ileriye dönüktür
+  // (AS-B04 (b)) — eski kayıtların yanıtı bu yüzden bir uyum testiyle değil,
+  // hiç okunmayarak bayt bayt aynı kalır. Değerler `resolveBoardConfig`'ten
+  // geçirilmiş ÇÖZÜLMÜŞ değerlerdir, `room.size`'ın ham hâli DEĞİL.
+  const { size, winLength } = resolveBoardConfig(room)
+
   const settled = await Game.findOneAndUpdate(
     { _id: gameId, finishedAt: null },
     {
       $set: {
+        size,
+        winLength,
         board: [...room.board],
         moves: room.moves.map((move) => ({ index: move.index, by: move.by, at: move.at })),
         winner: status.kind === 'won' ? status.winner : null,

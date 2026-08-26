@@ -29,7 +29,15 @@ interface Finished {
 }
 
 /** X kazanmış, `finished` durumda bir oda — rövanşın başlangıç zemini. */
-async function finishedRoom(options: { version?: number; rematch?: RoomDoc['rematch'] } = {}) {
+async function finishedRoom(
+  options: {
+    version?: number
+    rematch?: RoomDoc['rematch']
+    size?: number
+    winLength?: number
+    board?: RoomDoc['board']
+  } = {},
+) {
   const code = generateRoomCode()
   createdCodes.push(code)
   const xId = await makeUser('Ada')
@@ -50,12 +58,14 @@ async function finishedRoom(options: { version?: number; rematch?: RoomDoc['rema
   await Room.create({
     code,
     state: 'finished',
+    size: options.size,
+    winLength: options.winLength,
     seats: { X: { userId: xId, name: 'Ada' }, O: { userId: oId, name: 'Kaan' } },
     presence: {
       X: { connId: 'conn-ada', since: new Date() },
       O: { connId: 'conn-kaan', since: new Date() },
     },
-    board: ['X', 'X', 'X', 'O', 'O', null, null, null, null],
+    board: options.board ?? ['X', 'X', 'X', 'O', 'O', null, null, null, null],
     moves: [
       { index: 0, by: 'X', at: new Date() },
       { index: 3, by: 'O', at: new Date() },
@@ -306,6 +316,30 @@ describe('offerRematch / acceptRematch — KK-055…058 (spec §3.8)', () => {
 
     expect((await readRoom(f.code)).state).toBe('finished')
   })
+
+  it(
+    'CORE-CFG-001 borcu kapandı: rövanş tahtayı odanın KENDİ konfigürasyonundan ' +
+      'sıfırlar — 11×11 odada 9 hücrelik yerel EMPTY_BOARD DEĞİL, 121 hücre',
+    async () => {
+      const f = await finishedRoom({
+        version: 30,
+        size: 11,
+        winLength: 5,
+        board: Array.from({ length: 121 }, () => 'X'),
+      })
+      await offerRematch(f.code, f.xId)
+
+      const result = await acceptRematch(f.code, f.oId)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error(`beklenmeyen red: ${result.code}`)
+      expect(result.room.board).toHaveLength(121)
+      expect(result.room.board.every((cell) => cell === null)).toBe(true)
+      // size/winLength DEĞİŞMEZ (ADR-0014 §4) — rövanş yalnız tahtayı temizler.
+      expect(result.room.size).toBe(11)
+      expect(result.room.winLength).toBe(5)
+    },
+  )
 
   it('kendi teklifini kabul etmek hiçbir şey yazmaz (oyun başlamaz)', async () => {
     const f = await finishedRoom({ version: 30 })

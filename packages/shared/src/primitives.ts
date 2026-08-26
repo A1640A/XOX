@@ -9,10 +9,40 @@ import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from './constants'
  */
 export const playerSchema = z.enum(['X', 'O'])
 export const cellSchema = playerSchema.nullable()
-export const boardSchema = z.array(cellSchema).length(9)
 
-/** Tahta indeksi: 0..8 tam sayı. Hem hamle hem kazanan çizgi bunu kullanır. */
-export const cellIndexSchema = z.number().int().min(0).max(8)
+/**
+ * Tahta uzunluğu: 9 (3×3) .. 121 (11×11). Şema **şekil** korur, kural motoru
+ * değildir — `board.length === size²` odanın kendi konfigürasyonuna karşı
+ * SUNUCUDA kontrol edilir (ayrıştırma anında oda konfigürasyonu erişilebilir
+ * değildir). Sınırlar (9, 121) ÇIPLAK yazılır, `game-core`'un `BOARD_MODES`
+ * değerlerinden türetilmez (CTR-BOARD-001, gotcha örüntü 2) — barrel'dan
+ * `game-core` değeri yeniden dışa vermek `@xox/shared`'ın her tüketicisine
+ * `game-core`'u sokardı (D8).
+ */
+export const boardSchema = z.array(cellSchema).min(9).max(121)
+
+/**
+ * Tahta indeksi: 0..120 tam sayı (CTR-BOARD-001). Hem hamle hem kazanan çizgi
+ * bunu kullanır. Aralık üst sınırı en büyük tahtanın (11×11 = 121 hücre) son
+ * indeksidir; oda boyutuna göre daraltma SUNUCUDADIR — aşan indeks mevcut
+ * `move:rejected reason:'out-of-range'` ile reddedilir, protokole yeni bir
+ * reddetme sebebi eklenmez (ADR-0015 §4).
+ */
+export const cellIndexSchema = z.number().int().min(0).max(120)
+
+/** Tahta kenar uzunluğu — donmuş üçlü (spec §0.1: "başka boyut yok"). */
+export const boardSizeSchema = z.union([z.literal(3), z.literal(6), z.literal(11)])
+
+/** Kazanmak için yan yana gereken taş sayısı (K). 3..6 arası (ADR-0010 §2). */
+export const winLengthSchema = z.number().int().min(3).max(6)
+
+/**
+ * Tahta konfigürasyonu — REST gövdesinin tam (opsiyonel olmayan) şekli.
+ * `roomCreateBodySchema` bunun `.partial()`'ıdır (gövde tamamen yok da
+ * olabilir, KK-B14/B15). Bu şema `game-core`'un `BoardConfig`'iyle **aynı
+ * şekli** taşır ama ondan türetilmez — `shared` `game-core`'u import edemez.
+ */
+export const boardConfigSchema = z.object({ size: boardSizeSchema, winLength: winLengthSchema })
 
 /**
  * Kabul edilen karakter kümesi `ROOM_CODE_ALPHABET`'ten **türetilir**, elle
@@ -55,3 +85,6 @@ export type Players = z.infer<typeof playersSchema>
 export type Cell = z.infer<typeof cellSchema>
 export type BoardCells = z.infer<typeof boardSchema>
 export type RoomCode = z.infer<typeof roomCodeSchema>
+export type BoardSize = z.infer<typeof boardSizeSchema>
+export type WinLength = z.infer<typeof winLengthSchema>
+export type BoardConfigShape = z.infer<typeof boardConfigSchema>

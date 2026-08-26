@@ -30,6 +30,7 @@ export const errorCodeSchema = z.enum([
   'NOT_FRIENDS_ELIGIBLE',
   'SERVER_ERROR',
   'NETWORK',
+  'INVALID_BOARD_CONFIG',
 ])
 
 export type ErrorCode = z.infer<typeof errorCodeSchema>

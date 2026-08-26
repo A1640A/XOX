@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from './constants'
 import {
+  boardConfigSchema,
   boardSchema,
+  boardSizeSchema,
   cellIndexSchema,
   epochMsSchema,
   playerSchema,
   playersSchema,
   roomCodeSchema,
   seatOccupantSchema,
+  winLengthSchema,
 } from './primitives'
 
 describe('roomCodeSchema', () => {
@@ -54,13 +57,19 @@ describe('playerSchema', () => {
   })
 })
 
-describe('boardSchema', () => {
-  it('dokuz hücreyi kabul eder', () => {
+describe('boardSchema (CTR-BOARD-001: 9..121, şekil korur — kural değil)', () => {
+  it('dokuz hücreyi (3×3) kabul eder', () => {
     expect(boardSchema.safeParse(Array.from({ length: 9 }, () => null)).success).toBe(true)
   })
 
-  it('dokuzdan farklı uzunluğu reddeder', () => {
-    expect(boardSchema.safeParse([null, null]).success).toBe(false)
+  it('36 hücreyi (6×6) ve 121 hücreyi (11×11) kabul eder', () => {
+    expect(boardSchema.safeParse(Array.from({ length: 36 }, () => null)).success).toBe(true)
+    expect(boardSchema.safeParse(Array.from({ length: 121 }, () => null)).success).toBe(true)
+  })
+
+  it('8 hücreyi (alt sınırın altı) ve 122 hücreyi (üst sınırın üstü) reddeder', () => {
+    expect(boardSchema.safeParse(Array.from({ length: 8 }, () => null)).success).toBe(false)
+    expect(boardSchema.safeParse(Array.from({ length: 122 }, () => null)).success).toBe(false)
   })
 
   it('geçersiz hücre değerini reddeder', () => {
@@ -70,16 +79,60 @@ describe('boardSchema', () => {
   })
 })
 
-describe('cellIndexSchema', () => {
-  it('0..8 aralığını kabul eder', () => {
+describe('cellIndexSchema (CTR-BOARD-001: 0..120)', () => {
+  it('0..120 aralığını kabul eder', () => {
     expect(cellIndexSchema.safeParse(0).success).toBe(true)
     expect(cellIndexSchema.safeParse(8).success).toBe(true)
+    expect(cellIndexSchema.safeParse(120).success).toBe(true)
   })
 
   it('aralık dışını ve tam sayı olmayanı reddeder', () => {
-    expect(cellIndexSchema.safeParse(9).success).toBe(false)
+    expect(cellIndexSchema.safeParse(121).success).toBe(false)
     expect(cellIndexSchema.safeParse(-1).success).toBe(false)
     expect(cellIndexSchema.safeParse(1.5).success).toBe(false)
+  })
+})
+
+describe('boardSizeSchema — donmuş üçlü (spec §0.1)', () => {
+  it('3, 6, 11 kabul eder', () => {
+    expect(boardSizeSchema.safeParse(3).success).toBe(true)
+    expect(boardSizeSchema.safeParse(6).success).toBe(true)
+    expect(boardSizeSchema.safeParse(11).success).toBe(true)
+  })
+
+  it('listede olmayan boyutu reddeder', () => {
+    expect(boardSizeSchema.safeParse(4).success).toBe(false)
+    expect(boardSizeSchema.safeParse(9).success).toBe(false)
+    expect(boardSizeSchema.safeParse('3').success).toBe(false)
+  })
+})
+
+describe('winLengthSchema', () => {
+  it('3..6 aralığını kabul eder', () => {
+    for (const k of [3, 4, 5, 6]) expect(winLengthSchema.safeParse(k).success).toBe(true)
+  })
+
+  it('aralık dışını ve tam sayı olmayanı reddeder', () => {
+    expect(winLengthSchema.safeParse(2).success).toBe(false)
+    expect(winLengthSchema.safeParse(7).success).toBe(false)
+    expect(winLengthSchema.safeParse(4.5).success).toBe(false)
+  })
+})
+
+describe('boardConfigSchema', () => {
+  it('geçerli boyut+K çiftini kabul eder', () => {
+    expect(boardConfigSchema.safeParse({ size: 11, winLength: 5 }).success).toBe(true)
+  })
+
+  it('şema SEKLİ korur, KOMBİNASYONU değil: BOARD_MODES eşleşmesi burada YOKTUR', () => {
+    // {6, 6} game-core'un BOARD_MODES'unda YOK ama primitives bunu bilmez —
+    // kombinasyon kuralı game-core'dadır (ADR-0010), şema yalnız tip/aralık.
+    expect(boardConfigSchema.safeParse({ size: 6, winLength: 6 }).success).toBe(true)
+  })
+
+  it('eksik alanı reddeder', () => {
+    expect(boardConfigSchema.safeParse({ size: 3 }).success).toBe(false)
+    expect(boardConfigSchema.safeParse({ winLength: 3 }).success).toBe(false)
   })
 })
 

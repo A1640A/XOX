@@ -23,7 +23,7 @@ describe('tr.ts — @xox/shared/message-keys ile parite (iki yönlü)', () => {
 describe('tr.errors — errorCodeSchema ile parite (dış kaynak, iki yönlü)', () => {
   const kodlar = errorCodeSchema.options
 
-  it('errorCodeSchema’daki 20 kodun tamamı tr.errors’ta karşılık bulur', () => {
+  it('errorCodeSchema’daki 21 kodun tamamı tr.errors’ta karşılık bulur', () => {
     const eksik = kodlar.filter((kod) => !(kod in tr.errors))
     expect(eksik).toEqual([])
   })
@@ -33,9 +33,9 @@ describe('tr.errors — errorCodeSchema ile parite (dış kaynak, iki yönlü)',
     expect(fazla).toEqual([])
   })
 
-  it('kod sayısı tam 20 — hem şemada hem metin ağacında', () => {
-    expect(kodlar.length).toBe(20)
-    expect(Object.keys(tr.errors).length).toBe(20)
+  it('kod sayısı tam 21 — hem şemada hem metin ağacında (CTR-BOARD-001: +INVALID_BOARD_CONFIG)', () => {
+    expect(kodlar.length).toBe(21)
+    expect(Object.keys(tr.errors).length).toBe(21)
   })
 })
 
@@ -109,7 +109,7 @@ describe('tr.ts (mobil) — @xox/shared/message-keys ve errorCodeSchema ile pari
     expect(Object.keys(trMobil).sort()).toEqual(Object.keys(MESSAGE_KEYS).sort())
   })
 
-  it('errorCodeSchema’daki 20 kodun tamamı trMobil.errors’ta karşılık bulur', () => {
+  it('errorCodeSchema’daki 21 kodun tamamı trMobil.errors’ta karşılık bulur', () => {
     const kodlar = errorCodeSchema.options
     const eksik = kodlar.filter((kod) => !(kod in trMobil.errors))
     expect(eksik).toEqual([])
@@ -143,9 +143,22 @@ describe('Yer tutucu biçimi ve web/mobil parite', () => {
     expect(tr.room.yourSymbol).toBe('Senin taşın: {tas}')
   })
 
-  it('web ağacındaki tüm yer tutucular yalnızca {ad}, {saniye}, {tas} biçimindedir', () => {
+  it('web ağacındaki tüm yer tutucular sözleşmedeki kapalı kümeden gelir (CTR-BOARD-001 +9)', () => {
     const bulunanlar = new Set(Object.values(collectPlaceholders(tr)).flat())
-    expect([...bulunanlar].sort()).toEqual(['{ad}', '{saniye}', '{tas}'])
+    expect([...bulunanlar].sort()).toEqual([
+      '{ad}',
+      '{baslangicsatir}',
+      '{baslangicsutun}',
+      '{bitissatir}',
+      '{bitissutun}',
+      '{boyut}',
+      '{icerik}',
+      '{n}',
+      '{saniye}',
+      '{satir}',
+      '{sutun}',
+      '{tas}',
+    ])
   })
 
   it('yer tutucu taşıyan anahtar kümesi web ve mobilde birebir aynı', () => {
