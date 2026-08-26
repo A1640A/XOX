@@ -1136,3 +1136,26 @@ Bu gece bu ders üç ayrı yerde bağımsız olarak çıktı.
 
 **İkinci ders — katmanlı savunma işe yarar:** birinci kapı atlandı, ikincisi tuttu. Tek kapıya
 güvenen bir tasarımda production veritabanı silinmiş olurdu.
+
+## 2026-08-26 · Memoizasyon + Stryker `perTest` = kapı yanlış kapsamı ölçer (örüntü 6'nın türevi)
+
+`CORE-CFG-001` ölçtü: memoize eden bir fonksiyonun üretim kodunu gerçekten koşan tek test, o
+girdiyi **ilk isteyen** testtir. Sonrakiler önbellekten döner ve mutantı **öldüremez**.
+
+Kanıt niteliksel değil, sayısal: **iddiaların tek satırı değişmeden yalnız test sırası
+değiştirildi** ve mutasyon skoru **%94.04 → %84.25**'e düştü.
+
+**Reçete:** her konfigürasyonun _ilk isteyeni_, değerleri + sayıyı + donmuşluğu + referans
+kimliğini **tek testte** iddia etsin. Bunu kodda gerekçesiyle yaz, yoksa bir sonraki kişi
+testleri "düzenleyip" skoru sessizce düşürür.
+
+## 2026-08-26 · Parametrik üreticide sıfır olan terim, varsayılan konfigürasyonda görünmez
+
+`(3,3)`'te `N − K = 0`. Yani parametrik bir kazanma-hattı üreticisinin sütun terimini bozan
+mutasyon **3×3 testleriyle görünmez** — çarpan zaten sıfır.
+
+Parametrenin sıfır **olmadığı** bir konfigürasyonda (ör. `(6,4)`) da **elle yazılmış** beklenti
+şart. `CORE-CFG-001` bunu `(6,4)`'ün 17 sınır hattıyla kapattı.
+
+Genel kural: bir parametreyi sınarken, o parametrenin **nötr elemanı olmadığı** en az bir vaka
+seç. Varsayılan konfigürasyon çoğu zaman nötr elemandır ve tam da bu yüzden hiçbir şey ölçmez.
