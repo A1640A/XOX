@@ -1224,3 +1224,32 @@ seferde** iner. `main` hiçbir an kırık görmez, `git bisect` temiz kalır.
 `use-room.test.tsx` hiçbir bekleyen kartın çakışma kümesinde değildi (kapanmış `UI-SKEL-001`'e
 aitti) — fark edilmeseydi zincir sonuna kadar kırık kalırdı. Kırık dosya listesini çıkar,
 her birini bir karta ata, sahipsiz kalanı açıkça devret.
+
+## 2026-08-26 · Vercel takımı değiştirmek E2E kapısını sessizce kapattı (OPS-008)
+
+Projeyi `omeerdursunn` takımına taşıdım. O takımda **Vercel Authentication varsayılan açık**:
+`ssoProtection.enabled = true`, `deploymentType = "all_except_custom_domains"`.
+
+Sonuç ikiye bölündü ve **yarısı yeşil kaldığı için gizlendi**:
+
+- `xox.omerdursun.com` (özel alan adı) → muaf, çalışıyor. Production smoke yeşil.
+- Tüm `*.vercel.app` önizlemeleri → SSO duvarının arkasında.
+
+E2E `global-setup.ts` `/api/health`'ten JSON yerine **HTML SSO sayfası** aldı ve
+`Unexpected token '<'` ile düştü. Hata mesajı sebebi hiç göstermiyor.
+
+**Ders:** bir Vercel projesini takım değiştirmek yalnız faturalandırmayı taşımaz — **hedef
+takımın güvenlik varsayılanlarını uygular.** Taşımadan sonra `deployment-protection`
+ayarlarını açıkça oku; production özel alan adından yeşil dönüyor diye önizleme yolunun
+sağlam olduğunu varsayma. Taşıma ile kapının kırıldığını fark etmem arasında **bir gün** geçti.
+
+**Enum tuzağı:** `ssoProtection.deploymentType` yalnız `all` · `preview` ·
+`prod_deployment_urls_and_all_previews` kabul ediyor. **"Yalnız production'ı koru" seçeneği YOK.**
+Yani "önizlemeleri aç ama production'ı koru" ayarla ifade edilemiyor — ya hepsi korumalı ya
+hiçbiri. Doğru çözüm ayarı gevşetmek değil, **Protection Bypass for Automation** secret'ını
+otomasyona header olarak vermek (`x-vercel-protection-bypass`).
+
+**Yan ders — ölçüm aracı yanılttı:** ajan aynı testi `next dev` ile koşunca KK-027 kırmızı
+göründü; kök neden React StrictMode'un mount effect'ini iki kez çalıştırması. **Üretim
+derlemesinde** (`next build && next start`) effect bir kez çalışıyor ve test yeşil. Bir
+E2E kırmızısını koda yazmadan önce dev sunucusunun kendi davranışı olup olmadığını ele.

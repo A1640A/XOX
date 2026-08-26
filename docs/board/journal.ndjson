@@ -1346,3 +1346,14 @@
 {"ts":"2026-08-26T08:47:42Z","event":"file.touched","path":".claude/worktrees/CORE-AI-001/packages/game-core/src/evaluate.ts"}
 {"ts":"2026-08-26T08:48:15Z","event":"file.touched","path":".claude/worktrees/CORE-AI-001/packages/game-core/src/search.ts"}
 {"ts":"2026-08-26T07:50:00Z","event":"chain.started","note":"CTR-BOARD-001 bitti ama MERGE EDILMEDI. Alti paket yesil, apps/web kirik (size/winLength/lastMove semada zorunlu, tuketiciler vermiyor) — ADR-0015 §10.5-in bilinen zayif noktasi. ZINCIR KURULDU: DB-BOARD-001 feat/CTR-BOARD-001-den dallandi, zincir yesil olunca main-e TEK SEFERDE inecek. main hicbir an kirik gormeyecek. AJAN PENCEREYI KAPATMADAN BIR EKSIK BULDU: canJoinRoom yazarken roomStateResponseSchema-nin superRefine-inin ayni mantigi IKINCI KEZ yerelde tuttugunu fark etti (CTR-003-un kok nedeniyle ayni sinif) ve superRefine-i canJoinRoom-u cagiracak sekilde refactor etti — tek kaynak. Tuketici sondasi ELLE yazildi ve gercek mutasyonla dogrulandi (size ve winLength silindi, testler kirmizi dondu)"}
+{"ts":"2026-08-26T08:54:09Z","event":"subagent.stop"}
+{"ts":"2026-08-26T08:55:38Z","event":"file.touched","path":"docs/board/reports/E2E-002.md"}
+{"ts":"2026-08-26T08:57:25Z","event":"subagent.stop"}
+{"ts":"2026-08-26T08:59:16Z","event":"file.touched","path":".claude/worktrees/DB-BOARD-001/packages/db/src/models/validators.ts"}
+{"ts":"2026-08-26T08:59:30Z","event":"file.touched","path":".claude/worktrees/DB-BOARD-001/packages/db/src/models/room.ts"}
+{"ts":"2026-08-26T08:59:40Z","event":"file.touched","path":".claude/worktrees/DB-BOARD-001/packages/db/src/models/room.ts"}
+{"ts":"2026-08-26T08:59:49Z","event":"file.touched","path":".claude/worktrees/DB-BOARD-001/packages/db/src/models/room.ts"}
+{"ts":"2026-08-26T09:00:03Z","event":"file.touched","path":".claude/worktrees/DB-BOARD-001/packages/db/src/models/room.ts"}
+{"ts":"2026-08-26T09:00:15Z","event":"file.touched","path":".claude/worktrees/DB-BOARD-001/packages/db/src/models/game.ts"}
+{"ts":"2026-08-26T09:00:24Z","event":"file.touched","path":".claude/worktrees/DB-BOARD-001/packages/db/src/models/game.ts"}
+{"ts":"2026-08-26T09:20:00Z","event":"gate.broken","card":"OPS-008","severity":"P0","note":"Preview E2E kapisi kapali. Kok neden BENIM takim tasimam: omeerdursunn-da Vercel Authentication varsayilan acik, all_except_custom_domains. API ile dogrulandi. Ozel alan adi muaf oldugu icin production yesil kaldi ve sorunu bir gun gizledi. E2E-002 kaniti yerel URETIM derlemesinden (next build && next start) alindi: 21/21, iki ardisik kosu. Cozum B secildi (bypass secret) ama secret okuma izni reddedildi — KULLANICI KARARI BEKLIYOR. A secenegi (SSO kapat) onerilmiyor: repo PUBLIC ve preview gercek Atlas kumesine bagli. Yan bulgu: next dev StrictMode mount effect-i iki kez kosturup KK-027-yi yanlis kirmiziya dusuruyordu"}
