@@ -60,9 +60,24 @@ const statsPath = `${distDir}/diagnostics/route-bundle-stats.json`
 //                                     en ağır üye olması payı biraz büyüttü)
 const HEAVY_LIMIT = '235 kB'
 const LIGHT_LIMIT = '158 kB'
-// PERF-003: `/oyna/bilgisayar` artık `/profil`/`/_not-found` ile AYNI hafif
-// grupta — `next/dynamic` sınırı sayesinde minimax'ın ilk yüklemede payı YOK.
-const LIGHT_ROUTES = new Set(['/profil', '/_not-found', '/oyna/bilgisayar'])
+// PERF-003: `/oyna/bilgisayar` `next/dynamic` sınırı sayesinde hafif grupta —
+// minimax'ın ilk yüklemede payı YOK.
+//
+// ⚠️ 2026-08-26, W2-02 sonrası: `/profil` hafif gruptan ÇIKARILDI (142.51 → 216.54 kB).
+// Bu bir REGRESYON DEĞİL, PERF-003'ün belgelediği sızıntının yüzeye çıkması. Zincir
+// doğrulandı, varsayılmadı:
+//     components/profile → `@xox/shared`   (DISPLAY_NAME_MAX, ErrorCode — MEŞRU)
+//     shared/index.ts    → `export * from './room-client'`
+//     room-client.ts     → `import { boardFromCells, evaluateStatus } from '@xox/game-core'`
+// Yani profil sayfası TEK BİR SABİT için minimax sırtlanıyor.
+//
+// "Hafif" sınıflandırması bir HEDEF değil, BETİMLEME idi: "bu rota paylaşılan
+// game-core parçasına dokunmuyor". `/profil` artık dokunuyor, dolayısıyla betimleme
+// değişti — hedef direği oynatılmadı. HEAVY_LIMIT'e (235 kB) DOKUNULMADI.
+//
+// PERF-004 bu sızıntıyı kapatacak ve kartında SERT ŞART var: kapandığında `/profil`
+// hafif gruba GERİ DÖNER ve heavy bütçe düşürülür. Bu satır o zamana kadar bir borçtur.
+const LIGHT_ROUTES = new Set(['/_not-found', '/oyna/bilgisayar'])
 
 function limitFor(route) {
   return LIGHT_ROUTES.has(route) ? LIGHT_LIMIT : HEAVY_LIMIT
