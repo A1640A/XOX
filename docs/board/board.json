@@ -1,14 +1,15 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T06:19:25.286Z",
+  "updatedAt": "2026-08-26T06:42:27.765Z",
   "nightRun": {
-    "active": true,
+    "active": false,
     "deadline": null,
     "wave": "B2",
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0,
-    "maxParallel": 3
+    "maxParallel": 3,
+    "endedAt": "2026-08-26T06:42:27.764Z"
   },
   "tiers": {
     "P0": "Yürüyen iskelet ve çekirdek",
@@ -862,10 +863,10 @@
         "apps/web/components/room/EmojiTray.tsx",
         "apps/web/app/davet/**"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W3-03",
-      "report": null,
+      "report": "docs/board/reports/W3-03.md",
       "acceptance": [
         "pushEmoji version'ı ARTIRMAZ; yalnız lastEmoji={from,emoji,at} yazar. connection.ts'in emojiyi version kapısından ÖNCE ele aldığı WS-001'de hazır — bu dosya AÇILMAZ (regresyon testi delta yolunu doğrular)",
         "KK-122: palet tam 8 sabit emoji gösterir (EMOJI_PALETTE), testid'ler emoji-0..emoji-7; birine basıldığında karşı tarafta emoji-balonu 2 sn içinde belirir ve 3 sn sonra kaybolur",
@@ -876,7 +877,8 @@
         "handlers/index.ts ve connection.ts AÇILMAZ",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "3dc98c8"
     },
     {
       "id": "W3-04",

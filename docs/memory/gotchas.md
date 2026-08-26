@@ -1176,3 +1176,30 @@ ekle: _"Herhangi bir dosya okumadan/yazmadan ÖNCE worktree'yi kur ve içine ge�
 **Lead tarafında:** merge öncesi `git status --porcelain` ana checkout'ta **her zaman** kontrol
 edilir. Bu gece üç kez temiz çıktı çünkü ajanlar kendileri temizledi — ama temizlemeselerdi
 kör bir `git add` onları merge edilmemiş iş olarak `main`'e sokardı (CLAUDE.md kural 6).
+
+## 2026-08-26 · Denetim listesini "uygulanmamışlar"dan türeten sonda, uygulandıkça KENDİNİ boşaltır
+
+`W3-03` mevcut kodda buldu: `handlers/index.test.ts`'in R1 sondası denetleyeceği handler
+listesini `!UYGULANAN.has(...)` ile türetiyordu. Yani bir handler'ın gövdesi yazıldığı an
+sondadan **sessizce çıkıyordu**. Fiilen yalnız `move` denetleniyordu — sonda tam da korumak
+istediği şey büyüdükçe küçülüyordu.
+
+Örüntü #2'nin ("test yeşil ama hiçbir şey doğrulamıyor") en sinsi biçimi: test ilk yazıldığında
+gerçekten çalışıyor, sonra **iş ilerledikçe** kendi kapsamını terk ediyor. Kimse bir şeyi
+bozmuyor; kapsam kendiliğinden eriyor.
+
+**Kural:** bir denetim listesi asla "henüz yapılmamışlar" kümesinden türetilmez. **Elle yazılır**
+ve yeni bir üye eklendiğinde listeyi güncellememek testi kırar. Aynı sınıf: `Object.keys(schema)`
+üzerinden dönen sözleşme testleri, `!IMPLEMENTED` filtreleri, `TODO` etiketiyle atlanan vakalar.
+
+## 2026-08-26 · Kayan pencere sayacı REDLERİ saymamalı — yoksa kalıcı cezaya döner
+
+`W3-03`'ün emoji hız sınırı bilinçli olarak yalnız **kabul edilen** çerçeveleri sayıyor.
+Redler de sayılsaydı, ısrarcı bir istemci penceresini kendi retleriyle doldurup **hiçbir zaman
+çıkamazdı** — kayan pencere sessizce kalıcı bir cezaya dönüşürdü.
+
+Genel bağlantı sınırı (WS-001) ise **kabul + ret** sayıyor ve bu doğru: orada amaç kademelenme
+(uyarı → `4400` kapanış), yani ısrarın cezalandırılması. İki sayaç aynı olayı farklı amaçla
+sayıyor ve bu **ayrım kasıtlı**.
+
+Sonda: sabit pencereye çeviren mutasyon "kalıcı ceza yok" testini kırmızıya döndürmeli.
