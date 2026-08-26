@@ -192,5 +192,6 @@ export const tr: MessageTree = {
     NOT_FRIENDS_ELIGIBLE: 'Yalnızca birlikte oyun bitirdiğin oyuncuları ekleyebilirsin.',
     SERVER_ERROR: 'Sunucuda bir sorun oluştu. Tekrar dene.',
     NETWORK: 'Bağlantı sorunu. İnternetini kontrol et.',
+    INVALID_BOARD_CONFIG: 'Seçilen tahta boyutu ve kazanma uzunluğu birlikte geçerli değil.',
   },
 }

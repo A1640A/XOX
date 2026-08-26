@@ -23,12 +23,13 @@ const BEKLENEN_KODLAR = [
   'NOT_FRIENDS_ELIGIBLE',
   'SERVER_ERROR',
   'NETWORK',
+  'INVALID_BOARD_CONFIG',
 ]
 
 describe('errorCodeSchema', () => {
-  it('tam 20 kod içerir', () => {
-    expect(errorCodeSchema.options).toHaveLength(20)
-    expect(BEKLENEN_KODLAR).toHaveLength(20)
+  it('tam 21 kod içerir', () => {
+    expect(errorCodeSchema.options).toHaveLength(21)
+    expect(BEKLENEN_KODLAR).toHaveLength(21)
   })
 
   it('tasarım §2.3 listesiyle birebir aynıdır (sıra dahil)', () => {
