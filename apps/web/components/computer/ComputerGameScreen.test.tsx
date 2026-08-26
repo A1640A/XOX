@@ -8,6 +8,22 @@ import { COMPUTER_MOVE_DELAY_MS, TESTID } from '@xox/shared'
 import { tr } from '@/messages/tr'
 import { ComputerGameScreen } from './ComputerGameScreen'
 
+/**
+ * PERF-003: `ComputerGameScreen` artık BİLEREK `next/dynamic` (`ssr: false`)
+ * ile `ComputerGameInner`'ı eşzamansız çeker (bkz. dosyanın kendisi + rapor).
+ * Bu yüzden ilk render'da içerik YOKTUR — `act(async () => {})` dinamik
+ * `import()`in çözülmesini bekleyen mikro görevleri akıtır. Gerçek
+ * zamanlayıcılar (`vi.useFakeTimers()` DEĞİL) kullanılır çünkü bu bir
+ * `setTimeout` değil, modül çözümlemesidir; sahte zamanlayıcı kurulumu bu
+ * yüzden HER ZAMAN bu akıştan SONRA yapılır.
+ */
+async function renderScreen(): Promise<void> {
+  render(<ComputerGameScreen />)
+  // Gerçek zamanlayıcılarla beklenir (henüz `vi.useFakeTimers()` KURULMADI) —
+  // `waitFor`/`findBy` iç sorgu döngüsü gerçek `setInterval` kullanır.
+  await screen.findByTestId(TESTID.zorlukMedium)
+}
+
 /** İnsan hamlesinden sonra bekleyen zamanlayıcıyı ilerletip render'ı akıtır. */
 async function advanceComputerMove(): Promise<void> {
   await act(async () => {
@@ -24,8 +40,8 @@ describe('ComputerGameScreen', () => {
     vi.useRealTimers()
   })
 
-  it('KK-020: üç zorluk düğmesi gösterir, varsayılan zorluk-medium seçilidir', () => {
-    render(<ComputerGameScreen />)
+  it('KK-020: üç zorluk düğmesi gösterir, varsayılan zorluk-medium seçilidir', async () => {
+    await renderScreen()
 
     expect(screen.getByTestId(TESTID.zorlukEasy)).toBeInTheDocument()
     expect(screen.getByTestId(TESTID.zorlukMedium)).toBeInTheDocument()
@@ -36,14 +52,14 @@ describe('ComputerGameScreen', () => {
     expect(screen.getByTestId(TESTID.zorlukUnbeatable)).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('bilgisayara karşı oyunların puana sayılmadığı notu görünür', () => {
-    render(<ComputerGameScreen />)
+  it('bilgisayara karşı oyunların puana sayılmadığı notu görünür', async () => {
+    await renderScreen()
 
     expect(screen.getByText(tr.computer.notCounted)).toBeInTheDocument()
   })
 
-  it('render edilen metinler tr.computer/tr.game üzerinden gelir', () => {
-    render(<ComputerGameScreen />)
+  it('render edilen metinler tr.computer/tr.game üzerinden gelir', async () => {
+    await renderScreen()
 
     expect(screen.getByRole('heading', { name: tr.computer.title })).toBeInTheDocument()
     expect(screen.getByText(tr.computer.difficulty)).toBeInTheDocument()
@@ -97,8 +113,8 @@ describe('ComputerGameScreen', () => {
   })
 
   it('KK-022/023: insan hamlesinden sonra bilgisayar YALNIZ chooseMove ile ve gecikme sabidiyle oynar', async () => {
+    await renderScreen()
     vi.useFakeTimers()
-    render(<ComputerGameScreen />)
 
     fireEvent.click(screen.getByTestId(TESTID.zorlukUnbeatable))
     clickCell(0)
@@ -113,9 +129,9 @@ describe('ComputerGameScreen', () => {
   })
 
   it('KK-024: dolu hücreye tıklamak tahtayı değiştirmez, hata banner YOK', async () => {
+    await renderScreen()
     vi.useFakeTimers()
     const randomSpy = vi.spyOn(Math, 'random')
-    render(<ComputerGameScreen />)
 
     fireEvent.click(screen.getByTestId(TESTID.zorlukEasy))
 
@@ -134,9 +150,9 @@ describe('ComputerGameScreen', () => {
   })
 
   it('KK-025: oyun bittikten sonra boş hücreye tıklamak tahtayı değiştirmez, sira-gostergesi data-sira=yok olur', async () => {
+    await renderScreen()
     vi.useFakeTimers()
     const randomSpy = vi.spyOn(Math, 'random')
-    render(<ComputerGameScreen />)
 
     fireEvent.click(screen.getByTestId(TESTID.zorlukEasy))
 
@@ -161,8 +177,8 @@ describe('ComputerGameScreen', () => {
   })
 
   it('KK-026: Yeniden oyna tahtayı EMPTY_BOARDa döndürür ve seçili zorluğu korur', async () => {
+    await renderScreen()
     vi.useFakeTimers()
-    render(<ComputerGameScreen />)
 
     fireEvent.click(screen.getByTestId(TESTID.zorlukUnbeatable))
     clickCell(0)
@@ -180,8 +196,8 @@ describe('ComputerGameScreen', () => {
   })
 
   it('İNCELEME MINOR: ZATEN SEÇİLİ zorluğa tekrar tıklamak süren oyunu SİLMEZ', async () => {
+    await renderScreen()
     vi.useFakeTimers()
-    render(<ComputerGameScreen />)
 
     // Varsayılan zaten zorluk-medium — bir hamle oyna, sonra AYNI düğmeye
     // (teyit amaçlı) tekrar tıkla.
@@ -203,8 +219,8 @@ describe('ComputerGameScreen', () => {
   })
 
   it('İNCELEME MINOR: reset yarışı — insan hamlesinden hemen sonra Yeniden oyna tıklanırsa, beklemedeki bilgisayar zamanlayıcısı sıfırlanmış tahtaya YAZMAZ', async () => {
+    await renderScreen()
     vi.useFakeTimers()
-    render(<ComputerGameScreen />)
 
     fireEvent.click(screen.getByTestId(TESTID.zorlukUnbeatable))
     clickCell(0) // X oynar, COMPUTER_MOVE_DELAY_MS'lik bir zamanlayıcı kurulur
@@ -229,12 +245,13 @@ describe('ComputerGameScreen', () => {
   })
 
   it('İNCELEME MINOR: StrictMode altında çift mount/effectte zamanlayıcı sızdırmaz — tek bir bilgisayar hamlesi yazılır', async () => {
-    vi.useFakeTimers()
     render(
       <StrictMode>
         <ComputerGameScreen />
       </StrictMode>,
     )
+    await screen.findByTestId(TESTID.zorlukMedium)
+    vi.useFakeTimers()
 
     fireEvent.click(screen.getByTestId(TESTID.zorlukUnbeatable))
     clickCell(0)

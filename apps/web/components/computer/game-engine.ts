@@ -1,7 +1,6 @@
 import {
   applyMove,
-  chooseMove,
-  EMPTY_BOARD,
+  emptyBoard,
   evaluateStatus,
   isValidMove,
   type Board,
@@ -9,6 +8,12 @@ import {
   type GameStatus,
   type Player,
 } from '@xox/game-core'
+// PERF-003: hesaplama gerektiren arama kodu ana barrel'dan DEĞİL, ayrı bir
+// alt yoldan (`@xox/game-core/ai`) alınır. Tek başına bu satır Turbopack'in
+// paylaşılan-chunk birleştirmesini ENGELLEMEZ (ölçüldü) — asıl ayrıştırmayı
+// `ComputerGameScreen.tsx`'teki `next/dynamic` sınırı yapar; bu alt yol
+// yalnız o sınırın İÇİNDE kalan modül grafiğini netleştirir (bkz. rapor).
+import { chooseMove } from '@xox/game-core/ai'
 
 /**
  * Bilgisayara karşı oyunun saf durum makinesi (kart §oyna/bilgisayar, KK-022).
@@ -19,7 +24,7 @@ import {
  * sırası, hangi fonksiyon çağrılır" akışı vardır — `apps/web` kuralı yeniden
  * yazmaz, delege eder.
  *
- * İnsan her zaman X, bilgisayar her zaman O — X başlar (`nextPlayer(EMPTY_BOARD) === 'X'`),
+ * İnsan her zaman X, bilgisayar her zaman O — X başlar (`nextPlayer(emptyBoard()) === 'X'`),
  * yani insan açılış hamlesini oynar.
  */
 export const HUMAN: Player = 'X'
@@ -31,7 +36,10 @@ export interface ComputerGameState {
 }
 
 export function createInitialState(): ComputerGameState {
-  return { board: EMPTY_BOARD, status: evaluateStatus(EMPTY_BOARD) }
+  // Konfigürasyon bu ekranda VARSAYILANDIR ({3,3}); boyut seçimi UI-COMP-001'in
+  // işidir. `emptyBoard()` memoize edilmiş donmuş tek örneği döndürür.
+  const board = emptyBoard()
+  return { board, status: evaluateStatus(board) }
 }
 
 /**

@@ -2,6 +2,7 @@ import type { RoomDoc } from '@xox/db'
 import { boardFromCells, evaluateStatus } from '@xox/game-core'
 import type { Player, StateMessage, TransportStatus } from '@xox/shared'
 import { toTransportStatus, transportStatusSchema } from '@xox/shared'
+import { logError } from '@/lib/log'
 
 /** Sonuç okumak için gereken en küçük oda parçası. */
 export type StatusInput = Pick<RoomDoc, 'state' | 'board' | 'result'>
@@ -17,7 +18,7 @@ function storedStatus(result: RoomDoc['result']): TransportStatus | null {
   if (result === null) return null
   const parsed = transportStatusSchema.safeParse(result)
   if (!parsed.success) {
-    console.error('[room-view] rooms.result protokol şemasına uymuyor', parsed.error.issues)
+    logError('[room-view] rooms.result protokol şemasına uymuyor', {}, parsed.error.issues)
     return null
   }
   return parsed.data
@@ -44,7 +45,7 @@ export function roomTransportStatus(room: StatusInput): TransportStatus {
     // Buraya düşmek, bitişi yazan yolun `result` alanını DOLDURMADIĞI anlamına
     // gelir; sonuç ekranı kimseye yanlış galibiyet atfetmesin diye oyunu
     // sonuçsuz kapatıyoruz — ama gürültü çıkararak (W1-02).
-    console.error(
+    logError(
       '[room-view] oda finished ama rooms.result BOŞ — kazanan taşınamıyor, draw ile kapatıldı',
     )
     return { kind: 'draw' }

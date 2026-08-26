@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>XOX — Yön A: Kağıt &amp; Mürekkep</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ---- Token adayları (packages/ui-tokens biçimiyle birebir aynı isimler) ---- */
+      :root {
+        --font-display: 'Fraunces', Georgia, serif;
+        --font-ui: 'Inter', system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 16px;
+        --space-lg: 24px;
+        --space-xl: 32px;
+        --space-xxl: 48px;
+
+        --radius-sm: 6px;
+        --radius-md: 12px;
+
+        --fs-xs: 12px;
+        --fs-sm: 14px;
+        --fs-base: 16px;
+        --fs-lg: 20px;
+        --fs-xl: 28px;
+        --fs-display: 44px;
+      }
+
+      [data-tema='acik'] {
+        --color-bg: #f7f4ee;
+        --color-surface: #ffffff;
+        --color-surface-raised: #fbf9f5;
+        --color-border: #8a8478;
+        --color-text: #241f1a;
+        --color-text-muted: #6b6255;
+        --color-accent: #1d4ed8;
+        --color-player-x: #243b5c;
+        --color-player-o: #7a2e2e;
+        --color-win: #2f6b3a;
+        --color-danger: #a13d2c;
+      }
+
+      [data-tema='koyu'] {
+        --color-bg: #14120f;
+        --color-surface: #1e1b17;
+        --color-surface-raised: #262220;
+        --color-border: #786d5f;
+        --color-text: #f2ede4;
+        --color-text-muted: #b3a998;
+        --color-accent: #93b4ff;
+        --color-player-x: #aac0ea;
+        --color-player-o: #e6a8a2;
+        --color-win: #8ccb98;
+        --color-danger: #e2897c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: var(--font-ui);
+        font-size: var(--fs-base);
+        line-height: 1.6;
+        min-height: 100vh;
+        position: relative;
+      }
+      /* Çok hafif kağıt dokusu — dekoratif, kontrastı etkilemez, pointer-events yok */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.5;
+        background-image: radial-gradient(rgba(120, 109, 95, 0.08) 1px, transparent 1px);
+        background-size: 3px 3px;
+        z-index: 0;
+      }
+      @media (prefers-color-scheme: dark) {
+        body::before {
+          opacity: 0.35;
+        }
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+
+      .shell {
+        position: relative;
+        z-index: 1;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: var(--space-lg);
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-md);
+        padding-bottom: var(--space-lg);
+        margin-bottom: var(--space-xl);
+        border-bottom: 1px solid var(--color-border);
+      }
+      .toolbar .brand {
+        font-family: var(--font-display);
+        font-size: var(--fs-lg);
+      }
+      .tabs {
+        display: flex;
+        gap: var(--space-sm);
+        flex-wrap: wrap;
+      }
+      .tab-btn,
+      .theme-btn {
+        font-family: var(--font-ui);
+        font-size: var(--fs-sm);
+        font-weight: 500;
+        background: transparent;
+        color: var(--color-text-muted);
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        padding: var(--space-xs) var(--space-md);
+        cursor: pointer;
+      }
+      .tab-btn:hover,
+      .theme-btn:hover {
+        color: var(--color-text);
+        border-color: var(--color-border);
+      }
+      .tab-btn.active {
+        color: var(--color-text);
+        border-color: var(--color-text);
+        background: var(--color-surface-raised);
+      }
+      .theme-btn {
+        border-color: var(--color-border);
+      }
+
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+        animation: fadeIn 150ms ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        padding: var(--space-lg);
+      }
+
+      .btn {
+        font-family: var(--font-ui);
+        font-size: var(--fs-sm);
+        font-weight: 600;
+        border-radius: var(--radius-sm);
+        padding: 10px 18px;
+        cursor: pointer;
+        border: 1px solid var(--color-text);
+        background: transparent;
+        color: var(--color-text);
+        transition: background 120ms ease;
+      }
+      .btn:hover {
+        background: var(--color-surface-raised);
+      }
+      .btn-primary {
+        background: var(--color-accent);
+        color: var(--color-surface);
+        border-color: var(--color-accent);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.08);
+      }
+      .link {
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      /* ---- Ana sayfa ---- */
+      .hero {
+        text-align: left;
+        padding: var(--space-xxl) 0 var(--space-xl);
+      }
+      .hero h1 {
+        font-size: var(--fs-display);
+      }
+      .hero p.lede {
+        color: var(--color-text-muted);
+        font-size: var(--fs-lg);
+        margin-top: var(--space-sm);
+        max-width: 42ch;
+      }
+      .home-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+        max-width: 420px;
+        margin-top: var(--space-xl);
+      }
+      .home-actions .row {
+        display: flex;
+        gap: var(--space-sm);
+        flex-wrap: wrap;
+      }
+      .code-field {
+        font-family: var(--font-mono);
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface);
+        color: var(--color-text);
+        padding: 10px 14px;
+        font-size: var(--fs-base);
+        width: 160px;
+      }
+
+      /* ---- Oda ekranı ---- */
+      .room-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-md);
+      }
+      .room-code {
+        font-family: var(--font-mono);
+        letter-spacing: 0.1em;
+        font-size: var(--fs-lg);
+      }
+      .badge {
+        font-family: var(--font-ui);
+        font-size: var(--fs-xs);
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid currentColor;
+      }
+      .badge-ok {
+        color: var(--color-win);
+      }
+      .badge-warn {
+        color: var(--color-danger);
+      }
+
+      .status-line {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin: var(--space-md) 0;
+      }
+      .turn-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--color-player-x);
+        flex: none;
+      }
+      .status-text {
+        font-size: var(--fs-base);
+        color: var(--color-text);
+      }
+      .opponent-name {
+        color: var(--color-text-muted);
+        font-size: var(--fs-sm);
+        margin: 0 0 var(--space-sm);
+      }
+
+      /* ---- Tahta (paylaşılan hairline ızgara mantığı) ---- */
+      .board-wrap {
+        display: inline-block;
+      }
+      #board-3x3,
+      #nxn-board {
+        display: grid;
+        background: var(--color-border);
+        gap: 1px;
+        border: 1px solid var(--color-border);
+        width: fit-content;
+      }
+      #board-3x3 {
+        grid-template-columns: repeat(3, 76px);
+      }
+      .row-contents {
+        display: contents;
+      }
+      .cell {
+        background: var(--color-surface);
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+      }
+      #board-3x3 .cell {
+        width: 76px;
+        height: 76px;
+        min-width: 44px;
+        min-height: 44px;
+      }
+      .cell:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: -2px;
+      }
+      .cell svg {
+        width: 55%;
+        height: 55%;
+        animation: markIn 150ms ease-out;
+      }
+      @keyframes markIn {
+        from {
+          opacity: 0;
+          transform: scale(0.7);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .cell.cell-win {
+        background: color-mix(in srgb, var(--color-win) 16%, var(--color-surface));
+      }
+      .cell.cell-win svg {
+        color: var(--color-win) !important;
+      }
+
+      .win-line-svg line {
+        stroke-dasharray: 140;
+        stroke-dashoffset: 140;
+        animation: drawLine 200ms ease-out forwards;
+      }
+      @keyframes drawLine {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .cell svg,
+        .view.active,
+        .win-line-svg line {
+          animation: none !important;
+        }
+      }
+
+      .turn-timer {
+        font-family: var(--font-mono);
+        font-size: var(--fs-sm);
+        color: var(--color-text-muted);
+      }
+      .actions-row {
+        display: flex;
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+        flex-wrap: wrap;
+      }
+
+      .result-panel {
+        margin-top: var(--space-lg);
+        padding-top: var(--space-lg);
+        border-top: 1px solid var(--color-border);
+      }
+      .result-panel h2 {
+        font-size: var(--fs-xl);
+        margin-bottom: var(--space-sm);
+      }
+      .result-panel .result-sub {
+        color: var(--color-text-muted);
+        margin-bottom: var(--space-md);
+      }
+
+      .board-row-flex {
+        display: flex;
+        gap: var(--space-xxl);
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+
+      /* ---- 11x11 keşif görünümü ---- */
+      .scale-controls {
+        display: flex;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+      }
+      #nxn-board .cell svg {
+        width: 60%;
+        height: 60%;
+      }
+      #nxn-board[data-size='6'] {
+        grid-template-columns: repeat(6, 52px);
+      }
+      #nxn-board[data-size='6'] .cell {
+        width: 52px;
+        height: 52px;
+      }
+      #nxn-board[data-size='11'] {
+        grid-template-columns: repeat(11, 34px);
+      }
+      #nxn-board[data-size='11'] .cell {
+        width: 34px;
+        height: 34px;
+      }
+      #nxn-board[data-size='3'] {
+        grid-template-columns: repeat(3, 76px);
+      }
+      #nxn-board[data-size='3'] .cell {
+        width: 76px;
+        height: 76px;
+      }
+      .zoom-wrap {
+        max-width: 100%;
+        overflow: auto;
+        border: 1px dashed var(--color-border);
+        padding: var(--space-md);
+      }
+      .zoom-wrap.zoomed #nxn-board {
+        transform: scale(1.7);
+        transform-origin: top left;
+      }
+      .caption {
+        font-size: var(--fs-sm);
+        color: var(--color-text-muted);
+        max-width: 62ch;
+        margin-top: var(--space-md);
+      }
+      .caption strong {
+        color: var(--color-text);
+      }
+
+      footer.note {
+        margin-top: var(--space-xxl);
+        padding-top: var(--space-lg);
+        border-top: 1px solid var(--color-border);
+        color: var(--color-text-muted);
+        font-size: var(--fs-xs);
+      }
+    </style>
+  </head>
+  <body data-tema="acik">
+    <div class="shell">
+      <div class="toolbar">
+        <span class="brand">XOX — Yön A · Kağıt &amp; Mürekkep</span>
+        <div style="display: flex; gap: var(--space-md); align-items: center">
+          <nav class="tabs">
+            <button class="tab-btn active" data-target="view-ana">Ana sayfa</button>
+            <button class="tab-btn" data-target="view-oda">Oda (oyun ortası)</button>
+            <button class="tab-btn" data-target="view-kazanma">Kazanma anı</button>
+            <button class="tab-btn" data-target="view-11x11">11×11 tahta</button>
+          </nav>
+          <button class="theme-btn" id="temaBtn" type="button">Tema: Açık</button>
+        </div>
+      </div>
+
+      <!-- ANA SAYFA -->
+      <section class="view active" id="view-ana">
+        <div class="hero">
+          <h1>Bir kağıda çiz,<br />bir dostuna meydan oku.</h1>
+          <p class="lede">Oda kur, kodu paylaş, XOX oyna. Gerçek zamanlı, iki kişilik, sade.</p>
+        </div>
+        <div class="home-actions">
+          <p style="color: var(--color-text-muted); font-size: var(--fs-sm)">Hoş geldin, Ömer.</p>
+          <div class="row">
+            <a class="btn" href="#" onclick="return false">Bilgisayara karşı oyna</a>
+            <button class="btn btn-primary" type="button">Oda kur</button>
+          </div>
+          <div class="row" style="align-items: center">
+            <input class="code-field" placeholder="KODU GİR" />
+            <button class="btn" type="button">Odaya katıl</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ODA — OYUN ORTASI -->
+      <section class="view" id="view-oda">
+        <div class="card" style="max-width: 480px">
+          <div class="room-header">
+            <div style="display: flex; align-items: center; gap: var(--space-sm)">
+              <span class="room-code">7F K2 9Q</span>
+              <button class="btn" style="padding: 4px 10px; font-size: var(--fs-xs)" type="button">
+                Kopyala
+              </button>
+            </div>
+            <span class="badge badge-ok">Bağlı</span>
+          </div>
+          <p class="opponent-name">Rakip: aylin_42</p>
+          <div class="status-line">
+            <span class="turn-dot" aria-hidden="true"></span>
+            <span class="status-text" role="status" aria-live="polite">Sıra sende</span>
+          </div>
+
+          <div class="board-wrap">
+            <div id="board-3x3" role="grid" aria-label="XOX tahtası">
+              <div class="row-contents" role="row">
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="1. satır 1. sütun, X taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-x)" aria-hidden="true">
+                    <line
+                      x1="5"
+                      y1="5"
+                      x2="19"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      x1="19"
+                      y1="5"
+                      x2="5"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="1. satır 2. sütun, O taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="1. satır 3. sütun, boş"
+                ></div>
+              </div>
+              <div class="row-contents" role="row">
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="2. satır 1. sütun, boş"
+                ></div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="2. satır 2. sütun, X taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-x)" aria-hidden="true">
+                    <line
+                      x1="5"
+                      y1="5"
+                      x2="19"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      x1="19"
+                      y1="5"
+                      x2="5"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="2. satır 3. sütun, O taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div class="row-contents" role="row">
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="3. satır 1. sütun, O taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="3. satır 2. sütun, boş"
+                ></div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="0"
+                  aria-label="3. satır 3. sütun, X taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-x)" aria-hidden="true">
+                    <line
+                      x1="5"
+                      y1="5"
+                      x2="19"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      x1="19"
+                      y1="5"
+                      x2="5"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <span class="turn-timer">00:14</span>
+            <button class="btn" type="button">Pes et</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- KAZANMA ANI -->
+      <section class="view" id="view-kazanma">
+        <div class="card" style="max-width: 480px; position: relative">
+          <div class="room-header">
+            <div style="display: flex; align-items: center; gap: var(--space-sm)">
+              <span class="room-code">7F K2 9Q</span>
+            </div>
+            <span class="badge badge-ok">Bağlı</span>
+          </div>
+          <p class="opponent-name">Rakip: aylin_42</p>
+
+          <div class="board-wrap" style="position: relative">
+            <div id="board-win" role="grid" aria-label="XOX tahtası">
+              <div class="row-contents" role="row">
+                <div
+                  class="cell cell-win"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="1. satır 1. sütun, X taşı, kazanan"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-win)" aria-hidden="true">
+                    <line
+                      x1="5"
+                      y1="5"
+                      x2="19"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      x1="19"
+                      y1="5"
+                      x2="5"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell cell-win"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="1. satır 2. sütun, X taşı, kazanan"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-win)" aria-hidden="true">
+                    <line
+                      x1="5"
+                      y1="5"
+                      x2="19"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      x1="19"
+                      y1="5"
+                      x2="5"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell cell-win"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="1. satır 3. sütun, X taşı, kazanan"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-win)" aria-hidden="true">
+                    <line
+                      x1="5"
+                      y1="5"
+                      x2="19"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                    <line
+                      x1="19"
+                      y1="5"
+                      x2="5"
+                      y2="19"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div class="row-contents" role="row">
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="2. satır 1. sütun, O taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="2. satır 2. sütun, O taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="2. satır 3. sütun, boş"
+                ></div>
+              </div>
+              <div class="row-contents" role="row">
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="3. satır 1. sütun, boş"
+                ></div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="3. satır 2. sütun, boş"
+                ></div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="3. satır 3. sütun, boş"
+                ></div>
+              </div>
+            </div>
+            <svg
+              class="win-line-svg"
+              viewBox="0 0 230 76"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 230px;
+                height: 76px;
+                pointer-events: none;
+              "
+            >
+              <line
+                x1="8"
+                y1="38"
+                x2="222"
+                y2="38"
+                stroke="var(--color-win)"
+                stroke-width="3"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+
+          <div class="result-panel">
+            <h2>Kazandın!</h2>
+            <p class="result-sub">aylin_42 ile 7F K2 9Q odasında.</p>
+            <div class="actions-row">
+              <button class="btn btn-primary" type="button">Rövanş iste</button>
+              <a class="link" href="#" onclick="return false">Ana sayfa</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11x11 -->
+      <section class="view" id="view-11x11">
+        <h2 style="font-size: var(--fs-xl); margin-bottom: var(--space-sm)">Tahta ölçekleri</h2>
+        <p class="caption">
+          Hairline ızgara mantığı (kalın kart kenarlığı yok, gölge yok) boyut büyüdükçe bozulmuyor —
+          yalnızca hücre ve işaret ölçüsü küçülüyor.
+        </p>
+        <div class="scale-controls">
+          <button class="btn" type="button" onclick="buildBoard(3)">3×3</button>
+          <button class="btn" type="button" onclick="buildBoard(6)">6×6</button>
+          <button class="btn" type="button" onclick="buildBoard(11)">11×11</button>
+          <button class="btn" type="button" id="zoomBtn">Yakınlaştır (odak bölgesi)</button>
+        </div>
+        <div class="zoom-wrap" id="zoomWrap">
+          <div id="nxn-board" role="grid" aria-label="XOX tahtası" data-size="11"></div>
+        </div>
+        <p class="caption">
+          <strong>Dokunma hedefi notu:</strong> 11×11'de görsel hücre ~34pt'a düşer (44pt altı).
+          Gerçek uygulamada dokunma alanı görsel hücreden BÜYÜK tutulur (RN <code>hitSlop</code> /
+          web'de görünmez dolgu), komşu hücrelerin dokunma alanları çakışmayacak şekilde hesaplanır;
+          buna ek olarak "Yakınlaştır" ile odak bölgesi 44pt+ görsel boyuta büyütülebilir (harita
+          usulü pan/zoom). 3×3 ve 6×6'da bu gerekmez — hücreler zaten ≥44pt.
+        </p>
+      </section>
+
+      <footer class="note">
+        Yön A — Kağıt &amp; Mürekkep. Font: Fraunces (başlık) + Inter (arayüz) + JetBrains Mono
+        (kod/sayı). Renkler yalnız gösterim amaçlı hex — gerçek uygulamada packages/ui-tokens
+        üzerinden gelir.
+      </footer>
+    </div>
+
+    <script>
+      document.querySelectorAll('.tab-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.tab-btn').forEach(function (b) {
+            b.classList.remove('active')
+          })
+          document.querySelectorAll('.view').forEach(function (v) {
+            v.classList.remove('active')
+          })
+          btn.classList.add('active')
+          document.getElementById(btn.dataset.target).classList.add('active')
+        })
+      })
+
+      var temaBtn = document.getElementById('temaBtn')
+      temaBtn.addEventListener('click', function () {
+        var body = document.body
+        var next = body.getAttribute('data-tema') === 'acik' ? 'koyu' : 'acik'
+        body.setAttribute('data-tema', next)
+        temaBtn.textContent = 'Tema: ' + (next === 'acik' ? 'Açık' : 'Koyu')
+      })
+
+      var zoomWrap = document.getElementById('zoomWrap')
+      document.getElementById('zoomBtn').addEventListener('click', function () {
+        zoomWrap.classList.toggle('zoomed')
+      })
+
+      function xSvg(color) {
+        return (
+          '<svg viewBox="0 0 24 24" aria-hidden="true" style="color:' +
+          color +
+          '"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'
+        )
+      }
+      function oSvg(color) {
+        return (
+          '<svg viewBox="0 0 24 24" aria-hidden="true" style="color:' +
+          color +
+          '"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>'
+        )
+      }
+
+      function buildBoard(n) {
+        var el = document.getElementById('nxn-board')
+        el.setAttribute('data-size', String(n))
+        el.innerHTML = ''
+        var winLen = Math.min(n, 5)
+        var winSet = {}
+        for (var i = 0; i < winLen; i++) winSet[i * n + i] = true
+        for (var r = 0; r < n; r++) {
+          var rowEl = document.createElement('div')
+          rowEl.className = 'row-contents'
+          rowEl.setAttribute('role', 'row')
+          for (var c = 0; c < n; c++) {
+            var idx = r * n + c
+            var mark = null
+            if (winSet[idx]) mark = 'X'
+            else if ((r + c) % 3 === 0) mark = 'O'
+            else if (r !== c && (r * c) % 5 === 0) mark = 'X'
+            var cellEl = document.createElement('div')
+            cellEl.className = 'cell' + (winSet[idx] ? ' cell-win' : '')
+            cellEl.setAttribute('role', 'gridcell')
+            cellEl.tabIndex = 0
+            cellEl.setAttribute(
+              'aria-label',
+              r +
+                1 +
+                '. satır ' +
+                (c + 1) +
+                '. sütun, ' +
+                (mark ? mark + ' taşı' : 'boş') +
+                (winSet[idx] ? ', kazanan' : ''),
+            )
+            if (mark === 'X')
+              cellEl.innerHTML = xSvg(winSet[idx] ? 'var(--color-win)' : 'var(--color-player-x)')
+            if (mark === 'O') cellEl.innerHTML = oSvg('var(--color-player-o)')
+            rowEl.appendChild(cellEl)
+          }
+          el.appendChild(rowEl)
+        }
+      }
+      buildBoard(11)
+    </script>
+  </body>
+</html>

@@ -63,18 +63,15 @@ describe('JoinCodeField', () => {
     expect(input.value).toBe('')
   })
 
-  it('`user.paste()` maxLength tarafından zaten sınırlanır — normalizeInputa 6 karakterden uzun ham metin ULAŞMAZ', async () => {
-    // BULGU: incelemenin varsayımının aksine `user.paste()` GERÇEK bir
-    // yapıştırma etkileşimini simüle eder ve tarayıcı/jsdom `maxLength`
-    // niteliğini TAM DA paste gibi kullanıcı etkileşimlerinde uygular (HTML
-    // "value sanitization" algoritması) — React'in `onChange`'i devreye
-    // GİRMEDEN ÖNCE ham metin zaten 6 karaktere kırpılır. Kanıt: 12 karakterlik
-    // 'IAO1B0C2D3E4' yapıştırılınca `onChange` yalnızca ilk 6 ham karakteri
-    // ('IAO1B0') görür, `normalizeInput` onu 'AB'ye süzer — `.slice()` hiç
-    // devreye GİRMEZ. Bu, aşağıdaki testin neden `fireEvent.change`
-    // KULLANDIĞINI açıklar: `.slice()`'ı gerçekten ez sadece native
-    // `maxLength` denetiminin ATLANDIĞI bir yol (programatik `.value` ataması —
-    // örn. otomatik doldurma/parola yöneticisi/tarayıcı eklentisi) ile.
+  it('`user.paste()` artık native maxLength tarafından SINIRLANMAZ — ham metnin TAMAMI normalizeInputa ulaşır (W1-05 düzeltmesi)', async () => {
+    // DÜZELTME ÖNCESİ (bu yorumun eski hali): native `maxLength={6}` ham metni
+    // React'in `onChange`'i görmeden ÖNCE 6 karaktere kırpıyordu — 12 karakterlik
+    // 'IAO1B0C2D3E4' yapıştırılınca yalnız ilk 6 ham karakter ('IAO1B0') görülür,
+    // `normalizeInput` onu 'AB'ye süzerdi. `maxLength` KALDIRILDIĞI için artık
+    // ham metnin TAMAMI ('IAO1B0C2D3E4') `normalizeInput`'a ulaşır: alfabe dışı
+    // (I, O, 1, 0) karakterler atılır → 'ABC2D3E4', SONRA `.slice(0, 6)` uygulanır
+    // → 'ABC2D3'. Sıra artık [süz → kırp], [kırp → süz] DEĞİL — W1-05'in kök
+    // nedeni tam da bu sıra tersliğiydi.
     const user = userEvent.setup()
     render(<JoinCodeField />)
 
@@ -82,7 +79,24 @@ describe('JoinCodeField', () => {
     await user.click(input)
     await user.paste('IAO1B0C2D3E4')
 
-    expect(input.value).toBe('AB')
+    expect(input.value).toBe('ABC2D3')
+  })
+
+  it('W1-05: boşlukla başlayan yapıştırmada karakter KAYBOLMAZ (regresyon — E2E-002 gerçek tarayıcıda bulmuştu)', async () => {
+    // Kök neden: `maxLength` input üzerindeyken tarayıcı/jsdom ham metni
+    // `onChange`'den ÖNCE 6 karaktere kırpıyordu: ' abc234 ' → ' abc23'
+    // (maxLength) → normalizeInput ile boşluk atılınca 'ABC23' kalıyordu —
+    // sondaki '4' hiç görülmüyordu. `maxLength` kaldırıldığı ve uzunluk
+    // sınırı yalnız SÜZÜLMÜŞ metin üzerinde `.slice()` ile uygulandığı için
+    // bu test artık 'ABC234' bekleyebilir.
+    const user = userEvent.setup()
+    render(<JoinCodeField />)
+
+    const input = screen.getByLabelText<HTMLInputElement>('Oda kodu (6 hane)')
+    await user.click(input)
+    await user.paste(' abc234 ')
+
+    expect(input.value).toBe('ABC234')
   })
 
   it('programatik değer atamasında (maxLength ATLANDIĞINDA) ROOM_CODE_LENGTHi aşan sonucu .slice() keser', () => {

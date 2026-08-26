@@ -240,6 +240,54 @@ describe('POST /api/auth/[...nextauth] — SEC-002 sarmalayıcı', () => {
   )
 
   it(
+    'AUTH-002/KK-005: BAŞARISIZ giriş durum kodunu 401e ÇEVİRİR — Auth.js kendi ' +
+      '`X-Auth-Return-Redirect` JSON sarmalamasında (@auth/core@0.41.3) `res.ok`tan ' +
+      'BAĞIMSIZ HER ZAMAN 200 döner, bu sarmalayıcı gövdeyi/başlıkları DEĞİŞTİRMEDEN ' +
+      'yalnız durum kodunu düzeltir',
+    async () => {
+      mocks.authPOST.mockResolvedValue(
+        new Response(
+          JSON.stringify({ url: 'https://xox.test/giris?error=CredentialsSignin&code=badc' }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      )
+      const { POST } = await import('./route')
+
+      const response = await POST(
+        credentialsRequestFromFields({ email: 'yanlis@xox.test', password: 'kotu-parola' }),
+      )
+
+      expect(response.status).toBe(401)
+      const body = (await response.json()) as { url: string }
+      expect(body.url).toBe('https://xox.test/giris?error=CredentialsSignin&code=badc')
+    },
+  )
+
+  it(
+    'AUTH-002: BAŞARILI giriş (set-cookie VAR) durum kodunu DEĞİŞTİRMEZ — orijinal ' +
+      'yanıt (durum + başlıklar + gövde) AYNEN döner',
+    async () => {
+      mocks.authPOST.mockResolvedValue(
+        new Response(JSON.stringify({ url: 'https://xox.test/' }), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+            'set-cookie': 'authjs.session-token=abc; Path=/; HttpOnly',
+          },
+        }),
+      )
+      const { POST } = await import('./route')
+
+      const response = await POST(
+        credentialsRequestFromFields({ email: 'basarili@xox.test', password: 'dogru' }),
+      )
+
+      expect(response.status).toBe(200)
+      expect(response.headers.get('set-cookie')).toContain('authjs.session-token=abc')
+    },
+  )
+
+  it(
     'GÜVENLİK DENETİMİ — BLOCKER-2 kablolaması: kilit/IP-sınırı çağrıları AYNI ' +
       '`extractClientIp` sonucunu kullanır (uydurma XFF senaryosu birim testinde ' +
       '`ip-limit.test.ts`te ayrıca kanıtlanır)',

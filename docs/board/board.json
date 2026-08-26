@@ -1,13 +1,15 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-25T03:20:43.748Z",
+  "updatedAt": "2026-08-26T06:51:11.185Z",
   "nightRun": {
-    "active": true,
+    "active": false,
     "deadline": null,
-    "wave": 1,
+    "wave": "B2",
     "consecutiveFailures": 0,
-    "tokenBudgetUsedPct": 0
+    "tokenBudgetUsedPct": 0,
+    "maxParallel": 3,
+    "endedAt": "2026-08-26T06:42:27.764Z"
   },
   "tiers": {
     "P0": "Yürüyen iskelet ve çekirdek",
@@ -21,17 +23,18 @@
       "tier": "P1",
       "wave": "2",
       "agent": "xox-devops",
-      "deps": [],
+      "deps": ["OPS-006"],
       "conflictSet": [],
-      "status": "blocked",
+      "status": "done",
       "attempts": 1,
       "branch": null,
       "report": null,
       "acceptance": [
         "xox.omerdursun.com izrandevu/xox projesine bağlı ve doğrulanmış",
-        "https://xox.omerdursun.com production deploy'a çözülüyor"
+        "https://xox.omerdursun.com production deploy'a çözülüyor",
+        "KAPANDI 2026-08-25: OPS-006 tasimasiyla cozuldu. xox.omerdursun.com verified:true ve canli, HTTP 200, /api/health {ok:true,db:xox_prod}."
       ],
-      "blockedReason": "omerdursun.com, CLI oturumunun eriştiği izrandevu takımında DEĞİL. Nameserver'lar Vercel'i gösteriyor ama DNS kaydı oluşturma yetkisi yok (API: forbidden). Alan adı projeye eklendi fakat doğrulanmadı; _vercel.omerdursun.com TXT kaydı gerekiyor: vc-domain-verify=xox.omerdursun.com,ffba88a9a4221f5940e2 — ÖMER'DEN GEREKEN: (a) omerdursun.com'u izrandevu takımına taşı/paylaş, VEYA (b) bu TXT kaydını sahibi olduğun Vercel hesabından ekle, VEYA (c) hangi hesabın sahip olduğunu söyle. Bu blocker yalnızca production domainini etkiler; preview deploy'lar ve tüm e2e doğrulaması çalışıyor."
+      "blockedReason": null
     },
     {
       "id": "CTR-001",
@@ -544,7 +547,7 @@
       "status": "done",
       "attempts": 0,
       "branch": "feat/W1-04",
-      "report": "docs/board/reports/W1-04.md",
+      "report": null,
       "acceptance": [
         "/oda/katil 6 haneli kod girişi, btn-odaya-katil ve hata-mesaji gösterir; ana sayfadaki alanın derin bağlanabilir eşidir (spec §4.1)",
         "JoinCodeField girişi normalleştirir: küçük harf büyüğe çevrilir, baştaki/sondaki boşluk kırpılır — ' abc234 ' -> ABC234 (KK-034 birim testi)",
@@ -557,7 +560,7 @@
         "pnpm gates temiz",
         "ROOM_CODE_ALPHABET degistirilirse roomCodeSchema regex-i de turetilmis olmali (CTR-001 duzeltiyor). Alfabeye karakter eklenip regex guncellenmezse oda KURULUR ama KATILINAMAZ."
       ],
-      "blockedReason": null,
+      "blockedReason": "DoD 5 EKSIK: docs/board/reports/W1-04.md HIC YAZILMAMIS (git log --all o yolda bos). Ajan raporunda dosyayi listelemisti, lead dogrulamadan boarda isledi — lead hatasi. Kod merge edildi ve dogrulandi (dort mutasyon sondasi kirmizi, inceleme temiz), eksik olan yalniz teslim raporu. W1-01/02/03 hepsinde var.",
       "mergeSha": "fa6ffd7"
     },
     {
@@ -572,10 +575,10 @@
         "apps/e2e/tests/computer.spec.ts",
         "apps/e2e/tests/join.spec.ts"
       ],
-      "status": "in_wave",
+      "status": "reviewing",
       "attempts": 0,
       "branch": "feat/E2E-002",
-      "report": null,
+      "report": "docs/board/reports/E2E-002.md",
       "acceptance": [
         "KK-002 yeşil: kayıtlı e-postayla kayıt -> form kalır, 409, hata-mesaji data-kod=\"EMAIL_TAKEN\" ve 'Bu e-posta zaten kayıtlı.'",
         "KK-005 yeşil: yanlış parola -> 401 ve 'E-posta veya parola hatalı.'; kayıtsız e-posta AYNI metni ve AYNI kodu verir",
@@ -588,7 +591,7 @@
         "Flake tespit edilirse retries ile GİZLENMEZ: kök neden bulunur, rapora ve gotcha adayı olarak yazılır",
         "Kırmızı kalan her kriter için rapor sorumlu kart id'sini belirtir"
       ],
-      "blockedReason": null
+      "blockedReason": "MERGE BEKLETILDI (lead karari): 21 testin 4-u KIRMIZI ve ucu GERCEK URUN HATASI (W1-05, AUTH-002, UI-003). Testler DOGRU, kod yanlis. Kirmizi testleri isaretlemeden main-e almak suiti kalici kirmiziya cevirir; test.fail() ile isaretlemek de hatayi normallestirir. Dal commit-li ve guvende. Sabah karari: once uc hatayi duzelt, sonra yesil merge et."
     },
     {
       "id": "E2E-003",
@@ -598,7 +601,7 @@
       "agent": "xox-qa-e2e",
       "deps": ["W1-02", "W1-03"],
       "conflictSet": ["apps/e2e/tests/result-rematch.spec.ts", "apps/e2e/tests/reconnect.spec.ts"],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/E2E-003",
       "report": "docs/board/reports/E2E-003.md",
@@ -615,7 +618,8 @@
         "apps/e2e/fixtures/** ve playwright.config.ts DEĞİŞTİRİLMEZ",
         "P0 KAPISI: 50 P0 kriterinin (KK-001..011, 020..027, 030..036, 040..048, 050..058, 060..065) durumu rapora TABLO olarak yazılır; kırmızı kalanlar kart id'siyle eşlenir. Dalga 2 bu tablo olmadan başlamaz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "836d493"
     },
     {
       "id": "W2-01",
@@ -650,7 +654,8 @@
         "KK-076: her iki oyuncu da bağlı değilken hiçbir sonuç yazılmaz; oyun finishedAt:null kalır ve oda TTL ile silinir. CRON/SÜPÜRÜCÜ EKLENMEZ (ADR-0004 değişmezi)",
         "KK-077: finishedAt:null oyunlar stats, ELO ve maç geçmişi sorgularının hiçbirinde görünmez (sorgu sondası)",
         "pnpm gates temiz",
-        "BORC (WS-001 incelemesi): apps/web/lib/game/deadlines.ts icindeki dueSettlement uretimde SIFIR cagirana sahip ve dokumante edilmis gelecek tuketicisi packages/db/src/rooms/settle.ts, apps/web-den import EDEMEZ — bagimlilik yonu ters. Bu kart govdeyi yazarken kurali packages/db icinde YENIDEN yazarsa ayni kural iki yerde olur ve saparlar. ONCE dueSettlement-i packages/game-core (saf, bagimliliksiz — tam yeri) ya da packages/shared-a tasi, sonra hem timers.ts hem settle.ts TEK kaynagi cagirsin. Tasarim §5.7 dosya yolunu apps/web diye yaziyor — spec kendi mimarisiyle celisiyor. AYRICA: settle.ts iskeleti WS-001 duzeltme turunda throw yerine return null donuyor; bu kart govdeyi doldurmayi UNUTURSA artik hicbir sey bagirmaz — settle.ts-teki TODO(W2-01) yorumunu ve no-op testini kontrol et."
+        "BORC (WS-001 incelemesi): apps/web/lib/game/deadlines.ts icindeki dueSettlement uretimde SIFIR cagirana sahip ve dokumante edilmis gelecek tuketicisi packages/db/src/rooms/settle.ts, apps/web-den import EDEMEZ — bagimlilik yonu ters. Bu kart govdeyi yazarken kurali packages/db icinde YENIDEN yazarsa ayni kural iki yerde olur ve saparlar. ONCE dueSettlement-i packages/game-core (saf, bagimliliksiz — tam yeri) ya da packages/shared-a tasi, sonra hem timers.ts hem settle.ts TEK kaynagi cagirsin. Tasarim §5.7 dosya yolunu apps/web diye yaziyor — spec kendi mimarisiyle celisiyor. AYRICA: settle.ts iskeleti WS-001 duzeltme turunda throw yerine return null donuyor; bu kart govdeyi doldurmayi UNUTURSA artik hicbir sey bagirmaz — settle.ts-teki TODO(W2-01) yorumunu ve no-op testini kontrol et.",
+        "[W2-02 kartindan TASINDI 2026-08-26 — yanlis karta dusmustu, W2-02 ajani fark edip bildirdi] `move:applied` ince yolu yeni `turnDeadline` TASIMIYOR (CTR-002 kararı). Süre açılırken karar ver: ya mesaja alan ekle, ya her hamlede tam `state` yayınla. P0'da turnDeadline hep null oldugu icin etkisizdi; burada etkili hale geliyor."
       ],
       "blockedReason": null
     },
@@ -666,10 +671,10 @@
         "apps/web/app/api/profile/**",
         "apps/web/components/profile/**"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/W2-02",
+      "report": "docs/board/reports/W2-02.md",
       "acceptance": [
         "GET /api/profile { name, email, stats, elo, theme } döner; PATCH { name? } / { theme? } kabul eder ve gövdeler rest-contract şemalarından geçer",
         "KK-080: /profil görünen adı, e-postayı (salt okunur) ve istatistik-galibiyet / -maglubiyet / -beraberlik sayılarını gösterir; sayılar users.stats ile BİREBİR eşittir",
@@ -678,10 +683,10 @@
         "KK-083: tema değiştirici <html data-tema=\"koyu\"> yapar; seçim users.theme'e yazıldığı için sayfa yenilemesinden VE cihaz değişiminden sonra korunur",
         "app/layout.tsx AÇILMAZ — tema altyapısı ve data-tema yazımı UI-SKEL-001'de hazır; bu kart yalnız components/profile/ThemeToggle.tsx ve PATCH çağrısını ekler",
         "KK-084: renkler yalnız @xox/ui-tokens'tan gelir, dosyalarda hex literal yok (UI-001'in lint kuralı yeşil)",
-        "pnpm gates temiz",
-        "`move:applied` ince yolu yeni `turnDeadline` TASIMIYOR (CTR-002 kararı). Süre açılırken karar ver: ya mesaja alan ekle, ya her hamlede tam `state` yayınla. P0'da turnDeadline hep null oldugu icin etkisizdi; burada etkili hale geliyor."
+        "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "5a73009"
     },
     {
       "id": "W2-03",
@@ -689,7 +694,7 @@
       "tier": "P1",
       "wave": "2",
       "agent": "xox-dev-mobile",
-      "deps": ["UI-SKEL-001", "AUTH-001", "CTR-002", "TXT-001"],
+      "deps": ["UI-SKEL-001", "AUTH-001", "CTR-002", "TXT-001", "CTR-BOARD-001"],
       "conflictSet": ["apps/mobile/**", "apps/web/app/api/auth/mobile/**"],
       "status": "todo",
       "attempts": 0,
@@ -708,7 +713,8 @@
         "apps/mobile/messages/tr.ts DEĞİŞTİRİLMEZ (TXT-001'de tamamlandı)",
         "KK-093 [MANUEL]: Expo Go doğrulama adımları (aç, giriş yap, bir oyun tamamla) rapora madde madde yazılır ve 'insan doğrulaması bekliyor' olarak işaretlenir. Agent bunu otomatikleştirmeye ÇALIŞMAZ",
         "apps/mobile içinde playwright importu yok; pnpm gates temiz",
-        "apps/mobile `colors.light`/`colors.dark` geriye-donuk takma adindan `themes.acik`/`themes.koyu` kullanimina tasinir ve takma ad packages/ui-tokens-tan kaldirilir. Iki isim = kalici kayma riski."
+        "apps/mobile `colors.light`/`colors.dark` geriye-donuk takma adindan `themes.acik`/`themes.koyu` kullanimina tasinir ve takma ad packages/ui-tokens-tan kaldirilir. Iki isim = kalici kayma riski.",
+        "BAGLAYICI (ADR-0018 hat 3, tasarim §6): bu kart CTR-BOARD-001'e BAGIMLIDIR — mobil tahta GENISLEMIS protokole karsi yazilir, dar protokole karsi yazilip sonra genisletilmez. Boylece 'eski mobil x yeni oda' durumu HIC VAR OLMAZ. AS-B02'nin (mobilde 121 basilabilir eleman) karari bu kartindir: olcum tutmazsa 11x11 mobilde GIZLENIR, web'de yayinlanir — bu, tahta boyutu kartlarini BLOKLAMAZ."
       ],
       "blockedReason": null
     },
@@ -724,10 +730,10 @@
         "apps/web/lib/log.ts",
         "apps/web/app/api/health/route.ts"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/W2-04",
+      "report": "docs/board/reports/W2-04.md",
       "acceptance": [
         "KK-104: @vercel/analytics ve @vercel/speed-insights app/layout.tsx'e eklenir ve production build çıktısında yüklü oldukları doğrulanır (bundle grep + Vercel paneli ekran kanıtı rapora)",
         "apps/web/lib/log.ts tek sarmalayıcıdır: console.warn/error yalnız buradan çağrılır, kayıtlar userId ve roomCode ile etiketlenir",
@@ -738,7 +744,8 @@
         "no-console kuralı lib/log.ts dışında hiçbir yerde ihlal edilmiyor (lint çıktısı rapora)",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "81302b4"
     },
     {
       "id": "E2E-004",
@@ -856,10 +863,10 @@
         "apps/web/components/room/EmojiTray.tsx",
         "apps/web/app/davet/**"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/W3-03",
+      "report": "docs/board/reports/W3-03.md",
       "acceptance": [
         "pushEmoji version'ı ARTIRMAZ; yalnız lastEmoji={from,emoji,at} yazar. connection.ts'in emojiyi version kapısından ÖNCE ele aldığı WS-001'de hazır — bu dosya AÇILMAZ (regresyon testi delta yolunu doğrular)",
         "KK-122: palet tam 8 sabit emoji gösterir (EMOJI_PALETTE), testid'ler emoji-0..emoji-7; birine basıldığında karşı tarafta emoji-balonu 2 sn içinde belirir ve 3 sn sonra kaybolur",
@@ -870,7 +877,8 @@
         "handlers/index.ts ve connection.ts AÇILMAZ",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "3dc98c8"
     },
     {
       "id": "W3-04",
@@ -886,10 +894,10 @@
         "apps/web/app/api/friends/**",
         "apps/web/components/room/FriendAddButton.tsx"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/W3-04",
+      "report": "docs/board/reports/W3-04.md",
       "acceptance": [
         "friendships kaydı her zaman userA < userB sıralı yazılır; {userA:1,userB:1} unique indeksi çift kaydı ve ters yönlü kopyayı engeller (test)",
         "KK-126: POST /api/friends YALNIZ birlikte BİTMİŞ bir oyunu olan kullanıcıya istek gönderebilir; uygunluk games{pairKey, finishedAt} indeksinden sorgulanır. Başka bir userId için istek HTTP 403 + NOT_FRIENDS_ELIGIBLE döner (kullanıcı numaralandırma yüzeyi yok)",
@@ -900,7 +908,8 @@
         "FriendAddButton yalnız kendi dosyasında doldurulur; ResultPanel.tsx ve RoomScreen.tsx AÇILMAZ (slot UI-SKEL-001'de mount edildi)",
         "pnpm gates temiz"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "bda8608"
     },
     {
       "id": "E2E-006",
@@ -1032,16 +1041,17 @@
       "agent": "xox-devops",
       "deps": [],
       "conflictSet": [],
-      "status": "blocked",
+      "status": "done",
       "attempts": 0,
       "branch": null,
       "report": null,
       "acceptance": [
         "xoxAdmin Atlas parolasi Atlas konsolundan degistirilir",
         "Yeni URI Vercel (development/preview/production) ve GitHub MONGODB_URI secret-inda guncellenir",
-        "Yerel .env.local guncellenir; pnpm --filter @xox/db seed ile dogrulanir"
+        "Yerel .env.local guncellenir; pnpm --filter @xox/db seed ile dogrulanir",
+        "KAPATILDI 2026-08-25 — OMER KARARI: \"Atlas parolasini degistirmeyecegim ayni kalacak.\" Rotasyon YAPILMAYACAK. Risk kabul edildi: baglanti dizesi bu oturumun transkriptine ve bir subagent transkriptine dustu; repoya/committe HIC girmedi (gitleaks tum commitlerde sifir sizinti), GitHub push protection acik. Fikir degisirse yeni kart acilir ve o an Vercel uc ortaminin MONGODB_URI-si + GitHub secret-i birlikte guncellenir."
       ],
-      "blockedReason": "OMER'DEN GEREKEN: Atlas konsol erisimi bende yok. Baglanti dizesi bu oturumda duz metin paylasildi (kullanicinin kendisi verdi) ve ayrica bir subagent transkriptine .env.local icerigi redaksiyonsuz dustu. Repoya/committe/rapora HIC girmedi (gitleaks 153 commit-te sifir sizinti) ve GitHub push protection acik. Yine de sir bir kez transkripte girmis durumda — dusuk ama sifir olmayan risk. Uygun bir anda rotate edilmeli, acil degil."
+      "blockedReason": null
     },
     {
       "id": "SEC-002",
@@ -1170,7 +1180,7 @@
       "tier": "P2",
       "wave": "1",
       "agent": "xox-dev-backend",
-      "deps": ["ROOM-API-001"],
+      "deps": ["ROOM-API-001", "CTR-BOARD-001"],
       "conflictSet": [
         "packages/shared/src/rest-contract.ts",
         "apps/web/app/api/rooms/[code]/route.ts"
@@ -1186,7 +1196,8 @@
         "Böylece superRefine iki kopya arasındaki sapma dedektörü olmaktan çıkıp gerçek bir tüketici doğrulamasına döner — bugün o çağrı noktasında hiç ateşlenemiyor",
         "canJoinRoom için iki operandı tek tek öldüren iki mutasyon: playing + boş koltuk, waiting + iki koltuk dolu",
         "CTR-001 dondurması bilinçli açılıyor — değişiklik yalnız bu fonksiyonun eklenmesi ve superRefine gövdesiyle sınırlı",
-        "pnpm gates temiz"
+        "pnpm gates temiz",
+        "KAPSAM DARALDI (tasarim §12.5): canJoinRoom fonksiyonunun KENDISI ve mutasyon testleri CTR-BOARD-001'in acik shared penceresinde iner. Bu kartta geriye YALNIZ tuketici baglamasi kalir (superRefine + apps/web/app/api/rooms/[code]/route.ts ayni fonksiyonu cagirir) — bu kart ARTIK packages/shared UNFREEZE'I GEREKTIRMEZ."
       ]
     },
     {
@@ -1312,9 +1323,9 @@
     {
       "attempts": 0,
       "branch": "feat/PERF-002",
-      "report": null,
+      "report": "docs/board/reports/PERF-002.md",
       "blockedReason": null,
-      "status": "in_wave",
+      "status": "done",
       "id": "PERF-002",
       "title": "size-limit butcesi asiliyor — glob TUM rotalari tek butcede topluyor",
       "tier": "P1",
@@ -1328,7 +1339,8 @@
         "BUTCEYI SESSIZCE YUKSELTME. Bu, gecenin 6. oruntusu olur: kapiyi gecirmek icin hedef diregini oynatmak. Yukseltilecekse rota bazinda ayrilmis butcelerle ve her birinin gerekcesiyle yukseltilir",
         "Rota bazinda olcum: hangi rota ne kadar? /oyna/bilgisayar minimax tasiyor mu yoksa game-core lazy mi geliyor?",
         "Duzeltmeden sonra CI build isi YESIL donmeli — gercek CI kosusuyla kanitla"
-      ]
+      ],
+      "mergeSha": "e0f9f28"
     },
     {
       "attempts": 0,
@@ -1371,7 +1383,791 @@
         "HomeActions kendi oda-kur hatasini, JoinCodeField kendi katilma hatasini ayri ErrorBanner-larda gosteriyor; ikisi ayni anda gorunebiliyor",
         "Sonuc: getByTestId(\"hata-mesaji\") \"found multiple elements\" ile patlar. E2E yazildiginda ilk kurbani bu olur",
         "Kusur W1-04-ten ONCE de vardi; W1-04 JoinCodeField-in hata yuzeyini genislettigi icin olasiligi artirdi",
-        "Cozum: ya JoinCodeField-in banner-ini cagirana kaldir, ya da tek bir hata bolgesi olsun. E2E selector-unu kapsamlandirmak ikinci tercih — asil sorun iki dugumun ayni anda var olabilmesi"
+        "Cozum: ya JoinCodeField-in banner-ini cagirana kaldir, ya da tek bir hata bolgesi olsun. E2E selector-unu kapsamlandirmak ikinci tercih — asil sorun iki dugumun ayni anda var olabilmesi",
+        "EK (W1-04 merge): HomeActions.test.tsx 6/6 gecyor ama join akisina HIC dokunmuyor — yani W1-04-un ekledigi GET /api/rooms/[code] on kontrolu ana sayfada HIC test edilmeden gecti. Yesil olmasi calistigin kaniti DEGIL. Bu kart o kapsam boslugunu da kapatmali."
+      ]
+    },
+    {
+      "id": "DB-005",
+      "title": "seedTestUsers $setOnInsert kullaniyor — istatistikler HIC sifirlanmiyor",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-dev-backend",
+      "deps": [],
+      "conflictSet": ["packages/db/src/seed.ts", "packages/db/src/seed.test.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "KANITLANDI (W1-04 integrator, A/B ile): seed.test.ts yerelde {wins:0,losses:0,draws:0} bekliyor, {wins:5,losses:10,draws:0} aliyor. Merge oncesi commit-te BIREBIR AYNI hata — yani W1-04-un sucu degil, mevcut kusur",
+        "KOK NEDEN: seedTestUsers stats/elo/ratedGames alanlarini $setOnInsert ile yaziyor. e2e-user-1/2 bir kez var olduktan sonra bu alanlar HIC guncellenmiyor; E2E kosulari paylasilan Atlas xox_test-te gercek oyunlar oynayinca kirlenmis stats kaliciyor",
+        "DUZELTME: stats/elo/ratedGames $setOnInsert-ten $set-e tasinir. Kimlik alanlari (email, passwordHash olusturma) $setOnInsert-te KALIR — parola her seed-de yeniden hashlenmemeli",
+        "CI BUNU GOREMEZ: CI-002 CI-a kendi temiz mongod-unu verdi, her kosu bos DB ile basliyor. Yani kusur YALNIZ yerelde gorunuyor ve her ajanin pnpm gates-ini kiriyor. Bu, 6. oruntunun tersi: bu kez CI yanlis kapsami olcuyor (fazla temiz), yerel gercegi soyluyor",
+        "SONDA: seed -> oyun oyna (stats kirlet) -> seed tekrar -> stats SIFIR olmali. Bugun degil, duzeltmeden sonra",
+        "DIKKAT: duzeltmeyi test ederken paylasilan xox_test-e E2E ajani kosuyor olabilir. Once kontrol et",
+        "SEMPTOM KAYBOLDU AMA KUSUR DURUYOR (PERF-002 merge-i, 2026-08-25 06:48): o kosuda seed.test.ts 4/4 GECTI cunku paylasilan xox_test-teki stats E2E-002-nin akisiyla degisti. $setOnInsert hala orada, yani kusur yapisal. KART KAPANMAZ — semptomun gecmesini duzelme saymak bu gecenin ogrettigi hatanin ta kendisi. Kapanma sarti: $set-e tasima + seed->oyna->seed sondasi"
+      ]
+    },
+    {
+      "id": "PERF-003",
+      "title": "game-core (minimax dahil) TUM rotalara siziyor — yalniz /oyna/bilgisayar-a degil",
+      "tier": "P1",
+      "wave": "B0",
+      "agent": "xox-perf",
+      "deps": ["PERF-002"],
+      "conflictSet": [
+        "apps/web/next.config.ts",
+        "apps/web/components/computer/**",
+        "packages/game-core/package.json",
+        ".size-limit.mjs"
+      ],
+      "status": "done",
+      "attempts": 0,
+      "branch": "feat/PERF-003",
+      "report": "docs/board/reports/PERF-003.md",
+      "blockedReason": null,
+      "acceptance": [
+        "OLCULDU (PERF-002): @xox/game-core-un TAMAMI — chooseMove/bestMove dahil, strings ile dogrulandi — 1gn2loqck7nj8.js (298 kB ham, en buyuk parca) uzerinden /, /giris, /kayit ve /oda/[kod] rotalarina da giriyor. Oysa minimax YALNIZ /oyna/bilgisayar-in ihtiyaci",
+        "Giris ve kayit sayfalarinin minimax indirmesi icin hicbir sebep yok — bu rotalar oyun bile oynatmiyor",
+        "TESHIS ET: neden ortak parcaya dusuyor? Ortak bir barrel import mu (packages/game-core/src/index.ts her seyi disa veriyor), yoksa bir bilesen zinciri mi? PERF-002-nin route-bundle-stats.json tabanli olcum altyapisi zaten kurulu, onu kullan",
+        "COZUM SECENEKLERI (olcup karar ver): dinamik import ile /oyna/bilgisayar-a ertele · game-core-a alt yol export-lari ekleyip yalniz gerekeni cekmek · sunucu tarafina tasimak MUMKUN DEGIL, KK-027 sayfanin hic ag istegi yapmamasini sart kosuyor",
+        "MUMKUN DEGIL diyorsan gerekcesini yaz. Bu kart olcumle kapanabilir de — sizinti kaciniLmazsa nedenini bilmek de bir sonuc",
+        "Duzeltme sonrasi rota bazli bütceler DUSURULMELI: PERF-002 bütceleri olculen degerden turetti (heavy 235 kB), sizinti kalkarsa o sayi artik dogru degil. Yeni olcum + yeni bütce + gerekce",
+        "SERT ON KOSUL ROLU (ADR-0013 sonuclar, tasarim D8): bu kart CORE-AI-001'den ONCE kapanmali. Agir rotalarda size-limit payi yalniz ~20 kB gzip (heavy butce 235 kB, olculen 214.65 kB) ve game-core TUM rotalara siziyor; yeni arama + degerlendirme kodu bu payi yer.",
+        "apps/web/next.config.ts ROLLOUT-BOARD-001'in de cakisma kumesindedir (ADR-0018 sonuclar): `deploymentId` satiri BU KARTTAN SONRAKI bir dalgada yazilir, iki kart ayni dalgaya konmaz.",
+        "Yeniden turetilen rota butceleri CORE-AI-001 ve UI-COMP-001'in kapisidir; butce sayilari ve gerekceleri rapora ACIKCA yazilir ki sonraki kartlar neye karsi olctugunu bilsin."
+      ],
+      "mergeSha": "e588156"
+    },
+    {
+      "attempts": 0,
+      "branch": "feat/W1-05",
+      "report": "docs/board/reports/W1-05.md",
+      "blockedReason": null,
+      "status": "done",
+      "id": "W1-05",
+      "title": "Yapistirmada maxLength normallestirmeden ONCE kirpiyor — kod bir karakter eksik",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-dev-web",
+      "deps": [],
+      "conflictSet": ["apps/web/components/JoinCodeField.tsx"],
+      "acceptance": [
+        "OLCULDU (E2E-002, gercek Chromium): \" abc234 \" yapistirilinca beklenen \"ABC234\", gercek \"ABC23\". Bir karakter kayip",
+        "KOK NEDEN (lead kod okumasiyla dogruladi): maxLength={ROOM_CODE_LENGTH} input uzerinde (JoinCodeField.tsx:111), normalizeInput ise onChange-de (:107). Tarayici HAM metni React gormeden 6 karaktere kirpiyor: \" abc234 \" -> \" abc23\" -> normalize -> \"ABC23\". Bastaki bosluk bir karakter yiyor",
+        "BIRIM TESTI BUNU YAPISAL OLARAK GOREMEZ: jsdom-un yapistirma davranisi gercek tarayicidan farkli. W1-04 ajani bunu bana kanitla anlatmisti ve jsdom konusunda HAKLIYDI — eksik olan katmandi. Duzeltmeyi hem birim hem E2E ile kilitle",
+        "COZUM YONU: native maxLength kaldirilip uzunluk sinirini normalizeInput uygulasin (slice zaten var), ya da maxLength daha genis birakilip normalize kirpsin. Hangisi secilirse gerekcesi yazilir",
+        "REGRESYON: E2E-002-nin join.spec.ts testi yesile donmeli"
+      ],
+      "mergeSha": "493bd28"
+    },
+    {
+      "attempts": 0,
+      "branch": "feat/AUTH-002",
+      "report": "docs/board/reports/AUTH-002.md",
+      "blockedReason": null,
+      "status": "done",
+      "id": "AUTH-002",
+      "title": "Basarisiz giriste HTTP durumu her zaman 200 — hicbir zaman 401",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-dev-backend",
+      "deps": [],
+      "conflictSet": ["apps/web/app/api/auth/[...nextauth]/route.ts", "docs/superpowers/specs"],
+      "acceptance": [
+        "OLCULDU (E2E-002, curl ile canli dogrulandi): hata mesaji ve kodu DOGRU ama HTTP durumu her zaman 200. KK-005 401 bekliyor",
+        "SEBEP: Auth.js v5 redirect:false + X-Auth-Return-Redirect sozlesmesi — hatayi govdede/yonlendirmede tasiyor, durum kodunda degil. Yani bu Auth.js-in tasarimi",
+        "ONCE KARAR VER: spec mi yanlis, kod mu? KK-005 401 sart kosuyorsa ya sarmalayici durumu duzeltmeli ya spec Auth.js gercegine uyarlanmali. Ucuncu secenek: spec-i 401 yerine govde/kod bazli tanimlamak",
+        "DIKKAT: SEC-002-nin hiz sinirlayicisi ayni route-u sarmaliyor ve giris basarisini set-cookie basligindan tespit ediyor. Durum kodunu degistirirsen o mantigi KIRMA — birlikte test et",
+        "Karar ne olursa olsun decisions.md-ye gerekcesiyle yazilir"
+      ],
+      "mergeSha": "2679111"
+    },
+    {
+      "attempts": 0,
+      "branch": "feat/W1-05",
+      "report": "docs/board/reports/W1-05.md",
+      "blockedReason": null,
+      "status": "done",
+      "id": "UI-003",
+      "title": "SessionProvider session prop-u almiyor — her sayfa /api/auth/session cagiriyor",
+      "tier": "P1",
+      "wave": "2",
+      "agent": "xox-dev-web",
+      "deps": [],
+      "conflictSet": ["apps/web/app/layout.tsx"],
+      "acceptance": [
+        "OLCULDU (E2E-002 ag casusu, gercek tarayici): /oyna/bilgisayar oyunu boyunca 2x GET /api/auth/session yakalandi. KK-027 sayfanin HIC ag istegi yapmamasini sart kosuyor",
+        "KOK NEDEN: apps/web/app/layout.tsx-teki SessionProvider-a session prop-u gecilmiyor, bu yuzden istemci oturumu ucdan cekiyor. Sayfaya ozgu DEGIL, uygulama geneli",
+        "W1-01 REGRESYONU DEGIL: W1-01-in network-graph.test.ts-i kendi modul grafigini koruyor ve dogru calisiyor — ama layout-un davranisini yapisal olarak goremez. Iki katman farkli sey gorur, E2E olmasaydi bu bulunmazdi",
+        "ETKI: Atlas-a hicbir sey yazilmiyor (E2E dogrulamasi ayrica yesil), yani veri butunlugu sorunu yok. Sorun KK-027 sozlesmesinin ihlali ve gereksiz istek",
+        "DIKKAT: layout.tsx DONDURULMUS dosya (UI-SKEL-001). Bu kart onu bilerek aciyor, degisiklik session prop-u ile SINIRLI kalmali",
+        "REGRESYON: E2E-002-nin ag casusu testi yesile donmeli — sifir /api istegi"
+      ],
+      "mergeSha": "493bd28"
+    },
+    {
+      "attempts": 0,
+      "branch": null,
+      "report": "docs/board/reports/OPS-006.md",
+      "blockedReason": null,
+      "status": "done",
+      "id": "OPS-006",
+      "title": "Vercel projesini izrandevu -> omeerdursunn hesabina tasi",
+      "tier": "P0",
+      "wave": "2",
+      "agent": "xox-devops",
+      "deps": [],
+      "conflictSet": [".vercel/project.json"],
+      "acceptance": [
+        "OMER ACIKCA ISTEDI: proje yanlis takimda. omeerdursunn hesabinda omerdursun.com domaini var, proje oraya tasinmali",
+        "CLI-da vercel project transfer YOK (dogrulandi) — yeni proje kurup tasima gerekiyor",
+        "Alti ortam degiskeni uc ortama tasinir: AUTH_SECRET, AUTH_URL, AUTH_TRUST_HOST, MIGRATION_SECRET, MONGODB_DB, MONGODB_URI. DEGERLER ORTAMA GORE FARKLI (MONGODB_DB dev/test/prod)",
+        "Bolge fra1 PAZARLIKSIZ: iad1-de p95 98.6ms, fra1-de 8.7ms, 11x fark (Atlas Avrupa-da). vercel.json regions Hobby/Pro-da yurumuyor, proje ayari kullanilir",
+        "Domain xox.omerdursun.com eklenir ve DOGRULANDIGI gosterilir — OPS-001-in kapanma sarti",
+        "WAF kurallari yeni projede yeniden kurulur: POST /api/auth/* 60/60sn (ayni), GET /api/rooms/*/ws 60/60sn (30-dan yukseltildi, OMER ONAYLADI)",
+        "Eski proje SILINMEZ — once yenisi calistigi kanitlanir, sonra lead-e sorulur. GitHub baglantisi kesilir ki cift deploy olmasin",
+        "TAMAMLANDI 2026-08-25: proje omeerdursunn takiminda, fra1, xox.omerdursun.com verified ve CANLI (health -> {ok:true, db:xox_prod}), xox_prod indeksleri kuruldu, 13 ortam degiskeni tanimlandi (deger komut satirina yazilmadi, stdin ile gecirildi). AUTH_SECRET ve MIGRATION_SECRET eski proje silindigi icin kayipti — ortam basina TAZE ve AYRI degerler uretildi, gercek kullanici yok. izrandevu projesi Omer tarafindan silindi. KALAN: WAF kurallari hala staged, firewall publish reddedildi, panodan yayinlanmali."
+      ]
+    },
+    {
+      "id": "DESIGN-001a",
+      "title": "Yon A tasarim dili + tokenlar — YALNIZ ui-tokens katmani, bilesene DOKUNMAZ",
+      "tier": "P1",
+      "wave": "B0",
+      "agent": "xox-designer",
+      "deps": [],
+      "conflictSet": [
+        "packages/ui-tokens/**",
+        "apps/web/app/globals.css",
+        "apps/web/lib/generate-globals-css.ts",
+        "docs/design/**"
+      ],
+      "status": "done",
+      "attempts": 0,
+      "branch": "feat/DESIGN-001a",
+      "report": "docs/board/reports/DESIGN-001a.md",
+      "acceptance": [
+        "BOLUNME NOTU: DESIGN-001 bu kart ile DESIGN-001b'ye AYRILDI (ADR-0017 §10 — katmana gore bolme). 001a yalniz TASARIM DILI + TOKEN katmanidir. apps/web/components/** bu kartta ACILMAZ — tek satir bile. Aksi halde UI-BOARD-001 ile ayni agacta bulusur ve paralellik olur.",
+        "OMER YON A'yi SECTI (2026-08-25) — Kagit & Murekkep: sicak, minimal, hairline izgara, dekorasyon yerine bosluk ve tipografi. Gerekce ve reddedilenler decisions.md'de. ADIM 1 (uc gorsel yon, docs/design/onizleme/yon-{a,b,c}.html) TAMAM.",
+        "ONCE TASARIM DILI, SONRA UYGULAMA: palet, tipografi olcegi, bosluk sistemi, hareket dili KARARLASTIRILIR ve packages/ui-tokens'a yazilir. Bilesenler (DESIGN-001b + UI-BOARD-001) sonra o tokenlari TUKETIR, kendi ham degerini yazmaz.",
+        "--xox-grid-line: 2px ui-tokens'ta TEK token olarak tanimlanir; boyuta gore ikinci bir deger YOKTUR (ADR-0017 §2). Bu, Yon A'nin 1 px hairline onerisinden BILINCLI 1 piksellik sapmadir; gerekce KK-B51'in komsu dokunma hedefleri arasinda >= 2 px ayrim sarti. 2 px, 76 px'lik hucrede %2.6'dir — hala hairline okunur.",
+        "Izgara cizgisi GAP'IN KENDISIDIR: tahta arka plani border renginde, hucreler surface renginde. Yon A'nin kagit-izgara hilesi korunur.",
+        "UI-BOARD-001'in ihtiyac duydugu tokenlar bu kartta hazir olur: hucre yuzeyi, --xox-board-max, odak halkasi, surfaceRaised, kazanan/soluk hucre. Sonda: UI-BOARD-001 yazilirken ham Tailwind ya da piksel degeri serpistirmesi GEREKMEZ.",
+        "CSS'te ve tokenlarda hucre icin ALT SINIR (min-width/min-height) TANIMLANMAZ (ADR-0017 §1). 28 px ve 24 px sayilari token DEGILDIR; belirtilen gorunum alanlarinda OLCULEN iddialardir (dogrulama E2E-BOARD-001'de). Alt sinir yazmak, dar ekranda tasma yani KK-B50 ihlali uretmenin tek yoludur.",
+        "BAGLAYICI KISITLAR (tasarimci OLCTU, uygulamada korunacak): 11x11'de hucre >= 28 px (mutlak taban 24) · bosluk >= 2 px · TAHTA KAYDIRILMAZ, olceklenir · kazanan cizgi RENKTEN BAGIMSIZ >= 3px dis cizgi + kazanan olmayan hucrelerde >= %40 opaklik dususu · tum metin tokenlari >= 4.5:1, kenarliklar >= 3:1, IKI TEMADA DA. Olculen kontrast tablosu rapora yazilir.",
+        "YON A'NIN AVANTAJI KORUNMALI: hairline tabanli oldugu icin 11x11'de hicbir dekor SOKULMUYOR, yalniz olcu kuculuyor (76 -> 52 -> 34 px). BOYUTA GORE DALLANAN IKINCI BIR GORSEL KOD YOLU YAZILMAZ — o, Yon B'nin reddedilme sebebiydi.",
+        "ADR-0017'nin Yon A'dan UC SAPMASI docs/design/2026-08-25-gorsel-yonler.md'ye NOT DUSULUR: (a) gap 1 px -> 2 px, (b) 'Yakinlastir' dugmesi UYGULANMAZ (KK-B50 kaydirma/yakinlastirmayi reddetti — rakibin tehdidini tek bakista gormek oyunun kendisidir), (c) hitSlop ile 44 pt'a tamamlama REDDEDILDI (merkezler ~30 px arayla dizilirken 44 px hedefler zorunlu olarak cakisir ve dokunmayi yanlis hucreye dusurur). Not dusulmezse tasarimci ajan bunlari 'uygulanmamis' sanip geri getirir.",
+        "DEGISMEZ: apps/web icinde hex literal YASAK (KK-084 lint kurali). Tum renkler ui-tokens uzerinden; packages/ui-tokens muaf. KK-084 sondasi: bir dosyaya hex literal ekle, lint KIRMIZI donsun, geri al — kural gercekten atesleniyor mu.",
+        "Iki tema (acik/koyu) esit ozenle tasarlanir; koyu tema acik temanin naif tersi OLAMAZ. Web ve mobil TUTARLI: ui-tokens ikisinin ortak kaynagi.",
+        "Bu kart UI-BOARD-001'in SERT ON KOSULUDUR (ADR-0017 §10).",
+        "pnpm gates temiz."
+      ],
+      "blockedReason": null,
+      "mergeSha": "e4421fb"
+    },
+    {
+      "id": "DESIGN-001b",
+      "title": "Yon A'nin bilesenlere uygulanmasi — board/** HARIC, yeni token TANIMLANMAZ",
+      "tier": "P1",
+      "wave": "B5b",
+      "agent": "xox-designer",
+      "deps": ["DESIGN-001a", "UI-CFG-001", "UI-COMP-001"],
+      "conflictSet": [
+        "apps/web/components/**",
+        "!apps/web/components/board/**",
+        "apps/web/app/page.tsx",
+        "apps/web/app/giris/**",
+        "apps/web/app/kayit/**",
+        "apps/web/app/profil/**"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "SIRA DUZELTILDI (lead): ADR-0017 §10 ile tasarim §10.2 celisiyordu; ADR dogru. Bu kart B2-den B5b-ye alindi — UI-BOARD-001, UI-CFG-001 ve UI-COMP-001 BITTIKTEN SONRA. Gerekce: aksi halde RoomScreen.tsx ve ComputerGameScreen.tsx UC DALGADA UC KEZ yazilacakti. Bitmis olani cilalarsin, degismek uzere olani degil.",
+        "BOLUNME NOTU: DESIGN-001'in ikinci yarisi (ADR-0017 §10). Bu kart yalniz BILESEN katmanidir. YENI TOKEN TANIMLANMAZ — hepsi DESIGN-001a'dan gelir; packages/ui-tokens/**, apps/web/app/globals.css ve generate-globals-css.ts bu kartta ACILMAZ.",
+        "apps/web/components/board/** BU KARTIN KAPSAMI DISINDADIR — tahtanin gorsel dili UI-BOARD-001'in isidir. Tek satir bile dokunulmaz; yoksa iki kart ayni agacta bulusur (ADR-0017 §10'un tum amaci budur).",
+        "RoomScreen.tsx ve ComputerGameScreen.tsx'te yalniz GORSEL KABUK degisir; Board'un PROP SOZLESMESI ve prop baglamasi UI-BOARD-001'e (B3) aittir ve bu kartta ONCEDEN yazilmaz.",
+        "OMER ISTEDI (oncelik yukseltildi 2026-08-25): 'Suan tasarim oldukca amator gorunuyor, profesyonel olmali.' Ana sayfa, giris, kayit, profil ve oda kabugu (tahta haric) bu kartla profesyonel goruntuye cikar. Artik sonraki dalgalara ERTELENMIYOR.",
+        "MEVCUT DURUM: UI-SKEL-001 islevsel bir kabuk kurdu (tokenlar, ARIA, tema) ama gorsel dil MINIMAL — amac calisan iskeletti, estetik degil.",
+        "YON A'NIN AVANTAJI KORUNMALI: hairline tabanli oldugu icin olcu kucuLdukce hicbir dekor SOKULMUYOR. BOYUTA GORE DALLANAN IKINCI BIR GORSEL KOD YOLU YAZILMAZ — Yon B'nin reddedilme sebebi buydu.",
+        "DEGISMEZ: test-id sozlesmesi (packages/shared/src/testids.ts) DONMUS — gorsel degisiklik E2E'yi kirmamali. Kirarsa test-id degil SINIF/YAPI degistirilir.",
+        "DEGISMEZ: erisilebilirlik kazanimlari korunur — durum-metni role=status aria-live=polite, klavye ile oynanabilirlik, Turkce aria-label'lar, odak gorunurlugu. Gorsel iyilestirme bunlari BOZAMAZ.",
+        "DEGISMEZ: apps/web icinde hex literal YASAK (KK-084). Tum renkler DESIGN-001a'nin tokenlari uzerinden.",
+        "Iki tema (acik/koyu) esit ozenle uygulanir; her ekran icin ONCE/SONRA ekran kareleri IKI TEMADA DA rapora eklenir.",
+        "pnpm gates temiz."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "OPS-007",
+      "title": "E2E guard kirmizisi GEVSETILMEZ — nobetci kart",
+      "tier": "P0",
+      "wave": "2",
+      "agent": "xox-qa-e2e",
+      "deps": ["OPS-006"],
+      "conflictSet": ["apps/e2e/global-setup.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "Bu kart bir NOBETCI: apps/e2e/global-setup.ts:24-teki assertTestDatabase guard-i GEVSETILEMEZ",
+        "OLAY: OPS-006 tasimasinda preview ortami MONGODB_DB olmadigi icin xox_prod gosterdi. E2E paketinin ilk adimi pnpm --filter @xox/db reset — yani veritabanini DUSURMEK. Guard hicbir test kosmadan durdurdu ve PRODUCTION VERITABANINI KURTARDI",
+        "YASAK: guard-i cikarmak · esigi esnetmek · yalniz bu kosuda atla demek · CI isini disable etmek. Uc de yasak",
+        "DUZELTILECEK SEY TESTIN ESIGI DEGIL, ORTAM DEGISKENIDIR: yeni Vercel projesinde Preview icin MONGODB_DB=xox_test tanimlanir",
+        "Ortam duzeltildikten sonra E2E (preview) YESIL donmeli — ve bu kart o kaniti bekler",
+        "YAN KAZANIM: CI-003 kismen cozuldu. E2E (preview) daha once hep skipped donuyordu (main Production Branch, gercek Preview olayi dogmuyordu). Yeni proje gercek preview olaylari uretiyor, is ARTIK GERCEKTEN KOSUYOR"
+      ]
+    },
+    {
+      "id": "CI-004",
+      "title": "e2e-preview ortam filtresi DENYLIST idi ve atlandi — allowlist yapildi",
+      "tier": "P0",
+      "wave": "2",
+      "agent": "xox-devops",
+      "deps": [],
+      "conflictSet": [".github/workflows/e2e-preview.yml"],
+      "status": "reviewing",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "OLAY: filtre environment != Production && != production seklinde IKI DENYLIST karsilastirmasiydi. Vercel Production – xox (uzun tire + proje eki) etiketi yollayinca ikisine de esit olmadi, filtre GECILDI ve E2E isi PRODUCTION URL-lerine karsi kostu",
+        "apps/e2e ilk adimi pnpm --filter @xox/db reset. Production veritabanini kurtaran sey IKINCI savunma hatti oldu: global-setup.ts assertTestDatabase guard-i db !== xox_test gorup hicbir test kosturmadan durdu",
+        "DUZELTILDI (lead, dogrudan): kosul allowlist-e cevrildi — startsWith(environment, Preview). Beklenmeyen etiket artik CALISTIRMAZ, atlar. YAML gecerliligi ve yorumsuz dosyada denylist kalmadigi dogrulandi",
+        "DOGRULANACAK: bir PR preview deploy-u ile is GERCEKTEN kosmali. Allowlist fazla dar olursa is hic kosmaz ve bu SESSIZ bir kayiptir — skipped gormek yeterli degil, YESIL gormek gerekir",
+        "GENEL DERS: kapinin IZIN VERDIGI seyi saymak, YASAKLADIGI seyi saymaktan guvenlidir. Ayni ders bu gece uc ayri yerde cikti (PERF-002 size-limit glob, W1-01 ag sondasi, bu)"
+      ]
+    },
+    {
+      "id": "AI-SPIKE-001",
+      "title": "AI sure butcesi OLCUMU: AI_BUDGET_MS / AI_NODE_BUDGET / MAX_SEARCH_DEPTH — KOD MERGE EDILMEZ",
+      "tier": "P1",
+      "wave": "B0",
+      "agent": "xox-perf",
+      "deps": [],
+      "conflictSet": ["docs/board/reports/AI-SPIKE-001.md"],
+      "status": "done",
+      "attempts": 0,
+      "branch": "feat/AI-SPIKE-001",
+      "report": "docs/board/reports/AI-SPIKE-001.md",
+      "acceptance": [
+        "BU KART CORE-AI-001-I BEKLETMEZ. Olcum gelmezse varsayimla devam, ama varsayim GORUNUR kalir — sessizce dogru sanilmaz.",
+        "LEAD KARARI — MANUEL ADIM BLOKLAMAZ: (a) adimi (Omerin gercek Androidinde olcum) yapilamazsa kart DURMAZ. Muhafazakar bir varsayimla ilerlenir: CDP CPU kisitlamasi 6x, orta sinif Android icin yaygin bir vekil. R=6 SECILDI ve ACIKCA DOGRULANMAMIS olarak isaretlenir — hem kartin raporunda hem ai-config.ts yorumunda. Omer olcum yapinca R yeniden kalibre edilir ve butun esikler o carpanla tazelenir.",
+        "PROTOTIP BIRLESTIRILMEZ (ADR-0013 §9). Ayri bir dalda kalir; main'e giren TEK sey docs/board/reports/AI-SPIKE-001.md'dir. packages/** ve apps/** altinda hicbir dosya merge edilmez — cakisma kumesi bu yuzden yalniz rapor dosyasidir.",
+        "AS-B01 bu kartla kapanir. Bugun 'AI_BUDGET_MS = 800' bir ONERIDIR, olcum DEGILDIR. TAHMIN EDILMEYECEK.",
+        "KORPUS: {6,4} {6,5} {11,4} {11,5} {11,6} icin TAS SAYISINA GORE KATMANLANMIS 200 pozisyonluk sabit korpus (0 / 4 / 12 / 30 / 60 / 100 tas). En kotu durum bos tahta DEGILDIR — aday sayisinin en yuksek oldugu orta oyundur. Korpus tohumlu ureteclerle sabit ve yeniden uretilebilir.",
+        "Her kombinasyon icin RAPORLANIR: ziyaret edilen MAKSIMUM dugum sayisi · ortalama derinlik · budama kesme orani · duvar saati MAKSIMUMU (ortalama DEGIL).",
+        "Bugunku 3x3 unbeatable yolu AYNI kisitlanmis tarayicida olculur. moves.ts:59'un kaydettigi 515 ms GELISTIRICI MAKINESINDENDI. 1000 ms tavani zorlaniyorsa AYRI BIR KART acilir — bu ozelligin borcu degildir ama bu ozellik onu gorunur kilar.",
+        "UC ASAMALI KALIBRASYON, SIRAYLA (ADR-0013 §9): (a) [MANUEL] Omer'in gercek orta sinif Android telefonunda sabit bir kalibrasyon is yuku (3x3 bos tahta tam minimax) BIR KEZ kosulur ve suresi kaydedilir; (b) apps/e2e icinde AYNI is yuku CDP Emulation.setCPUThrottlingRate ile farkli R degerlerinde kosulur ve (a)'nin suresini veren R KALIBRASYON CARPANI olarak sabitlenir, rapora yazilir; (c) bundan sonraki BUTUN duvar saati olcumleri (b)'nin R'siyle kosar — yeniden uretilebilir, cihaz gerektirmez, CI'in hiziyla degil KULLANICININ CIHAZIYLA kalibredir.",
+        "(a) YAPILMADAN KART KAPANMAZ. Omer'in eli gerekir; agent bunu otomatiklestirmeye CALISMAZ. Kalibrasyon yoksa CI'daki throttle carpani gerekcesiz kalir ve kapi yanlis kapsami olcer (gotcha oruntu 6).",
+        "CIKTI: AI_BUDGET_MS · AI_NODE_BUDGET · MAX_SEARCH_DEPTH sayilari + CANDIDATE_RADIUS = 2'nin dogrulanmasi (yaricap 1 ve 3 ile karsilastirmali olcum).",
+        "AS-B02 girdisi: 11x11'in mobilde acilip acilmayacagina dair olcum sonucu rapora yazilir. Karari W2-03 verir; bu kart onu BLOKLAMAZ.",
+        "CORE-AI-001 bu kart bitmeden BASLAYABILIR ama BITIREMEZ: algoritma butce sayisindan bagimsizdir, sabitin DEGERI olcumden gelir."
+      ],
+      "blockedReason": null,
+      "mergeSha": "77ba0cc"
+    },
+    {
+      "id": "CORE-CFG-001",
+      "title": "game-core parametriklesmesi: BoardConfig + markali Board + winLines(config) ve zorunlu shared/db payi — TEK worktree, TEK commit",
+      "tier": "P1",
+      "wave": "B1",
+      "agent": "xox-dev-core",
+      "deps": ["PERF-003"],
+      "conflictSet": [
+        "packages/game-core/src/types.ts",
+        "packages/game-core/src/config.ts",
+        "packages/game-core/src/config.test.ts",
+        "packages/game-core/src/board.ts",
+        "packages/game-core/src/board.test.ts",
+        "packages/game-core/src/status.ts",
+        "packages/game-core/src/status.test.ts",
+        "packages/game-core/src/moves.ts",
+        "packages/game-core/src/moves.test.ts",
+        "packages/game-core/src/index.ts",
+        "packages/shared/src/game-status.ts",
+        "packages/shared/src/game-status.test.ts",
+        "packages/db/src/models/validators.ts",
+        "packages/db/src/models/room.ts",
+        "packages/db/src/models/game.ts",
+        "apps/web/components/computer/game-engine.ts"
+      ],
+      "status": "done",
+      "attempts": 0,
+      "branch": null,
+      "report": "docs/board/reports/CORE-CFG-001.md",
+      "acceptance": [
+        "BU KART BOLUNEMEZ (ADR-0011): typecheck atomikligi. Board ve WinLine tiplerinin genislemesi shared'in game-status semasini ve db dogrulayicilarini AYNI commit'te hareket ettirmek zorundadir. ai.ts / search.ts KAPSAM DISI — onlar CORE-AI-001.",
+        "KK-B01 saglanir: BOARD_MODES tam olarak uc boyut icerir (3, 6, 11). Test bu uc sayiyi CIPLAK yazar, sabitten TURETMEZ. Dorduncu boyut eklenirse test kirmiziya doner.",
+        "KK-B02 saglanir: izinli K listeleri tam olarak 3 -> [3], 6 -> [4,5], 11 -> [4,5,6]; ELLE YAZILMIS beklenti tablosundan dogrulanir (gotcha oruntu 2: kendine referansli test SILMEYI goremez).",
+        "KK-B03 + KK-B04 saglanir: varsayilanlar 3 -> 3, 6 -> 4, 11 -> 5 (ciplak sayilar) ve her varsayilan o boyutun izinli listesinin uyesidir. BOARD_MODES ELLE YAZILMIS DONMUS bir sabittir, formulden turetilmez (ADR-0010).",
+        "KK-B05 saglanir: parseBoardConfig bes AYIRT EDILEBILIR reddetme sebebi doner — not-an-object · size-not-integer · unknown-size · win-length-not-integer · win-length-not-allowed. Tasarim §2.2 davranis tablosunun HER SATIRI ciplak yazilmis bir testtir: {size:4,winLength:3} · {size:3,winLength:4} · {size:3,winLength:2} · {size:6,winLength:3} · {size:6,winLength:6} · {size:11,winLength:7} · {size:11.5,...} · {size:-3,...} · {size:'11',winLength:'5'} · 42 · 'x' · []. undefined / null / {} HATA DEGILDIR: ok:true, {3,3}'e duser. {size:11} -> {11,5}.",
+        "KK-B06 saglanir: basarili parse sonucu Object.isFrozen === true. Gerekce EMPTY_BOARD/WIN_LINES ile ayni: uzun omurlu bir sunucu surecinde tek bir yazma sonraki tum oyunlari bozar.",
+        "KK-B07 saglanir: winLines hat sayilari CIPLAK yazilir — (3,3)->8 · (6,4)->54 · (6,5)->32 · (11,4)->304 · (11,5)->252 · (11,6)->204.",
+        "KK-B08 saglanir: winLines({3,3}) bugunku WIN_LINES ile BIREBIR AYNI sekiz hatti AYNI SIRADA uretir. Beklenti WIN_LINES'a REFERANS DEGIL, ELLE KOPYALANMIS dizidir. Uretim sirasi SOZLESMEDIR (ADR-0012): yatay (r artan, c artan) -> dikey (c artan, r artan) -> kosegen kucuk-carpi-asagi-saga -> kosegen asagi-sola.",
+        "KK-B09 + KK-B10 saglanir: winLines donusu ve icindeki her hat donmus; ayni config AYNI REFERANSI doner (memoizasyon, anahtar `${size}x${winLength}`), farkli config farkli referans. Yalniz BOARD_MODES'taki 6 kombinasyon onbellege alinir; 'sinir disi konfigurasyon onbellege alinmaz' dali testle TETIKLENIR (KK-B29).",
+        "KK-B22 saglanir: evaluateStatus her konfigurasyonda won / draw / playing ucluSunu dogru doner; won.line TAM OLARAK K indeks icerir ve hepsi kazananin tasini tasir.",
+        "KK-B23 saglanir: bir hamle iki hatti ayni anda tamamliyorsa winLines sirasindaki ILK hat doner; ayni tahta iki kez degerlendirildiginde ayni line gelir. Ek bir oncelik kurali YOKTUR (E-10).",
+        "KK-B24 saglanir (FREESTYLE): K=5 iken 6'li kesintisiz dizi de galibiyettir ve donen line dizinin ILK 5 INDEKSIDIR (pencere tarama sirasi geregi). Kural sessizce 'tam 5'e cevrilemesin diye testle KILITLENIR.",
+        "KK-B25 saglanir: tahta tamamen dolu ve hicbir hat tamamlanmamissa draw; 11x11 icin 121 tasli bir tahtayla test edilir.",
+        "KK-B26 saglanir: wouldWin (son tas etrafinda dort yon taramasi, hat tablosuna BAKMAZ) ile evaluateStatus tam taramasi, TOHUMLU ureticle sabitlenmis 500 POZISYONLUK korpusun TAMAMINDA ayni sonucu verir. Iki uygulama birbirinden TURETILMEZ. Bu test SILINEMEZ, orneklem DUSURULEMEZ.",
+        "KK-B27 saglanir: applyMove reddetme sirasi KORUNUR (out-of-range -> game-over -> occupied) ve aralik cellCount(config)'e goredir — {3,3}'te indeks 9 out-of-range; {11,5}'te 120 gecerli, 121 out-of-range. Sira sahipligi HALA BILEREK dogrulanmaz (index.ts gerekcesi aynen).",
+        "Board MARKALANIR (ADR-0011): `readonly Cell[] & { readonly [boardBrand]: true }`. Duz readonly Cell[] tuple'in ikinci isini — 'Board'a giden tek yol boardFromCells'tir' kapisini — sessizce yok ederdi. WinLine `readonly number[]` olur.",
+        "cellAt PAKET-OZEL kalir; index.ts onu DISA AKTARMAZ (D1: game-core disinda Board'u indeksleyen tek bir uretim satiri yok, SB-01'in 'disa aktarilmali' gerekcesi olgusal olarak yanlis). `?? null` TOTALLIGI bir TESTTIR (cellAt(board, 999) === null), savunmaci kod degildir: aralik disi okuma bos hucre verir, undefined vermez — boylece konfigurasyon-tahta uyusmazligi HAYALET GALIBIYET uretemez.",
+        "boardFromCells uzunlugu (config'e gore) VE her hucre degerini dogrular, aksi halde RangeError atar. emptyBoard(config?) memoize + Object.freeze. EMPTY_BOARD ve WIN_LINES sabitleri SILINIR. boardToString duz dize kalir, round-trip sozlesmesi korunur.",
+        "KK-B28 saglanir: game-core SIFIR BAGIMLILIKLI ve saf kalir — package.json'da dependencies bos, sideEffects:false, hicbir dosya G/C yapmaz. AI_BUDGET_MS packages/shared'a KONMAZ (D5: game-core shared'i import edemez; SB-07 reddedildi).",
+        "KK-B29 saglanir: game-core kapsami %100 kalir. Yeni eklenen HICBIR dal kapsam disi degildir; ulasilamaz hale gelen bir dal SESSIZCE SILINMEZ, gurultulu birakilir.",
+        "KK-B36 saglanir: packages/db/src/models/room.ts icindeki yerel `const BOARD_SIZE = 9` SILINIR. Sonda: yorum satirlari elenerek (grep -vE '^\\s*(\\*|//|/\\*)') repoda 9-hucre varsayiminin ikinci bir kopyasi kalmadigini gosteren grep ciktisi rapora yazilir.",
+        "YUZEY TESTI: index.ts'in export anahtar kumesi ELLE YAZILMIS bir listeyle karsilastirilir — yuzey sessizce buyuyemez ya da kuculemez. Yeni: BoardConfig, BoardMode, BOARD_MODES, DEFAULT_BOARD_CONFIG, cellCount, rowOf, colOf, parseBoardConfig, BoardConfigParse, BoardConfigRejection, emptyBoard, winLines, wouldWin. Silinen: BOARD_SIZE, EMPTY_BOARD, WIN_LINES. (knip olu disa aktarimi ayrica yakalar.)",
+        "SHARED PAYI — TEK PENCERE KURALININ BILINCLI VE TEK ISTISNASI (ADR-0015 §1): yalniz packages/shared/src/game-status.ts'in winLineSchema'si (tuple([c,c,c]) -> array(c).min(3).max(6)) ve toTransportStatus'un `const [a,b,c]` yerine `[...status.line]` KOPYALAMASI degisir (KK-B39'un tip tarafi; motorun donmus ic dizisine referans tasimama gerekcesi korunur). shared'in BASKA HICBIR dosyasina dokunulmaz — o pencere CTR-BOARD-001'indir.",
+        "DB PAYI: yalniz models/{validators,room,game}.ts'in tip ve tek-alan dogrulayici uyumu — result.line isNullOrExactLength(3) -> isNullOrLengthBetween(3,6). packages/db/src/rooms/** bu kartta ACILMAZ (DB-BOARD-001'in isi, cas.ts dahil).",
+        "apps/web/components/computer/game-engine.ts yalniz yeni imzalara uyar; davranis {3,3} varsayilaniyla BIT DUZEYINDE ayni kalir. Bu dosyaya dokunuldugu icin AYNI DALGADA components/** agacina dokunan BASKA KART OLAMAZ (DESIGN-001b bu yuzden B1'e konamadi).",
+        "Diger tum imzalar `config = DEFAULT_BOARD_CONFIG` varsayilani alir -> db/rooms/**, web/lib/** bu kartta acilmaz ve main YAYINLANABILIR kalir (ADR-0018 §2): kullaniciya gorunen hicbir degisiklik yok.",
+        "Katman yonu korunur: config -> board -> status -> moves. import-x/no-cycle yesil.",
+        "KK-B21 bu kartin kodunda da gecerli: pnpm mutation >= %98. pnpm gates temiz; merge sonrasi `pnpm exec turbo run typecheck --force` + `test:coverage --force` ciktisinda `Cached: 0`."
+      ],
+      "blockedReason": null,
+      "mergeSha": "f2b2f2a"
+    },
+    {
+      "id": "CTR-BOARD-001",
+      "title": "packages/shared TEK PENCERE: protokol genislemesi + room-client + iki tr.ts — sonra YENIDEN DONAR",
+      "tier": "P1",
+      "wave": "B2",
+      "agent": "xox-dev-backend",
+      "deps": ["CORE-CFG-001"],
+      "conflictSet": [
+        "packages/shared/src/**",
+        "apps/web/messages/tr.ts",
+        "apps/mobile/messages/tr.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "SERT UYARI (CORE-CFG-001 merge sonrasi): cellIndexSchema HALA 0..8. winLineSchema artik 3..6 UZUNLUK kabul ediyor ama indeks tavani 8-de — yani 6x6 ve 11x11 hatlari protokolden GECEMEZ. Bu bilincli (pencere senin kartinda) ama SEN INMEDEN hicbir sey 3x3 disini yayinlayamaz. Kartin en kritik tek satiri bu.",
+        "packages/shared bu ozellik icin TAM OLARAK BIR KEZ acilir ve burada TAMAMEN genisletilir; kart merge edildikten sonra paket YENIDEN DONAR (ADR-0015 §1). game-status.ts payi bir dalga once CORE-CFG-001'de indi — burada tekrar acilmaz.",
+        "KK-B38 saglanir: cellIndexSchema 0..120. KK-B37 saglanir: boardSchema array(cell).min(9).max(121). YENI: boardSizeSchema (3|6|11), winLengthSchema (3..6), boardConfigSchema.",
+        "KK-B37/B38'in GEREKCESI karta yazili: sema SEKIL korur, KURAL DEGIL. board.length === size^2 odanin KENDI konfigurasyonuna karsi SUNUCUDA kontrol edilir (ayristirma aninda oda konfigurasyonu erisilebilir degildir). Asan indeks MEVCUT move:rejected reason:'out-of-range' ile reddedilir; moveRejectionReasonSchema DORT degerde KALIR, protokole yeni reddetme sebebi EKLENMEZ.",
+        "Sema sinirlari (0, 120, 9, 121, 3, 6) CIPLAK yazilir; game-core'un DEGERLERINDEN turetilmez ve shared onlari YENIDEN DISA VERMEZ. Barrel'dan deger yeniden disa vermek @xox/shared'in HER tuketicisine game-core'u sokar ve PERF-003'un cozdugu sizintiyi buyutur (D8). Tutarlilik iddialari (max === MAX_CELL_COUNT - 1 vb.) AYRI BIR TEST DOSYASINDA yazilir — test dosyalari boundaries'ten muaftir ve bundle'a girmez.",
+        "SB-06: errors.ts'e INVALID_BOARD_CONFIG eklenir, kod sayisi 20 -> 21. errors.test.ts'teki CIPLAK 20 sayisi 21'e GUNCELLENIR — o test kasten ciplak sayi yaziyor; guncellemek dogru davranistir, testi turetilmis hale getirmek DEGILDIR.",
+        "KK-B14/B15 sema tarafi: rest-contract.ts'e YENI roomCreateBodySchema { size?, winLength? } (govde tamamen yok da olabilir). SB-09: roomStateResponseSchema'ya size + winLength ZORUNLU olarak eklenir (US-B03 — katilan oyuncu ayari gormeli).",
+        "SB-10: ws-protocol.ts stateMessageSchema'ya size + winLength ZORUNLU + lastMove: { index: cellIndexSchema, by: playerSchema } | null eklenir.",
+        "lastMove SPEC'TE YOKTU, ADR-0015 §3 EKLEDI: Z2 geregi baglanti en gec 300 sn'de kesilir ve yeniden baglanan istemcinin gordugu tek gercek state'tir. state'te olmayan her sey rotasyondan sonra KAYBOLUR — data-son-hamle (KK-B55) 121 hucrede 'rakibin hamlesini aninda gor'un tek gorsel dayanagidir. Gerekce ADR-0001'in rematch'i state'e koyma gerekcesiyle BIREBIR aynidir.",
+        "room-client.ts: RoomClientState + size + winLength + lastMove. move:applied lastMove'u GUNCELLER, state onu TUMUYLE DEGISTIRIR. Reducer testleri her iki yolu da kapsar.",
+        "TUKETICI SONDASI — BU KARTIN EN ONEMLI KABUL KRITERI, iyi niyet degil (ADR-0015 §7). Bolumlemenin EN RISKLI KENARI burasidir: protokol B2'de DONUYOR, tuketicileri (DB-BOARD-001, UI-BOARD-001, API-BOARD-001, UI-CFG-001) B3-B4'te yaziliyor. Bu, CTR-001'in KANITLANMIS KUSURUDUR (acik borc CTR-003): EKSIK BIR ALAN kapanmis pencereyi YENIDEN ACTIRIR ve dort kartlik zinciri BASTAN TETIKLER.",
+        "Sonda iki iddia yazar: (a) 'Oda ekraninin okudugu her alan state mesajinda vardir' — type · roomCode · board · status · players · you · version · turnDeadline · graceEndsAt · rematch · serverTime · size · winLength · lastMove; (b) 'Katilma ekraninin okudugu her alan roomStateResponse'ta vardir' — code · state · seats · canJoin · size · winLength.",
+        "BU IKI ANAHTAR LISTESI TASARIMIN §3.2 ALAN TABLOSUNDAN ELLE KOPYALANIR. SEMADAN TURETILIRSE HICBIR SEY KORUMAZ — kendine referansli bir test alan eksikligini goremez (gotcha oruntu 2; bu gece defalarca zarar verdi). Object.keys(stateMessageSchema.shape) ya da z.infer uzerinden uretilen bir liste bu kriteri SAGLAMAZ ve kart reddedilir.",
+        "Her ZORUNLU alan tek tek eksiltilince sema REDDEDER (mevcut iki katmanli kalip: turetilmis test + elle yazilmis beklenti).",
+        "spec §5 metin agaci: message-keys.ts'e boardConfig grubu (16 anahtar) + game'e 4 + computer'a 3 + errors'a 1. UC DOSYA TEK COMMIT'TE: shared/errors.ts + shared/message-keys.ts + apps/web/messages/tr.ts + apps/mobile/messages/tr.ts. Biri eksik kalirsa message-keys.test.ts birebir eslik iddiasi kirilir. `unbeatable: 'Yenilmez'` SILINMEZ — 3x3'te hala dogru metin odur.",
+        "ADR-0016 / SB-11: testids.ts'e 5 TESTID (tahta-boyut-3, tahta-boyut-6, tahta-boyut-11, kazanma-uzunlugu, oyun-ayari-ozeti) + 3 DATA_ATTR (data-boyut, data-kazanma, data-son-hamle). cellTestId(index) KODU DEGISMEZ, yalniz yorumu ('0..8' -> '0..N^2-1'). zorluk-unbeatable, tahta, durum-metni, sira-gostergesi, data-tas, data-kazanan, data-bekliyor AYNEN kalir. TESTID/DATA_ATTR sayilari ciplak yazilan testlerle guncellenir.",
+        "CTR-003 BORCUNUN SHARED PAYI BU PENCEREDE KAPANIR (tasarim §12.5 — pencere acikken ucretsiz, kapandiktan sonra yeni bir unfreeze karti): shared `canJoinRoom(state, seats): boolean` export eder + iki operandi tek tek olduren iki mutasyon testi (playing + bos koltuk; waiting + iki koltuk dolu). YALNIZ fonksiyon ve testi bu kartta; route baglamasi CTR-003'te kalir ve o kart ARTIK UNFREEZE GEREKTIRMEZ.",
+        "apps/mobile/messages/tr.ts DEGISIR ama MOBIL EKRAN YAZILMAZ (D3: apps/mobile bugun bir oyun ekrani icermiyor). AS-B02'nin karari W2-03'undur.",
+        "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0` ve `gh run list --workflow=CI --limit 3` yesil.",
+        "BOYUT UYARISI (planner): bu kart tek oturum icin SINIRDA — primitives + errors + rest-contract + ws-protocol + room-client + 24 mesaj anahtari + iki tr.ts + testids + tuketici sondasi + canJoinRoom. ADR-0015 tek pencereyi zorunlu kildigi icin BOLUNMUYOR. Ilk denemede yarim kalirsa attempts harcanmaz; lead karti (shared semalari) / (metin agaci + testids) diye ikiye ayirir ve AYNI DALGADA seri kosturur — ardisik dalgaya DEGIL, pencere kapanmamali."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "CORE-AI-001",
+      "title": "N>3 arama motoru: aday daraltma + taktik tarama + yinelemeli derinlesme + alfa-beta + duvar saati butcesi",
+      "tier": "P1",
+      "wave": "B2",
+      "agent": "xox-dev-core",
+      "deps": ["CORE-CFG-001", "AI-SPIKE-001", "PERF-003"],
+      "conflictSet": [
+        "packages/game-core/src/ai.ts",
+        "packages/game-core/src/ai.test.ts",
+        "packages/game-core/src/search.ts",
+        "packages/game-core/src/search.test.ts",
+        "packages/game-core/src/evaluate.ts",
+        "packages/game-core/src/evaluate.test.ts",
+        "packages/game-core/src/ai-config.ts",
+        "packages/game-core/src/index.ts",
+        "packages/game-core/stryker.config.mjs"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "URUN GERCEGI (AI-SPIKE-001): 11x11-in HICBIR K degeri derinlik 3-u gercekci butcede tamamlayamiyor (tutucu tahmin 3.2-6.2 sn). Derinlik 2 her yerde <=260 ms guvenli. Yani 11x11-de iteratif derinlesme pratikte derinlik 2-de kalacak — bu bir KUSUR DEGIL, olculmus bir sinir. Raporda ACIKCA yaz, kullanici beklentisi buna gore kurulsun.",
+        "AI-SPIKE-001 OLCTU — bu sayilari kullan, yeniden tahmin etme: CANDIDATE_RADIUS=2 (r=1->2 gercek sicrama, r=2->3 getirisi dusuk) · MAX_SEARCH_DEPTH=6 · AI_NODE_BUDGET=30000 dugum/hamle (Vitest, deterministik) · AI_BUDGET_MS=1000 (tarayici). AI_BUDGET_MS DOGRULANMAMIS: R=6 varsayimina DOGRUSAL bagli, gercek olcum gelince x(gercek_R/6) ile tazelenir. Bu damgayi ai-config.ts yorumuna DA yaz.",
+        "SERT ON KOSUL PERF-003 (D8): agir rotalarda size-limit payi yalniz ~20 kB gzip (heavy butce 235 kB, olculen 214.65 kB) ve @xox/game-core BUGUN TUM rotalara siziyor. Yeni arama + degerlendirme kodu bu payi yiyebilir. Bu kart size-limit kapisini KENDI yesil tutmak zorundadir ve olculen ROTA BAZLI sonucu raporuna yazar.",
+        "SERT ON KOSUL AI-SPIKE-001: AI_BUDGET_MS, AI_NODE_BUDGET, MAX_SEARCH_DEPTH sayilari OLCUMDEN gelir. Algoritma spike bitmeden yazilabilir ama kart TAHMIN EDILMIS sayiyla KAPANMAZ; her sabitin yaninda spike raporuna atif yazilir (800 ms bir oneriydi, olcum degil).",
+        "KK-B20 saglanir: bestMove'un GOVDESI VE IMZASI DEGISMEZ ve chooseMove'un 4. parametresi (rng) KONUMUNU KORUR -> ai.test.ts SIFIR SATIR duzenlenir, tumevarimsal yenilmezlik kosusu (X olarak, O olarak, iki mukemmel AI) hicbir iddiasi zayiflatilmadan yesil kalir ve numaralandirdigi oyun sayisi degismez. Bir iddia silinir ya da gevsetilirse KRITER IHLAL EDILMISTIR.",
+        "KK-B43 saglanir: {3,3} + unbeatable bugunku TAM MINIMAX yolunu kosar; budama ve derinlik siniri DEVREYE GIRMEZ. Dagitim: config.size === 3 -> bestMove, config.size > 3 -> searchMove. easy/medium sekli degismez; medium'un 'en iyi'si N>3'te searchMove'dur.",
+        "KK-B45 saglanir: adaylar = herhangi bir tasa Chebyshev uzakligi <= CANDIDATE_RADIUS (2) olan bos hucreler; tahta tamamen bossa tek aday MERKEZ. Sonda: 11x11'de tek tas varken aday sayisi 24 (5x5-1), 121 DEGIL. Yaricap 2 -> 1 ve 2 -> 3 mutantlari bu sondayla oldurulur.",
+        "KK-B46 saglanir: TAKTIK TARAMA derinlesme dongusunden ONCE ve BUTCEDEN BAGIMSIZ, KOSULSUZ calisir — (1) bir adayla hemen kazaniyorsam onu oyna, (2) rakip bir adayla hemen kazaniyorsa onu blokla. Her (N,K) kombinasyonu icin EN AZ 10 kurulmus pozisyonla dogrulanir. Bu YAPISAL bir garantidir, aramanin yan urunu DEGIL: bloklamayi aramaya birakirsak butce daralinca AI aptallasir — ve butce tam olarak en yavas cihazda daralir.",
+        "KK-B44 saglanir: N>3'te yinelemeli derinlesme + alfa-beta + DUVAR SAATI butcesi (sabit derinlik DEGIL). YARIM ITERASYON ATILIR — kismen aranmis bir derinlik, aranmamis kardesler yuzunden bir oncekinden KOTU hamle uretebilir. Sure kontrolu her dugumde degil HER 1024 DUGUMDE bir (now() cagrisinin kendisi olculebilir maliyettir). Sonda: butce 1 ms'ye dusuruldugunde fonksiyon yine GECERLI bir hamle doner ve HATA FIRLATMAZ.",
+        "Hamle siralamasi (budama oranini belirleyen tek sey): kazandiran > bloklayan > statik oruntu puani > merkeze yakinlik; onceki iterasyonun en iyi hamlesi bir sonrakinde ILK denenir.",
+        "Determinizm: unbeatable/hard yolunda HIC RASTGELELIK YOK; esitlikte en kucuk indeks (bugunku kesin '>' karsilastirmasi). `now` ENJEKTE EDILIR (options.now, varsayilan Date.now) — testler sahte saatle deterministik, game-core G/C yapmaz ve KK-B28 korunur.",
+        "evaluate.ts: her yondeki her K-pencere icin, pencerede rakip tasi varsa 0 (olu), yoksa WINDOW_WEIGHT[penceredeki tas sayisi]. Toplam = benim - DEFENSE_BIAS x rakibin. Yalniz TASLARIN KOMSULUGUNDAKI pencereler taranir, tam tahta taramasi yapilmaz. WINDOW_WEIGHT ELLE YAZILMIS, DONMUS, uzunlugu K+1 — boylece yeni bir K yeni bir oruntu sinifi DOGURMAZ (spec §2.2(b) endisesi dogrusala iner). Tablonun CIPLAK beklentisi testte yazilidir.",
+        "KK-B48 saglanir, IKI AYRI DEGISMEZ olarak: (a) bestMove icin eski degismez YERINDE kalir, yalniz '> BOARD_SIZE' ifadesi '> cellCount({3,3})' olarak guncellenir; (b) searchMove icin daha guclu olani: TERMINAL_SCORE - MAX_SEARCH_DEPTH > MAX_HEURISTIC — en gec kazanc bile en iyi sezgisel pozisyondan yuksek puan almalidir. MAX_HEURISTIC agirlik tablosundan ve maksimum pencere sayisindan TURETILEREK testte hesaplanir ve iddia edilir; TERMINAL_SCORE'u MAX_HEURISTIC'e indiren mutant, AI'in 3 hamlede zorla kazanmak yerine 'gelecek vaat eden' hamleyi sectigi KURULU BIR POZISYONDA oldurulur.",
+        "KK-B68'in BIRIM TARAFI saglanir: chooseMove HER desteklenen (N,K) icin, >= 200 pozisyonluk sabit korpusun TAMAMINDA, AI_NODE_BUDGET icinde gecerli bir hamle doner. Olcum MAKSIMUMDUR, ortalama degil.",
+        "DUVAR SAATI KAPISI BU KARTTA KOSULMAZ (ADR-0013 §8, gotcha oruntu 6): CI'in hizli Node'unda olculen 120 ms orta sinif Android'de 900 ms olabilir; 'kapi yesil' o durumda hicbir sey olcmemis olur. AI_BUDGET_MS kapisi E2E-BOARD-001'de, kisitlanmis gercek tarayicida kosar. Burada dugum sayilir — deterministik, flake yok.",
+        "KK-B21 saglanir: pnpm mutation sonrasi game-core mutasyon skoru >= %98 (bugun %98.49). stryker.config.mjs esigi BU KARTTA GEVSETILIRSE KART REDDEDILIR — esik sabittir, kod ona uyar.",
+        "KK-B47'nin SINIRI: bu kart HICBIR METIN DEGISTIRMEZ. 'Zor' etiketi ve strengthNote UI-COMP-001'in isidir; Difficulty tipi ve zorluk-unbeatable test-id'si degismez.",
+        "index.ts YUZEY TESTI guncellenir: AI_BUDGET_MS, CANDIDATE_RADIUS, MAX_SEARCH_DEPTH elle yazilmis dISA aktarim listesine eklenir. Sabitlerin yeri packages/game-core/src/ai-config.ts'tir; packages/shared'a KONMAZ (D5).",
+        "Katman yonu korunur: config -> board -> status -> moves -> evaluate -> search -> ai. import-x/no-cycle yesil.",
+        "CORE-CFG-001 bir dalga once merge EDILMIS olmali — bu kart da index.ts'e dokunuyor.",
+        "pnpm gates + pnpm mutation temiz; merge sonrasi turbo --force ile `Cached: 0`.",
+        "KALIBRASYON SAPMASI: AI-SPIKE-001 basit prototiple olctu ve x3 tutucu duzeltme uyguladi. Gercek kod yazilinca AI_BUDGET_MS YENIDEN OLCULMELI. AI_NODE_BUDGET dugum bazli oldugu icin bu duzeltmeden etkilenmiyor — once onu kilitle.",
+        "CORE-CFG-001 BIRAKTI: ai.ts yorumundaki WIN_SCORE > BOARD_SIZE degismezi artik OLMAYAN bir ada atif yapiyor (KK-B48). ai.ts-e hic dokunulmadi."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "DB-BOARD-001",
+      "title": "Kalicilik: opsiyonel size/winLength, resolveBoardConfig tek kapisi, cas tipli tahta kanali, toStateMessage",
+      "tier": "P1",
+      "wave": "B3",
+      "agent": "xox-dev-backend",
+      "deps": ["CORE-CFG-001", "CTR-BOARD-001"],
+      "conflictSet": [
+        "packages/db/src/models/room.ts",
+        "packages/db/src/models/game.ts",
+        "packages/db/src/rooms/**",
+        "apps/web/lib/game/room-view.ts",
+        "apps/web/lib/realtime/connection.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "KK-B30 saglanir: RoomDoc ve GameDoc'ta `size?: number` / `winLength?: number` OPSIYONEL — required DEGIL, `default` DA VERILMEZ. Gerekce: 2026-08-25'te RoomDoc'a zorunlu alan eklemek birlesmis agacin typecheck'ini ve apps/web'de 5 fixture'i kirdi; ayrica .lean()/aggregate okumalarinda mongoose varsayilani UYGULANMAZ -> tip dogru, calisma zamani yalan soyler (gotcha oruntu 3).",
+        "KK-B31 saglanir: packages/db/src/rooms/board-config.ts icinde resolveBoardConfig(doc) — iki alan da yoksa {3,3} doner, SESSIZCE (mesru eski sekil, anormallik degil). Bu, apps/web'in oda okuma yolundaki TEK gecis kapisidir.",
+        "KK-B32 saglanir: alan var ama parseBoardConfig REDDEDIYORSA console.error ile gurultu cikarir ve {3,3} doner. SESSIZ DUSUS YASAK — bozuk veri gorunmez kalmamali. Dogrulamayi kendisi yapmaz, game-core'un parseBoardConfig'ine DELEGE eder (kural 4).",
+        "Sonda: `grep -rn 'size ?? 3'` SIFIR eslesme — hicbir tuketici sabitin ikinci kopyasini yazmaz.",
+        "KK-B35 saglanir: board.length === size^2 degismezi SEMA DOGRULAYICISIYLA DEGIL, TEK YAZMA KAPISIYLA dayatilir. casUpdateRoom'a tipli `board?: { cells: readonly Cell[]; config: BoardConfig }` kanali eklenir ve `set` icinde 'board' anahtari YASAKLANIR (calisma zamani guard + test). Sonda: `size:11` odaya 9 hucreli bir tahta yazmayi DENEYEN bir test vardir ve yazma YAPILMADAN reddedilir.",
+        "Gerekce karta yazili: mongoose dokuman dogrulayicisi findOneAndUpdate/updateOne/bulkWrite yolunda ATLANIR (cas.ts tam olarak findOneAndUpdate kullaniyor) ve runValidators altinda capraz-alan dogrulamasi `this`'e erisemez. Semaya yazmak 'kural yazilmis ama atesLenmiyor' (gotcha oruntu 1) sinifinin kitabi ornegi olurdu.",
+        "IKINCI KEMER — tek alanlik araliklar (Model.create yolunda calisir, kaba bozulmayi yakalar): board hasExactLength(9) -> hasLengthBetween(9,121) · moves hasAtMostLength(9) -> hasAtMostLength(121) · moveSchema.index min:0 max:8 -> min:0 max:120.",
+        "KK-B69 saglanir ve AYRIMI karta yazili: sema UST SINIRI 121'dir; ODA BASINA gercek sinir size^2'dir ve onu KURAL MOTORU saglar (3x3'te 10. hamle `occupied` ile reddedilir, sema degil). Sonda: 121 hamleli bir 11x11 oyunu kaydedilebilir (E-12).",
+        "KK-B19 saglanir: rooms koleksiyonunda size/winLength'i yazan TEK yol createRoom(owner, config = DEFAULT_BOARD_CONFIG)'tir ve yalniz DOKUMAN OLUSTURURKEN yazar — size, winLength ve cellCount(config) uzunlugunda bos tahta TEK Room.create cagrisinda. Oda state:'playing' iken bu iki alani degistiren hicbir yazma yolu YOKTUR. Sonda: startRematch cagrildiktan sonra iki alan BIT DUZEYINDE degismemistir (KK-B18'in sunucu tarafi).",
+        "startRematch tahtayi odanin KENDI resolveBoardConfig sonucundan sifirlar, size/winLength'e DOKUNMAZ. AS-B03 varsayimi (a) benimsendi: `waiting` durumunda bile ayar degismez; geri donus yolu (seats.O === null kosulunu CAS filtresine koymak) rapora yazili kalir, bugun ACILMAZ.",
+        "applyMove: resolveBoardConfig(room) -> boardFromCells(room.board, config) -> isValidMove/applyMove/evaluateStatus(..., config); moveRejectionReason cellCount(config) kullanir.",
+        "E-18 gurultulu kapanir: boardFromCells RangeError atarsa console.error + istemciye SERVER_ERROR; oda `finished` SAYILMAZ, sonuc UYDURULMAZ.",
+        "KK-B33 saglanir: rooms icin GERI DOLUM BETIGI YOKTUR VE YAZILMAYACAKTIR. Sonda: roomSchema'nin updatedAt TTL indeksi ROOM_TTL_SECONDS(7200) ile kurulu — canli oda kumesi deploy'dan en gec 2 saat sonra kendiliginden bosalir. Kendini silen bir koleksiyonu migrate etmek sifir fayda karsiligi uretim yazma riskidir.",
+        "KK-B34 saglanir: games'e size/winLength YAZILIR ama HICBIR API OKUMAZ — GET /api/matches, ELO hesabi ve siralama alanlara HIC BAKMAZ. 'Eski kayitlar icin yanit baytI baytina ayni' iddiasi bir uyum testiyle degil, HIC OKUNMAYARAK YAPISAL OLARAK saglanir. Alanlarin yazilmasinin tek sebebi ileriye donuktur (AS-B04 (b) sonradan ucuz kalsin).",
+        "finishGame games'e size/winLength yazar; getRoomSummary yanita size/winLength ekler (SB-09).",
+        "apps/web/lib/game/room-view.ts toStateMessage'a size, winLength ve lastMove eklenir. lastMove RoomDoc.moves'un SON elemanindan uretilir; moves dizisinin TAMAMI GONDERILMEZ (yuk butcesi + hicbir ekran hamle gecmisini gostermiyor).",
+        "lib/realtime/connection.ts'in DELTA MANTIGI DEGISMEZ: move:applied ince yolu ve state tam yolu ayni kalir; lastMove yalniz state uretiminde hesaplanir.",
+        "KK-B70 saglanir: 11x11 DOLU tahtada state mesajinin GERCEK JSON.stringify ciktisi < 4 KiB (WS maxPayload 8 KiB'in yarisi). Olcum bu kartin testidir; olculen bayt sayisi rapora yazilir.",
+        "KK-B72 saglanir: YENI INDEKS YOK, hamle basina EK ATLAS ISLEMI YOK — instance basina tek change stream ve hamle basina tek CAS yazmasi disiplini korunur (M0'da 100 islem/sn butcesi). 11x11 oyunlari hamle sayisi kadar daha cok YAZMA uretir; bu BEKLENENDIR, ek SORGU degildir.",
+        "KK-B73 saglanir: MOVE_TIMEOUT_SECONDS tum boyutlarda 60 saniye kalir; TTL updatedAt uzerindedir ve her hamlede tazelenir. Sonda: 100 hamlelik simule bir oyunda oda dokumani hala vardir.",
+        "cas.ts BU KARTIN cakisma kumesindedir — AYNI DALGADA BASKA HICBIR KART ona dokunamaz (W1-03'un detachConnection duzeltmesi tam bu dosyada yasandi). Bugunku tum caGiranlar (apply-move, join, detach, resign, rematch, settle) ayni kartta guncellenir.",
+        "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0`.",
+        "CORE-CFG-001 BIRAKTI: packages/db/src/rooms/rematch.ts icinde 9 elemanli YEREL EMPTY_BOARD dizisi duruyor — konfigurasyondan turetilmeli."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "UI-BOARD-001",
+      "title": "Board.tsx yeniden yazimi: tek izgara kod yolu + roving tabindex + saf cell-label/roving-grid modulleri",
+      "tier": "P1",
+      "wave": "B3",
+      "agent": "xox-dev-web",
+      "deps": ["CORE-CFG-001", "CTR-BOARD-001", "DESIGN-001a"],
+      "conflictSet": [
+        "apps/web/components/board/**",
+        "apps/web/components/room/RoomScreen.tsx",
+        "apps/web/components/computer/ComputerGameScreen.tsx"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "RoomScreen.tsx ve ComputerGameScreen.tsx'te YALNIZ PROP BAGLAMA SATIRLARI degisir (ADR-0017 sonuclar). Bu iki dosya ayni dalgada baska hicbir kartin cakisma kumesinde OLAMAZ.",
+        "PROP SOZLESMESI: { cells: readonly Cell[]; config: BoardConfig (YENI); interactive: boolean; winningLine?: readonly number[] | null; pendingIndex?: number | null; lastMoveIndex?: number | null (YENI); onCellPress?: (index: number) => void }. config prop'u ZORUNLUDUR cunku data-kazanma UZUNLUKTAN TURETILEMEZ.",
+        "KK-B56 saglanir: izgara sutun sayisi config.size'dan gelir; `grid-cols-3` gibi SABIT BIR SINIF ADI hicbir yerde kalmaz. Sonda: bilesene 36 hucre verildiginde 6 sutun, 121 hucre verildiginde 11 sutun olusur.",
+        "KK-B57 saglanir: cells.length !== cellCount(config) ise bilesen BOZUK IZGARA CIZMEZ — hata durumu render eder ve console.error ile gurultu cikarir (E-03 bayat reducer, E-18 bozuk veri).",
+        "YERLESIM DALLANMASIZDIR: grid-template-columns: repeat(var(--xox-n), minmax(0, 1fr)) · tahta width: min(100%, var(--xox-board-max)); aspect-ratio: 1 · hucre aspect-ratio: 1, piksel olcusu YAZILMAZ. `minmax(0, 1fr)` ve TAHTANIN TUM ATA ELEMANLARINDA `min-width: 0` ZORUNLUDUR — duz 1fr'in min-width:auto davranisi KK-B50'nin EN OLASI IHLAL YOLUDUR.",
+        "CSS'te hucre icin ALT SINIR (min-width/min-height) YAZILMAZ. 28 / 24 px sayilari CSS'e GOMULMEZ; belirtilen gorunum alanlarinda OLCULEN iddialardir (KK-B50/B51/B52/B53 dogrulamasi E2E-BOARD-001'de). Alt sinir yazmak dar ekranda tasma uretmenin tek yoludur; oyuncu ASLA DISLANMAZ — ekran daralinca tahta kuculur, kaydirmaz.",
+        "Tum gorsel degerler DESIGN-001a'nin tokenlarindan gelir; gap TEK SABIT --xox-grid-line: 2px, HER BOYUTTA AYNI. Ham Tailwind/piksel degeri serpistirilmez, hex literal YASAK (KK-084).",
+        "DATA NITELIKLERI emit edilir (dogrulamasi E2E'de): tahta elementinde data-boyut ve data-kazanma (KK-B49) · kazanan hucrelerde data-kazanan='true' · son oynanan hucrede data-son-hamle='true'. Son hamle isareti HER BOYUTTA gosterilir (KK-B55, AS-B06) — boyuta gore dallanan bir gorunurluk kurali YOKTUR.",
+        "KK-B54'un uygulama tarafi: kazanan cizgi UC SINYAL — (a) data-kazanan='true', (b) kazanan OLMAYAN hucrelerde >= %40 opaklik dususu (YENI VERI NITELIGI EKLENMEZ; bilesen winningLine'i zaten prop olarak biliyor, kazanan olmayanlara sinif verilir), (c) renkten bagimsiz >= 3 px dis cizgi. Sozlesme yuzeyi buyumez.",
+        "KK-B58 saglanir: role='grid' -> role='row' -> role='gridcell' ucluSu HER BOYUTTA korunur; satir kapsayicilari `display: contents` ile gorsel izgarayi bozmadan erisilebilirlik agacinda kalir. Bugunku inceleme bulgusunun duzeltmesi GERI ALINMAZ.",
+        "KK-B59 saglanir: ROVING TABINDEX — grid icinde yalniz BIR hucrenin tabIndex=0, geri kalaninin -1. 3x3'te DE uygulanir (9 durak -> 1 durak). Sonda: 11x11'de tahtadan sonraki odaklanabilir elemana ulasmak 1 Tab basisi alir, 121 degil.",
+        "KK-B60 saglanir: klavye mantigi SAF bir modulde yasar — apps/web/components/board/roving-grid.ts, nextFocusIndex(current: number, key: KeyName, config: BoardConfig): number. DOM'suz Vitest ile HER TUS AYRI test edilir: yon tuslari bir hucre · Home/End satir basi-sonu · Ctrl+Home/Ctrl+End ilk/son hucre · PageUp/PageDown +-5 satir · Enter/Space oynar. KENARLARDA SARMA YOKTUR (E-16).",
+        "KK-B61 saglanir: grid elementi aria-label tasir (tr.boardConfig.boardLabel -> '11x11 oyun tahtasi, kazanmak icin 5 tas yan yana'). Bugun grid'in HIC ETIKETI YOK — bu bir KAZANC, gerileme degil.",
+        "KK-B62 saglanir: grid'de aria-rowcount/aria-colcount, her hucrede aria-rowindex/aria-colindex.",
+        "KK-B63 saglanir: hucre aria-label'i bugunku bicimi korur ('3. satir 2. sutun, bos') ama satir/sutun hesabi CONFIG'ten gelir (rowOf/colOf; 1 eklemek `tr`'nin isi, bilesenin degil). Bilesendeki `const BOARD_SIZE = 3` SILINIR; Turkce metin bilesene gomulu KALMAZ — saf modul apps/web/components/board/cell-label.ts, kaynak tr.boardConfig.cellPosition/cellEmpty/cellStone.",
+        "KK-B64 + KK-B65'in SAF YARDIMCISI bu kartta yazilir ve test edilir: sira degisiminde YALNIZ FARKI duyuran metin ('Rakip 4. satir 7. sutuna oynadi. Sira sende.') ve oyun bitince kazanan cizginin KOORDINATLARINI duyuran metin ('5 tas: 3. satir 4. sutundan 3. satir 8. sutuna') — kaynak tr.game.opponentPlayed/youPlayed/winningLineAnnounce. Tahtanin tamami ASLA okunmaz. BAGLAMA (durum-metni / status-text.ts) UI-CFG-001'in isidir; o dosya BU KARTIN cakisma kumesinde DEGILDIR.",
+        "KK-B71 saglanir: CellButton React.memo ile sarilir, onCellPress useCallback ile referans-kararli olur, tum prop'lar ilkel degerdir. Bir state/move:applied mesaji <= 2 hucre bilesenini yeniden render eder (degisen hucre + bekleyen hucre). SAYAC TABANLI test — 'hizli hissettiriyor' kriter DEGILDIR.",
+        "Board.tsx 250 satir konvansiyonunun ALTINDA kalir (roving-grid.ts + cell-label.ts ayrilmasinin ikinci faydasi). Marks.tsx DEGISMEZ.",
+        "testid sozlesmesi: cellTestId(index) kodu degismez — hucre-0 ... hucre-120 kendiliginden calisir. Mevcut E2E kancalari (tahta, data-tas, data-bekliyor) KIRILMAZ.",
+        "pnpm gates temiz.",
+        "CORE-CFG-001 BIRAKTI: apps/web/components/board/Board.tsx icinde const BOARD_SIZE = 3 (KENAR anlaminda) duruyor. ADR-0010 bu adin repodan TAMAMEN silinmesini istiyor — game-core=hucre, Board.tsx=kenar seklinde uc farkli anlamla kopyalanmisti."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "API-BOARD-001",
+      "title": "POST /api/rooms opsiyonel govde + GET /api/rooms/[code] yanitinda size/winLength",
+      "tier": "P1",
+      "wave": "B4",
+      "agent": "xox-dev-backend",
+      "deps": ["DB-BOARD-001", "CTR-BOARD-001"],
+      "conflictSet": ["apps/web/app/api/rooms/**"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "Govde OPSIYONEL okunur: req.json() patlarsa {} -> roomCreateBodySchema -> parseBoardConfig -> enabledSizes kapisi -> createRoom(owner, config).",
+        "KK-B14 saglanir: govde YOKSA ya da BOSSA oda {3,3} ile kurulur ve 201 doner; bugunku davranis BIT DUZEYINDE korunur (E-07 eski istemci, US-B11). Sonda: govdesiz POST bugunku yanitla ayni.",
+        "KK-B15 saglanir: govdede yalniz {size:11} gelirse oda {11,5} ile kurulur — eksik alan o boyutun varsayilanina duser, REDDEDILMEZ.",
+        "KK-B16 saglanir: KK-B05'teki gecersiz kombinasyonlarin HER BIRI icin HTTP 400 ve code:'INVALID_BOARD_CONFIG' doner, oda OLUSTURULMAZ (rooms sayisi ARTMAZ — sonda sayimla dogrular). Istemci dogrulamasi tek savunma degildir (E-06: arayuz kombinasyonu zaten sunmaz, sunucu AYRICA reddeder).",
+        "KK-B17'nin sunucu tarafi saglanir: GET /api/rooms/[code] yaniti size ve winLength tasir (roomStateResponseSchema'nin zorunlu alanlari). Katilma ekraninin gosterimi UI-CFG-001'de.",
+        "E-04 degismez: oda kodu cakismasinda (E11000) ROOM_CREATE_MAX_ATTEMPTS(5) yeniden deneme, sonra CODE_GENERATION_FAILED. Konfigurasyon her denemede AYNI govdeden tasinir, YENIDEN OKUNMAZ.",
+        "enabled-sizes kapisi bu kartta HENUZ YOK olabilir (ROLLOUT-BOARD-001 ekler). Bu kart kapinin cagrilacagi TEK NOKTAYI hazirlar ve IKINCI BIR KOPYA YAZMAZ — kill switch mantigi route icine gomulmez.",
+        "YARIM OZELLIK UYARISI (tasarim §10.5.3): bu kart UI-CFG-001 ile PARALEL gider; ikisi birden merge edilene kadar secici uctan uca calismaz. Bu KABUL EDILIR — uctan uca kanit E2E-BOARD-001'dedir (B6).",
+        "pnpm gates temiz."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "UI-CFG-001",
+      "title": "Boyut/K secici + oyun ayari ozeti + katilma/rovans gorunumu — OZELLIK BURADA YAYINLANIR",
+      "tier": "P1",
+      "wave": "B4",
+      "agent": "xox-dev-web",
+      "deps": ["CTR-BOARD-001", "UI-BOARD-001", "DESIGN-001b"],
+      "conflictSet": [
+        "apps/web/components/board-config/**",
+        "apps/web/components/home/HomeActions.tsx",
+        "apps/web/components/room/RoomScreen.tsx",
+        "apps/web/components/room/status-text.ts",
+        "apps/web/app/oda/katil/page.tsx"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "OZELLIK BU KARTIN MERGE'UYLE CANLANIR (ADR-0018 §2). B0-B3 kullaniciya GORUNMEZ; 'yayin penceresi' diye bir sey yoktur — yayin tek bir kartin merge'udur. Geri alma 2. kademesi de tam olarak bu kartin revert'udur.",
+        "KK-B11 saglanir: ana sayfada oda kurarken tahta boyutu UC SECENEK olarak gorunur ve secilen boyut tahta-boyut-<n> kancasinda aria-pressed='true' tasir.",
+        "KK-B12 saglanir: boyut 6 secildiginde K secenekleri TAM OLARAK 4 ve 5; boyut 11'de 4, 5, 6; boyut 3'te HIC SECENEK YOKTUR ve yerine tr.boardConfig.winLengthFixed ('3 tas (3x3 tahtada sabit)') metni gorunur.",
+        "KK-B13 saglanir: SAF durum modulu apps/web/components/board-config/board-config-state.ts — applySizeChange(state, size); K yeni boyutun izinli listesinde degilse O BOYUTUN VARSAYILANINA duser (11+6 -> 6 secilince K=4). Ekranda HICBIR ANDA gecersiz kombinasyon gorunmez (E-09). DOM'suz Vitest testi.",
+        "use-board-modes.ts secenek listesinin TEK KAYNAGIDIR — ROLLOUT-BOARD-001 yalniz orayi filtreler. Ikinci bir liste ya da ikinci bir filtre YAZILMAZ.",
+        "KK-B17'nin arayuz tarafi saglanir: katilma ekrani KOLTUGA OTURMADAN ONCE oyun-ayari-ozeti kancasinda '11x11 tahta · 5 tas yan yana' gosterir (US-B03). oyun-ayari-ozeti UC EKRANDA (oda kurma/bekleme, oda, katilma) AYNI KANCA, AYNI SABLON (tr.boardConfig.summary).",
+        "KK-B18'in istemci tarafi saglanir: rovans kabul edildiginde tahta bos baslar ama data-boyut ve data-kazanma DEGISMEZ; koltuklar (mevcut davranis) takas edilir.",
+        "KK-B64 + KK-B65 BAGLAMASI: UI-BOARD-001'in saf duyuru yardimcilari durum-metni'ne baglanir — sira degisiminde YALNIZ FARK duyurulur, oyun bitince kazanan cizginin KOORDINATLARI duyurulur. role='status' aria-live='polite' KORUNUR; tahtanin tamami ASLA okunmaz (E-17). status-text.ts bu kartin cakisma kumesindedir.",
+        "VARSAYILAN {3,3}: bugunku akisin TIKLAMA SAYISI DEGISMEZ (US-B11). Secici varsayilanla acilir, ek bir adim dayatmaz.",
+        "Butun yeni metinler tr agacindan gelir (CTR-BOARD-001'de indi); bilesene gomulu Turkce YAZILMAZ. Tum renkler DESIGN-001a/b tokenlarindan; hex literal YASAK.",
+        "YARIM OZELLIK: API-BOARD-001 ile ayni dalgada PARALEL gidiyor; ikisi birden merge edilmeden secici uctan uca calismaz (tasarim §10.5.3, kabul edilir).",
+        "pnpm gates temiz."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "UI-COMP-001",
+      "title": "Bilgisayar ekrani: boyut/K secimi, gecikme TABANI ve durust 'Zor' etiketi",
+      "tier": "P1",
+      "wave": "B5",
+      "agent": "xox-dev-web",
+      "deps": ["UI-CFG-001", "CORE-AI-001"],
+      "conflictSet": ["apps/web/components/computer/**", "apps/web/app/oyna/bilgisayar/page.tsx"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "KK-B42 saglanir: bilgisayar ekraninda boyut ve K secimi ODA AKISINDAN BAGIMSIZDIR — sunucuya ISTEK GITMEZ, oda kurulmaz. UI-CFG-001'in BoardConfigPicker'i YENIDEN KULLANILIR; ikinci bir secici bileseni YAZILMAZ. Varsayilan {3,3} -> bugunku tiklama sayisi DEGISMEZ.",
+        "KK-B67 saglanir: use-computer-game.ts'te bekleme artik TOPLANMAZ, TABAN OLUR — max(0, COMPUTER_MOVE_DELAY_MS - gercekDusunmeSuresi), olcum performance.now(). Sonda: {3,3}'te toplam gecikme ~400 ms (bugunku his degismez), {11,5}'te dusunme 800 ms surerse toplam ~800 ms, 1200 ms DEGIL. 1000 ms tepki ust siniri KORUNUR.",
+        "packages/shared/src/constants.ts ACILMAZ — protokol paketi CTR-BOARD-001'den sonra YENIDEN DONDU. 'Toplam <= 1000 ms' iddiasi apps/web'in KENDI testinde yazilir; constants.test.ts'teki mevcut '400 ve <= 1000' iddiasi aynen kalir.",
+        "KK-B47 saglanir: size === 3 iken tr.computer.unbeatable ('Yenilmez'), size > 3 iken tr.computer.hard ('Zor') + tr.computer.strengthNote gorunur. HICBIR METIN, HICBIR YERDE N > 3 icin YENILMEZLIK IDDIA ETMEZ. Difficulty tipi ve zorluk-unbeatable test-id'si DEGISMEZ (sozlesme donuk) — degisen YALNIZ ETIKETTIR. `unbeatable: 'Yenilmez'` metni silinmez.",
+        "E-19 korunur: AI dusunurken tahta kilitlidir (interactive=false iken onCellPress cagrilmaz). Butce asimi olsa bile bir hamle doner (KK-B44), oyun DONMAZ. Kullanici ust uste hizli tikladiginda ikinci hamle islenmez.",
+        "KK-027 korunur: sayfa HIC AG ISTEGI YAPMAZ — bilgisayara karsi oyun tamamen istemci tarafidir. Sonda: ag dinlemesiyle sifir istek.",
+        "size-limit: /oyna/bilgisayar rota butcesi ASILMAZ. PERF-003'un yeniden turettigi butceye karsi olculur ve olculen deger rapora yazilir.",
+        "pnpm gates temiz."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "ROLLOUT-BOARD-001",
+      "title": "Skew dogrulamasi + deploymentId + kill switch (XOX_ENABLED_BOARD_SIZES)",
+      "tier": "P1",
+      "wave": "B5",
+      "agent": "xox-devops",
+      "deps": ["API-BOARD-001", "UI-CFG-001"],
+      "conflictSet": [
+        "apps/web/lib/game/enabled-sizes.ts",
+        "apps/web/components/board-config/use-board-modes.ts",
+        "apps/web/app/api/rooms/route.ts",
+        "apps/web/app/api/health/route.ts",
+        "apps/web/next.config.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "ILK KRITER BIR OLCUMDUR (ADR-0018): Vercel Skew Protection bu projede ETKIN MI? Skew Protection Pro/Enterprise takimlar icindir ve bu projenin plani DOGRULANMADI. MEKANIK SONDA: VERCEL_SKEW_PROTECTION_ENABLED === '1' ve VERCEL_DEPLOYMENT_ID VARLIGI, GET /api/health yanitina BOOLEAN olarak eklenir — DEGER SIZDIRILMAZ. Olcum yapilmadan 'korunuyoruz' DENMEYECEK (gotcha oruntu 1: kural yazilmis ama atesLenmiyor).",
+        "Sonuc 0 ya da yoksa: apps/web/next.config.ts'e `deploymentId: process.env.VERCEL_DEPLOYMENT_ID` ELLE yazilir. Amac eski istemciyi PINLEMEK DEGIL, YENILEMEYE ZORLAMAKTIR — Next istemcisi x-nextjs-deployment-id uyusmazliginda tam sayfa yenilemeye duser. __vdpl cerezi bizim icin YANLIS ARACTIR (eski istemciyi hayatta tutar).",
+        "apps/web/next.config.ts PERF-003'un de cakisma kumesindedir; deploymentId satiri PERF-003'ten SONRAKI bir dalgada yazilir (ADR-0018 sonuclar) — iki kart ayni dalgaya KONMAZ.",
+        "KILL SWITCH apps/web/lib/game/enabled-sizes.ts'te (YENI dosya) yasar. XOX_ENABLED_BOARD_SIZES; AYARLANMAMISSA varsayilan '3,6,11' (kapali kalma riski yok).",
+        "IKI TUKETICI, AYNI FONKSIYON: POST /api/rooms dogrulamasi ve use-board-modes.ts'in secenek listesi. IKINCI BIR KOPYA YAZILMAZ. use-board-modes.ts bu kartta TEK DOSYA olarak degisir (UI-CFG-001'in board-config agacinin geri kalanina dokunulmaz).",
+        "Kill switch game-core'a, shared'a ya da db'ye GIRMEZ. BOARD_MODES bir KURALDIR ve testleri ciplak 3, 6, 11 yazar (KK-B01); ortam degiskeniyle daralan bir kural o testleri ortama bagimli ve FLAKE yapardi. Ayrica shared bu ozellikten sonra YENIDEN DONUYOR — operasyonel anahtari oraya koymak pencereyi kalici olarak acik tutardi.",
+        "Sonda 1: XOX_ENABLED_BOARD_SIZES=3 iken POST /api/rooms {size:11} -> 400 INVALID_BOARD_CONFIG ve secici yalniz 3x3 gosterir.",
+        "Sonda 2 (GERIYE DONUK DARALTMA YOK): XOX_ENABLED_BOARD_SIZES=3 iken, kapatilmadan ONCE kurulmus bir 11x11 odasinda hamle OYNANABILIR kalir. Oyunun ortasinda oyuncu DISLANMAZ (KK-B52'nin ruhu); TTL 2 saatte zaten temizler.",
+        "KK-B40'in AZALTMA TARAFI saglanir: dort savunma hatti rapora yazilir — (1) YAPISAL: oda konfigurasyonu kurulurken yazilir ve degismez, bir sekmenin odasi ayaginin altinda 11x11'e donusemez; (2) dagitim kimligi uyusmazliginda ZORUNLU TAM YENILEME; (3) YETENEK KAPISI: W2-03 CTR-BOARD-001'e bagimli ilan edildi, 'eski mobil x yeni oda' durumu HIC VAR OLMAZ; (4) gurultulu 4400 SON CAREDIR, birincil azaltma degildir. 'Web ve mobil ayni surumde yayinlanir' bir NIYET BEYANIDIR ve azaltma sayilmaz.",
+        "GERI ALMA UC KADEMESI rapora yazilir ve 1. KADEME GERCEKTEN DENENIR: ortam degiskeni + redeploy'un dakikalar icinde etkili oldugu preview'da KANITLANIR. Veri onarimi gerekmez — goc yok, alanlar opsiyonel, rooms TTL ile bosaliyor (ADR-0014).",
+        "OPS-007 NOBETCISI YURURLUKTE: E2E URETIME KARSI KOSTURULMAZ, assertTestDatabase guard'i gevsetilmez, allowlist gevsetilmez.",
+        "pnpm gates temiz VE CI'in KENDISI yesil: `gh run list --workflow=CI --limit 3`."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "E2E-BOARD-001",
+      "title": "OZELLIK KAPISI: 15 [E2E] kriteri + axe uc boyutta + eski istemci 4400 + AI duvar saati kapisi",
+      "tier": "P1",
+      "wave": "B6",
+      "agent": "xox-qa-e2e",
+      "deps": [
+        "CORE-CFG-001",
+        "CORE-AI-001",
+        "CTR-BOARD-001",
+        "DB-BOARD-001",
+        "UI-BOARD-001",
+        "API-BOARD-001",
+        "UI-CFG-001",
+        "UI-COMP-001",
+        "ROLLOUT-BOARD-001",
+        "DESIGN-001b",
+        "AI-SPIKE-001"
+      ],
+      "conflictSet": ["apps/e2e/**"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "KK-B41 saglanir: MEVCUT 3x3 E2E SENARYOLARININ TAMAMI DEGISTIRILMEDEN gecer. playMove(page, index, options?) ve expectCell(page, index, mark) IMZALARI KORUNUR (boyut parametresi OPSIYONEL eklenir); createRoom(page, config?) parametresiz cagrildiginda bugunku akistir.",
+        "Kirilmasi beklenen tek sinif — kazanan ucluYu elle yazan iddialar (result-rematch.spec.ts) — winningSequence(config) yardimcisina tasinir. Bu yardimci apps/e2e ICINDE, KENDI CIPLAK ARITMETIGIYLE yazilir: boundaries politikasi `e2e -> shared` YALNIZ; @xox/game-core IMPORT EDILEMEZ (D4). Bu zaten DOGRU test tasarimidir — beklenti, test edilen seyin DISINDAN gelmelidir (gotcha oruntu 2).",
+        "KK-B11 saglanir: uc boyut secenegi gorunur, secilen boyut tahta-boyut-<n> kancasinda aria-pressed='true'.",
+        "KK-B12 saglanir: boyut 6 -> K secenekleri tam olarak 4 ve 5; boyut 11 -> 4,5,6; boyut 3 -> hic secenek yok, '3 tas (3x3 tahtada sabit)' metni gorunur.",
+        "KK-B13 saglanir: 11 + K6 secili iken boyut 6'ya cevrilirse K otomatik 4'e duser; gecersiz kombinasyon EKRANDA HICBIR ANDA gorunmez.",
+        "KK-B17 saglanir: GET /api/rooms/[code] size ve winLength tasir VE katilma ekrani koltuga oturmadan once oyun-ayari-ozeti kancasinda '11x11 tahta · 5 tas yan yana' gosterir.",
+        "KK-B18 saglanir: rovans kabul edildiginde yeni tahta AYNI size/winLength ile bos baslar; tahta elementinin data-boyut ve data-kazanma degerleri DEGISMEZ, koltuklar takas edilir.",
+        "KK-B42 saglanir: bilgisayar ekraninda boyut/K secimi SUNUCUYA ISTEK GITMEDEN calisir (ag dinlemesiyle kanitlanir), oda kurulmaz.",
+        "KK-B49 saglanir: tahta elementi data-boyut='3|6|11' ve data-kazanma='3|4|5|6' tasir; hucre sayisi data-boyut'un KARESINE esittir (hucre-0 ... hucre-<n^2-1> tamami DOM'da).",
+        "KK-B50 saglanir: 360x640 CSS px gorunum alaninda 11x11 tahtada `tahta` elementinin scrollWidth === clientWidth VE scrollHeight === clientHeight; sayfada YATAY KAYDIRMA CUBUGU OLUSMAZ. Olcekle, kaydirma.",
+        "KK-B51 saglanir: hucre dokunma hedefi 3x3 ve 6x6'da >= 44x44 CSS px, 11x11'de >= 28x28 CSS px ve hucreler arasi bosluk >= 2 px. OLCULEN degerler rapora yazilir (aritmetik: 344 px kullanilabilir, 11x28 + 10x2 = 328 <= 344).",
+        "KK-B52 saglanir: gorunum alani ~280 px'e daraldiginda 11x11 tahta YINE OYNANABILIR kalir (kilitlenmez) ve tr.boardConfig.narrowScreen ipucu gorunur. Oyuncu katildigi bir oyundan ASLA DISLANMAZ (E-15).",
+        "KK-B53 saglanir: X ve O isaretleri EN KUCUK render boyutunda hucre genisliginin >= %60'ini kaplar ve hucre arka planina karsi kontrast >= 4.5:1. Testin esigi, esigin secilme gerekcesindeki SAYIYLA AYNIDIR.",
+        "KK-B54 saglanir: kazanan cizgi UC SINYALLE birden — data-kazanan='true' · kazanan olmayan hucrelerde HESAPLANMIS opacity'de >= %40 dusus · renkten BAGIMSIZ >= 3 px dis cizgi.",
+        "KK-B55 saglanir: son oynanan hucre data-son-hamle='true' tasir ve YENI BIR HAMLE GELENE KADAR kalir. AYRICA: planli WS rotasyonundan (4499) ve yeniden baglanmadan SONRA DA kalir — bu, lastMove'un state mesajinda tasinmasinin TEK gozlemlenebilir kanitidir (ADR-0015 §3). Bu iddia atlanirsa protokol alani kanitsiz kalir.",
+        "KK-B66 saglanir: axe otomatik erisilebilirlik denetimi 3x3, 6x6 VE 11x11 tahtalarda SIFIR IHLAL verir.",
+        "KK-B59/B60'in uctan uca dogrulamasi: 11x11'de tahtadan sonraki odaklanabilir elemana 1 Tab basisiyla ulasilir; ok tuslari, Home/End, Ctrl+Home/Ctrl+End, PageUp/PageDown, Enter/Space gercek tarayicida calisir; kenarlarda SARMA YOKTUR (E-16).",
+        "KK-B40 saglanir: eski (guncellenmemis) istemci sondasi — boardSchema'yi ihlal eden mesajlar INVALID_MESSAGE sayilir ve 3 ihlalden sonra baglanti 4400 ile kapanir. SESSIZ BOZUK TAHTA CIZILMEZ. Bu KABUL EDILEN davranistir.",
+        "AI DUVAR SAATI KAPISI (ADR-0013 §8): AI_BUDGET_MS GERCEK TARAYICIDA, CDP Emulation.setCPUThrottlingRate ile AI-SPIKE-001'in sabitledigi R kalibrasyon carpaniyla olculur. CI'in Node'unda OLCULMEZ. Kullanilan R degeri ve kaynagi (spike raporu) teste YORUM olarak yazilir; R gerekcesiz ise kapi hicbir sey olcmuyor demektir (gotcha oruntu 6).",
+        "OPS-007 NOBETCISI: apps/e2e/global-setup.ts'teki assertTestDatabase guard'i GEVSETILEMEZ, esneteilemez, 'yalniz bu kosuda atla' denemez; E2E URETIME KARSI KOSTURULMAZ ve allowlist gevsetilmez. Bu kart 11x11 odalar kuruyor — guard'in onemi ARTIYOR, azalmiyor.",
+        "Playwright YALNIZ apps/e2e icinde (kural 1). Yeni yardimcilar da orada; apps/web, apps/mobile, packages/** ACILMAZ.",
+        "Gercek preview dagitimina karsi kosar; rapor docs/board/reports/E2E-BOARD-001.md'ye yazilir ve 15 [E2E] kriterinin her biri MADDE MADDE gecti/kaldi olarak isaretlenir."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "CORE-AI-002",
+      "title": "3x3 minimax 1000ms tavanini IKI KAT asiyor — alfa-beta ekle",
+      "tier": "P1",
+      "wave": "B2b",
+      "agent": "xox-dev-core",
+      "deps": ["CORE-AI-001"],
+      "conflictSet": ["packages/game-core/src/ai.ts", "packages/game-core/src/ai.test.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "SIRA DUZELTILDI (lead): CORE-AI-001 ile AYNI dosyayi (ai.ts) aciyor — paralel gidemezler. B2-den B2b-ye alindi, CORE-AI-001 bittikten SONRA. Ayrica bu kart ADR-0013 §1-in 3x3 yolunu bilerek butcesiz birakma kararini DEGISTIRIYOR; once ana AI yerine otursun, sonra 3x3 optimize edilsin.",
+        "OLCULDU (AI-SPIKE-001, gercek uretim bestMove kodu esbuild ile bundle-lanip tarayicida): R=6 kisitlamasinda 1982-2265 ms. KK-023 tavani 1000 ms. IKI KAT asim",
+        "BU OZELLIGIN BORCU DEGIL — bugun YAYINLANMIS kodda var. Tahta boyutu ozelligi onu yalnizca GORUNUR kildi",
+        "AI_BUDGET_MS BUNU COZEMEZ: ADR-0013 §1 3x3 yolunu bilerek butcesiz birakiyor (yenilmezlik kanitinin kostugu kod aynen kalsin diye)",
+        "COZUM: 3x3 minimax-a alfa-beta budama ekle. Alfa-beta minimax DEGERINI DEGISTIRMEZ, yalniz budar — KK-B20-nin yenilmezlik sonucu AYNEN korunur, yalniz dugum sayisi duser",
+        "KANIT 1: mevcut 642 oyunluk tumevarimsal yenilmezlik kosusu ve %98.49 mutasyon esigi DEGISMEDEN yesil kalir. Oyun sayisi degismez",
+        "KANIT 2: ayni is yuku R=6 kisitlamasinda YENIDEN olculur ve <=1000 ms gosterilir. Olcum AI-SPIKE-001-in yontemiyle (esbuild bundle + CDP throttle) yapilir, CI Node-unda DEGIL",
+        "SONDA: alfa-beta budamasini devre disi birakan mutasyon, dugum sayisi iddiasini KIRMIZI dondurmeli — yoksa budama gercekten calisiyor mu bilinmez"
+      ]
+    },
+    {
+      "id": "PERF-004",
+      "title": "shared barrel game-core-u BES rotaya yayiyor — 298 kB ortak parca",
+      "tier": "P1",
+      "wave": "B3",
+      "agent": "xox-perf",
+      "deps": ["CTR-BOARD-001"],
+      "conflictSet": ["packages/shared/src/index.ts", "packages/shared/src/room-client.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "SIZINTI YUZEYE CIKTI (W2-02 sonrasi): /profil 142.51 -> 216.54 kB, hafif butceyi 58.54 kB asti ve CI-i kirdi. Zincir DOGRULANDI: components/profile -> @xox/shared (DISPLAY_NAME_MAX, ErrorCode) -> shared/index.ts export * room-client -> room-client.ts import boardFromCells/evaluateStatus. Profil sayfasi TEK BIR SABIT icin minimax sirtliyor.",
+        "SERT SART (2026-08-26): sizinti kapandiginda /profil HAFIF gruba GERI DONER (.size-limit.mjs LIGHT_ROUTES) ve heavy butce olculen yeni degerden turetilir. Bu kart o satiri geri almadan KAPANMAZ.",
+        "OLCULDU (PERF-003, kapsami disindaydi): packages/shared/src/room-client.ts @xox/game-core ANA barrel-ini STATIK cekiyor; packages/shared/src/index.ts-in export * barrel-i bunu yalnizca TESTID gibi ufak bir sey icin @xox/shared-a dokunan HER rotaya yayiyor",
+        "KANIT: /, /giris, /kayit, /oda/[kod], /oda/katil rotalarinin baytlari PERF-003 boyunca HIC KIPIRDAMADI — ayni chunk hash, ayni 298132 bayt. Giris sayfasi minimax indiriyor",
+        "PERF-003 NEYI COZDU, NEYI COZMEDI: /oyna/bilgisayar next/dynamic ile 213.61 -> 143.75 kB dustu (kendi payi artik AI buyumesiyle buyumeyecek). Ama ai.ts-e eklenecek her satir bu zincir yuzunden HALA agir besli rotanin 235 kB butcesine yaziliyor",
+        "CORE-AI-001 ICIN KRITIK: AI kodu buyuyecek ve agir rotalarda ~20 kB pay var. Bu kart cozulmezse butce patlar",
+        "OLCULMUS YAKLASIM UYARISI (PERF-003 uc yolu denedi): alt yol export + statik import SIFIR ETKI yapti (bayt bayt ayni) · ham import() KOTULESTIRDI (next start + curl ile dogrulandi, /giris HTML-i minimaxi eagerly servis etti) · ise yarayan tek sey next/dynamic + ssr:false bileşen sinirıydi. Ayni tuzaklara dusme",
+        "SIRA: CTR-BOARD-001 protokol penceresini KAPATTIKTAN sonra. O kart packages/shared/src/** sahibi ve zaten sinirda; import yapisini ayni anda degistirmek onu patlatir",
+        "Duzeltme sonrasi agir butce DUSURULMELI — 235 kB olculen degerden turetilmisti, sizinti kalkinca dogru sayi degil"
+      ]
+    },
+    {
+      "id": "W2-05",
+      "title": "Tema cihazlar arasi senkron degil — resolveTheme yalniz cerezi okuyor",
+      "tier": "P2",
+      "wave": "B4",
+      "agent": "xox-dev-web",
+      "deps": ["W2-02"],
+      "conflictSet": ["apps/web/lib/theme.ts", "apps/web/app/layout.tsx"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "W2-02 ajani DURUSTCE bildirdi: resolveTheme() yalniz cerezi okuyor, cunku kart app/layout.tsx-e dokunmayi yasakliyordu (W2-04 orada calisiyordu)",
+        "SONUC: gercekten yeni bir cihazda (cerez yok) kullanici users.theme tercihini /profil-e ugrayana kadar GORMEZ. Tercih kaydediliyor ama uygulanmiyor",
+        "COZUM: resolveTheme() cerez yoksa DB-den okusun. DIKKAT — bu her istekte bir DB sorgusu demek; kok layout zaten dinamik ama maliyeti OLC ve raporla",
+        "layout.tsx DONDURULMUS dosya; degisiklik tema okumasiyla SINIRLI kalmali",
+        "Cerez hala hizli yol olmali: DB okumasi yalniz cerez YOKKEN"
+      ]
+    },
+    {
+      "id": "SEC-004",
+      "title": "Bilet maskelemesini hicbir test korumuyor — bugun yalniz JWT deseni kurtariyor",
+      "tier": "P2",
+      "wave": "B4",
+      "agent": "xox-test-writer",
+      "deps": ["W2-04"],
+      "conflictSet": ["apps/web/lib/log.test.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "blockedReason": null,
+      "acceptance": [
+        "LEAD SONDASI (W2-04 merge oncesi): TICKET_QUERY_PATTERN kasitli olarak bozuldu, log testlerinin 12-si de YESIL kaldi. Ayni sonda EMAIL_PATTERN-e uygulandiginda 2 test kirmizi dondu — yani e-posta kilitli, bilet DEGIL",
+        "NEDEN BUGUN ZARARSIZ: bilet bir JWT ve JWT_PATTERN onu yine yakaliyor. Ikinci bir ag var",
+        "NEDEN YARIN TEHLIKELI: SEC-003 bileti tek kullanimlik yapmayi planliyor ve format degisebilir. Bilet opak bir token-a donerse TICKET_QUERY_PATTERN tek savunma olur ve onu hicbir test korumaz",
+        "YAP: ?ticket= degerini JWT OLMAYAN bir dize ile (or. rastgele 40 karakter) iceren bir log satiri test et, maskelendigini iddia et",
+        "SONDA: TICKET_QUERY_PATTERN bozuldugunda o test KIRMIZI donmeli. Bugun donmuyor — kartin kapanma sarti bu"
       ]
     }
   ]

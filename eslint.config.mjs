@@ -221,7 +221,20 @@ export default tseslint.config(
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
       ...NO_HEX_COLOR_LITERAL,
+      // W2-04 — güvenlik denetimi: `settleDeadlines` iskeleti oda kodunu ham
+      // `console.error`'a basıyordu (Runtime Logs erişimi = canlı oyuna
+      // katılma yeteneği). apps/web genelinde ham `console.*` YASAK; TEK
+      // yetkili çağıran `apps/web/lib/log.ts` (override altta, bu bloktan
+      // SONRA geldiği için kazanır — flat config sırası).
+      'no-console': 'error',
     },
+  },
+
+  // W2-04: tek yetkili `console.warn`/`console.error` çağıranı — maskeleme
+  // burada uygulanıyor (bkz. dosyanın kendi başlık yorumu).
+  {
+    files: ['apps/web/lib/log.ts'],
+    rules: { 'no-console': 'off' },
   },
 
   // React Native — yalnız mobil
@@ -247,12 +260,17 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       'boundaries/dependencies': 'off',
+      // W2-04'ün apps/web geneline getirdiği `no-console: 'error'` testleri de
+      // kapsar (KK-005 ölçüm çıktısı, hydrateRoot sondasının `vi.spyOn(console,
+      // 'error')` ile yakaladığı React uyarısı) — üretim güvenlik sınırı testte
+      // uygulanmaz, test kodu Runtime Logs'a çıkmaz.
+      'no-console': 'off',
     },
   },
 
   // Konfig dosyaları — tip bilgisi gerektirmeyen
   {
-    files: ['**/*.config.{js,mjs,ts}', '**/*.setup.ts', 'vitest.shared.ts'],
+    files: ['**/*.config.{js,mjs,ts}', '**/*.setup.ts', 'vitest.shared.ts', '.size-limit.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
 

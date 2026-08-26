@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto'
 import { connectDb, ensureIndexes, getDbName } from '@xox/db'
+import { logError, logWarn } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
 /** İndeks kurulumu birden fazla `createIndex` çağrısı yapar; varsayılan 10 sn dar olabilir. */
@@ -51,7 +52,7 @@ function secretMatches(provided: string | null): boolean {
 export async function POST(request: Request): Promise<Response> {
   if (!secretMatches(request.headers.get('x-migration-secret'))) {
     // SEC-007: değeri ya da uzunluğunu ASLA loglama — yalnız denemenin olduğunu.
-    console.warn('migrate: yetkisiz istek reddedildi', { at: new Date().toISOString() })
+    logWarn('migrate: yetkisiz istek reddedildi', { at: new Date().toISOString() })
     return new Response('Not Found', { status: 404 })
   }
 
@@ -75,10 +76,11 @@ export async function POST(request: Request): Promise<Response> {
     await ensureIndexes()
     return Response.json({ ok: true, db: actualDb, at: new Date().toISOString() })
   } catch (error) {
-    // SEC-006: sürücü hatası (host adı, kimlik bilgisi ipuçları içerebilir)
-    // ASLA istemciye/loglara açık dönmez — yalnız sunucu tarafı (Vercel Runtime
-    // Logs, private) `console.error`'a gider, istemci sabit bir kod alır.
-    console.error('migrate: ensureIndexes başarısız', error)
+    // SEC-006: sürücü hatası (host adı, kimlik bilgisi ipuçları içerebilir) ASLA
+    // istemciye açık dönmez — sunucu tarafı `lib/log.ts`'e gider (W2-04'ten
+    // itibaren MONGODB_URI/e-posta/JWT kalıpları orada maskelenir, ikinci
+    // savunma hattı), istemci sabit bir kod alır.
+    logError('migrate: ensureIndexes başarısız', {}, error)
     const isLockConflict = error instanceof Error && error.message.includes('zaten çalışıyor')
     return Response.json(
       { ok: false, error: isLockConflict ? 'already_running' : 'migration_failed' },

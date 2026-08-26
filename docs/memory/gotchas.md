@@ -1016,3 +1016,190 @@ sarı bile yanmıyor, sadece yok sayılıyor.
 
 **Ders:** bir CI işinin `skipped` dönmesi "geçti" değildir. `gh run list` çıktısında `skipped`
 gören biri onu yeşil sanmamalı; koşması BEKLENEN bir işin atlanması bir bulgudur.
+
+## 2026-08-25 · `$setOnInsert` ile yazılan seed alanları BİR DAHA güncellenmez
+
+`seedTestUsers` `stats`/`elo`/`ratedGames`'i `$setOnInsert` ile yazıyor. `e2e-user-1/2` bir kez
+var olduktan sonra bu alanlar **hiç sıfırlanmıyor**; E2E koşuları paylaşılan Atlas `xox_test`'te
+gerçek oyunlar oynadığı için kirlenmiş istatistik kalıcı oluyor ve `seed.test.ts` yerelde
+kırmızıya dönüyor (`{wins:0}` bekliyor, `{wins:5,losses:10}` alıyor).
+
+Kimlik alanları (`email`, parola hash'i) `$setOnInsert`'te **kalmalı** — parola her seed'de
+yeniden hash'lenmemeli. Sıfırlanması gereken durum alanları `$set`'e taşınır.
+
+**Asıl ders — 6. örüntünün TERSİ:** bu kusuru **CI göremiyor**, çünkü CI-002'den sonra CI her
+koşuya temiz bir mongod ile başlıyor. Yani bu kez _yerel_ gerçeği söylüyor, _CI_ yanlış kapsamı
+ölçüyor (fazla temiz bir dünya). "CI yeşil" de tek başına kanıt değildir: CI'ın ortamı üretimden
+ya da geliştiricinin ortamından **daha steril** olabilir ve paylaşılan-durum hatalarını yapısal
+olarak göremez.
+
+Teşhis yöntemi doğruydu ve tekrarlanmalı: integrator merge öncesi commit'e dönüp **birebir aynı
+hatayı** aldı, böylece "benim merge'im mi kırdı" sorusunu ölçerek yanıtladı.
+
+## 2026-08-25 · Yetim vitest fork işçileri 27 saat boyunca dört çekirdeği yedi
+
+`E2E-003` integrator'ı fark etti: dört `node ... vitest` fork işçisi `PPID=1` ile, **1 gün 3.5
+saattir**, her biri ~%99 CPU'da koşuyordu. Canlı ebeveynleri yoktu — önceki bir oturumdan
+kalmışlardı. Yük ortalaması: 15 dakikalık **57.85**, öldürdükten sonra 1 dakikalık **8.19**.
+
+Etkisi görünmezdi ama her yere yayılmıştı: gecenin tüm paralel ajanları bu yükün altında koştu,
+ve `@xox/db#test:coverage`'ın bir koşuda verdiği `ENOENT coverage/.tmp/coverage-3.json` hatası
+büyük olasılıkla aç kalan bir işçinin kendi parçasını hiç yazamamasıydı — yani **kararsızlık
+sanılan bir hata aslında kaynak açlığıydı.**
+
+**Kontrol:** uzun gece koşularında ara ara
+`ps -eo pid,ppid,etime,pcpu,command | awk '$2==1 && /vitest/ && $4>50'`.
+`PPID=1` + yüksek CPU + uzun `etime` = kesin kaçak; öldürmek güvenli ve geri alınabilir.
+Vitest'in fork havuzu bir koşu sert kesildiğinde (kota bitmesi, iptal, çöken üst süreç) işçileri
+arkada bırakabiliyor — bu gece bir kez oturum kotası tükenip üç ajan ölmüştü, kaynağı muhtemelen o.
+
+## 2026-08-25 · Native `maxLength` normalleştirmeden ÖNCE kırpar — jsdom bunu gizler
+
+`JoinCodeField`'da `maxLength={6}` input'un üzerinde, `normalizeInput` ise `onChange`'de.
+Tarayıcı ham metni React görmeden 6 karaktere kırpıyor: `" abc234 "` → `" abc23"` → normalize
+(trim + filtre) → **`"ABC23"`**. Baştaki boşluk bir karakter yiyor.
+
+**Birim testi bunu yapısal olarak göremez.** jsdom da `maxLength`'i uyguluyor, ama W1-04'ün
+testleri bu sırayı değil sonucu ölçüyordu ve boşluklu bir yapıştırma denenmemişti. Ajan bana
+"`user.paste()` de jsdom'da maxLength'e uyuyor" diye **doğru** bir düzeltme yapmıştı — eksik olan
+onun bilgisi değil, **katmandı**: gerçek tarayıcıda boşlukla başlayan bir yapıştırma.
+
+**Kural:** girdi normalleştirmesi ile native kısıt (`maxLength`, `pattern`, `type=number`) aynı
+alanda birlikte kullanılıyorsa, **hangisinin önce çalıştığı** bir davranış kararıdır ve
+gerçek tarayıcıda sınanmalıdır. Ya native kısıtı kaldırıp her şeyi normalleştirmeye bırak, ya
+kısıtı normalleştirmenin üretebileceği en uzun değerden geniş tut.
+
+Aynı sınıfın ikinci örneği aynı gece: `SessionProvider`'a `session` prop'u geçilmediği için
+`/oyna/bilgisayar` oyun boyunca 2× `GET /api/auth/session` çağırıyordu — sayfanın kendi modül
+grafiğini koruyan birim testi doğru çalışıyordu ama **layout'un davranışını göremezdi.**
+İki katman farklı şey görür; biri diğerinin yerine geçmez.
+
+## 2026-08-25 · 🛡️ E2E guard'ı PRODUCTION VERİTABANINI KURTARDI — ve o kırmızı GEVŞETİLMEZ
+
+`OPS-006` Vercel projesini `izrandevu` → `omeerdursunn` taşırken yeni projenin **Preview**
+ortamına `MONGODB_DB` yazılamadı (izin reddi). Sonuç: preview `/api/health` **`xox_prod`**
+raporladı. `apps/e2e` paketinin ilk adımı `pnpm --filter @xox/db reset` — yani veritabanını
+**düşürmek**.
+
+`E2E-001`'de şart koşulan bloke edici ön kontrol tam burada devreye girdi:
+
+```
+BLOKE: /api/health 'db' alani 'xox_test' DEGIL (alinan: '"xox_prod"')
+  at assertTestDatabase (apps/e2e/global-setup.ts:24)
+```
+
+**Hiçbir test çalıştırılmadan durdu.** Guard olmasaydı production veritabanı silinecekti.
+
+**En büyük risk artık teknik değil, insani:** biri bu kırmızıyı "CI yeşil olsun" diye
+gevşetebilir. **GEVŞETİLMEZ.** Bu kırmızı doğru davranıştır; düzeltilecek şey testin eşiği
+değil, **ortam değişkenidir**. Guard'ı `global-setup.ts`'ten çıkarmak, eşiği esnetmek ya da
+"yalnız bu koşuda atla" demek — üçü de yasaktır.
+
+**Yan not:** aynı olay `CI-003`'ü kısmen çözdü. `E2E (preview)` daha önce hep `skipped`
+dönüyordu çünkü `main` Production Branch'ti ve gerçek bir "Preview" olayı doğmuyordu. Yeni
+proje gerçek preview olayları üretiyor, iş **artık gerçekten koşuyor** — ve ilk koştuğunda
+işe yaradı.
+
+## 2026-08-25 · Production Branch'ten yerel `vercel deploy`, `--prod` OLMADAN da production'a gider
+
+`OPS-006` ajanı yalnız preview doğrulaması için `vercel deploy --archive=tgz` çalıştırdı,
+`--prod` **kullanmadı**. Yerel dal `main` ve `main` Vercel'de Production Branch olduğu için CLI
+bunu **production'a** deploy edip `xox.omerdursun.com`'a aliasladı. Domain o ana kadar hiç canlı
+değildi; artık canlı ve yarım (sayfalar 200, `/api/health` 503 — env yok).
+
+**Kural:** production branch üzerindeyken yerel deploy alma. Ya ayrı bir dala geç, ya
+`--target=preview` gibi hedefi AÇIKÇA belirt, ya da deploy'u CI'a bırak. "`--prod` yazmadım"
+koruma değildir.
+
+## 2026-08-25 · ⚠️ `deployment_status.environment` DENYLIST'i `Production – xox` etiketiyle atlandı
+
+`e2e-preview.yml` "yalnız preview" filtresini iki **denylist** karşılaştırmasıyla yapıyordu:
+`environment != 'Production' && environment != 'production'`. Vercel bazı deploy'larda
+**`Production – xox`** (uzun tire + proje eki) etiketi yolluyor — bu string ikisine de eşit
+değil, filtre **geçildi** ve E2E işi **production URL'lerine karşı koştu**:
+
+```
+success  Production – xox  https://xox-cdae296lb-omeerdursunn.vercel.app
+```
+
+`apps/e2e` paketinin ilk adımı `pnpm --filter @xox/db reset`. Production veritabanının
+silinmesini engelleyen tek şey **ikinci savunma hattı** oldu: `global-setup.ts`'teki
+`assertTestDatabase` guard'ı `db !== 'xox_test'` görüp hiçbir test koşturmadan durdu.
+
+**Düzeltme:** koşul allowlist'e çevrildi — `startsWith(environment, 'Preview')`. Beklenmeyen
+bir etiket artık **çalıştırmaz, atlar**.
+
+**Genel ders (PERF-002'nin `.size-limit` glob'uyla ve W1-01'in ağ sondasıyla aynı):** bir
+kapının **izin verdiği** şeyi saymak, **yasakladığı** şeyi saymaktan güvenlidir. Denylist,
+listeye girmeyen her yeni değeri sessizce geçirir; allowlist yeni değeri sessizce durdurur.
+Bu gece bu ders üç ayrı yerde bağımsız olarak çıktı.
+
+**İkinci ders — katmanlı savunma işe yarar:** birinci kapı atlandı, ikincisi tuttu. Tek kapıya
+güvenen bir tasarımda production veritabanı silinmiş olurdu.
+
+## 2026-08-26 · Memoizasyon + Stryker `perTest` = kapı yanlış kapsamı ölçer (örüntü 6'nın türevi)
+
+`CORE-CFG-001` ölçtü: memoize eden bir fonksiyonun üretim kodunu gerçekten koşan tek test, o
+girdiyi **ilk isteyen** testtir. Sonrakiler önbellekten döner ve mutantı **öldüremez**.
+
+Kanıt niteliksel değil, sayısal: **iddiaların tek satırı değişmeden yalnız test sırası
+değiştirildi** ve mutasyon skoru **%94.04 → %84.25**'e düştü.
+
+**Reçete:** her konfigürasyonun _ilk isteyeni_, değerleri + sayıyı + donmuşluğu + referans
+kimliğini **tek testte** iddia etsin. Bunu kodda gerekçesiyle yaz, yoksa bir sonraki kişi
+testleri "düzenleyip" skoru sessizce düşürür.
+
+## 2026-08-26 · Parametrik üreticide sıfır olan terim, varsayılan konfigürasyonda görünmez
+
+`(3,3)`'te `N − K = 0`. Yani parametrik bir kazanma-hattı üreticisinin sütun terimini bozan
+mutasyon **3×3 testleriyle görünmez** — çarpan zaten sıfır.
+
+Parametrenin sıfır **olmadığı** bir konfigürasyonda (ör. `(6,4)`) da **elle yazılmış** beklenti
+şart. `CORE-CFG-001` bunu `(6,4)`'ün 17 sınır hattıyla kapattı.
+
+Genel kural: bir parametreyi sınarken, o parametrenin **nötr elemanı olmadığı** en az bir vaka
+seç. Varsayılan konfigürasyon çoğu zaman nötr elemandır ve tam da bu yüzden hiçbir şey ölçmez.
+
+## 2026-08-26 · Ajanlar worktree'ye GEÇMEDEN yazmaya başlıyor — üç kez oldu
+
+`DESIGN-001a`, `W3-04` ve daha önce `AUTH-002` ilk dosyalarını **ana checkout'a** yazdı, sonra
+fark edip `git stash`/`mv`/`cp` ile doğru worktree'ye taşıdı ve `main`'i temizledi. Üçü de
+dürüstçe bildirdi, hiçbirinde kalıcı zarar olmadı — ama üç kez tekrarlanan bir şey tesadüf değil.
+
+**Kök neden:** kart prompt'u `git worktree add` + `cd` bloğunu veriyor, ama ajan önce dosya
+okumaya/yazmaya başlayıp `cd`'yi sonraya bırakabiliyor. Araçların çalışma dizini ana checkout.
+
+**Önlem (kart yazarken):** worktree kurulum bloğunu prompt'un **en başına** koy ve şu cümleyi
+ekle: _"Herhangi bir dosya okumadan/yazmadan ÖNCE worktree'yi kur ve içine geç. İlk `Write`/`Edit`
+çağrından önce `pwd` ile doğrula."_
+
+**Lead tarafında:** merge öncesi `git status --porcelain` ana checkout'ta **her zaman** kontrol
+edilir. Bu gece üç kez temiz çıktı çünkü ajanlar kendileri temizledi — ama temizlemeselerdi
+kör bir `git add` onları merge edilmemiş iş olarak `main`'e sokardı (CLAUDE.md kural 6).
+
+## 2026-08-26 · Denetim listesini "uygulanmamışlar"dan türeten sonda, uygulandıkça KENDİNİ boşaltır
+
+`W3-03` mevcut kodda buldu: `handlers/index.test.ts`'in R1 sondası denetleyeceği handler
+listesini `!UYGULANAN.has(...)` ile türetiyordu. Yani bir handler'ın gövdesi yazıldığı an
+sondadan **sessizce çıkıyordu**. Fiilen yalnız `move` denetleniyordu — sonda tam da korumak
+istediği şey büyüdükçe küçülüyordu.
+
+Örüntü #2'nin ("test yeşil ama hiçbir şey doğrulamıyor") en sinsi biçimi: test ilk yazıldığında
+gerçekten çalışıyor, sonra **iş ilerledikçe** kendi kapsamını terk ediyor. Kimse bir şeyi
+bozmuyor; kapsam kendiliğinden eriyor.
+
+**Kural:** bir denetim listesi asla "henüz yapılmamışlar" kümesinden türetilmez. **Elle yazılır**
+ve yeni bir üye eklendiğinde listeyi güncellememek testi kırar. Aynı sınıf: `Object.keys(schema)`
+üzerinden dönen sözleşme testleri, `!IMPLEMENTED` filtreleri, `TODO` etiketiyle atlanan vakalar.
+
+## 2026-08-26 · Kayan pencere sayacı REDLERİ saymamalı — yoksa kalıcı cezaya döner
+
+`W3-03`'ün emoji hız sınırı bilinçli olarak yalnız **kabul edilen** çerçeveleri sayıyor.
+Redler de sayılsaydı, ısrarcı bir istemci penceresini kendi retleriyle doldurup **hiçbir zaman
+çıkamazdı** — kayan pencere sessizce kalıcı bir cezaya dönüşürdü.
+
+Genel bağlantı sınırı (WS-001) ise **kabul + ret** sayıyor ve bu doğru: orada amaç kademelenme
+(uyarı → `4400` kapanış), yani ısrarın cezalandırılması. İki sayaç aynı olayı farklı amaçla
+sayıyor ve bu **ayrım kasıtlı**.
+
+Sonda: sabit pencereye çeviren mutasyon "kalıcı ceza yok" testini kırmızıya döndürmeli.

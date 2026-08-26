@@ -1,6 +1,7 @@
 import { connectDb, createRoom } from '@xox/db'
 import { roomCreateResponseSchema, type ErrorCode, type ErrorResponse } from '@xox/shared'
 import { resolveIdentity } from '@/lib/auth/identity'
+import { logError } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,14 +37,14 @@ export async function POST(req: Request): Promise<Response> {
       }
       // Beklenmeyen bir dal (`createRoom`'un savunmacı SERVER_ERROR'ı gibi) —
       // sürücü ayrıntısı istemciye sızdırılmaz.
-      console.error('POST /api/rooms beklenmeyen sonuç kodu', result.code)
+      logError('POST /api/rooms beklenmeyen sonuç kodu', { userId: identity.userId }, result.code)
       return errorJson('SERVER_ERROR', 'Oda oluşturulamadı.', 500)
     }
 
     const body = roomCreateResponseSchema.parse({ code: result.room.code })
     return Response.json(body, { status: 201 })
   } catch (error) {
-    console.error('POST /api/rooms hata', error)
+    logError('POST /api/rooms hata', {}, error)
     return errorJson('SERVER_ERROR', 'Oda oluşturulamadı.', 500)
   }
 }

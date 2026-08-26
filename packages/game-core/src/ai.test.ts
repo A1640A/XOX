@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_BOARD, availableMoves, boardFromCells } from './board'
+import { availableMoves, boardFromCells, emptyBoard } from './board'
 import { applyMove } from './moves'
 import { evaluateStatus } from './status'
 import { bestMove, chooseMove } from './ai'
@@ -47,7 +47,7 @@ describe('bestMove', () => {
   it('eşit puanlı hamlelerde ilkini seçer — seçim deterministiktir', () => {
     // Boş tahtada her hamle beraberlikle biter; sunucu otoritesi için sonuç
     // yeniden üretilebilir olmalı, bu yüzden ilk en iyi hamle korunur.
-    expect(bestMove(EMPTY_BOARD, 'X')).toBe(0)
+    expect(bestMove(emptyBoard(), 'X')).toBe(0)
   })
 
   it('hemen kazanabilecekken kazancı bir tura ertelemez', () => {
@@ -109,7 +109,7 @@ describe('unbeatable zorluk', () => {
 
   const playAll = (aiPlayer: Player): Tally => {
     const tally: Tally = { games: 0, losses: 0, illegal: 0 }
-    explore(EMPTY_BOARD, aiPlayer, tally)
+    explore(emptyBoard(), aiPlayer, tally)
     return tally
   }
 
@@ -128,7 +128,7 @@ describe('unbeatable zorluk', () => {
   })
 
   it('iki mükemmel AI karşılaşırsa beraberlik olur', () => {
-    let board = EMPTY_BOARD
+    let board = emptyBoard()
     let status = evaluateStatus(board)
     while (status.kind === 'playing') {
       board = applyMove(board, chooseMove(board, status.turn, 'unbeatable'), status.turn)
@@ -140,7 +140,7 @@ describe('unbeatable zorluk', () => {
 
 describe('chooseMove', () => {
   it('easy zorlukta rastgele seçer', () => {
-    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', seededRng([0.5]))).toBe(4)
+    expect(chooseMove(emptyBoard(), 'X', 'easy', seededRng([0.5]))).toBe(4)
   })
 
   // Aşağıdaki tahtada en iyi hamle 2 (O'nun 0-1-2 tehdidini bloklar); boş
@@ -153,7 +153,7 @@ describe('chooseMove', () => {
   })
 
   it('easy zorlukta rng 1 dönse bile son geçerli hamleyi seçer', () => {
-    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => 1)).toBe(8)
+    expect(chooseMove(emptyBoard(), 'X', 'easy', () => 1)).toBe(8)
   })
 
   it('easy zorlukta rng < 0.5 olsa bile en iyi hamleye sapmaz', () => {
@@ -163,11 +163,11 @@ describe('chooseMove', () => {
   })
 
   it('easy zorlukta rng negatif dönse bile ilk geçerli hamleyi seçer', () => {
-    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => -0.1)).toBe(0)
+    expect(chooseMove(emptyBoard(), 'X', 'easy', () => -0.1)).toBe(0)
   })
 
   it('easy zorlukta rng NaN dönse bile geçerli bir hamle seçer', () => {
-    expect(chooseMove(EMPTY_BOARD, 'X', 'easy', () => Number.NaN)).toBe(0)
+    expect(chooseMove(emptyBoard(), 'X', 'easy', () => Number.NaN)).toBe(0)
   })
 
   // Aşağıdaki üç test tek değerli (sabit) bir üreteç kullanır: ternary'nin
@@ -193,8 +193,8 @@ describe('chooseMove', () => {
   })
 
   it('geçerli bir hamle indeksi döndürür', () => {
-    const move = chooseMove(EMPTY_BOARD, 'X', 'easy')
-    expect(availableMoves(EMPTY_BOARD)).toContain(move)
+    const move = chooseMove(emptyBoard(), 'X', 'easy')
+    expect(availableMoves(emptyBoard())).toContain(move)
   })
 
   it('hamle kalmamışsa InvalidMoveError atar', () => {
@@ -215,7 +215,7 @@ describe('chooseMove', () => {
   })
 
   it('tip sisteminin dışından gelen zorluğu sessizce kabul etmez', () => {
-    expect(() => chooseMove(EMPTY_BOARD, 'X', 'imkansiz' as Difficulty)).toThrow(
+    expect(() => chooseMove(emptyBoard(), 'X', 'imkansiz' as Difficulty)).toThrow(
       new RangeError('Bilinmeyen zorluk: imkansiz'),
     )
   })

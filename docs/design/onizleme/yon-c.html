@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>XOX — Yön C: Sistem / Veri Izgarası</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+        --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 16px;
+        --space-lg: 24px;
+        --space-xl: 32px;
+        --space-xxl: 48px;
+
+        --radius-sm: 6px;
+
+        --fs-xs: 12px;
+        --fs-sm: 14px;
+        --fs-base: 16px;
+        --fs-lg: 20px;
+        --fs-xl: 28px;
+        --fs-display: 44px;
+      }
+
+      [data-tema='acik'] {
+        --color-bg: #eef0f2;
+        --color-surface: #ffffff;
+        --color-surface-raised: #f7f8fa;
+        --color-border: #5b6472;
+        --color-text: #10151a;
+        --color-text-muted: #4c5566;
+        --color-accent: #0f6f66;
+        --color-player-x: #0e4f9c;
+        --color-player-o: #a3480a;
+        --color-win: #136534;
+        --color-danger: #a91d1d;
+      }
+
+      [data-tema='koyu'] {
+        --color-bg: #0d1117;
+        --color-surface: #151b23;
+        --color-surface-raised: #1c2530;
+        --color-border: #64768a;
+        --color-text: #e6edf3;
+        --color-text-muted: #9aa7b5;
+        --color-accent: #3ddbc4;
+        --color-player-x: #6bb1ff;
+        --color-player-o: #f0954f;
+        --color-win: #6bdc78;
+        --color-danger: #f97066;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: var(--font-ui);
+        font-size: var(--fs-base);
+        line-height: 1.5;
+        min-height: 100vh;
+        background-image:
+          linear-gradient(
+            color-mix(in srgb, var(--color-border) 12%, transparent) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--color-border) 12%, transparent) 1px,
+            transparent 1px
+          );
+        background-size: 24px 24px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-ui);
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+      .mono {
+        font-family: var(--font-mono);
+      }
+
+      .shell {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: var(--space-lg);
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-md);
+        flex-wrap: wrap;
+        padding: var(--space-sm) 0;
+        margin-bottom: var(--space-lg);
+        border-bottom: 1px solid var(--color-border);
+      }
+      .toolbar .brand {
+        font-family: var(--font-mono);
+        font-size: var(--fs-base);
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+      .toolbar .brand::before {
+        content: '[';
+        color: var(--color-accent);
+      }
+      .toolbar .brand::after {
+        content: ']';
+        color: var(--color-accent);
+      }
+      .tabs {
+        display: flex;
+        gap: 1px;
+        background: var(--color-border);
+        border: 1px solid var(--color-border);
+      }
+      .tab-btn,
+      .theme-btn {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: var(--color-surface);
+        color: var(--color-text-muted);
+        border: none;
+        padding: var(--space-sm) var(--space-md);
+        cursor: pointer;
+      }
+      .tab-btn.active {
+        color: var(--color-bg);
+        background: var(--color-text);
+      }
+      .theme-btn {
+        border: 1px solid var(--color-border);
+      }
+      .theme-btn:hover {
+        background: var(--color-text);
+        color: var(--color-bg);
+      }
+
+      .view {
+        display: none;
+      }
+      .view.active {
+        display: block;
+        animation: fadeIn 120ms ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        padding: var(--space-lg);
+      }
+
+      .btn {
+        font-family: var(--font-ui);
+        font-size: var(--fs-sm);
+        font-weight: 600;
+        border-radius: var(--radius-sm);
+        padding: 9px 16px;
+        cursor: pointer;
+        border: 1px solid var(--color-text);
+        background: transparent;
+        color: var(--color-text);
+      }
+      .btn:hover {
+        background: var(--color-text);
+        color: var(--color-bg);
+      }
+      .btn-primary {
+        background: var(--color-accent);
+        color: var(--color-bg);
+        border-color: var(--color-accent);
+      }
+      .btn-primary:hover {
+        filter: brightness(0.92);
+        background: var(--color-accent);
+        color: var(--color-bg);
+      }
+      .link {
+        color: var(--color-accent);
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .hero {
+        padding: var(--space-xl) 0 var(--space-lg);
+      }
+      .hero .eyebrow {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .hero h1 {
+        font-size: var(--fs-xl);
+        margin-top: var(--space-xs);
+      }
+      .hero p.lede {
+        color: var(--color-text-muted);
+        font-size: var(--fs-base);
+        margin-top: var(--space-sm);
+        max-width: 48ch;
+      }
+      .home-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+        max-width: 420px;
+        margin-top: var(--space-lg);
+      }
+      .home-actions .row {
+        display: flex;
+        gap: var(--space-sm);
+        flex-wrap: wrap;
+      }
+      .code-field {
+        font-family: var(--font-mono);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface);
+        color: var(--color-text);
+        padding: 9px 12px;
+        font-size: var(--fs-sm);
+        width: 150px;
+      }
+
+      .room-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-md);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--color-border);
+      }
+      .room-code {
+        font-family: var(--font-mono);
+        letter-spacing: 0.08em;
+        font-size: var(--fs-base);
+        font-weight: 600;
+      }
+      .badge {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        padding: 3px 8px;
+        border: 1px solid currentColor;
+        border-radius: 3px;
+      }
+      .badge::before {
+        content: '● ';
+      }
+      .badge-ok {
+        color: var(--color-win);
+      }
+      .badge-warn {
+        color: var(--color-danger);
+      }
+
+      .status-line {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin: var(--space-md) 0;
+      }
+      .status-tag {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        font-weight: 600;
+        padding: 3px 8px;
+        border: 1px solid var(--color-player-x);
+        color: var(--color-player-x);
+        border-radius: 3px;
+      }
+      .status-text {
+        font-size: var(--fs-sm);
+      }
+      .opponent-name {
+        color: var(--color-text-muted);
+        font-size: var(--fs-sm);
+        margin: 0 0 var(--space-sm);
+        font-family: var(--font-mono);
+      }
+      .opponent-name::before {
+        content: '> ';
+        color: var(--color-accent);
+      }
+
+      /* Tablo/spreadsheet ızgara: gap yok, iç kenarlıklar hücreler paylaşır */
+      #board-3x3,
+      #board-win,
+      #nxn-board {
+        display: grid;
+        border: 1px solid var(--color-border);
+      }
+      #board-3x3,
+      #board-win {
+        grid-template-columns: repeat(3, 70px);
+      }
+      .row-contents {
+        display: contents;
+      }
+      .cell {
+        background: var(--color-surface);
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-right: 1px solid var(--color-border);
+        border-bottom: 1px solid var(--color-border);
+      }
+      #board-3x3 .cell,
+      #board-win .cell {
+        width: 70px;
+        height: 70px;
+        min-width: 44px;
+        min-height: 44px;
+      }
+      .cell:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: -2px;
+      }
+      .cell svg {
+        width: 50%;
+        height: 50%;
+        animation: fadeInFast 120ms ease-out;
+      }
+      @keyframes fadeInFast {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .cell.cell-win {
+        background: color-mix(in srgb, var(--color-win) 14%, var(--color-surface));
+      }
+      .cell.cell-win svg {
+        color: var(--color-win) !important;
+      }
+
+      .win-line-svg line {
+        opacity: 0;
+        animation: flashIn 120ms ease-out forwards;
+      }
+      @keyframes flashIn {
+        to {
+          opacity: 1;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .cell svg,
+        .view.active,
+        .win-line-svg line {
+          animation: none !important;
+          opacity: 1;
+        }
+      }
+
+      .turn-timer {
+        font-family: var(--font-mono);
+        font-size: var(--fs-sm);
+        color: var(--color-text-muted);
+      }
+      .actions-row {
+        display: flex;
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .result-panel {
+        margin-top: var(--space-lg);
+        padding-top: var(--space-md);
+        border-top: 1px solid var(--color-border);
+      }
+      .result-panel h2 {
+        font-family: var(--font-mono);
+        font-size: var(--fs-lg);
+        margin-bottom: var(--space-xs);
+      }
+      .result-panel h2::before {
+        content: '// ';
+        color: var(--color-accent);
+      }
+      .result-panel .result-sub {
+        color: var(--color-text-muted);
+        margin-bottom: var(--space-md);
+        font-size: var(--fs-sm);
+      }
+
+      /* ---- 11x11: sıfır kural değişikliği — aynı ızgara mantığı doğrudan büyür ---- */
+      .scale-controls {
+        display: flex;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-lg);
+        flex-wrap: wrap;
+      }
+      #nxn-board .cell svg {
+        width: 56%;
+        height: 56%;
+      }
+      #nxn-board[data-size='3'] {
+        grid-template-columns: repeat(3, 70px);
+      }
+      #nxn-board[data-size='3'] .cell {
+        width: 70px;
+        height: 70px;
+      }
+      #nxn-board[data-size='6'] {
+        grid-template-columns: repeat(6, 48px);
+      }
+      #nxn-board[data-size='6'] .cell {
+        width: 48px;
+        height: 48px;
+      }
+      #nxn-board[data-size='11'] {
+        grid-template-columns: repeat(11, 32px);
+      }
+      #nxn-board[data-size='11'] .cell {
+        width: 32px;
+        height: 32px;
+      }
+
+      .zoom-wrap {
+        max-width: 100%;
+        overflow: auto;
+        border: 1px solid var(--color-border);
+        padding: var(--space-md);
+        background: var(--color-surface);
+      }
+      .zoom-wrap.zoomed #nxn-board {
+        transform: scale(1.7);
+        transform-origin: top left;
+      }
+      .caption {
+        font-size: var(--fs-sm);
+        color: var(--color-text-muted);
+        max-width: 64ch;
+        margin-top: var(--space-md);
+      }
+      .caption strong {
+        color: var(--color-text);
+      }
+      .kbd-nav {
+        font-family: var(--font-mono);
+        font-size: var(--fs-xs);
+        border: 1px solid var(--color-border);
+        border-radius: 3px;
+        padding: 1px 6px;
+      }
+
+      footer.note {
+        margin-top: var(--space-xxl);
+        padding-top: var(--space-lg);
+        border-top: 1px solid var(--color-border);
+        color: var(--color-text-muted);
+        font-size: var(--fs-xs);
+        font-family: var(--font-mono);
+      }
+    </style>
+  </head>
+  <body data-tema="acik">
+    <div class="shell">
+      <div class="toolbar">
+        <span class="brand">XOX</span>
+        <div style="display: flex; gap: var(--space-md); align-items: center; flex-wrap: wrap">
+          <nav class="tabs">
+            <button class="tab-btn active" data-target="view-ana">ana-sayfa</button>
+            <button class="tab-btn" data-target="view-oda">oda</button>
+            <button class="tab-btn" data-target="view-kazanma">kazanma</button>
+            <button class="tab-btn" data-target="view-11x11">11x11</button>
+          </nav>
+          <button class="theme-btn" id="temaBtn" type="button">tema:acik</button>
+        </div>
+      </div>
+
+      <!-- ANA SAYFA -->
+      <section class="view active" id="view-ana">
+        <div class="hero">
+          <p class="eyebrow">// oda tabanlı 2 kişilik oyun</p>
+          <h1>XOX — hızlı, adil, ölçülebilir.</h1>
+          <p class="lede">Oda kur, kodu paylaş, oyna. Sonuç, elo ve geçmiş kayıt altında.</p>
+        </div>
+        <div class="home-actions">
+          <p class="mono" style="color: var(--color-text-muted); font-size: var(--fs-sm)">
+            &gt; kullanıcı: omer
+          </p>
+          <div class="row">
+            <a class="btn" href="#" onclick="return false">bilgisayara karşı</a>
+            <button class="btn btn-primary" type="button">oda kur</button>
+          </div>
+          <div class="row" style="align-items: center">
+            <input class="code-field" placeholder="KOD" />
+            <button class="btn" type="button">katıl</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ODA -->
+      <section class="view" id="view-oda">
+        <div class="card" style="max-width: 460px">
+          <div class="room-header">
+            <div style="display: flex; align-items: center; gap: var(--space-sm)">
+              <span class="room-code">[ 7F-K2-9Q ]</span>
+              <button class="btn" style="padding: 4px 8px; font-size: var(--fs-xs)" type="button">
+                kopyala
+              </button>
+            </div>
+            <span class="badge badge-ok">bagli</span>
+          </div>
+          <p class="opponent-name">aylin_42</p>
+          <div class="status-line">
+            <span class="status-tag">SIRA: SEN</span>
+            <span class="status-text" role="status" aria-live="polite">Hamle bekleniyor</span>
+          </div>
+
+          <div id="board-3x3" role="grid" aria-label="XOX tahtası">
+            <div class="row-contents" role="row">
+              <div class="cell" role="gridcell" tabindex="0" aria-label="1. satır 1. sütun, X taşı">
+                <svg viewBox="0 0 24 24" style="color: var(--color-player-x)" aria-hidden="true">
+                  <line
+                    x1="4"
+                    y1="4"
+                    x2="20"
+                    y2="20"
+                    stroke="currentColor"
+                    stroke-width="3.5"
+                    stroke-linecap="square"
+                  />
+                  <line
+                    x1="20"
+                    y1="4"
+                    x2="4"
+                    y2="20"
+                    stroke="currentColor"
+                    stroke-width="3.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+              </div>
+              <div class="cell" role="gridcell" tabindex="0" aria-label="1. satır 2. sütun, O taşı">
+                <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="7.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  />
+                </svg>
+              </div>
+              <div
+                class="cell"
+                role="gridcell"
+                tabindex="0"
+                aria-label="1. satır 3. sütun, boş"
+              ></div>
+            </div>
+            <div class="row-contents" role="row">
+              <div
+                class="cell"
+                role="gridcell"
+                tabindex="0"
+                aria-label="2. satır 1. sütun, boş"
+              ></div>
+              <div class="cell" role="gridcell" tabindex="0" aria-label="2. satır 2. sütun, X taşı">
+                <svg viewBox="0 0 24 24" style="color: var(--color-player-x)" aria-hidden="true">
+                  <line
+                    x1="4"
+                    y1="4"
+                    x2="20"
+                    y2="20"
+                    stroke="currentColor"
+                    stroke-width="3.5"
+                    stroke-linecap="square"
+                  />
+                  <line
+                    x1="20"
+                    y1="4"
+                    x2="4"
+                    y2="20"
+                    stroke="currentColor"
+                    stroke-width="3.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+              </div>
+              <div class="cell" role="gridcell" tabindex="0" aria-label="2. satır 3. sütun, O taşı">
+                <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="7.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div class="row-contents" role="row">
+              <div class="cell" role="gridcell" tabindex="0" aria-label="3. satır 1. sütun, O taşı">
+                <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="7.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  />
+                </svg>
+              </div>
+              <div
+                class="cell"
+                role="gridcell"
+                tabindex="0"
+                aria-label="3. satır 2. sütun, boş"
+              ></div>
+              <div class="cell" role="gridcell" tabindex="0" aria-label="3. satır 3. sütun, X taşı">
+                <svg viewBox="0 0 24 24" style="color: var(--color-player-x)" aria-hidden="true">
+                  <line
+                    x1="4"
+                    y1="4"
+                    x2="20"
+                    y2="20"
+                    stroke="currentColor"
+                    stroke-width="3.5"
+                    stroke-linecap="square"
+                  />
+                  <line
+                    x1="20"
+                    y1="4"
+                    x2="4"
+                    y2="20"
+                    stroke="currentColor"
+                    stroke-width="3.5"
+                    stroke-linecap="square"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <span class="turn-timer">[00:14]</span>
+            <button class="btn" type="button">pes et</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- KAZANMA -->
+      <section class="view" id="view-kazanma">
+        <div class="card" style="max-width: 460px">
+          <div class="room-header">
+            <span class="room-code">[ 7F-K2-9Q ]</span>
+            <span class="badge badge-ok">bagli</span>
+          </div>
+          <p class="opponent-name">aylin_42</p>
+
+          <div style="position: relative">
+            <div id="board-win" role="grid" aria-label="XOX tahtası">
+              <div class="row-contents" role="row">
+                <div
+                  class="cell cell-win"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="1. satır 1. sütun, X taşı, kazanan"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-win)" aria-hidden="true">
+                    <line
+                      x1="4"
+                      y1="4"
+                      x2="20"
+                      y2="20"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      stroke-linecap="square"
+                    />
+                    <line
+                      x1="20"
+                      y1="4"
+                      x2="4"
+                      y2="20"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      stroke-linecap="square"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell cell-win"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="1. satır 2. sütun, X taşı, kazanan"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-win)" aria-hidden="true">
+                    <line
+                      x1="4"
+                      y1="4"
+                      x2="20"
+                      y2="20"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      stroke-linecap="square"
+                    />
+                    <line
+                      x1="20"
+                      y1="4"
+                      x2="4"
+                      y2="20"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      stroke-linecap="square"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell cell-win"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="1. satır 3. sütun, X taşı, kazanan"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-win)" aria-hidden="true">
+                    <line
+                      x1="4"
+                      y1="4"
+                      x2="20"
+                      y2="20"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      stroke-linecap="square"
+                    />
+                    <line
+                      x1="20"
+                      y1="4"
+                      x2="4"
+                      y2="20"
+                      stroke="currentColor"
+                      stroke-width="3.5"
+                      stroke-linecap="square"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div class="row-contents" role="row">
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="2. satır 1. sütun, O taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="2. satır 2. sütun, O taşı"
+                >
+                  <svg viewBox="0 0 24 24" style="color: var(--color-player-o)" aria-hidden="true">
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="7.5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                  </svg>
+                </div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="2. satır 3. sütun, boş"
+                ></div>
+              </div>
+              <div class="row-contents" role="row">
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="3. satır 1. sütun, boş"
+                ></div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="3. satır 2. sütun, boş"
+                ></div>
+                <div
+                  class="cell"
+                  role="gridcell"
+                  tabindex="-1"
+                  aria-label="3. satır 3. sütun, boş"
+                ></div>
+              </div>
+            </div>
+            <svg
+              class="win-line-svg"
+              viewBox="0 0 212 70"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 212px;
+                height: 70px;
+                pointer-events: none;
+              "
+            >
+              <line x1="6" y1="35" x2="206" y2="35" stroke="var(--color-win)" stroke-width="2.5" />
+            </svg>
+          </div>
+
+          <div class="result-panel">
+            <h2>SONUC: KAZANDIN</h2>
+            <p class="result-sub">aylin_42 · 7F-K2-9Q</p>
+            <div class="actions-row">
+              <button class="btn btn-primary" type="button">rövanş iste</button>
+              <a class="link" href="#" onclick="return false">ana sayfa</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11x11 -->
+      <section class="view" id="view-11x11">
+        <h2 style="font-size: var(--fs-xl); margin-bottom: var(--space-sm)">Tahta ölçekleri</h2>
+        <p class="caption">
+          Bu yönde tahta zaten bir "veri ızgarası": hücreler kenarlıkları paylaşır (spreadsheet
+          mantığı), gölge/köşe yuvarlama/parlama gibi boyuta bağlı bozulan dekor hiç yok. 3×3'ten
+          11×11'e giderken TEK değişen şey hücre kenar uzunluğu — kural değişmiyor.
+        </p>
+        <div class="scale-controls">
+          <button class="btn" type="button" onclick="buildBoard(3)">3x3</button>
+          <button class="btn" type="button" onclick="buildBoard(6)">6x6</button>
+          <button class="btn" type="button" onclick="buildBoard(11)">11x11</button>
+          <button class="btn" type="button" id="zoomBtn">yakınlaştır</button>
+        </div>
+        <div class="zoom-wrap" id="zoomWrap">
+          <div id="nxn-board" role="grid" aria-label="XOX tahtası" data-size="11"></div>
+        </div>
+        <p class="caption">
+          <strong>Dokunma hedefi notu:</strong> 11×11'de görsel hücre ~32pt'a düşer. Bu yön için
+          önerilen çözüm: dokunma alanı yine <code>hitSlop</code> ile 44pt'a tamamlanır, AYRICA
+          "veri ızgarası" felsefesiyle tutarlı bir ikinci giriş modu sunulur — ok tuşlarıyla (<span
+            class="kbd-nav"
+            >↑↓←→</span
+          >) hücreden hücreye gezinip <span class="kbd-nav">Enter</span>
+          ile işaretleme; bu zaten klavye erişilebilirliği için var olan yapının doğal uzantısıdır,
+          büyük tahtalarda birincil etkileşim biçimine dönüşür.
+        </p>
+      </section>
+
+      <footer class="note">
+        // Yön C — Sistem / Veri Izgarası. Font: IBM Plex Sans (arayüz) + IBM Plex Mono
+        (kod/durum/koordinat). Renkler yalnız gösterim amaçlı hex — gerçek uygulamada
+        packages/ui-tokens üzerinden gelir.
+      </footer>
+    </div>
+
+    <script>
+      document.querySelectorAll('.tab-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.tab-btn').forEach(function (b) {
+            b.classList.remove('active')
+          })
+          document.querySelectorAll('.view').forEach(function (v) {
+            v.classList.remove('active')
+          })
+          btn.classList.add('active')
+          document.getElementById(btn.dataset.target).classList.add('active')
+        })
+      })
+
+      var temaBtn = document.getElementById('temaBtn')
+      temaBtn.addEventListener('click', function () {
+        var body = document.body
+        var next = body.getAttribute('data-tema') === 'acik' ? 'koyu' : 'acik'
+        body.setAttribute('data-tema', next)
+        temaBtn.textContent = 'tema:' + next
+      })
+
+      var zoomWrap = document.getElementById('zoomWrap')
+      document.getElementById('zoomBtn').addEventListener('click', function () {
+        zoomWrap.classList.toggle('zoomed')
+      })
+
+      function xSvg(color) {
+        return (
+          '<svg viewBox="0 0 24 24" aria-hidden="true" style="color:' +
+          color +
+          '"><line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="square"/><line x1="20" y1="4" x2="4" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="square"/></svg>'
+        )
+      }
+      function oSvg(color) {
+        return (
+          '<svg viewBox="0 0 24 24" aria-hidden="true" style="color:' +
+          color +
+          '"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>'
+        )
+      }
+
+      function buildBoard(n) {
+        var el = document.getElementById('nxn-board')
+        el.setAttribute('data-size', String(n))
+        el.innerHTML = ''
+        var winLen = Math.min(n, 5)
+        var winSet = {}
+        for (var i = 0; i < winLen; i++) winSet[i * n + i] = true
+        for (var r = 0; r < n; r++) {
+          var rowEl = document.createElement('div')
+          rowEl.className = 'row-contents'
+          rowEl.setAttribute('role', 'row')
+          for (var c = 0; c < n; c++) {
+            var idx = r * n + c
+            var mark = null
+            if (winSet[idx]) mark = 'X'
+            else if ((r + c) % 3 === 0) mark = 'O'
+            else if (r !== c && (r * c) % 5 === 0) mark = 'X'
+            var cellEl = document.createElement('div')
+            cellEl.className = 'cell' + (winSet[idx] ? ' cell-win' : '')
+            cellEl.setAttribute('role', 'gridcell')
+            cellEl.tabIndex = 0
+            cellEl.setAttribute(
+              'aria-label',
+              r +
+                1 +
+                '. satır ' +
+                (c + 1) +
+                '. sütun, ' +
+                (mark ? mark + ' taşı' : 'boş') +
+                (winSet[idx] ? ', kazanan' : ''),
+            )
+            if (mark === 'X')
+              cellEl.innerHTML = xSvg(winSet[idx] ? 'var(--color-win)' : 'var(--color-player-x)')
+            if (mark === 'O') cellEl.innerHTML = oSvg('var(--color-player-o)')
+            rowEl.appendChild(cellEl)
+          }
+          el.appendChild(rowEl)
+        }
+      }
+      buildBoard(11)
+    </script>
+  </body>
+</html>

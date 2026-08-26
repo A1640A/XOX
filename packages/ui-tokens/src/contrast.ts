@@ -55,14 +55,19 @@ export function contrastRatio(hexA: string, hexB: string): number {
 }
 
 /**
- * Bir temada verilen renk token'ının hem `bg` hem `surface` üzerindeki kontrastının
- * en az `minRatio` olup olmadığını doğrular. Varsayılan 4.5 — WCAG AA metin eşiği.
+ * Bir temada "arka plan" olarak kullanılan TÜM yüzey token'ları. DESIGN-001a `surfaceRaised`'ı
+ * (Yön A'nın hover/aktif zemini) eklediğinden beri üç yüzey var — bir metin/vurgu token'ı
+ * yalnız `bg`/`surface`'ta değil, ÜÇÜNDE de okunabilir olmalı (ör. hücre hover'ındaki metin).
+ */
+const SURFACE_TOKENS: ColorToken[] = ['bg', 'surface', 'surfaceRaised']
+
+/**
+ * Bir temada verilen renk token'ının `bg`, `surface` VE `surfaceRaised` üzerindeki
+ * kontrastının en az `minRatio` olup olmadığını doğrular. Varsayılan 4.5 — WCAG AA metin
+ * eşiği.
  */
 export function meetsTextContrast(theme: Theme, token: ColorToken, minRatio = 4.5): boolean {
   const palette = themes[theme]
   const foreground = palette[token]
-  return (
-    contrastRatio(foreground, palette.bg) >= minRatio &&
-    contrastRatio(foreground, palette.surface) >= minRatio
-  )
+  return SURFACE_TOKENS.every((surface) => contrastRatio(foreground, palette[surface]) >= minRatio)
 }

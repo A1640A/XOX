@@ -6,6 +6,7 @@ import {
   type ErrorResponse,
 } from '@xox/shared'
 import { resolveIdentity } from '@/lib/auth/identity'
+import { logError } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,7 +73,7 @@ export async function GET(req: Request, { params }: RouteContext): Promise<Respo
     })
     return Response.json(body)
   } catch (error) {
-    console.error('GET /api/rooms/[code] hata', error)
+    logError('GET /api/rooms/[code] hata', {}, error)
     return errorJson('SERVER_ERROR', 'Oda bilgisi alınamadı.', 500)
   }
 }

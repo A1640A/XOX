@@ -1,4 +1,6 @@
-import { BOARD_SIZE, boardFromCells, cellAt } from './board'
+import { boardFromCells, cellAt } from './board'
+import { DEFAULT_BOARD_CONFIG, cellCount } from './config'
+import type { BoardConfig } from './config'
 import { InvalidMoveError } from './errors'
 import { evaluateStatus } from './status'
 import type { Board, Cell, Player } from './types'
@@ -7,21 +9,26 @@ import type { Board, Cell, Player } from './types'
  * Hamle katmanı. Hamle doğrulaması `evaluateStatus`'a, `status.ts` ise
  * `board.ts`'e ihtiyaç duyduğu için doğrulama `board.ts` içinde kalsaydı
  * board -> status -> board döngüsü oluşurdu. Katmanlar tek yönlü tutulur:
- * board -> status -> moves -> ai.
+ * config -> board -> status -> moves -> ai.
  */
 
-function isInRange(index: number): boolean {
-  return Number.isInteger(index) && index >= 0 && index < BOARD_SIZE
+/** Aralık artık `cellCount(config)`'e göredir: {3,3}'te 9, {11,5}'te 121 hücre. */
+function isInRange(index: number, config: BoardConfig): boolean {
+  return Number.isInteger(index) && index >= 0 && index < cellCount(config)
 }
 
-function isPlayable(board: Board): boolean {
-  return evaluateStatus(board).kind === 'playing'
+function isPlayable(board: Board, config: BoardConfig): boolean {
+  return evaluateStatus(board, config).kind === 'playing'
 }
 
 /** Hamlenin kurallara uygunluğu: indeks aralığı, oyunun sürüyor olması, hücrenin boşluğu. */
-export function isValidMove(board: Board, index: number): boolean {
-  if (!isInRange(index)) return false
-  if (!isPlayable(board)) return false
+export function isValidMove(
+  board: Board,
+  index: number,
+  config: BoardConfig = DEFAULT_BOARD_CONFIG,
+): boolean {
+  if (!isInRange(index, config)) return false
+  if (!isPlayable(board, config)) return false
   return cellAt(board, index) === null
 }
 
@@ -35,17 +42,22 @@ export function isValidMove(board: Board, index: number): boolean {
  *
  * Sıra sahipliği bilerek doğrulanmaz; gerekçesi için `index.ts`'e bakın.
  */
-export function applyMove(board: Board, index: number, player: Player): Board {
-  if (!isInRange(index)) {
+export function applyMove(
+  board: Board,
+  index: number,
+  player: Player,
+  config: BoardConfig = DEFAULT_BOARD_CONFIG,
+): Board {
+  if (!isInRange(index, config)) {
     throw new InvalidMoveError(index, 'out-of-range')
   }
-  if (!isPlayable(board)) {
+  if (!isPlayable(board, config)) {
     throw new InvalidMoveError(index, 'game-over')
   }
   if (cellAt(board, index) !== null) {
     throw new InvalidMoveError(index, 'occupied')
   }
-  return placeStone(board, index, player)
+  return placeStone(board, index, player, config)
 }
 
 /**
@@ -58,8 +70,13 @@ export function applyMove(board: Board, index: number, player: Player): Board {
  * fazladan bir `evaluateStatus` demek olurdu: ölçümde boş tahtadaki en iyi hamle
  * 515 ms yerine 1006 ms sürüyordu.
  */
-export function placeStone(board: Board, index: number, player: Player): Board {
+export function placeStone(
+  board: Board,
+  index: number,
+  player: Player,
+  config: BoardConfig = DEFAULT_BOARD_CONFIG,
+): Board {
   const next: Cell[] = [...board]
   next[index] = player
-  return boardFromCells(next)
+  return boardFromCells(next, config)
 }
