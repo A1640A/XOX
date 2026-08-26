@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canJoinRoom,
   errorResponseSchema,
   friendActionBodySchema,
   friendRequestBodySchema,
@@ -168,6 +169,39 @@ describe('oda uç noktaları', () => {
         winLength: 3,
       }).success,
     ).toBe(false)
+  })
+})
+
+/**
+ * CTR-003 payı (tasarım §12.5) — bu pencerede ÜCRETSİZ kapatıldı. Fonksiyon
+ * TEK BAŞINA, route bağlaması olmadan test edilir; `CTR-003` yalnız çağırır.
+ *
+ * İki mutasyon testi iki OPERANDI ayrı ayrı öldürür (`&&`'nin iki tarafı):
+ * biri `state === 'waiting'`'i, diğeri `boş koltuk var mı`'yı tek başına
+ * yanlış yaparsa sonuç false olmalı — ikisi birden true olmadan asla true
+ * dönmemeli.
+ */
+describe('canJoinRoom (CTR-003 payı, tasarım §12.5)', () => {
+  const doluKoltuklar = { X: { userId: 'u1', name: 'Ömer' }, O: { userId: 'u2', name: 'Ayşe' } }
+  const bosKoltuklar = { X: null, O: null }
+  const yariBosKoltuklar = { X: { userId: 'u1', name: 'Ömer' }, O: null }
+
+  it('waiting + boş koltuk varsa true döner', () => {
+    expect(canJoinRoom('waiting', bosKoltuklar)).toBe(true)
+    expect(canJoinRoom('waiting', yariBosKoltuklar)).toBe(true)
+  })
+
+  // OPERAND 1'i öldürür: state playing'e döner ama koltuk hâlâ boş —
+  // `&&`'nin sol tarafı `true -> false` olmasaydı bu true kalırdı.
+  it('playing + boş koltuk olsa BİLE false döner (state operandı)', () => {
+    expect(canJoinRoom('playing', bosKoltuklar)).toBe(false)
+    expect(canJoinRoom('finished', bosKoltuklar)).toBe(false)
+  })
+
+  // OPERAND 2'yi öldürür: state hâlâ waiting ama iki koltuk da dolu —
+  // `&&`'nin sağ tarafı `true -> false` olmasaydı bu true kalırdı.
+  it('waiting + iki koltuk dolu OLSA BİLE false döner (koltuk operandı)', () => {
+    expect(canJoinRoom('waiting', doluKoltuklar)).toBe(false)
   })
 })
 

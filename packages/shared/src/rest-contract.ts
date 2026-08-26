@@ -58,6 +58,30 @@ export const roomCreateResponseSchema = z.object({ code: roomCodeSchema })
  * bugünkü davranış bit düzeyinde korunur.
  */
 export const roomCreateBodySchema = boardConfigSchema.partial()
+
+/**
+ * CTR-003 payı (tasarım §12.5, bu pencerede ÜCRETSİZ kapatılır — ADR-0015 §7):
+ * oda katılabilirliğinin TEK türetme noktası. Yalnız `waiting` durumdaki VE
+ * en az bir boş koltuğu olan oda katılınabilir (§4 yaşam döngüsü).
+ *
+ * CTR-001'in bilinen kusuru tam buydu: mantık `apps/web/app/api/rooms/[code]/
+ * route.ts`'te YEREL yazılmıştı, `packages/shared` dondurulduğu için
+ * `ROOM-API-001` onu değiştiremedi. Bu kartta fonksiyon `shared`'a çıkar;
+ * route BAĞLAMASI (bu fonksiyonu çağırmak) `CTR-003`'te kalır — o kart artık
+ * ikinci bir unfreeze GEREKTİRMEZ.
+ *
+ * `roomStateResponseSchema`'nın kendi değişmezi de AYNI fonksiyonu çağırır:
+ * iki yerde aynı mantığın iki kopyası olursa biri güncellenip diğeri
+ * unutulabilir (bkz. "sabitin regex kopyası" gotcha örüntüsü).
+ */
+export function canJoinRoom(
+  state: z.infer<typeof roomStateSchema>,
+  seats: Pick<z.infer<typeof playersSchema>, 'X' | 'O'>,
+): boolean {
+  const bosKoltukVar = seats.X === null || seats.O === null
+  return state === 'waiting' && bosKoltukVar
+}
+
 /**
  * `canJoin` türetilmiş bir alandır, bağımsız bir bayrak değil: **yalnız**
  * `waiting` odada ve boş koltuk varsa doğrudur (§4 yaşam döngüsü). Değişmez
@@ -77,8 +101,7 @@ export const roomStateResponseSchema = z
     winLength: winLengthSchema,
   })
   .superRefine((room, ctx) => {
-    const bosKoltukVar = room.seats.X === null || room.seats.O === null
-    if (room.canJoin !== (room.state === 'waiting' && bosKoltukVar)) {
+    if (room.canJoin !== canJoinRoom(room.state, room.seats)) {
       ctx.addIssue({
         code: 'custom',
         message: 'canJoin yalnız bekleyen ve boş koltuğu olan odada true olabilir',
