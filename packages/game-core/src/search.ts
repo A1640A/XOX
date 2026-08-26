@@ -192,7 +192,7 @@ function scoreChild(
   if (depth === 1) return state.score
   return alphaBeta(
     state,
-    childCandidates(state, candidates, move),
+    childCandidates(state.view, state.config, candidates, move),
     opponentOf(toMove),
     depth - 1,
     ply + 1,
@@ -206,11 +206,25 @@ function scoreChild(
  * hücrenin yarıçapındaki boş hücreler eklenir. İki liste de artan sıradadır,
  * birleştirme tek geçiştir — düğüm başına tahtanın tamamını yeniden taramak
  * yerine yalnız 5×5'lik kutu okunur.
+ *
+ * DEĞİŞMEZ (`search.test.ts` bunu her aday için sınar):
+ *   childCandidates(sonrakiTahta, config, candidateMoves(öncekiTahta), hamle)
+ *     === candidateMoves(sonrakiTahta, config)
+ * Yani artımlı liste, sıfırdan hesaplanmış listeyle BİREBİR aynıdır. Doğru
+ * olmasının nedeni yapısal: bir taş koymak yarıçap genişlemesini yalnız KENDİ
+ * çevresinde büyütür, başka hiçbir hücrenin adaylığını değiştirmez.
+ *
+ * `board` hamlenin OYNANDIĞI hâldir (`move` artık doludur).
  */
-function childCandidates(state: SearchState, parent: readonly number[], move: number): number[] {
-  const n = state.config.size
-  const row = rowOf(move, state.config)
-  const col = colOf(move, state.config)
+export function childCandidates(
+  board: Board,
+  config: BoardConfig,
+  parent: readonly number[],
+  move: number,
+): number[] {
+  const n = config.size
+  const row = rowOf(move, config)
+  const col = colOf(move, config)
   const lastRow = Math.min(n - 1, row + CANDIDATE_RADIUS)
   const lastCol = Math.min(n - 1, col + CANDIDATE_RADIUS)
   const near: number[] = []
@@ -218,7 +232,7 @@ function childCandidates(state: SearchState, parent: readonly number[], move: nu
   for (let r = Math.max(0, row - CANDIDATE_RADIUS); r <= lastRow; r += 1) {
     for (let c = Math.max(0, col - CANDIDATE_RADIUS); c <= lastCol; c += 1) {
       const index = r * n + c
-      if (cellAt(state.view, index) === null) near.push(index)
+      if (cellAt(board, index) === null) near.push(index)
     }
   }
 

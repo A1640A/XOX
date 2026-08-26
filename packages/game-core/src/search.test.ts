@@ -8,7 +8,7 @@ import {
 import { boardFromCells } from './board'
 import { cellCount, colOf, rowOf } from './config'
 import type { BoardConfig } from './config'
-import { candidateMoves, searchMove } from './search'
+import { candidateMoves, childCandidates, searchMove } from './search'
 import type { SearchResult } from './search'
 import { evaluateStatus, wouldWin } from './status'
 import type { Board, Cell, Player } from './types'
@@ -35,6 +35,11 @@ const build = (config: BoardConfig, stones: ReadonlyMap<number, Player>): Board 
   )
 
 const emptyOf = (config: BoardConfig): Board => build(config, new Map())
+
+const centerOf = (config: BoardConfig): number => {
+  const mid = Math.floor(config.size / 2)
+  return mid * config.size + mid
+}
 
 const fromString = (cells: string, config: BoardConfig): Board =>
   boardFromCells(
@@ -89,6 +94,20 @@ describe('candidateMoves — Chebyshev ≤ CANDIDATE_RADIUS (KK-B45)', () => {
     }
   })
 
+  /**
+   * SAĞ KENAR SONDASI. `lastCol` `min(n − 1, …)` yerine `min(n + 1, …)`
+   * olsaydı tarama satır sınırını aşar ve `r * n + c` BİR SONRAKİ SATIRIN
+   * başına SARARDI — (6,0)'daki taş, ona 10 sütun uzaktaki (4,10) hücresini
+   * "yakın" gösterirdi. Sol köşe sondası bunu göremez, çünkü orada sütun
+   * kutusu zaten sıfırdan başlar.
+   */
+  it('SAĞ kenarda satır sarması olmaz', () => {
+    const board = build(ELEVEN_FIVE, new Map([[66, 'X']]))
+    expect(candidateMoves(board, ELEVEN_FIVE)).toEqual([
+      44, 45, 46, 55, 56, 57, 67, 68, 77, 78, 79, 88, 89, 90,
+    ])
+  })
+
   it('dolu tahtada aday kalmaz', () => {
     const stones = new Map<number, Player>(
       Array.from({ length: cellCount(SIX_FOUR) }, (_unused, i): [number, Player] => [
@@ -98,6 +117,53 @@ describe('candidateMoves — Chebyshev ≤ CANDIDATE_RADIUS (KK-B45)', () => {
     )
     expect(candidateMoves(build(SIX_FOUR, stones), SIX_FOUR)).toEqual([])
   })
+})
+
+describe('childCandidates — artımlı aday listesi', () => {
+  /**
+   * DEĞİŞMEZ: artımlı liste, SIFIRDAN hesaplanmış listeyle BİREBİR aynıdır.
+   *
+   *   childCandidates(sonra, config, candidateMoves(önce), hamle)
+   *     === candidateMoves(sonra, config)
+   *
+   * Bu tek iddia, birleştirme döngüsünün bütün dallarını ve 5×5 kutusunun
+   * dört sınırını aynı anda çiviler: kutu bir satır kayarsa, birleştirmede
+   * bir dal atlanırsa ya da oynanan hücre listeden düşmezse iki taraf ayrışır.
+   * Sonda HER aday hamle için koşar, tek bir örnek için değil.
+   */
+  const configs: readonly BoardConfig[] = [SIX_FOUR, ELEVEN_FIVE]
+
+  for (const config of configs) {
+    const label = `${String(config.size)}×${String(config.size)} K${String(config.winLength)}`
+
+    it(`${label}: artımlı liste sıfırdan hesaplananla AYNI`, () => {
+      const seeds: ReadonlyMap<number, Player>[] = [
+        new Map(),
+        new Map([[0, 'X']]),
+        new Map([[config.size * config.size - 1, 'O']]),
+        new Map([
+          [centerOf(config), 'X'],
+          [config.size + 1, 'O'],
+        ]),
+      ]
+
+      let checked = 0
+      for (const stones of seeds) {
+        const before = build(config, stones)
+        const parent = candidateMoves(before, config)
+        for (const move of parent) {
+          const next = new Map(stones)
+          next.set(move, 'X')
+          const after = build(config, next)
+          expect(childCandidates(after, config, parent, move)).toEqual(
+            candidateMoves(after, config),
+          )
+          checked += 1
+        }
+      }
+      expect(checked).toBeGreaterThan(config.size * 4)
+    })
+  }
 })
 
 /**
@@ -291,6 +357,23 @@ describe('bütçe — düğüm sayacı YAPISAL, duvar saati enjekte edilir (KK-B
     expect(run(200)).toEqual({ move: 14, nodes: 200, depth: 2 })
     expect(run(1200)).toEqual({ move: 14, nodes: 1200, depth: 2 })
     expect(run(1400)).toEqual({ move: 15, nodes: 1400, depth: 3 })
+  })
+
+  /**
+   * BUDAMANIN KENDİSİ ölçülür. Bu (6,5) pozisyonunda arama bütçeye   * DAYANMADAN biter (428 düğüm < 30 000), dolayısıyla düğüm sayısı artık bir
+   * tavan değil, alfa-beta'nın ürettiği GERÇEK sayıdır.
+   *
+   * Çıplak 428 sayısı budamayı ilgilendiren her şeyi tek başına çiviler:
+   * `alpha`/`beta` güncellemesinin karşılaştırıcısı, kesme koşulu, önceki
+   * iterasyonun en iyisini başa alan `preferFirst` — biri gevşerse ya da
+   * kaybolursa ziyaret edilen düğüm sayısı değişir. Hamle aynı kalabilir;
+   * SAYI kalmaz.
+   */
+  it('budama ölçülür — tamamlanan aramanın düğüm sayısı ÇIPLAK yazılıdır', () => {
+    const board = fromString('X.XOOXOOOXOOOOOX.XOX.OXOXX..XXXXOXO.', SIX_FIVE)
+    const result = searchMove(board, 'X', { config: SIX_FIVE, now: frozenClock() })
+    expect(result).toEqual({ move: 20, nodes: 428, depth: MAX_SEARCH_DEPTH })
+    expect(result.nodes).toBeLessThan(AI_NODE_BUDGET)
   })
 
   it('varsayılan saat Date.now — enjekte edilmezse gerçek zaman kullanılır', () => {

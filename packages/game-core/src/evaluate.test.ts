@@ -81,6 +81,21 @@ describe('windowsThrough — artımlı değerlendirmenin dayanağı', () => {
   })
 
   /**
+   * Pencere hücreyi GERÇEKTEN içermelidir. (0,4) hücresinden geçen hiçbir
+   * pencere (0,0)'daki taşı görmez — ikisi arasındaki uzaklık K'dır, yani
+   * aynı dörtlüye sığmazlar.
+   *
+   * Bu, geriye yürüyüşün `back < k` sınırını çiviler: `back <= k` olsaydı
+   * (0,0)-(0,3) penceresi de sayılırdı, oysa o pencere (0,4)'ü İÇERMİYOR.
+   * `evaluateBoard`ta aynı gevşeme görünmez (ilk-taş kuralı zaten kırar),
+   * burada görünür — ve arama tam olarak buraya dayanıyor.
+   */
+  it('tam K uzaklıktaki taş HİÇBİR ortak pencerede değildir', () => {
+    expect(windowsThrough(b(withStones(SIX_FOUR, { 0: 'X' })), SIX_FOUR, 4, 'X')).toBe(0)
+    expect(windowsThrough(b(withStones(SIX_FOUR, { 0: 'X' })), SIX_FOUR, 3, 'X')).toBe(1)
+  })
+
+  /**
    * DEĞİŞMEZ (arama motorunun tamamı buna dayanır): bir hücreye taş konunca
    * tahtanın TOPLAM puanındaki değişim, YALNIZ o hücreden geçen pencerelerin
    * puanındaki değişime eşittir. Yani `searchMove` her düğümde tam tahtayı
@@ -135,6 +150,19 @@ describe('orderMoves — kazandıran > bloklayan > örüntü > merkeze yakınlı
   it('örüntüsü eşit hamlelerde merkeze yakın olan öne geçer', () => {
     const board = b(withStones(SIX_FOUR, { 0: 'X' }))
     expect(orderMoves(board, [35, 21], 'X', SIX_FOUR)).toEqual([21, 35])
+  })
+
+  /**
+   * MERKEZ, tahtanın gerçek ortasıdır. (6,4)'te (2,2) ve (3,3) merkeze EŞİT
+   * uzaklıktadır (kenar 6 çift olduğu için merkez ikisinin arasındadır), bu
+   * yüzden eşitliği indeks bozar ve 14 öne geçer.
+   *
+   * Uzaklık `size − 1` yerine `size + 1` üzerinden hesaplansaydı merkez
+   * (3.5, 3.5)'e kayar, (3,3) tek başına en yakın olur ve 21 öne geçerdi.
+   */
+  it('merkez size − 1 üzerinden hesaplanır — (2,2) ile (3,3) EŞİT uzaklıktadır', () => {
+    const board = b(withStones(SIX_FOUR, { 0: 'X' }))
+    expect(orderMoves(board, [21, 14], 'X', SIX_FOUR)).toEqual([14, 21])
   })
 
   it('her şeyi eşit hamlelerde küçük indeks öne geçer', () => {
