@@ -1281,3 +1281,23 @@ elendi:
 karşı koşup ıskaladığını gördüğüm için yakalandı. **Teşhis kodu da en az düzelttiği hata
 kadar test edilmeli** — sessizce yanlış teşhis koyan bir hata mesajı, hiç mesaj olmamasından
 daha pahalıdır.
+
+## 2026-08-26 · Asılan bir kapı, kırmızı veren bir kapıdan daha kötüdür
+
+`assertTestDatabase` (OPS-007 nöbetçisi) `/api/health`'e **zaman aşımısız** istek atıyordu.
+Kazara keşfedildi: `playwright.config.ts`'in varsayılan `baseURL`'i `http://localhost:3000`
+ve o portta **başka bir projenin** (`PROJELER/izrandevu`) iki günlük, **kilitlenmiş** dev
+sunucusu duruyordu — bağlantıyı kabul edip hiç cevap vermiyor. `curl` de asıldı, yani
+istemciye özgü değil.
+
+Sonuç: `E2E_BASE_URL` vermeden `pnpm e2e` koşmak **sonsuza kadar asılıyordu**. Kapı
+yanlış hedefi tespit edip kırmızı vermiyordu; hiç sonuçlanmıyordu. Kırmızı bir kapı sebebi
+söyler, asılan bir kapı hiçbir şey söylemez ve "yavaş" sanılıp beklenir.
+
+**Düzeltme:** `newContext({ timeout: 15_000 })` + ulaşılamama dalını okunabilir bir
+`BLOKE:` mesajına sarmak (hedef adresi mesaja yazarak — ham Playwright hatası hangi
+adrese gidildiğini yazmıyor).
+
+**Genel ders:** bir ön kontrol yazarken "yanlış cevap" kadar **"hiç cevap yok"** hâlini de
+ele. Ağ çağrısı yapan her kapıya açık zaman aşımı koy. Ayrıca `localhost:PORT` varsayılanı
+tek bir makinede birden çok proje çalışırken **sessizce yanlış projeyi** hedefler.
