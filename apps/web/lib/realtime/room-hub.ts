@@ -1,4 +1,5 @@
 import { Room, connectDb, type RoomDoc } from '@xox/db'
+import { logError } from '@/lib/log'
 
 /**
  * ADR-0002 · Instance başına **EN FAZLA BİR** change stream.
@@ -403,6 +404,6 @@ export const roomHub: RoomHub = (globalForHub.__xoxRoomHub ??= createRoomHub({
     clearTimeout(handle as ReturnType<typeof setTimeout>)
   },
   logError: (message, error) => {
-    console.error(`[room-hub] ${message}`, error)
+    logError(`[room-hub] ${message}`, {}, error)
   },
 }))
