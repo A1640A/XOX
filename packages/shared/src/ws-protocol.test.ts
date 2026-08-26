@@ -58,6 +58,9 @@ const gecerliState = {
   graceEndsAt: null,
   rematch: null,
   serverTime: 1_770_000_000_000,
+  size: 3,
+  winLength: 3,
+  lastMove: null,
 }
 
 const gecerliIstemciMesajlari: Record<string, Record<string, unknown>> = {
@@ -111,9 +114,14 @@ describe('clientMessageSchema', () => {
     expect(clientMessageSchema.safeParse({ type: 'join', roomCode: 'AB2C3D' }).success).toBe(true)
   })
 
-  it('aralık dışı hamle indeksini reddeder', () => {
-    expect(clientMessageSchema.safeParse({ type: 'move', index: 9 }).success).toBe(false)
+  it('aralık dışı hamle indeksini reddeder (CTR-BOARD-001: tavan 120)', () => {
+    expect(clientMessageSchema.safeParse({ type: 'move', index: 121 }).success).toBe(false)
     expect(clientMessageSchema.safeParse({ type: 'move', index: -1 }).success).toBe(false)
+  })
+
+  it('0..120 aralığındaki hamle indeksini kabul eder (11×11 dahil)', () => {
+    expect(clientMessageSchema.safeParse({ type: 'move', index: 9 }).success).toBe(true)
+    expect(clientMessageSchema.safeParse({ type: 'move', index: 120 }).success).toBe(true)
   })
 
   it('tam sayı olmayan hamle indeksini reddeder', () => {
@@ -214,6 +222,102 @@ describe('stateMessageSchema (tasarım §2.4)', () => {
       false,
     )
   })
+
+  it('11×11 tahtayı (121 hücre) size:11/winLength:5 ile kabul eder', () => {
+    const buyukTahta = Array.from({ length: 121 }, () => null)
+    expect(
+      stateMessageSchema.safeParse({
+        ...gecerliState,
+        board: buyukTahta,
+        size: 11,
+        winLength: 5,
+      }).success,
+    ).toBe(true)
+  })
+
+  it('bilinmeyen boyutu ve aralık dışı K değerini reddeder (SB-10)', () => {
+    expect(stateMessageSchema.safeParse({ ...gecerliState, size: 4 }).success).toBe(false)
+    expect(stateMessageSchema.safeParse({ ...gecerliState, winLength: 2 }).success).toBe(false)
+    expect(stateMessageSchema.safeParse({ ...gecerliState, winLength: 7 }).success).toBe(false)
+  })
+
+  it('size ve winLength zorunludur — eksikse reddeder', () => {
+    expect(stateMessageSchema.safeParse({ ...gecerliState, size: undefined }).success).toBe(false)
+    expect(stateMessageSchema.safeParse({ ...gecerliState, winLength: undefined }).success).toBe(
+      false,
+    )
+  })
+
+  it('lastMove null olabilir (henüz hamle yok) ya da {index, by} taşır (ADR-0015 §3, KK-B55)', () => {
+    expect(stateMessageSchema.safeParse({ ...gecerliState, lastMove: null }).success).toBe(true)
+    expect(
+      stateMessageSchema.safeParse({ ...gecerliState, lastMove: { index: 4, by: 'X' } }).success,
+    ).toBe(true)
+  })
+
+  it('lastMove eksik alanla ya da aralık dışı indeksle reddedilir', () => {
+    expect(stateMessageSchema.safeParse({ ...gecerliState, lastMove: { index: 4 } }).success).toBe(
+      false,
+    )
+    expect(stateMessageSchema.safeParse({ ...gecerliState, lastMove: { by: 'X' } }).success).toBe(
+      false,
+    )
+    expect(
+      stateMessageSchema.safeParse({ ...gecerliState, lastMove: { index: 121, by: 'X' } }).success,
+    ).toBe(false)
+  })
+
+  it('lastMove zorunlu bir alandır (undefined kabul etmez) — silinirse KAYBOLUR (Z2 rotasyonu)', () => {
+    expect(stateMessageSchema.safeParse({ ...gecerliState, lastMove: undefined }).success).toBe(
+      false,
+    )
+  })
+})
+
+/**
+ * CTR-BOARD-001 — TÜKETİCİ SONDASI (ADR-0015 §7, kartın kabul kriteri).
+ *
+ * Bu iki liste tasarım dokümanının §3.2 alan tablosundan ELLE KOPYALANDI.
+ * `Object.keys(stateMessageSchema.shape)` ya da `z.infer` üzerinden ÜRETİLMEDİ —
+ * kendine-referanslı bir liste şemadan bir alan SİLİNDİĞİNDE bunu göremez
+ * (gotcha örüntü 2). Üstteki `zorunluAlanHaritasi(serverMessageSchema)` testi
+ * şemadan türetilmiş BİRİNCİ katmandır; bu blok tasarım dokümanından gelen
+ * bağımsız İKİNCİ katmandır. Amaç: `CTR-BOARD-001` kapandıktan sonra
+ * `DB-BOARD-001`/`UI-BOARD-001`/`API-BOARD-001` yazılırken bir alan eksik
+ * kalırsa (CTR-001'in kanıtlanmış kusuru — CTR-003) bunu BURADA yakalamak.
+ */
+describe('CTR-BOARD-001 — tüketici sondası (ADR-0015 §7, tasarım §3.2)', () => {
+  // Oda ekranının `state`'ten okuduğu HER alan — tasarım §3.2'den elle kopyalandı.
+  const odaEkraninınOkudugu = [
+    'type',
+    'roomCode',
+    'board',
+    'status',
+    'players',
+    'you',
+    'version',
+    'turnDeadline',
+    'graceEndsAt',
+    'rematch',
+    'serverTime',
+    'size',
+    'winLength',
+    'lastMove',
+  ]
+
+  it('oda ekranının okuduğu her alan state mesajında VARDIR (14 alan)', () => {
+    expect(odaEkraninınOkudugu).toHaveLength(14)
+    // `gecerliState` bu dosyanın en üstünde ELLE yazılmış bağımsız bir örnektir
+    // (şemadan üretilmemiştir). Şema bir alanı SESSİZCE KIRPARSA (zod'un
+    // varsayılan davranışı — gotcha örüntü 2) `state.data`'da o alan kalmaz ve
+    // aşağıdaki `hasOwnProperty` iddiası kırmızı olur.
+    const state = stateMessageSchema.safeParse(gecerliState)
+    expect(state.success).toBe(true)
+    if (!state.success) return
+    for (const alan of odaEkraninınOkudugu) {
+      expect(Object.prototype.hasOwnProperty.call(state.data, alan)).toBe(true)
+    }
+  })
 })
 
 describe('serverMessageSchema', () => {
@@ -245,13 +349,16 @@ describe('serverMessageSchema', () => {
       state: [
         'board',
         'graceEndsAt',
+        'lastMove',
         'players',
         'rematch',
         'roomCode',
         'serverTime',
+        'size',
         'status',
         'turnDeadline',
         'version',
+        'winLength',
         'you',
       ],
       'move:applied': ['by', 'index', 'version'],
