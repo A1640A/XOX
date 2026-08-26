@@ -1,52 +1,67 @@
+import { DEFAULT_BOARD_CONFIG, cellCount, isKnownMode } from './config'
+import type { BoardConfig } from './config'
 import type { Board, Cell, Player } from './types'
 
-export const BOARD_SIZE = 9
-
 /**
- * Boş tahta modül düzeyinde tek örnektir; bu yüzden dondurulur. `readonly`
+ * Boş tahtalar modül düzeyinde tek örnektir; bu yüzden dondurulur. `readonly`
  * yalnız derleme zamanında korur: uzun ömürlü bir sunucu sürecinde tek bir
- * `EMPTY_BOARD[0] = 'X'` yazması bundan sonraki bütün oyunları bozardı.
+ * `emptyBoard()[0] = 'X'` yazması bundan sonraki bütün oyunları bozardı.
+ *
+ * Önbellek YALNIZ `BOARD_MODES`'taki altı kombinasyonu tutar (ADR-0012 §2):
+ * hatalı bir çağrı uzun ömürlü bir instance'ta sonsuz büyüyen bir önbellek
+ * üretmesin.
  */
-export const EMPTY_BOARD: Board = Object.freeze<Board>([
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-  null,
-])
+const emptyBoardCache = new Map<string, Board>()
+
+function cacheKey(config: BoardConfig): string {
+  return `${String(config.size)}x${String(config.winLength)}`
+}
+
+export function emptyBoard(config: BoardConfig = DEFAULT_BOARD_CONFIG): Board {
+  const key = cacheKey(config)
+  const cached = emptyBoardCache.get(key)
+  if (cached !== undefined) return cached
+
+  const board = Object.freeze(Array.from({ length: cellCount(config) }, () => null)) as Board
+  if (isKnownMode(config)) emptyBoardCache.set(key, board)
+  return board
+}
 
 /**
- * Tahta indeksi her zaman 0..8 aralığındadır; bu değişmez `boardFromCells`,
- * `availableMoves` ve `WIN_LINES` tarafından garanti edilir. Bu yüzden burada
- * savunmacı bir dal yerine tek bir daraltma yapılır — böylece kural motorunda
- * test edilemeyen dal kalmaz.
+ * TOTAL hücre okuması (ADR-0011 §3): aralık dışı indeks BOŞ hücre verir,
+ * `undefined` vermez.
  *
- * Pakete özeldir, `index.ts` dışa aktarmaz: `Board` bir tuple olduğu için
- * tüketiciler `board[4]` yazarak aynı hücreyi tam tip güvenliğiyle okur,
- * `cellAt(board, 9)` ise `Cell` tipiyle `undefined` döndürürdü.
+ * Bu tek satır, eski `as Cell` cast'inin gizlediği en tehlikeli sınıfı kapatır:
+ * yanlış konfigürasyonla taranan bir tahtada `undefined === undefined`
+ * karşılaştırması HAYALET GALİBİYET üretebilirdi. `?? null` ile aralık dışı
+ * okuma boş hücre olur ve hiçbir hat tamamlanmaz.
+ *
+ * Pakete özeldir, `index.ts` dışa aktarmaz: `game-core` dışında `Board`'u
+ * indeksleyen tek bir üretim satırı yok (ADR-0011 D1), yüzey gereksiz büyümez.
  */
 export function cellAt(board: Board, index: number): Cell {
-  return board[index] as Cell
+  return board[index] ?? null
 }
 
 /**
  * Dışarıdan gelen diziyi tahtaya çevirir; `Board`'a giden tek yol budur.
  *
- * Hem uzunluk hem de her hücrenin değeri doğrulanır: kalıcı katmandaki şema
- * hücreleri yalnız `String` olarak tanımlar, dolayısıyla `undefined` ya da
- * `'a'` gibi bir değer buraya kadar gelebilir. Doğrulanmazsa `evaluateStatus`
- * üç `undefined` hücreyi kazanan hat sanar ve `Player` tipli bir alana `'a'`
- * yazılır.
+ * Hem uzunluk (KONFİGÜRASYONA göre) hem de her hücrenin değeri doğrulanır:
+ * kalıcı katmandaki şema hücreleri yalnız `String` olarak tanımlar, dolayısıyla
+ * `undefined` ya da `'a'` gibi bir değer buraya kadar gelebilir. Doğrulanmazsa
+ * `evaluateStatus` `undefined` hücreleri kazanan hat sanar ve `Player` tipli bir
+ * alana `'a'` yazılır. Uzunluk doğrulaması E-18'in ("`size:11` ama tahta 9
+ * hücre") tek mekanik savunmasıdır.
  */
-export function boardFromCells(cells: readonly Cell[]): Board {
-  if (cells.length !== BOARD_SIZE) {
-    throw new RangeError(`Tahta ${String(BOARD_SIZE)} hücre olmalı, ${String(cells.length)} geldi`)
+export function boardFromCells(
+  cells: readonly Cell[],
+  config: BoardConfig = DEFAULT_BOARD_CONFIG,
+): Board {
+  const expected = cellCount(config)
+  if (cells.length !== expected) {
+    throw new RangeError(`Tahta ${String(expected)} hücre olmalı, ${String(cells.length)} geldi`)
   }
-  for (let index = 0; index < BOARD_SIZE; index += 1) {
+  for (let index = 0; index < expected; index += 1) {
     const cell = cells[index]
     if (cell !== null && cell !== 'X' && cell !== 'O') {
       throw new RangeError(
@@ -59,18 +74,16 @@ export function boardFromCells(cells: readonly Cell[]): Board {
 
 /**
  * `boardFromCells`'in tersini yapar: tahtayı hata ayıklama çıktısı ve testler
- * için okunabilir tek satır metne çevirir. Her hücre `X`, `O` ya da boşsa `.`
- * olur — `EMPTY_BOARD` için sonuç dokuz nokta içeren bir dizedir.
+ * için tek satır metne çevirir. Her hücre `X`, `O` ya da boşsa `.` olur —
+ * `emptyBoard()` için sonuç dokuz nokta içeren bir dizedir.
  *
  * Round-trip sözleşmesi: bu çıktı `Array.from` ile karakterlere bölünüp
- * `boardFromCells`'e geri verildiğinde aynı tahtayı üretir. Paket içindeki her
- * test dosyası bunu elle yazan bir `b(s)` yardımcısıyla tekrarlıyordu; bu
- * fonksiyon tersini yaparak o dizeyi üretir.
+ * `boardFromCells`'e geri verildiğinde aynı tahtayı üretir. Biçim 121 hücrede
+ * okunaksızdır ama BİLEREK değiştirilmedi (tasarım §12.4).
  */
 export function boardToString(board: Board): string {
   const chars: string[] = []
-  for (let index = 0; index < BOARD_SIZE; index += 1) {
-    const cell = cellAt(board, index)
+  for (const cell of board) {
     chars.push(cell ?? '.')
   }
   return chars.join('')
@@ -78,7 +91,7 @@ export function boardToString(board: Board): string {
 
 export function availableMoves(board: Board): number[] {
   const moves: number[] = []
-  for (let i = 0; i < BOARD_SIZE; i += 1) {
+  for (let i = 0; i < board.length; i += 1) {
     if (cellAt(board, i) === null) moves.push(i)
   }
   return moves

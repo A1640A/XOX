@@ -1,7 +1,8 @@
 import {
-  BOARD_SIZE,
+  DEFAULT_BOARD_CONFIG,
   applyMove as applyMoveCore,
   boardFromCells,
+  cellCount,
   evaluateStatus,
   isValidMove,
   nextPlayer,
@@ -20,12 +21,13 @@ import type { RoomEvent, TransitionResult } from './types'
  * sebebini dışa vermez — bkz. `packages/game-core/src/moves.ts`). Taşıma
  * katmanının istemciye bir sebep göstermesi gerektiği için (B8), aynı üç
  * kuralı `isValidMove`'un KENDİSİNİN kullandığı birebir aynı dışa açık
- * ilkellerle (`BOARD_SIZE`, `evaluateStatus`) sınıflandırıyoruz — kural
+ * ilkellerle (`cellCount`, `evaluateStatus`) sınıflandırıyoruz — kural
  * MANTIĞI burada yeniden YAZILMIYOR, yalnızca `isValidMove`'un zaten
  * `false` dediği bir durumun HANGİ üç sebepten olduğu okunuyor.
  */
 function moveRejectionReason(board: Board, index: number): MoveRejectionReason {
-  if (!Number.isInteger(index) || index < 0 || index >= BOARD_SIZE) return 'out-of-range'
+  if (!Number.isInteger(index) || index < 0 || index >= cellCount(DEFAULT_BOARD_CONFIG))
+    return 'out-of-range'
   if (evaluateStatus(board).kind !== 'playing') return 'game-over'
   return 'occupied'
 }

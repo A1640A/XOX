@@ -1,11 +1,11 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T00:14:02.656Z",
+  "updatedAt": "2026-08-26T00:32:45.276Z",
   "nightRun": {
     "active": true,
     "deadline": null,
-    "wave": "B1",
+    "wave": "B2",
     "consecutiveFailures": 0,
     "tokenBudgetUsedPct": 0,
     "maxParallel": 3
@@ -1697,10 +1697,10 @@
         "packages/db/src/models/game.ts",
         "apps/web/components/computer/game-engine.ts"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/CORE-CFG-001.md",
       "acceptance": [
         "BU KART BOLUNEMEZ (ADR-0011): typecheck atomikligi. Board ve WinLine tiplerinin genislemesi shared'in game-status semasini ve db dogrulayicilarini AYNI commit'te hareket ettirmek zorundadir. ai.ts / search.ts KAPSAM DISI — onlar CORE-AI-001.",
         "KK-B01 saglanir: BOARD_MODES tam olarak uc boyut icerir (3, 6, 11). Test bu uc sayiyi CIPLAK yazar, sabitten TURETMEZ. Dorduncu boyut eklenirse test kirmiziya doner.",
@@ -1731,7 +1731,8 @@
         "Katman yonu korunur: config -> board -> status -> moves. import-x/no-cycle yesil.",
         "KK-B21 bu kartin kodunda da gecerli: pnpm mutation >= %98. pnpm gates temiz; merge sonrasi `pnpm exec turbo run typecheck --force` + `test:coverage --force` ciktisinda `Cached: 0`."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "f2b2f2a"
     },
     {
       "id": "CTR-BOARD-001",
@@ -1750,6 +1751,7 @@
       "branch": null,
       "report": null,
       "acceptance": [
+        "SERT UYARI (CORE-CFG-001 merge sonrasi): cellIndexSchema HALA 0..8. winLineSchema artik 3..6 UZUNLUK kabul ediyor ama indeks tavani 8-de — yani 6x6 ve 11x11 hatlari protokolden GECEMEZ. Bu bilincli (pencere senin kartinda) ama SEN INMEDEN hicbir sey 3x3 disini yayinlayamaz. Kartin en kritik tek satiri bu.",
         "packages/shared bu ozellik icin TAM OLARAK BIR KEZ acilir ve burada TAMAMEN genisletilir; kart merge edildikten sonra paket YENIDEN DONAR (ADR-0015 §1). game-status.ts payi bir dalga once CORE-CFG-001'de indi — burada tekrar acilmaz.",
         "KK-B38 saglanir: cellIndexSchema 0..120. KK-B37 saglanir: boardSchema array(cell).min(9).max(121). YENI: boardSizeSchema (3|6|11), winLengthSchema (3..6), boardConfigSchema.",
         "KK-B37/B38'in GEREKCESI karta yazili: sema SEKIL korur, KURAL DEGIL. board.length === size^2 odanin KENDI konfigurasyonuna karsi SUNUCUDA kontrol edilir (ayristirma aninda oda konfigurasyonu erisilebilir degildir). Asan indeks MEVCUT move:rejected reason:'out-of-range' ile reddedilir; moveRejectionReasonSchema DORT degerde KALIR, protokole yeni reddetme sebebi EKLENMEZ.",
@@ -1816,7 +1818,8 @@
         "Katman yonu korunur: config -> board -> status -> moves -> evaluate -> search -> ai. import-x/no-cycle yesil.",
         "CORE-CFG-001 bir dalga once merge EDILMIS olmali — bu kart da index.ts'e dokunuyor.",
         "pnpm gates + pnpm mutation temiz; merge sonrasi turbo --force ile `Cached: 0`.",
-        "KALIBRASYON SAPMASI: AI-SPIKE-001 basit prototiple olctu ve x3 tutucu duzeltme uyguladi. Gercek kod yazilinca AI_BUDGET_MS YENIDEN OLCULMELI. AI_NODE_BUDGET dugum bazli oldugu icin bu duzeltmeden etkilenmiyor — once onu kilitle."
+        "KALIBRASYON SAPMASI: AI-SPIKE-001 basit prototiple olctu ve x3 tutucu duzeltme uyguladi. Gercek kod yazilinca AI_BUDGET_MS YENIDEN OLCULMELI. AI_NODE_BUDGET dugum bazli oldugu icin bu duzeltmeden etkilenmiyor — once onu kilitle.",
+        "CORE-CFG-001 BIRAKTI: ai.ts yorumundaki WIN_SCORE > BOARD_SIZE degismezi artik OLMAYAN bir ada atif yapiyor (KK-B48). ai.ts-e hic dokunulmadi."
       ],
       "blockedReason": null
     },
@@ -1860,7 +1863,8 @@
         "KK-B72 saglanir: YENI INDEKS YOK, hamle basina EK ATLAS ISLEMI YOK — instance basina tek change stream ve hamle basina tek CAS yazmasi disiplini korunur (M0'da 100 islem/sn butcesi). 11x11 oyunlari hamle sayisi kadar daha cok YAZMA uretir; bu BEKLENENDIR, ek SORGU degildir.",
         "KK-B73 saglanir: MOVE_TIMEOUT_SECONDS tum boyutlarda 60 saniye kalir; TTL updatedAt uzerindedir ve her hamlede tazelenir. Sonda: 100 hamlelik simule bir oyunda oda dokumani hala vardir.",
         "cas.ts BU KARTIN cakisma kumesindedir — AYNI DALGADA BASKA HICBIR KART ona dokunamaz (W1-03'un detachConnection duzeltmesi tam bu dosyada yasandi). Bugunku tum caGiranlar (apply-move, join, detach, resign, rematch, settle) ayni kartta guncellenir.",
-        "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0`."
+        "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0`.",
+        "CORE-CFG-001 BIRAKTI: packages/db/src/rooms/rematch.ts icinde 9 elemanli YEREL EMPTY_BOARD dizisi duruyor — konfigurasyondan turetilmeli."
       ],
       "blockedReason": null
     },
@@ -1900,7 +1904,8 @@
         "KK-B71 saglanir: CellButton React.memo ile sarilir, onCellPress useCallback ile referans-kararli olur, tum prop'lar ilkel degerdir. Bir state/move:applied mesaji <= 2 hucre bilesenini yeniden render eder (degisen hucre + bekleyen hucre). SAYAC TABANLI test — 'hizli hissettiriyor' kriter DEGILDIR.",
         "Board.tsx 250 satir konvansiyonunun ALTINDA kalir (roving-grid.ts + cell-label.ts ayrilmasinin ikinci faydasi). Marks.tsx DEGISMEZ.",
         "testid sozlesmesi: cellTestId(index) kodu degismez — hucre-0 ... hucre-120 kendiliginden calisir. Mevcut E2E kancalari (tahta, data-tas, data-bekliyor) KIRILMAZ.",
-        "pnpm gates temiz."
+        "pnpm gates temiz.",
+        "CORE-CFG-001 BIRAKTI: apps/web/components/board/Board.tsx icinde const BOARD_SIZE = 3 (KENAR anlaminda) duruyor. ADR-0010 bu adin repodan TAMAMEN silinmesini istiyor — game-core=hucre, Board.tsx=kenar seklinde uc farkli anlamla kopyalanmisti."
       ],
       "blockedReason": null
     },

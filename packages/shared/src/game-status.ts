@@ -15,8 +15,15 @@ import { cellIndexSchema, type Player, playerSchema } from './primitives'
 export const endReasonSchema = z.enum(['line', 'resign', 'timeout', 'abandon'])
 export type EndReason = z.infer<typeof endReasonSchema>
 
-/** Kazanan çizgi: 0..8 aralığında üç indeks. */
-export const winLineSchema = z.tuple([cellIndexSchema, cellIndexSchema, cellIndexSchema])
+/**
+ * Kazanan çizgi: K indeks (K = odanın `winLength`'i, 3..6 — ADR-0011 §4).
+ *
+ * Tuple değil DİZİ: motorun `WinLine` tipi `readonly number[]`e genişledi ve
+ * tuple şema `noUncheckedIndexedAccess` altında atanamaz hâle gelirdi. Sınırlar
+ * ÇIPLAK yazılır, `BOARD_MODES`'tan türetilmez (ADR-0010 §4 / gotcha örüntü 2);
+ * `cellIndexSchema`'nın üst sınırı `primitives.ts`'in işidir (CTR-BOARD-001).
+ */
+export const winLineSchema = z.array(cellIndexSchema).min(3).max(6)
 export type WinLineCells = z.infer<typeof winLineSchema>
 
 /**
@@ -56,10 +63,11 @@ export type ForfeitReason = Exclude<EndReason, 'line'>
 /** Saf motor durumundan taşıma durumuna. Tek yönlü köprünün tek yönü. */
 export function toTransportStatus(status: GameStatus): TransportStatus {
   if (status.kind === 'won') {
-    const [a, b, c] = status.line
-    // Motorun `WIN_LINES` üçlüleri dondurulmuştur ve paylaşılır; kopyalanmazsa
-    // taşıma nesnesi motorun iç durumuna referans tutar.
-    return { kind: 'won', winner: status.winner, line: [a, b, c], reason: 'line' }
+    // Motorun `winLines(config)` hatları dondurulmuştur ve memoize edilerek
+    // PAYLAŞILIR; kopyalanmazsa taşıma nesnesi motorun iç durumuna referans
+    // tutar. Yayma (`[...]`) hat uzunluğundan bağımsızdır — eski `[a, b, c]`
+    // yıkımı 3 indeksi sabitliyordu ve K=4..6'da sessizce hat kırpardı.
+    return { kind: 'won', winner: status.winner, line: [...status.line], reason: 'line' }
   }
   return status
 }

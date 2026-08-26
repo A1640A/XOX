@@ -1,4 +1,10 @@
-import { EMPTY_BOARD, boardFromCells, evaluateStatus, type InvalidMoveReason } from '@xox/game-core'
+import {
+  boardFromCells,
+  emptyBoard,
+  evaluateStatus,
+  type BoardConfig,
+  type InvalidMoveReason,
+} from '@xox/game-core'
 import { describe, expect, it } from 'vitest'
 import {
   endReasonSchema,
@@ -98,7 +104,19 @@ describe('winLineSchema', () => {
     expect(winLineSchema.safeParse([0, 4, 9]).success).toBe(false)
   })
 
-  it('üç elemandan farklı diziyi reddeder', () => {
+  it.each([
+    [3, true],
+    [4, true],
+    [5, true],
+    [6, true],
+    [2, false],
+    [7, false],
+  ])('%i indeksli hat kabul durumu: %s (sınırlar ÇIPLAK: 3..6)', (length, accepted) => {
+    const line = Array.from({ length }, (_unused, index) => index)
+    expect(winLineSchema.safeParse(line).success).toBe(accepted)
+  })
+
+  it('iki elemanlı diziyi reddeder — alt sınır 3tür', () => {
     expect(winLineSchema.safeParse([0, 4]).success).toBe(false)
   })
 })
@@ -117,7 +135,7 @@ describe('toTransportStatus', () => {
   })
 
   it('süren oyunu olduğu gibi taşır', () => {
-    expect(toTransportStatus(evaluateStatus(EMPTY_BOARD))).toEqual({ kind: 'playing', turn: 'X' })
+    expect(toTransportStatus(evaluateStatus(emptyBoard()))).toEqual({ kind: 'playing', turn: 'X' })
   })
 
   it('beraberliği olduğu gibi taşır', () => {
@@ -129,6 +147,19 @@ describe('toTransportStatus', () => {
     const status = toTransportStatus(engineStatus)
     if (engineStatus.kind !== 'won' || status.kind !== 'won') throw new Error('kazanan bekleniyor')
     expect(status.line).not.toBe(engineStatus.line)
+    expect(Object.isFrozen(status.line)).toBe(false)
+  })
+
+  it('üçten UZUN hattı KIRPMADAN taşır — eski [a,b,c] yıkımı burada ölürdü', () => {
+    const config: BoardConfig = { size: 6, winLength: 5 }
+    const cells = Array.from({ length: 36 }, () => null) as ('X' | 'O' | null)[]
+    for (let i = 0; i < 5; i += 1) cells[i] = 'X'
+    const engineStatus = evaluateStatus(boardFromCells(cells, config), config)
+    const status = toTransportStatus(engineStatus)
+    expect(status).toEqual({ kind: 'won', winner: 'X', line: [0, 1, 2, 3, 4], reason: 'line' })
+    if (status.kind !== 'won') return
+    expect(status.line).toHaveLength(5)
+    expect(transportStatusSchema.safeParse(status).success).toBe(true)
   })
 })
 

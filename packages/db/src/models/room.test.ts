@@ -125,4 +125,45 @@ describe('Room modeli', () => {
     }))
     await expect(Room.create({ code, moves: extra })).rejects.toThrow()
   })
+
+  // `result.line` doğrulayıcısı "tam 3"ten "3..6"ya genişledi (ADR-0011 §4):
+  // tip 3..6 indeks derken mongoose'un tam 3 demesi, ancak 6×6 ilk kez
+  // oynandığında patlayan bir tutarsızlık olurdu. Sınırlar ÇIPLAK sınanır.
+  it('result.line 3..6 indeks kabul eder, dışını reddeder', async () => {
+    const accepted = freshCode()
+    await Room.create({
+      code: accepted,
+      state: 'finished',
+      result: { kind: 'won', winner: 'X', line: [0, 1, 2, 3, 4, 5], reason: 'line' },
+    })
+    const room = await Room.findOne({ code: accepted }).lean()
+    expect(room?.result?.line).toStrictEqual([0, 1, 2, 3, 4, 5])
+
+    await expect(
+      Room.create({
+        code: freshCode(),
+        state: 'finished',
+        result: { kind: 'won', winner: 'X', line: [0, 1], reason: 'line' },
+      }),
+    ).rejects.toThrow()
+
+    await expect(
+      Room.create({
+        code: freshCode(),
+        state: 'finished',
+        result: { kind: 'won', winner: 'X', line: [0, 1, 2, 3, 4, 5, 6], reason: 'line' },
+      }),
+    ).rejects.toThrow()
+  })
+
+  it('result.line null kalabilir — pes/süre/terk galibiyetinde çizgi yoktur', async () => {
+    const code = freshCode()
+    await Room.create({
+      code,
+      state: 'finished',
+      result: { kind: 'won', winner: 'O', line: null, reason: 'resign' },
+    })
+    const room = await Room.findOne({ code }).lean()
+    expect(room?.result?.line).toBeNull()
+  })
 })

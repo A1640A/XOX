@@ -105,7 +105,7 @@ describe('Game modeli', () => {
     expect(game?.settledAt).toBeInstanceOf(Date)
   })
 
-  it('winLine 3 indeksten farklı bir uzunlukta ise reddedilir', async () => {
+  it('winLine 3 indeksten KISA ise reddedilir', async () => {
     const id = track(randomUUID())
     await expect(
       Game.create({
@@ -115,6 +115,44 @@ describe('Game modeli', () => {
         participants: ['u1', 'u2'],
         pairKey: 'u1|u2',
         winLine: [0, 1],
+      }),
+    ).rejects.toThrow()
+  })
+
+  // Tip "3..6 indeks" derken mongoose'un "tam 3" demesi, ancak 6×6 İLK KEZ
+  // oynandığında patlayan bir tutarsızlık olurdu (ADR-0011). Doğrulayıcı ve tip
+  // aynı commit'te hareket ediyor; iki uç da ÇIPLAK sayıyla sınanır.
+  it('winLine 6 indekse kadar kabul edilir — 6x6 K=5 ve 11x11 K=6 için', async () => {
+    const id = track(randomUUID())
+    const now = new Date()
+    await Game.create({
+      _id: id,
+      roomCode: 'RCLONG1',
+      players: { X: 'u1', O: 'u2' },
+      participants: ['u1', 'u2'],
+      pairKey: 'u1|u2',
+      winner: 'X',
+      endReason: 'line',
+      winLine: [10, 11, 12, 13, 14, 15],
+      finishedAt: now,
+    })
+    const game = await Game.findById(id).lean()
+    expect(game?.winLine).toStrictEqual([10, 11, 12, 13, 14, 15])
+  })
+
+  it('winLine 6 indeksten UZUN ise reddedilir — üst sınır 6', async () => {
+    const id = track(randomUUID())
+    await expect(
+      Game.create({
+        _id: id,
+        roomCode: 'RCLONG2',
+        players: { X: 'u1', O: 'u2' },
+        participants: ['u1', 'u2'],
+        pairKey: 'u1|u2',
+        winner: 'X',
+        endReason: 'line',
+        winLine: [10, 11, 12, 13, 14, 15, 16],
+        finishedAt: new Date(),
       }),
     ).rejects.toThrow()
   })
