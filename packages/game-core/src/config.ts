@@ -91,9 +91,16 @@ function reject(reason: BoardConfigRejection): BoardConfigParse {
   return Object.freeze({ ok: false as const, reason })
 }
 
-/** Tam sayı ise sayıyı, değilse `null` döner — daraltma tek noktada. */
+/**
+ * Tam sayı ise sayıyı, değilse `null` döner — daraltma tek noktada.
+ *
+ * `typeof value === 'number'` kontrolü BİLEREK yok: `Number.isInteger` yalnız
+ * sayı ilkelleri için `true` döner (`'11'`, `5n`, `new Number(5)` hepsi `false`),
+ * dolayısıyla ek kontrol çalışma zamanında ULAŞILAMAZ bir dal ve öldürülemez
+ * bir mutant üretirdi. Daraltma yerine tek bir dönüşüm yazılır.
+ */
 function asInteger(value: unknown): number | null {
-  return typeof value === 'number' && Number.isInteger(value) ? value : null
+  return Number.isInteger(value) ? (value as number) : null
 }
 
 /**

@@ -116,7 +116,18 @@ const DIRECTIONS: readonly { readonly dr: number; readonly dc: number }[] = [
   { dr: 1, dc: -1 },
 ]
 
-/** `(row, col)`'dan `(dr, dc)` yönünde kaç kesintisiz `player` taşı var. */
+/**
+ * `(row, col)`'dan `(dr, dc)` yönünde kaç kesintisiz `player` taşı var.
+ *
+ * Sınır kontrolü ÜÇ koşuldur, dört değil: `r >= 0` BİLEREK yoktur. Negatif
+ * satır daima negatif indeks üretir (`r * n + c`, `0 <= c < n`) ve `cellAt`
+ * TOTAL olduğu için negatif indeks `null` döner — yani dördüncü koşul hiçbir
+ * girdiyle ayırt edilemeyen, öldürülemez bir mutant üretirdi.
+ *
+ * `r < n` ise ULAŞILABİLİRDİR ve şart: konfigürasyon-tahta uyuşmazlığında
+ * (E-18: 121 hücrelik tahta `size:6` ile taranırsa) `r = n` gerçek bir hücreye
+ * denk gelir ve bu kontrol olmasa hayalet galibiyet üretirdi. Testi vardır.
+ */
 function runLength(
   board: Board,
   config: BoardConfig,
@@ -130,7 +141,7 @@ function runLength(
   let count = 0
   let r = row + dr
   let c = col + dc
-  while (r >= 0 && r < n && c >= 0 && c < n && cellAt(board, r * n + c) === player) {
+  while (r < n && c >= 0 && c < n && cellAt(board, r * n + c) === player) {
     count += 1
     r += dr
     c += dc

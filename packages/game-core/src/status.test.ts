@@ -35,48 +35,29 @@ const WIN_LINES_3X3 = [
   [2, 4, 6],
 ]
 
+/**
+ * ⚠️ MEMOİZASYON, TEST SIRASINI SÖZLEŞMEYE ÇEVİRİR (gotcha örüntü 6).
+ *
+ * `winLines` bir konfigürasyonu yalnız İLK istendiğinde hesaplar; sonraki
+ * çağrılar önbellekten döner. Yani üretim kodunu (hat aritmetiği, `Object.freeze`,
+ * önbelleğe yazma) GERÇEKTEN çalıştıran tek test, o konfigürasyonu ilk isteyen
+ * testtir. Mutasyon koşucusu "hangi test hangi satırı çalıştırdı"ya göre seçim
+ * yaptığı için, sonradan gelen bir test ne kadar sıkı iddia ederse etsin o
+ * mutantları ÖLDÜREMEZ (ölçüldü: iddialar yerinde dururken skor %94 → %84).
+ *
+ * Bu yüzden her konfigürasyonun İLK İSTEYENİ, o konfigürasyon hakkında bilinmesi
+ * gereken HER ŞEYİ tek testte iddia eder: değerler + sayı + donmuşluk + referans
+ * kimliği. Aşağıdaki üç testin SIRASI ve İÇERİĞİ bu yüzden bir sözleşmedir.
+ */
 describe('winLines', () => {
-  it('KK-B08: (3,3) elle kopyalanmış sekiz hattı AYNI SIRADA üretir', () => {
-    expect(winLines(C33).map((line) => [...line])).toEqual(WIN_LINES_3X3)
-  })
-
-  it('varsayılan konfigürasyon (3,3)tür', () => {
-    expect(winLines().map((line) => [...line])).toEqual(WIN_LINES_3X3)
-  })
-
-  it.each([
-    [3, 3, 8],
-    [6, 4, 54],
-    [6, 5, 32],
-    [11, 4, 304],
-    [11, 5, 252],
-    [11, 6, 204],
-  ])('KK-B07: (%i,%i) tam %i hat üretir', (size, winLength, expected) => {
-    expect(winLines({ size, winLength })).toHaveLength(expected)
-  })
-
-  it('her hat tam olarak K indeks içerir ve indeksler kenar aralığındadır', () => {
-    for (const line of winLines(C115)) {
-      expect(line).toHaveLength(5)
-      for (const index of line) {
-        expect(index).toBeGreaterThanOrEqual(0)
-        expect(index).toBeLessThan(121)
-      }
-    }
-  })
-
-  it('6x6 K=4de ilk yatay, ilk dikey ve iki köşegen elle yazılmış hatlardır', () => {
-    const lines = winLines(C64).map((line) => [...line])
-    expect(lines[0]).toEqual([0, 1, 2, 3])
-    // 6 kenar, K=4 -> satır başına 3 hat; dikeyler 18. hattan başlar.
-    expect(lines[18]).toEqual([0, 6, 12, 18])
-    // Köşegenler 36. hattan başlar: ↘ sonra ↙.
-    expect(lines[36]).toEqual([0, 7, 14, 21])
-    expect(lines[45]).toEqual([3, 8, 13, 18])
-  })
-
-  it('KK-B09: dizi ve içindeki hatlar donmuştur — kazanma tespiti bozulamaz', () => {
+  it('(3,3) İLK İSTEYEN — KK-B07/B08/B09/B10: değerler, sayı, donmuşluk, kimlik', () => {
     const lines = winLines(C33)
+
+    // KK-B08: ELLE KOPYALANMIŞ sekiz hat, AYNI SIRADA.
+    expect(lines.map((line) => [...line])).toEqual(WIN_LINES_3X3)
+    expect(lines).toHaveLength(8)
+
+    // KK-B09: dizi ve içindeki hatlar donmuş.
     expect(Object.isFrozen(lines)).toBe(true)
     expect(lines.every((line) => Object.isFrozen(line))).toBe(true)
     expect(() => {
@@ -86,11 +67,93 @@ describe('winLines', () => {
       ;(lines[0] as unknown as number[])[0] = 5
     }).toThrow(TypeError)
     expect(evaluateStatus(b('XXX......'))).toEqual({ kind: 'won', winner: 'X', line: [0, 1, 2] })
+
+    // KK-B10: memoize — aynı değerli konfigürasyon aynı referansı döner.
+    expect(winLines({ size: 3, winLength: 3 })).toBe(lines)
+    // Varsayılan konfigürasyon (3,3)tür.
+    expect(winLines()).toBe(lines)
   })
 
-  it('KK-B10: aynı konfigürasyon AYNI referansı döner, farklı konfigürasyon farklı', () => {
-    expect(winLines(C33)).toBe(winLines({ size: 3, winLength: 3 }))
-    expect(winLines(C64)).not.toBe(winLines(C65))
+  /**
+   * (6,4)'ün dört grubunun sınır hatları — hepsi ELLE hesaplanmış, `winLines`'a
+   * referanssız. Her grupta `c > 0` olan EN AZ BİR hat vardır; yalnız `c = 0`
+   * hatlarına bakan bir tablo, sütun teriminin işaretini bozan bir mutasyonu
+   * (`r * n + c` -> `r * n - c`) GÖREMEZDİ — (3,3)'te `c` daima 0'dır.
+   *
+   * Yerleşim: 0..17 yatay (satır başına 3), 18..35 dikey (sütun başına 3),
+   * 36..44 köşegen ↘ (3×3), 45..53 köşegen ↙ (3×3).
+   */
+  it('(6,4) İLK İSTEYEN — dört grubun sınır hatları, donmuşluk, kimlik', () => {
+    const frozen = winLines(C64)
+    const lines = frozen.map((line) => [...line])
+    expect(lines).toHaveLength(54)
+
+    expect(lines[0]).toEqual([0, 1, 2, 3]) // yatay r=0 c=0
+    expect(lines[1]).toEqual([1, 2, 3, 4]) // yatay r=0 c=1
+    expect(lines[2]).toEqual([2, 3, 4, 5]) // yatay r=0 c=2
+    expect(lines[3]).toEqual([6, 7, 8, 9]) // yatay r=1 c=0
+    expect(lines[17]).toEqual([32, 33, 34, 35]) // yatay r=5 c=2
+
+    expect(lines[18]).toEqual([0, 6, 12, 18]) // dikey c=0 r=0
+    expect(lines[19]).toEqual([6, 12, 18, 24]) // dikey c=0 r=1
+    expect(lines[21]).toEqual([1, 7, 13, 19]) // dikey c=1 r=0
+    expect(lines[35]).toEqual([17, 23, 29, 35]) // dikey c=5 r=2
+
+    expect(lines[36]).toEqual([0, 7, 14, 21]) // ↘ r=0 c=0
+    expect(lines[37]).toEqual([1, 8, 15, 22]) // ↘ r=0 c=1
+    expect(lines[39]).toEqual([6, 13, 20, 27]) // ↘ r=1 c=0
+    expect(lines[44]).toEqual([14, 21, 28, 35]) // ↘ r=2 c=2
+
+    expect(lines[45]).toEqual([3, 8, 13, 18]) // ↙ r=0 c=3
+    expect(lines[46]).toEqual([4, 9, 14, 19]) // ↙ r=0 c=4
+    expect(lines[53]).toEqual([17, 22, 27, 32]) // ↙ r=2 c=5
+
+    expect(Object.isFrozen(frozen)).toBe(true)
+    expect(frozen.every((line) => Object.isFrozen(line))).toBe(true)
+    expect(winLines({ size: 6, winLength: 4 })).toBe(frozen)
+    expect(winLines(C65)).not.toBe(frozen)
+  })
+
+  /**
+   * Kalan dört kombinasyonun İLK İSTEYENİ. Hat sayıları ÇIPLAK yazılır (KK-B07);
+   * donmuşluk ve kimlik aynı testte iddia edilir, çünkü sonraki hiçbir test bu
+   * konfigürasyonların üretim kodunu bir daha çalıştırmayacak.
+   */
+  it.each([
+    [6, 5, 32],
+    [11, 4, 304],
+    [11, 5, 252],
+    [11, 6, 204],
+  ])('(%i,%i) İLK İSTEYEN — KK-B07: tam %i hat, donmuş, memoize', (size, winLength, expected) => {
+    const lines = winLines({ size, winLength })
+    expect(lines).toHaveLength(expected)
+    expect(Object.isFrozen(lines)).toBe(true)
+    expect(lines.every((line) => Object.isFrozen(line))).toBe(true)
+    expect(lines.every((line) => line.length === winLength)).toBe(true)
+    expect(winLines({ size, winLength })).toBe(lines)
+  })
+
+  it('KK-B07: altı kombinasyonun hat sayıları çıplak tabloyla eşleşir', () => {
+    const combinations: readonly BoardConfig[] = [
+      { size: 3, winLength: 3 },
+      { size: 6, winLength: 4 },
+      { size: 6, winLength: 5 },
+      { size: 11, winLength: 4 },
+      { size: 11, winLength: 5 },
+      { size: 11, winLength: 6 },
+    ]
+    expect(combinations.map((config) => winLines(config).length)).toEqual([
+      8, 54, 32, 304, 252, 204,
+    ])
+  })
+
+  it('her hat indeksi kenar aralığındadır', () => {
+    for (const line of winLines(C115)) {
+      for (const index of line) {
+        expect(index).toBeGreaterThanOrEqual(0)
+        expect(index).toBeLessThan(121)
+      }
+    }
   })
 
   it('KK-B29: BOARD_MODES dışı konfigürasyon ÖNBELLEĞE ALINMAZ — her çağrı yeni dizi', () => {
@@ -281,6 +344,31 @@ describe('wouldWin — hızlı yol (hat tablosuna BAKMAZ)', () => {
     expect(wouldWin(b('X.X......'), 1, 'X')).toBe(true)
     expect(wouldWin(b('.XX......'), 0, 'X')).toBe(true)
     expect(wouldWin(b('XX.......'), 2, 'X')).toBe(true)
+  })
+
+  /**
+   * E-18 SINIFI: tahta 121 hücre ama tarama {6,4} konfigürasyonuyla yapılıyor.
+   * Alt satır sınırı (`r < n`) olmasaydı, tarama konfigürasyonun DIŞINDAKİ
+   * gerçek hücreleri okur ve HAYALET GALİBİYET üretirdi — indeksler 30, 36,
+   * 42, 48 altı-genişlikte "aynı sütun" gibi görünüyor ama 30 son satırdır.
+   */
+  it('konfigürasyon-tahta uyuşmazlığında satır sınırı aşılmaz — hayalet galibiyet yok', () => {
+    const cells: Cell[] = Array.from({ length: 121 }, () => null)
+    for (const index of [24, 30, 36, 42, 48]) cells[index] = 'X'
+    const oversized = boardFromCells(cells, C115)
+
+    // {6,4}'e göre 30 son satırın (r=5) ilk hücresidir: aşağı doğru tarama
+    // hemen durmalı. Yukarı doğru 24 sayılır -> 2 taş, K=4'e ulaşmaz.
+    // `r < n` kaldırılırsa 36/42/48 de sayılır ve 5 taşla hayalet galibiyet olur.
+    expect(wouldWin(oversized, 30, 'X', C64)).toBe(false)
+    // `r < n` -> `r <= n` sapması TEK fazladan satır okur (36). K=3'te bu tek
+    // hücre farkı sonucu çevirir: 24 + 30 + 36 = 3.
+    expect(wouldWin(oversized, 30, 'X', { size: 6, winLength: 3 })).toBe(false)
+    // POZİTİF KONTROL: aynı tahta, aynı hücre, DOĞRU konfigürasyonla okunduğunda
+    // taşlar gerçekten oradadır — "her şey false" gibi anlamsız bir yeşil değil.
+    expect(oversized[24]).toBe('X')
+    expect(oversized[30]).toBe('X')
+    expect(oversized[48]).toBe('X')
   })
 
   it('sınır taramaları dört kenarda da durur', () => {
