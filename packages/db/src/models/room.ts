@@ -1,3 +1,4 @@
+import { DEFAULT_BOARD_CONFIG, cellCount } from '@xox/game-core'
 import type { Cell, EndReason, Player, SeatOccupant, WinLineCells } from '@xox/shared'
 import { ROOM_TTL_SECONDS } from '@xox/shared'
 import type { Model } from 'mongoose'
@@ -7,9 +8,16 @@ import mongoose from 'mongoose'
 // (`does not provide an export named 'models'`). Vitest calisir cunku Vite
 // CJS interop-u farkli yapar — yani birim testler bu kirikligi GIZLER.
 const { Schema, model, models } = mongoose
-import { hasAtMostLength, hasExactLength, isNullOrExactLength } from './validators'
+import { hasAtMostLength, hasExactLength, isNullOrLengthBetween } from './validators'
 
-const BOARD_SIZE = 9
+/**
+ * Varsayılan tahta HÜCRE sayısı. KK-B36: yerel `const BOARD_SIZE = 9` SİLİNDİ —
+ * o ad üç dosyada iki farklı birimi (9 hücre / 3 kenar) taşıyordu ve "9" burada
+ * `game-core`'dan bağımsız İKİNCİ bir kopyaydı. Değer artık tek kaynaktan
+ * türetilir; `size`/`winLength` alanları ve `9..121` aralığı DB-BOARD-001'in
+ * işidir, bu kartta davranış bit düzeyinde aynı kalır.
+ */
+const DEFAULT_CELL_COUNT = cellCount(DEFAULT_BOARD_CONFIG)
 
 export type RoomState = 'waiting' | 'playing' | 'finished'
 
@@ -143,8 +151,8 @@ const resultSchema = new Schema<RoomResult>(
       type: [Number],
       default: null,
       validate: {
-        validator: isNullOrExactLength(3),
-        message: 'line tam olarak 3 indeks içermelidir',
+        validator: isNullOrLengthBetween(3, 6),
+        message: 'line 3 ile 6 arasında indeks içermelidir',
       },
     },
     reason: { type: String, enum: ['line', 'resign', 'timeout', 'abandon', null], default: null },
@@ -186,18 +194,18 @@ const roomSchema = new Schema<RoomDoc>(
     },
     board: {
       type: [{ type: String, enum: ['X', 'O', null] }],
-      default: (): null[] => Array.from({ length: BOARD_SIZE }, () => null),
+      default: (): null[] => Array.from({ length: DEFAULT_CELL_COUNT }, () => null),
       validate: {
-        validator: hasExactLength(BOARD_SIZE),
-        message: `board tam olarak ${String(BOARD_SIZE)} hücre içermelidir`,
+        validator: hasExactLength(DEFAULT_CELL_COUNT),
+        message: `board tam olarak ${String(DEFAULT_CELL_COUNT)} hücre içermelidir`,
       },
     },
     moves: {
       type: [moveSchema],
       default: (): RoomMove[] => [],
       validate: {
-        validator: hasAtMostLength(BOARD_SIZE),
-        message: `moves en fazla ${String(BOARD_SIZE)} kayıt içerebilir`,
+        validator: hasAtMostLength(DEFAULT_CELL_COUNT),
+        message: `moves en fazla ${String(DEFAULT_CELL_COUNT)} kayıt içerebilir`,
       },
     },
     turnDeadline: { type: Date, default: null },

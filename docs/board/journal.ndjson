@@ -1218,3 +1218,52 @@
 {"ts":"2026-08-26T00:10:06Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
 {"ts":"2026-08-26T00:10:22Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
 {"ts":"2026-08-26T01:35:00Z","event":"task.done","task":"W2-04","note":"Gozlemlenebilirlik + gunluk maskeleme. HER SINIF ICIN GERCEK CONSOLE CIKTISI raporlandi (uydurma degil). AKILLI KARAR: userId ve roomCode SILINMIYOR, HMAC-leniyor (AUTH_SECRET tabanli) — korelasyon korunuyor, geri dondurulemez. no-console lint kurali eklendi, tek istisna log.ts, sonda ateslendi. BEKLENMEYEN KAZANIM: /api/health artik VERCEL_ENV <-> veritabani uyusmazligini yakaliyor (KK-101) — OPS-006-da production veritabanini kurtaran hata sinifini health-in kendisi de tespit ediyor. LEAD SONDASI BOSLUK BULDU: TICKET_QUERY_PATTERN bozuldugunda 12 testin hicbiri kirilmiyor (e-posta deseninde 2 kirmizi doniyor). Bugun zararsiz cunku bilet JWT ve JWT_PATTERN yakaliyor; SEC-003 formati degistirirse tehlikeli. SEC-004 acildi. size-limit rota basina +2.5 kB, butce icinde"}
+{"ts":"2026-08-26T01:45:00Z","event":"wave.start","tasks":["W3-03","W3-04"],"note":"Bos slotlara alindi. W2-01 ve W3-02 YINE REDDEDILDI, bu sefer grep-le kanitlandi: apply-move.ts Board/boardFromCells/evaluateStatus kullaniyor, matches.ts henuz yok ama GameDoc.winLine-a karsi yazilacak — ikisi de CORE-CFG-001-in degistirdigi tipler. emoji.ts, handlers/emoji.ts, friendship.ts TEMIZ cikti (grep ile dogrulandi). Ikisi de UI-SKEL-001-in donmus iskelet slotlarini dolduruyor: EmojiTray, InviteLink, FriendAddButton zaten monte ve proplari gercek stateye bagli — RoomScreen.tsx acilmayacak. Dondurma tam olarak bunun icin yapilmisti"}
+{"ts":"2026-08-26T00:16:06Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/packages/game-core/src/status.test.ts"}
+{"ts":"2026-08-26T00:17:47Z","event":"file.touched","path":"packages/db/src/queries/friends.ts"}
+{"ts":"2026-08-26T00:18:10Z","event":"file.touched","path":".claude/worktrees/W3-03/packages/db/src/rooms/emoji.test.ts"}
+{"ts":"2026-08-26T00:18:28Z","event":"file.touched","path":"packages/db/src/queries/friends.test.ts"}
+{"ts":"2026-08-26T00:18:35Z","event":"file.touched","path":"packages/db/src/queries/friends.test.ts"}
+{"ts":"2026-08-26T00:18:37Z","event":"file.touched","path":".claude/worktrees/W3-03/packages/db/src/rooms/emoji.test.ts"}
+{"ts":"2026-08-26T00:18:42Z","event":"file.touched","path":".claude/worktrees/W3-03/packages/db/src/rooms/emoji.test.ts"}
+{"ts":"2026-08-26T00:18:47Z","event":"file.touched","path":"packages/db/src/index.ts"}
+{"ts":"2026-08-26T00:19:18Z","event":"file.touched","path":".claude/worktrees/W3-03/packages/db/src/rooms/emoji.ts"}
+{"ts":"2026-08-26T00:21:59Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/emoji.test.ts"}
+{"ts":"2026-08-26T00:22:05Z","event":"file.touched","path":"apps/web/app/api/friends/route.ts"}
+{"ts":"2026-08-26T00:22:19Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/emoji.test.ts"}
+{"ts":"2026-08-26T00:22:26Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/emoji.test.ts"}
+{"ts":"2026-08-26T00:22:32Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/emoji.test.ts"}
+{"ts":"2026-08-26T00:22:37Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/emoji.test.ts"}
+{"ts":"2026-08-26T00:23:02Z","event":"file.touched","path":"apps/web/app/api/friends/route.test.ts"}
+{"ts":"2026-08-26T00:23:29Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/emoji.ts"}
+{"ts":"2026-08-26T00:23:53Z","event":"file.touched","path":".claude/worktrees/W3-04/apps/web/app/api/friends/route.test.ts"}
+{"ts":"2026-08-26T00:23:58Z","event":"file.touched","path":".claude/worktrees/W3-04/apps/web/app/api/friends/route.test.ts"}
+{"ts":"2026-08-26T00:24:53Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/index.test.ts"}
+{"ts":"2026-08-26T00:24:54Z","event":"file.touched","path":".claude/worktrees/W3-04/apps/web/components/room/FriendAddButton.tsx"}
+{"ts":"2026-08-26T00:25:01Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/index.test.ts"}
+{"ts":"2026-08-26T00:25:10Z","event":"file.touched","path":".claude/worktrees/W3-04/apps/web/components/room/FriendAddButton.test.tsx"}
+{"ts":"2026-08-26T00:25:17Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/index.test.ts"}
+{"ts":"2026-08-26T00:25:31Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/lib/realtime/handlers/index.test.ts"}
+{"ts":"2026-08-26T00:26:12Z","event":"file.touched","path":".claude/worktrees/CORE-CFG-001/docs/board/reports/CORE-CFG-001.md"}
+{"ts":"2026-08-26T00:26:16Z","event":"file.touched","path":".claude/worktrees/W3-04/apps/web/components/friends/FriendsContent.tsx"}
+{"ts":"2026-08-26T00:26:26Z","event":"file.touched","path":".claude/worktrees/W3-04/apps/web/app/arkadaslar/page.tsx"}
+{"ts":"2026-08-26T00:26:50Z","event":"file.touched","path":".claude/worktrees/W3-04/apps/web/components/friends/FriendsContent.test.tsx"}
+{"ts":"2026-08-26T00:27:12Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/components/room/EmojiTray.test.tsx"}
+{"ts":"2026-08-26T00:27:22Z","event":"subagent.stop"}
+{"ts":"2026-08-26T00:27:43Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/components/room/EmojiTray.tsx"}
+{"ts":"2026-08-26T00:29:05Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/components/room/InviteLink.test.tsx"}
+{"ts":"2026-08-26T00:29:26Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/components/room/InviteLink.tsx"}
+{"ts":"2026-08-26T00:31:39Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/components/room/EmojiTray.tsx"}
+{"ts":"2026-08-26T02:10:00Z","event":"task.done","task":"CORE-CFG-001","note":"DORT PAKET TEK COMMITTE, cakisma cikmadi, birlesmis agac Cached:0 ile yesil. Board MARKALI dizi — cast kimlik donusumu olmadigi icin lint silmiyor, boardFromCells kapisi tip duzeyinde ayakta (lead @ts-expect-error ile dogruladi). cellAt total: board[index] ?? null, hayalet galibiyet sinifi kapandi. 642 oyun KORUNDU (73+569). MUTASYON %97.31 -> %99.75 — ajan 11 survivor bulup 10-unu oldurdu, kalan biri kanitli esdeger. game-core 91 -> 179 test. AI.TEST.TS 11 SATIR DEGISTI, SIFIR DEGIL: ADR-0011 EMPTY_BOARD silinmesini emrediyordu, KK-B20 sifir satir diyordu — CELISKI BENIM KARTIMDAYDI, ajan bildirdi ve ikameyi mekanik tuttu (hicbir expect/esik/oyun sayisi degismedi). KAPSAM DISI IKI ZORUNLU DOKUNUS: rooms/apply-move.ts BOARD_SIZE import ediyordu, rooms/finish.ts status.line[0..2] destructure ediyordu — mimar bu halkayi kacirmis, ikisi olmadan db typecheck kiriliyordu. IKI YENI ORUNTU: memoizasyon+Stryker perTest (test sirasi degisince skor %94->%84) ve parametrenin notr elemani (3x3-te N-K=0)"}
+{"ts":"2026-08-26T00:33:15Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/app/davet/invite-target.test.ts"}
+{"ts":"2026-08-26T00:33:34Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/app/davet/invite-target.ts"}
+{"ts":"2026-08-26T00:33:40Z","event":"file.touched","path":".claude/worktrees/W3-04/apps/web/app/api/friends/route.ts"}
+{"ts":"2026-08-26T00:34:09Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/app/davet/[kod]/page.test.tsx"}
+{"ts":"2026-08-26T00:34:10Z","event":"file.touched","path":".claude/worktrees/W3-04/packages/db/src/queries/friends.ts"}
+{"ts":"2026-08-26T00:34:38Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/app/davet/[kod]/page.tsx"}
+{"ts":"2026-08-26T00:35:19Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/app/davet/oturumsuz-akis.test.tsx"}
+{"ts":"2026-08-26T00:35:45Z","event":"file.touched","path":".claude/worktrees/W3-03/apps/web/app/davet/invite-target.test.ts"}
+{"ts":"2026-08-26T00:36:18Z","event":"file.touched","path":".claude/worktrees/W3-04/docs/board/reports/W3-04.md"}
+{"ts":"2026-08-26T00:37:40Z","event":"subagent.stop"}
+{"ts":"2026-08-26T06:19:22Z","event":"file.touched","path":".claude/worktrees/W3-03/packages/db/src/rooms/skeletons.test.ts"}
+{"ts":"2026-08-26T02:35:00Z","event":"task.done","task":"W3-04","note":"Arkadaslar. SIRALI-CIFT KAPISI korundu, sonda ile dogrulandi (sortPair devre disi -> 5 test kirmizi). ZEKICE NUMARALANDIRMA SAVUNMASI: route testinde @xox/db mocku User-i BILEREK export etmiyor, yani biri sonradan kullanici-var-mi kontrolu eklerse test undefined ile kirilir — mekanik nobetci. Idempotans mutasyonla kanitlandi ($setOnInsert -> $set, test kirmizi). RoomScreen.tsx dokunulmadi (dondurma tuttu, ucuncu kart). db 184 test, web 663. YENI ORUNTU: ajanlar worktreeye gecmeden yazmaya basliyor, UC KEZ oldu (DESIGN-001a, W3-04, AUTH-002) — hepsi kendi temizledi ama kart promptunda onlem alinmali"}

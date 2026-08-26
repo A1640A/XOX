@@ -1136,3 +1136,43 @@ Bu gece bu ders üç ayrı yerde bağımsız olarak çıktı.
 
 **İkinci ders — katmanlı savunma işe yarar:** birinci kapı atlandı, ikincisi tuttu. Tek kapıya
 güvenen bir tasarımda production veritabanı silinmiş olurdu.
+
+## 2026-08-26 · Memoizasyon + Stryker `perTest` = kapı yanlış kapsamı ölçer (örüntü 6'nın türevi)
+
+`CORE-CFG-001` ölçtü: memoize eden bir fonksiyonun üretim kodunu gerçekten koşan tek test, o
+girdiyi **ilk isteyen** testtir. Sonrakiler önbellekten döner ve mutantı **öldüremez**.
+
+Kanıt niteliksel değil, sayısal: **iddiaların tek satırı değişmeden yalnız test sırası
+değiştirildi** ve mutasyon skoru **%94.04 → %84.25**'e düştü.
+
+**Reçete:** her konfigürasyonun _ilk isteyeni_, değerleri + sayıyı + donmuşluğu + referans
+kimliğini **tek testte** iddia etsin. Bunu kodda gerekçesiyle yaz, yoksa bir sonraki kişi
+testleri "düzenleyip" skoru sessizce düşürür.
+
+## 2026-08-26 · Parametrik üreticide sıfır olan terim, varsayılan konfigürasyonda görünmez
+
+`(3,3)`'te `N − K = 0`. Yani parametrik bir kazanma-hattı üreticisinin sütun terimini bozan
+mutasyon **3×3 testleriyle görünmez** — çarpan zaten sıfır.
+
+Parametrenin sıfır **olmadığı** bir konfigürasyonda (ör. `(6,4)`) da **elle yazılmış** beklenti
+şart. `CORE-CFG-001` bunu `(6,4)`'ün 17 sınır hattıyla kapattı.
+
+Genel kural: bir parametreyi sınarken, o parametrenin **nötr elemanı olmadığı** en az bir vaka
+seç. Varsayılan konfigürasyon çoğu zaman nötr elemandır ve tam da bu yüzden hiçbir şey ölçmez.
+
+## 2026-08-26 · Ajanlar worktree'ye GEÇMEDEN yazmaya başlıyor — üç kez oldu
+
+`DESIGN-001a`, `W3-04` ve daha önce `AUTH-002` ilk dosyalarını **ana checkout'a** yazdı, sonra
+fark edip `git stash`/`mv`/`cp` ile doğru worktree'ye taşıdı ve `main`'i temizledi. Üçü de
+dürüstçe bildirdi, hiçbirinde kalıcı zarar olmadı — ama üç kez tekrarlanan bir şey tesadüf değil.
+
+**Kök neden:** kart prompt'u `git worktree add` + `cd` bloğunu veriyor, ama ajan önce dosya
+okumaya/yazmaya başlayıp `cd`'yi sonraya bırakabiliyor. Araçların çalışma dizini ana checkout.
+
+**Önlem (kart yazarken):** worktree kurulum bloğunu prompt'un **en başına** koy ve şu cümleyi
+ekle: _"Herhangi bir dosya okumadan/yazmadan ÖNCE worktree'yi kur ve içine geç. İlk `Write`/`Edit`
+çağrından önce `pwd` ile doğrula."_
+
+**Lead tarafında:** merge öncesi `git status --porcelain` ana checkout'ta **her zaman** kontrol
+edilir. Bu gece üç kez temiz çıktı çünkü ajanlar kendileri temizledi — ama temizlemeselerdi
+kör bir `git add` onları merge edilmemiş iş olarak `main`'e sokardı (CLAUDE.md kural 6).

@@ -63,7 +63,7 @@ export function useComputerGame(): UseComputerGameResult {
     setState(createInitialState())
   }
 
-  /** "Yeniden oyna" — tahtayı `EMPTY_BOARD`'a döndürür, seçili zorluğu KORUR (KK-026). */
+  /** "Yeniden oyna" — tahtayı `emptyBoard()`'a döndürür, seçili zorluğu KORUR (KK-026). */
   function reset(): void {
     setState(createInitialState())
   }

@@ -1,6 +1,6 @@
 import {
   applyMove,
-  EMPTY_BOARD,
+  emptyBoard,
   evaluateStatus,
   isValidMove,
   type Board,
@@ -24,7 +24,7 @@ import { chooseMove } from '@xox/game-core/ai'
  * sırası, hangi fonksiyon çağrılır" akışı vardır — `apps/web` kuralı yeniden
  * yazmaz, delege eder.
  *
- * İnsan her zaman X, bilgisayar her zaman O — X başlar (`nextPlayer(EMPTY_BOARD) === 'X'`),
+ * İnsan her zaman X, bilgisayar her zaman O — X başlar (`nextPlayer(emptyBoard()) === 'X'`),
  * yani insan açılış hamlesini oynar.
  */
 export const HUMAN: Player = 'X'
@@ -36,7 +36,10 @@ export interface ComputerGameState {
 }
 
 export function createInitialState(): ComputerGameState {
-  return { board: EMPTY_BOARD, status: evaluateStatus(EMPTY_BOARD) }
+  // Konfigürasyon bu ekranda VARSAYILANDIR ({3,3}); boyut seçimi UI-COMP-001'in
+  // işidir. `emptyBoard()` memoize edilmiş donmuş tek örneği döndürür.
+  const board = emptyBoard()
+  return { board, status: evaluateStatus(board) }
 }
 
 /**
