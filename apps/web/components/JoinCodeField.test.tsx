@@ -25,6 +25,8 @@ describe('JoinCodeField', () => {
           state: 'waiting',
           seats: { X: null, O: null },
           canJoin: true,
+          size: 3,
+          winLength: 3,
         }),
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -141,6 +143,8 @@ describe('JoinCodeField', () => {
           state: 'waiting',
           seats: { X: { userId: 'u1', name: 'A' }, O: { userId: 'u2', name: 'B' } },
           canJoin: false,
+          size: 3,
+          winLength: 3,
         }),
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -164,6 +168,8 @@ describe('JoinCodeField', () => {
           state: 'playing',
           seats: { X: { userId: 'u1', name: 'A' }, O: { userId: 'u2', name: 'B' } },
           canJoin: false,
+          size: 3,
+          winLength: 3,
         }),
     })
     vi.stubGlobal('fetch', fetchMock)
@@ -187,6 +193,8 @@ describe('JoinCodeField', () => {
           state: 'finished',
           seats: { X: { userId: 'u1', name: 'A' }, O: { userId: 'u2', name: 'B' } },
           canJoin: false,
+          size: 3,
+          winLength: 3,
         }),
     })
     vi.stubGlobal('fetch', fetchMock)
