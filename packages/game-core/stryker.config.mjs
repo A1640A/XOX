@@ -9,7 +9,18 @@ export default {
   reporters: ['html', 'clear-text', 'progress'],
   htmlReporter: { fileName: '../../reports/mutation/game-core.html' },
   coverageAnalysis: 'perTest',
-  mutate: ['src/**/*.ts', '!src/**/*.test.ts', '!src/index.ts', '!src/types.ts'],
+  // `search-corpus-*.test.ts` mutasyon koşusundan HARİÇTİR — gerekçesi
+  // `vitest.mutation.config.ts`in başındadır. Eşikler DEĞİŞMEDİ.
+  vitest: { configFile: 'vitest.mutation.config.ts' },
+  // `*.fixture.ts` test donanımıdır, üretim kodu değil: korpus üretecine
+  // yapılan mutasyon yalnız korpusu değiştirir, hiçbir iddiayı düşürmez.
+  mutate: [
+    'src/**/*.ts',
+    '!src/**/*.test.ts',
+    '!src/**/*.fixture.ts',
+    '!src/index.ts',
+    '!src/types.ts',
+  ],
   thresholds: { high: 95, low: 90, break: 90 },
   timeoutMS: 60000,
 }

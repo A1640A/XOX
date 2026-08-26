@@ -1,14 +1,22 @@
 import { availableMoves } from './board'
+import { DEFAULT_BOARD_CONFIG } from './config'
+import type { BoardConfig } from './config'
 import { InvalidMoveError } from './errors'
 import { placeStone } from './moves'
+import { searchMove } from './search'
 import { evaluateStatus } from './status'
 import type { Board, Difficulty, Player } from './types'
 
 /**
- * DEĞİŞMEZ: WIN_SCORE > BOARD_SIZE (yani > 9, `board.ts`).
+ * DEĞİŞMEZ (KK-B48 (a)): WIN_SCORE > cellCount(DEFAULT_BOARD_CONFIG), yani > 9.
+ *
+ * Eski metin `BOARD_SIZE`e atıf yapıyordu; o ad ADR-0010 ile SİLİNDİ (aynı ad
+ * iki farklı birimi — 9 hücre / 3 kenar — taşıyordu). Sayı ve gerekçe aynı,
+ * yalnız adres güncellendi. `searchMove`in kendi, daha güçlü değişmezi
+ * `ai-config.ts`tedir: `TERMINAL_SCORE − MAX_SEARCH_DEPTH > MAX_HEURISTIC`.
  *
  * Minimax kazancı `WIN_SCORE - depth`, kaybı `depth - WIN_SCORE` diye puanlar;
- * derinlik en fazla BOARD_SIZE (dokuz yarım hamle) olur. WIN_SCORE bu sınıra
+ * derinlik en fazla dokuz yarım hamle olur. WIN_SCORE bu sınıra
  * eşit ya da altında kalsaydı geç bir kazanç 0'a (beraberlik) düşer, altına
  * inince de işaret değiştirip kayıp gibi görünürdü. Şu anki pay tam olarak 1.
  *
@@ -65,8 +73,8 @@ function minimax(board: Board, current: Player, maximizing: Player, depth: numbe
 }
 
 /** Oyun bitmişse hamle üretilemez; kalan tek doğru cevap hatadır. */
-function assertPlayable(board: Board): void {
-  if (evaluateStatus(board).kind !== 'playing') {
+function assertPlayable(board: Board, config: BoardConfig = DEFAULT_BOARD_CONFIG): void {
+  if (evaluateStatus(board, config).kind !== 'playing') {
     throw new InvalidMoveError(-1, 'game-over')
   }
 }
@@ -91,22 +99,62 @@ export function bestMove(board: Board, player: Player): number {
   return scored.reduce((best, candidate) => (candidate.score > best.score ? candidate : best)).move
 }
 
+export interface ChooseMoveOptions {
+  readonly config?: BoardConfig
+  /** Duvar saati bütçesi (ms). Yalnız N > 3 yolunda anlamlıdır. */
+  readonly budgetMs?: number
+  /** `rng` gibi ENJEKTE EDİLİR; varsayılanı `Date.now`. */
+  readonly now?: () => number
+}
+
+/**
+ * İKİ AYRI KOD YOLU (ADR-0013 §1).
+ *
+ * `size === 3` → bugünkü TAM MİNİMAX (`bestMove`), gövdesi satırı satırına
+ * aynı: KK-B20'nin tümevarımsal yenilmezlik kanıtı o kodu koşmaya devam eder.
+ * Budama yok, derinlik sınırı yok, bütçe yok.
+ *
+ * `size > 3` → `searchMove`. Tek bir birleşik fonksiyon yazıp 3×3'ü onun özel
+ * hâli yapmak kanıtın koştuğu kodu DEĞİŞTİRİRDİ; o zaman "kanıt korundu" demek
+ * olgusal olarak yanlış olurdu.
+ */
+function strongMove(
+  board: Board,
+  player: Player,
+  config: BoardConfig,
+  options: ChooseMoveOptions,
+): number {
+  if (config.size === 3) return bestMove(board, player)
+  return searchMove(board, player, {
+    config,
+    budgetMs: options.budgetMs,
+    now: options.now,
+  }).move
+}
+
+/**
+ * `rng` DÖRDÜNCÜ parametredir ve öyle kalır: mevcut çağıranlar (ve
+ * `ai.test.ts`in tamamı) onu konumsal geçiyor. Konfigürasyon BEŞİNCİ ve
+ * opsiyonel bir nesnedir — konfigürasyonu bilmeyen çağıran hiç değişmez.
+ */
 export function chooseMove(
   board: Board,
   player: Player,
   difficulty: Difficulty,
   rng: () => number = Math.random,
+  options: ChooseMoveOptions = {},
 ): number {
-  assertPlayable(board)
+  const config = options.config ?? DEFAULT_BOARD_CONFIG
+  assertPlayable(board, config)
   const moves = availableMoves(board)
 
   switch (difficulty) {
     case 'easy':
       return pickRandom(moves, rng)
     case 'medium':
-      return rng() < 0.5 ? bestMove(board, player) : pickRandom(moves, rng)
+      return rng() < 0.5 ? strongMove(board, player, config, options) : pickRandom(moves, rng)
     case 'unbeatable':
-      return bestMove(board, player)
+      return strongMove(board, player, config, options)
     // Zorluk tip sisteminin dışından (istek gövdesi, veritabanı) gelebilir;
     // sessizce `undefined` döndürmek yerine yüksek sesle reddedilir.
     default:
