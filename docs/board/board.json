@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T09:51:47.462Z",
+  "updatedAt": "2026-08-26T10:22:48.816Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1186,10 +1186,10 @@
         "packages/shared/src/rest-contract.ts",
         "apps/web/app/api/rooms/[code]/route.ts"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/CTR-003",
-      "report": null,
+      "report": "docs/board/reports/CTR-003.md",
       "blockedReason": null,
       "acceptance": [
         "IKINCI KOK NEDEN (12 kirmizinin cogu): roomStateResponseSchema artik size/winLength istiyor, route vermiyor -> ZodError invalid_union -> HTTP 500. Degerleri resolveBoardConfig(doc) ile uret; doc.size ?? 3 YAZMA (sabitin ucuncu kopyasi olur).",
@@ -1203,7 +1203,8 @@
         "pnpm gates temiz",
         "KAPSAM DARALDI (tasarim §12.5): canJoinRoom fonksiyonunun KENDISI ve mutasyon testleri CTR-BOARD-001'in acik shared penceresinde iner. Bu kartta geriye YALNIZ tuketici baglamasi kalir (superRefine + apps/web/app/api/rooms/[code]/route.ts ayni fonksiyonu cagirir) — bu kart ARTIK packages/shared UNFREEZE'I GEREKTIRMEZ."
       ],
-      "priority": "P1"
+      "priority": "P1",
+      "mergeSha": "805192c"
     },
     {
       "id": "SEC-003",
@@ -1754,7 +1755,7 @@
         "apps/web/messages/tr.ts",
         "apps/mobile/messages/tr.ts"
       ],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/CTR-BOARD-001",
       "report": "docs/board/reports/CTR-BOARD-001.md",
@@ -1780,7 +1781,8 @@
         "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0` ve `gh run list --workflow=CI --limit 3` yesil.",
         "BOYUT UYARISI (planner): bu kart tek oturum icin SINIRDA — primitives + errors + rest-contract + ws-protocol + room-client + 24 mesaj anahtari + iki tr.ts + testids + tuketici sondasi + canJoinRoom. ADR-0015 tek pencereyi zorunlu kildigi icin BOLUNMUYOR. Ilk denemede yarim kalirsa attempts harcanmaz; lead karti (shared semalari) / (metin agaci + testids) diye ikiye ayirir ve AYNI DALGADA seri kosturur — ardisik dalgaya DEGIL, pencere kapanmamali."
       ],
-      "blockedReason": "MERGE BEKLETILDI (lead karari, bilincli): tek basina merge edilirse apps/web typecheck KIRIK kalir — size/winLength/lastMove artik semada zorunlu, tuketiciler henuz vermiyor. Diger ALTI paket yesil, dogrulandi. ADR-0015 §10.5 bunu bolumlemenin bilinen zayif noktasi olarak isaretlemisti. Bu geceki en pahali hatamiz CI-in bes saat kirmizi kalmasiydi; BILEREK kirik merge etmek onu tekrar etmek olur. ZINCIR KURULDU: DB-BOARD-001 (ve sonra UI-BOARD-001) feat/CTR-BOARD-001-DEN dallaniyor; zincir yesil olunca main-e TEK SEFERDE inecek."
+      "blockedReason": null,
+      "mergeSha": "805192c"
     },
     {
       "id": "CORE-AI-001",
@@ -1846,7 +1848,7 @@
         "apps/web/lib/realtime/connection.ts",
         "apps/web/lib/client/use-room.test.tsx"
       ],
-      "status": "reviewing",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/DB-BOARD-001",
       "report": "docs/board/reports/DB-BOARD-001.md",
@@ -1877,7 +1879,8 @@
         "pnpm gates temiz; merge sonrasi turbo --force ile `Cached: 0`.",
         "CORE-CFG-001 BIRAKTI: packages/db/src/rooms/rematch.ts icinde 9 elemanli YEREL EMPTY_BOARD dizisi duruyor — konfigurasyondan turetilmeli."
       ],
-      "blockedReason": "ZINCIRDE BEKLIYOR. Kendi isini bitirdi: CTR-BOARD-001-in biraktigi 111 web kirmizisinin 99-unu kapatti, packages/db 230/230 yesil. Kalan 12 kirmizi tamamen CTR-003-un kumesinde (canJoin + route.ts + rest-contract.ts) — DOGRULADIM, ajanin sozune guvenmedim."
+      "blockedReason": null,
+      "mergeSha": "805192c"
     },
     {
       "id": "UI-BOARD-001",
@@ -2196,6 +2199,26 @@
         "SSO TESPITI OLCULEREK BULUNDU, varsayilmadi: govde metni (7 aday dizgenin hicbiri yok), durum kodu (duvar 401 degil HTTP 200 donuyor) ve set-cookie (Playwright yonlendirmeyi TAKIP ettigi icin zincirde tukeniyor, headersArray-de 0 adet) ELENDI. Tek kararli iz: yanitin SON ORIGIN-i (vercel.com) istenen origin-den farkli."
       ],
       "conflictSet": ["apps/e2e/playwright.config.ts", ".github/workflows/e2e-preview.yml"]
+    },
+    {
+      "id": "CI-005",
+      "title": "game-engine.test.ts yenilmezlik sondasi YUKE DUYARLI — paralel kosuda kirmizi veriyor",
+      "priority": "P3",
+      "agent": "xox-test-writer",
+      "status": "todo",
+      "deps": [],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "OLCULDU 2026-08-26: turbo test:coverage --force (5 paket paralel) + arka planda bir agent koserken 207 oyunluk yenilmezlik sondasi 1 kez kirmizi verdi. Tek basina 707/707 yesil; --concurrency=2 ile de 707/707 yesil. Yani IDDIA dogru, ZAMANLAMA kirilgan.",
+        "Sondanin kendisi degerli (9 acilis varyanti x 207 oyun) — SILME, kapsamini DARALTMA.",
+        "Cozum yonu: bu testi ayri bir vitest projesine/etiketine al ve seri kostur, ya da acik bir timeout ver. Yesil kalmasi CPU bosluguna bagli olmamali.",
+        "CI-da henuz gorulmedi (runner daha az yuklu) — ama CI yuklendiginde flaky olacak sinifta."
+      ],
+      "conflictSet": [
+        "apps/web/components/computer/game-engine.test.ts",
+        "apps/web/vitest.config.ts"
+      ]
     }
   ]
 }
