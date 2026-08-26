@@ -41,3 +41,12 @@ export {
 // bilinçli olarak üst barrelde ve dosyanın kendisinden geliyor, donmuş barrel'e
 // dokunulmadı (DB-003).
 export { getRoomSummary, type RoomSummary } from './rooms/summary'
+export {
+  getFriendsView,
+  hasFinishedGameTogether,
+  removeFriend,
+  requestFriendship,
+  respondToFriendRequest,
+  type FriendEntry,
+  type FriendsView,
+} from './queries/friends'
