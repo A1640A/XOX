@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T08:14:06.429Z",
+  "updatedAt": "2026-08-27T08:32:38.556Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2001,9 +2001,9 @@
       "agent": "xox-dev-web",
       "deps": ["UI-CFG-001", "CORE-AI-001"],
       "conflictSet": ["apps/web/components/computer/**", "apps/web/app/oyna/bilgisayar/page.tsx"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/UI-COMP-001",
       "report": null,
       "acceptance": [
         "KK-B42 saglanir: bilgisayar ekraninda boyut ve K secimi ODA AKISINDAN BAGIMSIZDIR — sunucuya ISTEK GITMEZ, oda kurulmaz. UI-CFG-001'in BoardConfigPicker'i YENIDEN KULLANILIR; ikinci bir secici bileseni YAZILMAZ. Varsayilan {3,3} -> bugunku tiklama sayisi DEGISMEZ.",
@@ -2031,9 +2031,9 @@
         "apps/web/app/api/health/route.ts",
         "apps/web/next.config.ts"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/ROLLOUT-BOARD-001",
       "report": null,
       "acceptance": [
         "ILK KRITER BIR OLCUMDUR (ADR-0018): Vercel Skew Protection bu projede ETKIN MI? Skew Protection Pro/Enterprise takimlar icindir ve bu projenin plani DOGRULANMADI. MEKANIK SONDA: VERCEL_SKEW_PROTECTION_ENABLED === '1' ve VERCEL_DEPLOYMENT_ID VARLIGI, GET /api/health yanitina BOOLEAN olarak eklenir — DEGER SIZDIRILMAZ. Olcum yapilmadan 'korunuyoruz' DENMEYECEK (gotcha oruntu 1: kural yazilmis ama atesLenmiyor).",
@@ -2278,5 +2278,5 @@
       "conflictSet": ["apps/web/auth.ts"]
     }
   ],
-  "wave": "B4"
+  "wave": "B5"
 }
