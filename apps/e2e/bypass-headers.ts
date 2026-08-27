@@ -26,12 +26,21 @@
 export function bypassHeaders(): Record<string, string> {
   const secret = process.env['VERCEL_AUTOMATION_BYPASS_SECRET']
   if (secret === undefined || secret === '') return {}
-  return {
-    'x-vercel-protection-bypass': secret,
-    // Yanıtla birlikte bir atlatma çerezi de kurdurur. Başlık yalnız Playwright'ın
-    // kendi isteklerine eklenir; sayfanın KENDİ başlattığı yönlendirmeler,
-    // `next/link` gezinmeleri ve WebSocket upgrade'i başlığı taşımaz — çerez taşır.
-    // `samesitenone` şart: WS ve çapraz-bağlam isteklerde çerez aksi halde düşer.
-    'x-vercel-set-bypass-cookie': 'samesitenone',
-  }
+  // YALNIZ başlık. `x-vercel-set-bypass-cookie` BİLEREK YOK — bir kez denendi ve
+  // ölçülerek elendi (CI, 2026-08-27):
+  //
+  // O başlık Vercel'e içeriği doğrudan servis etmek yerine **araya bir 307
+  // yönlendirmesi** sokturuyor (Location = isteğin KENDİSİ, çerezi kurup tekrar
+  // istetmek için). Tarayıcı bunu sessizce izlediği için çoğu test etkilenmiyordu,
+  // ama iki yerde kapıyı kırdı:
+  //   • `auth.spec.ts` `maxRedirects: 0` ile ham 307'yi okuyor → uygulamanın
+  //     `/giris?donus=…` yönlendirmesi yerine Vercel'in kendi çerez redirect'ini
+  //     gördü (`Location: /oyna/bilgisayar`), 4 test kırmızı.
+  //   • `smoke.spec.ts`'in ham `ws` istemcisi upgrade yerine 307 aldı
+  //     ("Unexpected server response: 307").
+  //
+  // Çerezin ilk gerekçesi "WS upgrade başlığı taşımaz" idi; o sorun artık başlığı
+  // ham `ws` istemcisine ELLE geçerek çözülüyor (`smoke.spec.ts`). Yani çerezin
+  // faydası kalmadı, zararı ölçüldü. GERİ EKLEME.
+  return { 'x-vercel-protection-bypass': secret }
 }
