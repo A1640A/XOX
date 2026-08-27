@@ -3,6 +3,7 @@
 import type { RoomCode } from '@xox/shared'
 import { TESTID } from '@xox/shared'
 import { Board } from '@/components/board/Board'
+import { GameConfigSummary } from '@/components/board-config/GameConfigSummary'
 import { ErrorBanner } from '@/components/ErrorBanner'
 import { useRoom } from '@/lib/client/use-room'
 import { tr } from '@/messages/tr'
@@ -13,7 +14,7 @@ import { FriendAddButton } from './FriendAddButton'
 import { InviteLink } from './InviteLink'
 import { OpponentLeftBanner } from './OpponentLeftBanner'
 import { ResultPanel } from './ResultPanel'
-import { statusText, turnAttr } from './status-text'
+import { liveAnnouncement, turnAttr } from './status-text'
 import { TurnTimer } from './TurnTimer'
 
 export interface RoomScreenProps {
@@ -44,6 +45,12 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
     state.status.kind === 'playing' &&
     state.status.turn === state.you
   const winningLine = state.status.kind === 'won' ? state.status.line : null
+  // Eski (size/winLength taşımayan) odalar `resolveBoardConfig` üzerinden
+  // sunucuda ZATEN `{3,3}`'e çözülmüş gelir (`initialRoomClientState`'in
+  // ilk `state` mesajından ÖNCEki geçici değeri de aynıdır) — burada
+  // `?? 3` gibi üçüncü bir varsayılan YAZILMAZ, `state.size`/`winLength`
+  // doğrudan aktarılır (kart §Sert şart 3).
+  const config = { size: state.size, winLength: state.winLength }
 
   function handleResignClick(): void {
     // KK-054: pes etme ONAYLANMADAN uygulanmaz — mobilde tahtayla düğme
@@ -66,18 +73,37 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
 
       <p data-testid={TESTID.rakipAdi}>{opponent?.name ?? tr.room.waitingOpponent}</p>
 
+      {/* `oyun-ayari-ozeti` — oda/bekleme/katılma ekranlarının ÜÇÜNDE de aynı
+          kanca, aynı metin şablonu (testids.ts). Katılan oyuncu ne oynayacağını
+          `/oda/katil`de zaten görmüştür (`JoinRoomPreview`); burada AYNI özet
+          oyun boyunca kalıcıdır — rövanşta da (config odanın kendi
+          `resolveBoardConfig` sonucundan geldiği için) DEĞİŞMEDEN görünür. */}
+      <GameConfigSummary config={config} />
+
+      {/* ADR-0017 §7: 11×11 gibi geniş tahtalarda dar/dikey ekranda tahtayı
+          görmek zorlaşır — yalnız CSS ile, JS ölçümü olmadan (KK-B50). */}
+      {config.size > 3 && (
+        <p className="hidden text-sm opacity-70 max-sm:block">{tr.boardConfig.narrowScreen}</p>
+      )}
+
       {/* Spec §2.0: iki AYRI kimlik — `sira-gostergesi` yalnız `data-sira`
           taşır, gösterilen metin `durum-metni`dedir. `aria-live="polite"` +
           `role="status"`: sıra değişimi ve oyun sonucu ekran okuyucuya
           duyurulsun (inceleme minor bulgusu — önceden HİÇ duyurulmuyordu). */}
       <p data-testid={TESTID.siraGostergesi} data-sira={turnAttr(state.status)} />
       <p data-testid={TESTID.durumMetni} role="status" aria-live="polite">
-        {statusText(state.status, state.you)}
+        {liveAnnouncement({
+          status: state.status,
+          you: state.you,
+          lastMove: state.lastMove,
+          size: state.size,
+          winLength: state.winLength,
+        })}
       </p>
 
       <Board
         cells={state.board}
-        config={{ size: state.size, winLength: state.winLength }}
+        config={config}
         interactive={interactive}
         winningLine={winningLine}
         pendingIndex={state.pending?.index ?? null}
