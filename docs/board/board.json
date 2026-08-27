@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T11:44:09.517Z",
+  "updatedAt": "2026-08-27T23:53:02.418Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -637,9 +637,9 @@
         "apps/web/lib/realtime/timers.ts",
         "apps/web/components/room/TurnTimer.tsx"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W2-01",
       "report": null,
       "acceptance": [
         "AS-08'in tek satırı açılır: joinRoom (oyun başlarken) ve applyMove turnDeadline'ı now + MOVE_TIMEOUT_SECONDS olarak yazar; oyun bittiğinde null'a döner",
@@ -2250,12 +2250,13 @@
       "id": "PERF-005",
       "title": "shared barreli istemciye ZOD sokuyor — 68.7 kB gzip, olculdu",
       "priority": "P1",
-      "agent": "xox-dev-web",
-      "status": "todo",
+      "agent": "xox-dev-backend",
+      "status": "in_wave",
       "deps": ["UI-CFG-001", "UI-COMP-001"],
       "report": null,
-      "branch": null,
+      "branch": "feat/PERF-005",
       "acceptance": [
+        "AJAN DUZELTILDI (lead): xox-dev-web -> xox-dev-backend. Kartin kume dosyalari o ajanin varsayilan yazma alaninda degildi. Ajan tanimlarina 2026-08-28-de eklenen madde geregi KART KUMESI YETKILI KAYNAKTIR.",
         "OLCULDU (PERF-004, parca duzeyi): agir rotalara ozel parca 275.6 kB ham / 68.7 kB gzip; icinde 485 zod izi, SIFIR minimax izi. Hafif rotalarin ortak parcalarinda ne zod ne minimax var. Bu 68.7 kB, agir(216) ile hafif(146) arasindaki 70 kB farkin TAMAMI.",
         "Cozum yonu: sema modullerini istemci yolundan ayir. TESTID / DISPLAY_NAME_MAX / ErrorCode gibi sabitler ve tipler icin bir istemci dosyasi zod indirmemeli.",
         "COK SAYIDA tuketici dosyasina dokunur — kendi dalgasi olmali, UI-CFG-001 ve UI-COMP-001 bittikten SONRA.",
@@ -2325,12 +2326,13 @@
       "id": "AUTH-004",
       "title": "GUVENLIK: cikis yap oturumu temizlemiyor — prefetch yaristi Set-Cookie silmeyi geri aliyor",
       "priority": "P0",
-      "agent": "xox-dev-backend",
-      "status": "todo",
+      "agent": "xox-dev-web",
+      "status": "in_wave",
       "deps": [],
       "report": null,
-      "branch": null,
+      "branch": "feat/AUTH-004",
       "acceptance": [
+        "AJAN DUZELTILDI (lead): xox-dev-backend -> xox-dev-web. Kartin kume dosyalari o ajanin varsayilan yazma alaninda degildi. Ajan tanimlarina 2026-08-28-de eklenen madde geregi KART KUMESI YETKILI KAYNAKTIR.",
         "KOK NEDEN OLCULDU (AUTH-003, CI playwright-report trace network dokumu): signOut() cerezi DOGRU siliyor (Max-Age=0). Ama TopBar kimliklendirilmis her sayfada Next.js <Link> prefetch istekleri baslatiyor (/profil, /arkadaslar...) ve bunlar IPTAL EDILMIYOR. Biri signout yanitindan SONRA tamamlanirsa kendi rolling-session Set-Cookie ile silmeyi GERI ALIYOR.",
         "SONUC: kullanici cikis yaptigini goruyor, oturum teknik olarak CANLI kaliyor. Paylasilan cihazda dogrudan hesap devralmasi.",
         "Supheli dosyalar: apps/web/components/TopBar.tsx (prefetch), apps/web/components/profile/ProfileContent.tsx (cikis dugmesi), apps/web/auth.ts.",
@@ -2345,5 +2347,5 @@
       ]
     }
   ],
-  "wave": "B5"
+  "wave": "G2-1"
 }
