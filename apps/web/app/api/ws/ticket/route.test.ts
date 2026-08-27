@@ -5,12 +5,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  * Güvenlik denetimi bulgusu: önceki sürüm `@/lib/auth/identity`'nin
  * TAMAMINI mock'luyordu — rotanın gerçek kimlik kararı (dolayısıyla
  * BLOCKER-2: bilet aklama açığı) HİÇBİR testte sınanmıyordu. Burada
- * yalnız `@/auth`'un `auth()` fonksiyonu mock'lanır (denetçinin canlı
- * sondasında yaptığı gibi) — `resolveIdentity`, `verifyToken`, `signToken`
- * GERÇEK kodla çalışır.
+ * yalnız `@/auth`'un `auth()` fonksiyonu ve `@xox/db`'nin (SEC-003)
+ * `connectDb`/`recordWsTicket` çağrıları mock'lanır — `resolveIdentity`,
+ * `verifyToken`, `signToken` GERÇEK kodla çalışır.
  */
 const mockAuth = vi.fn()
 vi.mock('@/auth', () => ({ auth: mockAuth }))
+
+const mockConnectDb = vi.fn()
+const mockRecordWsTicket = vi.fn()
+vi.mock('@xox/db', () => ({
+  connectDb: mockConnectDb,
+  recordWsTicket: mockRecordWsTicket,
+}))
 
 const ORIGINAL_AUTH_SECRET = process.env['AUTH_SECRET']
 
@@ -22,9 +29,11 @@ function jsonBody(body: unknown): RequestInit {
   return { body: JSON.stringify(body) }
 }
 
-describe('POST /api/ws/ticket — gerçek resolveIdentity, yalnız auth() mock', () => {
+describe('POST /api/ws/ticket — gerçek resolveIdentity, yalnız auth()+db mock', () => {
   beforeEach(() => {
     mockAuth.mockReset()
+    mockConnectDb.mockReset().mockResolvedValue(undefined)
+    mockRecordWsTicket.mockReset().mockResolvedValue(undefined)
     process.env['AUTH_SECRET'] = 'test-secret-en-az-32-karakter-uzunlugunda-olmali'
   })
 
@@ -97,6 +106,49 @@ describe('POST /api/ws/ticket — gerçek resolveIdentity, yalnız auth() mock',
     expect(json.ticket.length).toBeGreaterThan(0)
     // Çıplak sayı — WS_TICKET_TTL_SECONDS sabitiyle aynı olmak zorunda.
     expect(json.expiresIn).toBe(30)
+  })
+
+  describe("SEC-003: bilet ihraç edilirken tek-kullanımlık kaydı DB'ye YAZILIR", () => {
+    it('`connectDb` + `recordWsTicket` biletteki `jti`/`userId`/`room` ile ÇAĞRILIR', async () => {
+      mockAuth.mockResolvedValue({ user: { id: 'user-kayit', name: 'Kayıt' } })
+
+      const { POST } = await import('./route')
+      const response = await POST(
+        makeRequest('https://xox.test/api/ws/ticket', jsonBody({ roomCode: 'ABC234' })),
+      )
+      const { ticket } = (await response.json()) as { ticket: string }
+
+      const { verifyToken } = await import('@/lib/auth/tokens')
+      const verified = await verifyToken(ticket, 'ws-ticket')
+
+      expect(mockConnectDb).toHaveBeenCalled()
+      expect(mockRecordWsTicket).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jti: verified?.claims['jti'],
+          userId: 'user-kayit',
+          room: 'ABC234',
+        }),
+      )
+    })
+
+    it(
+      '`recordWsTicket` (DB yazması) başarısız olursa istemciye 500 SERVER_ERROR ' +
+        'döner — kullanılamaz (DB kaydı olmayan) bir bilet ASLA dışarı verilmez',
+      async () => {
+        mockAuth.mockResolvedValue({ user: { id: 'user-1', name: 'Ayşe' } })
+        mockRecordWsTicket.mockRejectedValue(new Error('ECONNREFUSED 127.0.0.1:27017'))
+
+        const { POST } = await import('./route')
+        const response = await POST(
+          makeRequest('https://xox.test/api/ws/ticket', jsonBody({ roomCode: 'ABC234' })),
+        )
+
+        expect(response.status).toBe(500)
+        const body: unknown = await response.json()
+        expect(body).toMatchObject({ code: 'SERVER_ERROR' })
+        expect(JSON.stringify(body)).not.toContain('ECONNREFUSED')
+      },
+    )
   })
 
   it('döndürülen bilet aud xox-ws ile doğrulanabilir, userId VE oda kodunu (room) taşır', async () => {

@@ -5,6 +5,22 @@ const mockAuth = vi.fn()
 
 vi.mock('@/auth', () => ({ auth: mockAuth }))
 
+/**
+ * SEC-003: `resolveIdentity`'nin `?ticket=` dalı artık `@xox/db`'ye
+ * (`connectDb` + `consumeWsTicket`) bağımlı. Yalnız BU iki fonksiyon
+ * mock'lanır — `verifyToken`/`signToken` GERÇEK kodla çalışır (aynı
+ * "bağımlılığı tamamen mock'lama" dersi, gotchas.md). Varsayılan
+ * `{ ok: true }`: mevcut testlerin ÇOĞU tüketimin BAŞARILI olduğu
+ * varsayımıyla yazıldı, yeniden kullanım/başarısızlık senaryoları kendi
+ * `mockResolvedValueOnce`'unu ayrıca kurar.
+ */
+const mockConnectDb = vi.fn()
+const mockConsumeWsTicket = vi.fn()
+vi.mock('@xox/db', () => ({
+  connectDb: mockConnectDb,
+  consumeWsTicket: mockConsumeWsTicket,
+}))
+
 const ORIGINAL_AUTH_SECRET = process.env['AUTH_SECRET']
 
 function makeRequest(url: string, headers: Record<string, string> = {}): Request {
@@ -15,6 +31,8 @@ describe('resolveIdentity — KK-010 tek çözücü', () => {
   beforeEach(() => {
     vi.resetModules()
     mockAuth.mockReset()
+    mockConnectDb.mockReset().mockResolvedValue(undefined)
+    mockConsumeWsTicket.mockReset().mockResolvedValue({ ok: true })
     process.env['AUTH_SECRET'] = 'test-secret-en-az-32-karakter-uzunlugunda-olmali'
   })
 
@@ -130,6 +148,84 @@ describe('resolveIdentity — KK-010 tek çözücü', () => {
       const { token } = await signToken('ws-ticket', 'user-x', { room: 'ABC234' })
       const req = makeRequest(`https://xox.test/x?ticket=${token}`)
       await expect(resolveIdentity(req, { allowTicket: false })).resolves.toBeNull()
+    })
+
+    describe('SEC-003: TEK KULLANIMLIK tüketim (`consumeWsTicket`)', () => {
+      it('geçerli bilette `connectDb` + `consumeWsTicket` TAM OLARAK biletteki `jti` ile çağrılır', async () => {
+        mockAuth.mockResolvedValue(null)
+        const { signToken } = await import('./tokens')
+        const { resolveIdentity } = await import('./identity')
+        const { token, jti } = await signToken('ws-ticket', 'user-tuketim', { room: 'ABC234' })
+        const req = makeRequest(`https://xox.test/x?ticket=${token}`)
+
+        await resolveIdentity(req, { allowTicket: true })
+
+        expect(mockConnectDb).toHaveBeenCalled()
+        expect(mockConsumeWsTicket).toHaveBeenCalledWith(jti)
+      })
+
+      it(
+        'SEC-003 ÇEKİRDEK: `consumeWsTicket` `ok:false` (zaten tüketilmiş) dönerse ' +
+          'bilet İMZASI/AUD/EXP/ROOM geçerli olsa BİLE null döner — imzanın geçerliliği ' +
+          'tek başına yetmez, DB tüketim kararı SON SÖZ',
+        async () => {
+          mockAuth.mockResolvedValue(null)
+          mockConsumeWsTicket.mockResolvedValue({ ok: false, reason: 'already-used' })
+          const { signToken } = await import('./tokens')
+          const { resolveIdentity } = await import('./identity')
+          const { token } = await signToken('ws-ticket', 'user-tekrar', { room: 'ABC234' })
+          const req = makeRequest(`https://xox.test/x?ticket=${token}`)
+
+          await expect(resolveIdentity(req, { allowTicket: true })).resolves.toBeNull()
+        },
+      )
+
+      it('`consumeWsTicket` `ok:false/expired` dönerse null döner', async () => {
+        mockAuth.mockResolvedValue(null)
+        mockConsumeWsTicket.mockResolvedValue({ ok: false, reason: 'expired' })
+        const { signToken } = await import('./tokens')
+        const { resolveIdentity } = await import('./identity')
+        const { token } = await signToken('ws-ticket', 'user-suresi-dolmus', { room: 'ABC234' })
+        const req = makeRequest(`https://xox.test/x?ticket=${token}`)
+
+        await expect(resolveIdentity(req, { allowTicket: true })).resolves.toBeNull()
+      })
+
+      it('`consumeWsTicket` `ok:false/not-found` dönerse null döner (DB kaydı olmayan bilet)', async () => {
+        mockAuth.mockResolvedValue(null)
+        mockConsumeWsTicket.mockResolvedValue({ ok: false, reason: 'not-found' })
+        const { signToken } = await import('./tokens')
+        const { resolveIdentity } = await import('./identity')
+        const { token } = await signToken('ws-ticket', 'user-kayitsiz', { room: 'ABC234' })
+        const req = makeRequest(`https://xox.test/x?ticket=${token}`)
+
+        await expect(resolveIdentity(req, { allowTicket: true })).resolves.toBeNull()
+      })
+
+      it(
+        'FAIL-CLOSED: `jti` claim´i taşımayan (elle üretilmiş) bir ws-ticket ' +
+          'REDDEDİLİR, `consumeWsTicket` HİÇ ÇAĞRILMAZ — eksik jti asla ' +
+          '"kullanımsız" varsayılmaz',
+        async () => {
+          mockAuth.mockResolvedValue(null)
+          const { SignJWT } = await import('jose')
+          const secret = process.env['AUTH_SECRET']
+          if (secret === undefined) throw new Error('test kurulum hatası')
+          const key = new TextEncoder().encode(secret)
+          const tokenWithoutJti = await new SignJWT({ room: 'ABC234' })
+            .setProtectedHeader({ alg: 'HS256' })
+            .setSubject('user-jtisiz')
+            .setAudience('xox-ws')
+            .setIssuedAt()
+            .setExpirationTime(Math.floor(Date.now() / 1000) + 30)
+            .sign(key)
+          const { resolveIdentity } = await import('./identity')
+          const req = makeRequest(`https://xox.test/x?ticket=${tokenWithoutJti}`)
+
+          await expect(resolveIdentity(req, { allowTicket: true })).resolves.toBeNull()
+          expect(mockConsumeWsTicket).not.toHaveBeenCalled()
+        },
+      )
     })
   })
 

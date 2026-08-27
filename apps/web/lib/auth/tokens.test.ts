@@ -160,6 +160,37 @@ describe('tokens', () => {
     })
   })
 
+  describe('SEC-003: `jti` — WS bileti tüketiminin birincil anahtarı', () => {
+    it('ws-ticket her zaman bir `jti` üretir (tip düzeyinde `string`, opsiyonel değil)', async () => {
+      const { signToken } = await import('./tokens')
+      const { jti } = await signToken('ws-ticket', 'user-1', { room: 'ABC234' })
+      expect(typeof jti).toBe('string')
+      expect(jti.length).toBeGreaterThan(0)
+    })
+
+    it('İKİ AYRI signToken çağrısı FARKLI jti üretir — aksi halde iki bilet aynı DB kaydını paylaşır', async () => {
+      const { signToken } = await import('./tokens')
+      const first = await signToken('ws-ticket', 'user-1', { room: 'ABC234' })
+      const second = await signToken('ws-ticket', 'user-1', { room: 'ABC234' })
+      expect(first.jti).not.toBe(second.jti)
+    })
+
+    it("mobil access/refresh tokenlarında `jti` YOKTUR (yalnız ws-ticket'a özgü)", async () => {
+      const { signToken } = await import('./tokens')
+      const access = await signToken('mobile-access', 'user-1')
+      const refresh = await signToken('mobile-refresh', 'user-1')
+      expect(access.jti).toBeUndefined()
+      expect(refresh.jti).toBeUndefined()
+    })
+
+    it('imzalanan `jti` doğrulamadan (`verifyToken`) claim olarak GERİ GELİR', async () => {
+      const { signToken, verifyToken } = await import('./tokens')
+      const { token, jti } = await signToken('ws-ticket', 'user-1', { room: 'ABC234' })
+      const verified = await verifyToken(token, 'ws-ticket')
+      expect(verified?.claims['jti']).toBe(jti)
+    })
+  })
+
   it('süresi dolmuş token reddedilir', async () => {
     vi.useFakeTimers()
     const { signToken, verifyToken } = await import('./tokens')
