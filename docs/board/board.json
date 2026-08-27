@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T07:36:29.522Z",
+  "updatedAt": "2026-08-27T07:40:22.199Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2129,7 +2129,7 @@
       "title": "shared barrel game-core-u BES rotaya yayiyor — 298 kB ortak parca",
       "tier": "P1",
       "wave": "B3",
-      "agent": "xox-perf",
+      "agent": "xox-dev-backend",
       "deps": ["CTR-BOARD-001"],
       "conflictSet": ["packages/shared/src/index.ts", "packages/shared/src/room-client.ts"],
       "status": "in_wave",
@@ -2138,6 +2138,8 @@
       "report": null,
       "blockedReason": null,
       "acceptance": [
+        "AJAN ROLU DUZELTILDI (lead hatasi): kart xox-perf-e atanmisti ama o ajan SALT-OKUNUR (Read/Grep/Glob/Bash — Write/Edit YOK). Uygulama karti bir uygulama ajanina gider. Olcum yarisi xox-perf tarafindan teslim edildi ve kayitli.",
+        "IKINCI KOK NEDEN (olcum ajani buldu, lead dogruladi): NE packages/shared NE packages/game-core package.json-inda sideEffects alani YOK. Bu alan yoksa bundler export * zincirini atomik kabul eder ve tree-shake garantisi bulamaz. KALDIRAC: game-core/package.json ZATEN {\".\":\"./src/index.ts\",\"./ai\":\"./src/ai.ts\"} tanimliyor — ./board ve ./status alt-yollari eklenerek src/index.ts-e hic dokunmadan cozulebilir.",
         "PAZARLIKSIZ (lead): @xox/shared-in bugun disa verdigi HICBIR AD kaldirilmayacak. UI-CFG-001 AYNI DALGADA kosuyor ve oradan import ediyor; bir isim kaybolursa dali merge-de kirilir ve sebebi gunler sonra anlasilir. Statik zinciri KIRMAK serbest, ISIM kaldirmak degil. Tek cozum bir ismi kaldirmaksa YAPMA, leade soyle.",
         "ACILIYET ARTTI (olculdu 2026-08-26, UI-BOARD-001 sonrasi): en agir rota 214.79 -> 222.08 kB, butce 235 kB. Kalan pay 12.9 kB. Tahta yeniden yazimi ~7 kB ekledi ve UI-CFG-001/UI-COMP-001 daha gelmedi. Bu kart artik temizlik degil, butceyi tutan sey.",
         "SIZINTI YUZEYE CIKTI (W2-02 sonrasi): /profil 142.51 -> 216.54 kB, hafif butceyi 58.54 kB asti ve CI-i kirdi. Zincir DOGRULANDI: components/profile -> @xox/shared (DISPLAY_NAME_MAX, ErrorCode) -> shared/index.ts export * room-client -> room-client.ts import boardFromCells/evaluateStatus. Profil sayfasi TEK BIR SABIT icin minimax sirtliyor.",

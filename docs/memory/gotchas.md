@@ -1408,3 +1408,30 @@ set -a; . /Users/omerdursun/PROJELER/XOX/.env.local; set +a; pnpm gates
 **Kural:** her worktree dispatch'inde `.env.local` satırı **zorunlu**. Kartın kendisi
 veritabanına dokunmasa bile `pnpm gates` repo genelinde koşuyor ve dokunan testleri
 kapsıyor.
+
+## 2026-08-27 · Kartın türü ile ajanın YETENEĞİ eşleşmeli — panoyu tarayarak doğrula
+
+`PERF-004` panoda `xox-perf`'e atanmıştı. O ajanın araçları: `Read, Grep, Glob, Bash` —
+**`Write`/`Edit` yok.** Ama kart worktree kurmayı, `room-client.ts` ile iki `package.json`'ı
+düzenlemeyi ve rapor **yazmayı** istiyordu. Planlayıcı böyle yazmış, ben de dispatch ederken
+fark etmemişim.
+
+Ajan doğru davrandı: uyuşmazlığı **ilk cümlede** bildirdi, yapabildiği ölçüm yarısını
+eksiksiz teslim etti ve hiçbir şeyi uydurmadı — hatta kartın bilmediği ikinci bir kök neden
+buldu (`sideEffects` alanının yokluğu).
+
+**Salt-okunur ajanlar:** `xox-perf`, `xox-reviewer`, `xox-security`. Bunlar **ölçer ve
+raporlar, düzeltmez** — tanımları gereği.
+
+**Önlem:** dispatch etmeden önce kartın çakışma kümesinde kod dosyası varsa, atanan ajanın
+`Write`/`Edit` yeteneğini kontrol et. Tek kart değil, **panoyu tara**:
+
+```bash
+# salt-okunur ajanlari bul, sonra onlara atanmis kod-kumeli kartlari listele
+for f in .claude/agents/*.md; do grep -m1 "^tools:" "$f" | grep -qE "Write|Edit" || basename "$f" .md; done
+```
+
+Bu taramayı bugün koştum: pano genelinde **tek** yanlış atama vardı (`PERF-004`).
+`PERF-001` de `xox-perf`'te ama o saf ölçüm kartı — çakışma kümesinde kod dosyası yok,
+doğru atanmış. Yani kural "salt-okunur ajan = yanlış" değil, **"kod kümesi + salt-okunur ajan
+= yanlış"**.
