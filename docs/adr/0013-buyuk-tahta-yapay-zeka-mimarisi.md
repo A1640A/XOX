@@ -31,6 +31,19 @@ chooseMove(board, player, difficulty, rng = Math.random, options: ChooseMoveOpti
 - `config.size === 3` **ve** `difficulty === 'unbeatable'` → **bugünkü `bestMove`**, satırı
   satırına aynı tam minimax. Budama yok, derinlik sınırı yok, `WIN_SCORE = 10` yorumu ve
   gerekçesi aynen yerinde. KK-B20'nin kanıtı **bu fonksiyonu** koşar.
+
+  > **DÜZELTME 2026-08-26 (`CORE-AI-002`) — "Budama yok" cümlesi artık geçerli DEĞİL.**
+  > `bestMove`'a alfa-beta budaması eklendi. Kararın **gerekçesi** aynen ayakta: 3×3 hâlâ
+  > `searchMove`'dan ayrı bir kod yolu, hâlâ derinlik sınırsız ve bütçesiz, KK-B20'nin
+  > kanıtı hâlâ **bu fonksiyonu** koşuyor. Değişen yalnız düğüm sayısı: boş tahtada
+  > 549 945 → 20 865; R = 6 kısıtlamasında 1230 ms → 48.4 ms (KK-023 tavanı 1000 ms idi,
+  > aşılıyordu). Alfa-beta minimax **değerini** değiştirmez, yalnız budar — bu yüzden
+  > yenilmezlik sonucu korunur ve `ai.test.ts`'in 642 oyunluk iddiaları **hiç
+  > değiştirilmeden** yeşil kaldı. Lead sondası bunu ayrıca sınadı: budamayı dönen değeri
+  > değiştirecek kadar agresif yapan bir mutasyon **yenilmezlik testinin kendisini**
+  > kırmızıya döndürüyor, yani kanıt değer bozan bir budama hatasına karşı gerçekten
+  > koruyor. Ayrıntı: `docs/board/reports/CORE-AI-002.md`.
+
 - `config.size > 3` → `searchMove(...)`, aşağıdaki mimari.
 - `easy` / `medium` şekli değişmez (rastgele / %50 en iyi); `medium`'un "en iyi"si N > 3'te
   `searchMove`'dur.

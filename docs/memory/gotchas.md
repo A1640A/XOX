@@ -1387,3 +1387,24 @@ işi yapmaya yetip yetmediğini de kontrol etmiş ol.
 
 **Ajan kümesinin dışına çıkmak zorunda kalırsa:** yazsın ama **bildirsin** — ve lead paralel
 worktree'lerde aynı dosyanın açılıp açılmadığını _ölçerek_ doğrulasın (`ls` ile; varsayımla değil).
+
+## 2026-08-26 · Worktree `.env.local`'i ALMAZ — ve bu artık `pnpm gates`'in tamamını düşürüyor
+
+Bilinen gotcha büyüdü. Eskiden bu yalnız `packages/db` testlerini etkiliyordu; bugün
+`CORE-AI-002` ajanı `pnpm gates`'in **tamamının** düştüğünü bildirdi:
+`apps/web/lib/realtime/presence.test.ts` → `MONGODB_URI tanımlı değil`. O test `game-core`
+kullanmıyor bile — yani ajan, kendi değişikliğiyle ilgisiz bir kırmızıyla karşılaştı.
+
+**Kök neden bendim:** `CORE-AI-002`'yi dispatch ederken worktree komutuna
+`cp .env.local ...` satırını koymayı **unuttum** (aynı dalgadaki `UI-BOARD-001` ve
+`API-BOARD-001` kartlarına koymuştum). Ajan zaman kaybetti ve doğru teşhisi kendisi koydu.
+
+**Çözüm (dosya kopyalamadan da olur):**
+
+```bash
+set -a; . /Users/omerdursun/PROJELER/XOX/.env.local; set +a; pnpm gates
+```
+
+**Kural:** her worktree dispatch'inde `.env.local` satırı **zorunlu**. Kartın kendisi
+veritabanına dokunmasa bile `pnpm gates` repo genelinde koşuyor ve dokunan testleri
+kapsıyor.

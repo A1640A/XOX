@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T06:54:29.242Z",
+  "updatedAt": "2026-08-27T07:19:31.275Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2103,10 +2103,10 @@
       "agent": "xox-dev-core",
       "deps": ["CORE-AI-001"],
       "conflictSet": ["packages/game-core/src/ai.ts", "packages/game-core/src/ai.test.ts"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/CORE-AI-002",
-      "report": null,
+      "report": "docs/board/reports/CORE-AI-002.md",
       "blockedReason": null,
       "acceptance": [
         "SIRA DUZELTILDI (lead): CORE-AI-001 ile AYNI dosyayi (ai.ts) aciyor — paralel gidemezler. B2-den B2b-ye alindi, CORE-AI-001 bittikten SONRA. Ayrica bu kart ADR-0013 §1-in 3x3 yolunu bilerek butcesiz birakma kararini DEGISTIRIYOR; once ana AI yerine otursun, sonra 3x3 optimize edilsin.",
@@ -2118,7 +2118,9 @@
         "KANIT 2: ayni is yuku R=6 kisitlamasinda YENIDEN olculur ve <=1000 ms gosterilir. Olcum AI-SPIKE-001-in yontemiyle (esbuild bundle + CDP throttle) yapilir, CI Node-unda DEGIL",
         "SONDA: alfa-beta budamasini devre disi birakan mutasyon, dugum sayisi iddiasini KIRMIZI dondurmeli — yoksa budama gercekten calisiyor mu bilinmez",
         "LEAD OLCUMU (destekleyici, 2026-08-26): masaustu Node-unda kisitlamasiz bestMove bos 3x3 tahtada 211 ms, ilk hamleden sonra 21 ms. Bu 2. kriterle CELISMEZ — o olcum tarayicida esbuild bundle + CDP R=6 throttle altinda alinmisti (1982-2265 ms). Iki sayi birlikte sunu soyluyor: darbogaz ACILIS pozisyonu (dallanma 9), sonrasi degil."
-      ]
+      ],
+      "mergeSha": "b02a05e",
+      "note": "R=6 throttle altinda 1230ms -> 48.4ms (kontrol grubuyla, ayni harness). ai.test.tsten SILINEN tek satir import; 78 satir YENI iddia. Mutasyon %98.02 -> %98.05. AJAN KENDI HATASINI YAKALADI: core.hooksPath=/dev/null ile commit atip bunun --no-verify ile ayni kapiyi atladigini fark etmis, reset --soft ile geri alip hooklar acikken yeniden atmis. LEAD SONDASI (kritik olan): budamayi DONEN DEGERI degistirecek kadar agresif yapan mutasyon (low >= high-1000) YENILMEZLIK TESTININ KENDISINI kirmiziya dondurdu, 12 test kirmizi — yani 642 oyunluk kanit deger bozan budama hatasina karsi gercekten koruyor. Ajanin bildirdigi IKI BELGE TUTARSIZLIGINI lead kapatti: ADR-0013 §1 (tarihli DUZELTME notu, metin yeniden yazilmadi) ve search.ts baslik yorumu."
     },
     {
       "id": "PERF-004",
