@@ -62,9 +62,26 @@ jobs:
       - run: pnpm --filter @xox/db seed
       - run: pnpm --filter @xox/e2e exec playwright install --with-deps chromium
       - run: pnpm --filter @xox/e2e e2e
+      # 🔴 TRACE ZIP'LERİ YÜKLENMEZ — bu repo PUBLIC ve artifact'lar herkese açık.
+      #
+      # Ölçüldü 2026-08-27 (AUTH-003): trace zip'lerinin içinde
+      # `x-vercel-protection-bypass` başlığı DÜZ METİN duruyordu (her trace'te 4 dosya).
+      # Yani `OPS-008` için tanımlanan bypass secret'ı, 7 gün saklanan public bir CI
+      # artifact'ına sızıyordu. Üç etkilenen artifact silindi ve secret döndürüldü.
+      #
+      # Trace yalnız bypass başlığını değil, oturum çerezlerini ve test kullanıcısı
+      # kimlik bilgilerini de taşır — public repoda hiçbiri yayımlanamaz.
+      #
+      # Ne kalıyor: HTML rapor, ekran görüntüleri ve videolar (bunlar istek BAŞLIĞI
+      # taşımaz). Bir trace'e gerçekten ihtiyaç olursa yerelde üretilir:
+      #   E2E_BASE_URL=<preview> VERCEL_AUTOMATION_BYPASS_SECRET=<secret> pnpm e2e
+      #
+      # Bu dışlamayı kaldırma. Kaldırırsan bir sonraki kırmızı koşu secret'ı yeniden yayınlar.
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
-          path: apps/e2e/playwright-report
+          path: |
+            apps/e2e/playwright-report
+            !apps/e2e/playwright-report/data/*.zip
           retention-days: 7
