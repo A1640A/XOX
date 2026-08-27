@@ -10,12 +10,19 @@ import { HUMAN } from './game-engine'
  * Oda ekranının aksine burada `reason` (pes etme/süre aşımı/terk) yoktur —
  * bilgisayara karşı oyunda kazanma/kaybetme her zaman hat tamamlanmasıyla
  * olur. Bilgisayarın sırasında oda ekranındaki genel "sıra rakipte" yerine
- * `tr.computer.thinking` gösterilir: bu ekrana özgü, daha bilgilendirici
- * bir metindir ve zaten mesaj ağacında (`tr.computer.*`) tanımlıdır.
+ * `tr.computer.thinking` (3×3) ya da `tr.computer.thinkingBig` (`size > 3`)
+ * gösterilir: bu ekrana özgü, daha bilgilendirici bir metindir ve zaten
+ * mesaj ağacında (`tr.computer.*`) tanımlıdır.
+ *
+ * UI-COMP-001: `size > 3`te `chooseMove` bütçeli aramaya (`searchMove`)
+ * gider — 3×3'ün tam minimaksından farklı olarak duvar saati bütçesi
+ * (`AI_BUDGET_MS`) kadar sürebilir, dolayısıyla ayrı ve daha açıklayıcı bir
+ * metin dürüsttür (bkz. `DifficultyPicker`in aynı `size` ayrımı).
  */
-export function statusText(status: GameStatus): string {
+export function statusText(status: GameStatus, size: number): string {
   if (status.kind === 'playing') {
-    return status.turn === HUMAN ? tr.game.yourTurn : tr.computer.thinking
+    if (status.turn === HUMAN) return tr.game.yourTurn
+    return size === 3 ? tr.computer.thinking : tr.computer.thinkingBig
   }
   if (status.kind === 'draw') return tr.game.draw
   return status.winner === HUMAN ? tr.game.youWon : tr.game.youLost
