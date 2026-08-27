@@ -30,10 +30,23 @@ test.describe('KK-006 · oturum sürekliliği', () => {
     const responseB = await pageB.goto('/profil')
     expect(responseB?.status()).toBe(200)
     await expect(pageB).toHaveURL(/\/profil$/)
-    // `TopBar` GLOBAL üst çubukta da aynı adla bir profil bağlantısı gösterir
-    // (`Link href="/profil"`) — `getByText` sayfa genelinde iki eşleşme bulup
-    // strict-mode'da patlar. İçerik doğrulaması `main` bölgesine kapsanır.
-    await expect(pageB.getByRole('main').getByText(TEST_USERS.playerOne.name)).toBeVisible()
+    // DÜZELTME (AUTH-003 — QA'nın bulduğu test artefaktı, ürün hatası DEĞİL):
+    // bu iddia `5a73009` (W2-02, ad düzenleme + istatistik/ELO) ÖNCESİNDEKİ
+    // `ProfileContent.tsx`i sınıyordu — o sürüm adı `<p>{session.user.name}</p>`
+    // olarak DÜZ METİN basıyordu. `5a73009` bunu KASITLI OLARAK `EditNameForm`
+    // (düzenlenebilir `<input>`) ile DEĞİŞTİRDİ: ad artık yalnız bir INPUT
+    // DEĞERİDİR, metin düğümü değil — `getByText()` bir `<input>`ın `value`
+    // özniteliğini asla eşleştirmez (DOM metin içeriği değildir), bu yüzden
+    // eski iddia `5a73009`den beri preview'da SESSİZCE HİÇ ÇALIŞMIYORDU
+    // (kanıt: gerçek CI koşusu error-context.md'de `textbox "Görünen ad":
+    // Test Oyuncu 1` erişilebilirlik ağacında AÇIKÇA GÖRÜNÜYOR — oturum
+    // BAŞARIYLA sürüyor, veri DOĞRU hidratlanıyor, yalnız test tekniği
+    // input değerini "metin" sanıyordu). KK-006'nın gerçek amacı korunur:
+    // ikinci context'in doğru kullanıcı verisini gösterdiğini kanıtlamak —
+    // yalnız doğrulama yöntemi güncel DOM biçimine uyarlanır.
+    await expect(pageB.getByRole('main').getByLabel('Görünen ad')).toHaveValue(
+      TEST_USERS.playerOne.name,
+    )
     await contextB.close()
   })
 })
