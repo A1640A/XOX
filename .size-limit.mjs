@@ -64,19 +64,31 @@ const LIGHT_LIMIT = '158 kB'
 // minimax'ın ilk yüklemede payı YOK.
 //
 // ⚠️ 2026-08-26, W2-02 sonrası: `/profil` hafif gruptan ÇIKARILDI (142.51 → 216.54 kB).
-// Bu bir REGRESYON DEĞİL, PERF-003'ün belgelediği sızıntının yüzeye çıkması. Zincir
-// doğrulandı, varsayılmadı:
+//
+// 🔴 DÜZELTME 2026-08-27 (PERF-004) — AŞAĞIDAKİ ESKİ GEREKÇE YANLIŞTI.
+//
+// Bu yorum, `PERF-003`'ün raporu ve `PERF-004`'ün kart gerekçesi ağırlığın kaynağı olarak
+// şu zinciri gösteriyordu:
 //     components/profile → `@xox/shared`   (DISPLAY_NAME_MAX, ErrorCode — MEŞRU)
 //     shared/index.ts    → `export * from './room-client'`
-//     room-client.ts     → `import { boardFromCells, evaluateStatus } from '@xox/game-core'`
-// Yani profil sayfası TEK BİR SABİT için minimax sırtlanıyor.
+//     room-client.ts     → `@xox/game-core` (ana barrel) → `ai.ts` ⟹ minimax
+// Zincirin her halkası GERÇEKTİ. Ama kimse **parça düzeyinde** ölçmemişti.
 //
-// "Hafif" sınıflandırması bir HEDEF değil, BETİMLEME idi: "bu rota paylaşılan
-// game-core parçasına dokunmuyor". `/profil` artık dokunuyor, dolayısıyla betimleme
-// değişti — hedef direği oynatılmadı. HEAVY_LIMIT'e (235 kB) DOKUNULMADI.
+// Ölçüldüğünde (PERF-004, ilk kez): ağır rotalara ÖZEL parça 275.6 kB ham / **68.7 kB
+// gzip** ve içinde **485 `zod` izi, SIFIR minimax izi**. Ağır (216 kB) ile hafif (146 kB)
+// arasındaki ~70 kB farkın TAMAMI **zod** — `@xox/shared`'ın barrel'ı zod şemalarını
+// istemci paketine sokuyor. Zinciri kırmak için iki değişiklik denendi, toplam kazanç
+// **~4 kB**; teori doğru olsaydı ~70 kB olmalıydı.
 //
-// PERF-004 bu sızıntıyı kapatacak ve kartında SERT ŞART var: kapandığında `/profil`
-// hafif gruba GERİ DÖNER ve heavy bütçe düşürülür. Bu satır o zamana kadar bir borçtur.
+// DERS: bir zincirin VAR OLDUĞUNU doğrulamak, o zincirin maliyetin KAYNAĞI olduğunu
+// kanıtlamaz. Sızıntıyı düzeltmeden önce parçayı aç ve içinde ne olduğuna bak.
+//
+// "Hafif" sınıflandırması bir HEDEF değil, BETİMLEME idi. HEAVY_LIMIT'e (235 kB)
+// DOKUNULMADI.
+//
+// Borç şimdi **PERF-005**'te: zod'u istemci yolundan ayır. Kapandığında `/profil` hafif
+// gruba GERİ DÖNER. `PERF-004` bunu YAPAMADI ve raporunda açıkça yazdı —
+// bkz. `docs/board/reports/PERF-004.md`.
 const LIGHT_ROUTES = new Set(['/_not-found', '/oyna/bilgisayar'])
 
 function limitFor(route) {

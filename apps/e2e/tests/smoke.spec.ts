@@ -1,5 +1,6 @@
 import { WS_CLOSE } from '@xox/shared'
 import { WebSocket } from 'ws'
+import { bypassHeaders } from '../bypass-headers'
 import { expect, test } from '../fixtures/two-players'
 
 test.describe('harness duman testleri', () => {
@@ -33,7 +34,12 @@ interface WsCloseEvent {
 /** Bağlanır, upgrade'i bekler, ilk kapanış olayını (kod + sebep) döner. */
 function waitForClose(url: string): Promise<WsCloseEvent> {
   return new Promise((resolve, reject) => {
-    const socket = new WebSocket(url)
+    // OPS-008: HAM `ws` istemcisi Playwright'ın context'inden GEÇMEZ, yani
+    // `use.extraHTTPHeaders` buraya UYGULANMAZ — başlığı elle vermezsek Vercel
+    // Deployment Protection upgrade'i 302 ile karşılar ("Unexpected server
+    // response: 302"). CI'da ölçüldü 2026-08-27: bypass bağlandıktan sonra 36
+    // testin 28'i geçti, kalan 8'in bir kısmı tam olarak buydu.
+    const socket = new WebSocket(url, { headers: bypassHeaders() })
     const timer = setTimeout(() => {
       socket.close()
       reject(new Error('WebSocket 10 saniyede kapanmadı'))
