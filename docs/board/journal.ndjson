@@ -1645,3 +1645,9 @@
 {"ts":"2026-08-27T10:44:09Z","event":"file.touched","path":"apps/e2e/bypass-headers.ts"}
 {"ts":"2026-08-27T11:05:00Z","event":"gate.restored","card":"OPS-008","note":"Preview E2E kapisi CALISIYOR. Uc turda olculdu: 28/8 -> 29/7 -> 34/2. Iki olculmus bulgu: ham ws istemcisi Playwright contextinden gecmez; x-vercel-set-bypass-cookie araya 307 sokup yonlendirme ve upgrade testlerini kiriyor. KAPI ILK KOSUSUNDA ISINI YAPTI: kalan 2 kirmizi e2e ayarinin degil MAIN-IN kodunda — cikis sonrasi /profil /giris-e donmuyor ve kayit sonrasi otomatik giris ana sayfaya donmuyor. Birim testler bunlari yakalamiyor. AUTH-003 P0 acildi."}
 {"ts":"2026-08-27T11:20:00Z","event":"cleanup","note":"13 worktree ve 13 merge edilmis dal temizlendi (0B kaldi). TEMIZLIK BIR KAYBI ONLEDI: CORE-AI-001 raporu worktreede staged kalmis, maine hic dusmemisti — silseydim kaybolacakti ve board.json onu report: alaninda isaret ediyordu. KOK NEDEN: git commit ciktisini grep ile filtrelemek commit hatalarini gizliyor; bugun UC kez oldu (docs(perf) gecersiz kapsam, PERF-004 raporu bicim, CORE-AI-001 raporu). Kural: commit ciktisini filtreleme, git log --oneline -1 ile sonucu dogrula. 137 rescue/ etiketi birikmis — OPS-005in konusu, anlamadan silinmedi."}
+{"ts":"2026-08-27T11:34:38Z","event":"file.touched","path":".claude/worktrees/AUTH-003/apps/e2e/tests/session-persistence.spec.ts"}
+{"ts":"2026-08-27T11:37:04Z","event":"file.touched","path":"docs/board/reports/AUTH-003.md"}
+{"ts":"2026-08-27T11:39:06Z","event":"subagent.stop"}
+{"ts":"2026-08-27T11:42:21Z","event":"file.touched","path":".github/workflows/e2e-preview.yml"}
+
+{"ts":"2026-08-27T11:50:00Z","event":"verify.started","note":"Trace dislamasinin gercekten calistigini kanitlamak icin dal push ediliyor. KK-011 hala kirmizi oldugu icin trace URETILECEK; artifacta girip girmedigine bakacagim. Mevcut secret zaten ifsa oldugu icin bu deneyde kaybedecek bir sey yok — YENI secret ancak bu dogrulandiktan SONRA olusturulmali."}
