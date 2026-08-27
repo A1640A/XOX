@@ -80,11 +80,24 @@ sonuç üretir (2026-08-25: CI 5 saat kırmızı kaldı, kimse fark etmedi). Mer
 doğrulama listesine ekle: `gh run list --workflow=CI --limit 3`.
 
 1. Kırmızı test önce yazıldı, sonra yeşile döndü
-2. `pnpm gates` temiz
+2. `pnpm gates` temiz — **beş kapının hepsi**: `typecheck` + `lint` + `format:check` +
+   `test:coverage` + `knip`. Tek tek görev koşup "yeşil" deme; `format:check` ve `knip`
+   atlanınca CI iki kez kırıldı.
 3. Kapsam eşiği aşıldı (`game-core` ayrıca `pnpm mutation`)
 4. `xox-reviewer` bulgusu yok ya da gerekçesi journal'da
-5. `docs/board/reports/<task>.md` yazıldı
-6. Conventional commit atıldı
+5. `docs/board/reports/<task>.md` yazıldı **ve `main`'de var** (`git cat-file -e main:<yol>`)
+6. Conventional commit atıldı — **çıktısını `grep`'leme.** Lefthook hatası filtreden kaçar,
+   sonraki `push`/`merge` "Already up to date" der ve commit hiç düşmemiş olur. Her
+   commit'ten sonra `git log --oneline -1` ile **sonucu doğrula**.
+7. **Merge biter bitmez worktree KAPANIR** — ayrı bir temizlik turuna bırakma:
+   ```bash
+   git -C .claude/worktrees/<id> status --porcelain     # boş olmalı; değilse ÖNCE kurtar
+   git merge-base --is-ancestor feat/<id> main          # gerçekten merge edildi mi
+   git worktree remove .claude/worktrees/<id> && git branch -d feat/<id>
+   git push origin --delete feat/<id> 2>/dev/null       # uzağa gittiyse
+   ```
+   Bunu atlarsam 13 worktree birikiyor ve içlerinden birinde commit edilmemiş bir rapor
+   kalabiliyor (2026-08-27'de tam bu oldu, kullanıcı fark etti).
 
 ## Komutlar
 
