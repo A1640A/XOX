@@ -1467,3 +1467,31 @@ grep -oE '(zod|next-auth|mongoose|@xox/[a-z-]+)' <parca>.js | sort | uniq -c | s
 yazılmış bir listeyle karşılaştırıyor ve benim `ai` yeniden dışa verimini kaldırmamı yakaladı.
 Ölçüm o kaldırmanın **2 kB** kazandırdığını gösterdiği için geri aldım: bilinçli olarak
 dondurulmuş bir kamu yüzeyini 2 kB için kırmak yanlış takas. **Kapı beni durdurdu ve haklıydı.**
+
+## 2026-08-27 · knip iş paketlerindeki ölü dışa verimi GÖREMEZ — barrel bir giriş noktası
+
+`SEC-003` `revokeWsTicketsForUser`'ı yazdı, test etti, `packages/db/src/index.ts`'ten dışa
+verdi — ve **hiçbir uygulama kodu onu çağırmıyor.** `pnpm gates` yeşil geçti.
+
+Sebep `knip.json`:
+
+```json
+{ "entry": ["src/index.ts"] }
+```
+
+Paketin barrel'ı knip için bir **giriş noktasıdır**; oradan yeniden dışa verilen her şey
+tanım gereği "kullanılıyor" sayılır. Bu, yayınlanan bir kütüphane için doğru varsayımdır —
+ama bizim `packages/*` paketlerimiz **yayınlanmıyor**, yalnız bu monorepo tüketiyor. Yani
+kullanılmayan bir dışa verim gerçekten ölü koddur ve kapı onu göremez.
+
+**Pratik sonuç:** bir `packages/*` dosyasına yeni bir dışa verim eklerken çağıranını da aynı
+kartta ekle. Ekleyemiyorsan (başka kartın alanı) **bunu açıkça bildir** — `SEC-003` ajanı
+tam olarak bunu yaptı ve doğru davrandı.
+
+**Elle kontrol:**
+
+```bash
+grep -rn "fonksiyonAdi" packages apps | grep -v node_modules | grep -v "\.test\." | grep -v coverage
+```
+
+Yalnız tanım + `index.ts` yeniden dışa verimi + testler çıkıyorsa çağıran yok demektir.
