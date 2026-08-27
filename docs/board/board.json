@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-26T21:43:54.348Z",
+  "updatedAt": "2026-08-27T07:19:31.275Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1896,9 +1896,9 @@
         "apps/web/components/room/RoomScreen.tsx",
         "apps/web/components/computer/ComputerGameScreen.tsx"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/UI-BOARD-001",
       "report": null,
       "acceptance": [
         "RoomScreen.tsx ve ComputerGameScreen.tsx'te YALNIZ PROP BAGLAMA SATIRLARI degisir (ADR-0017 sonuclar). Bu iki dosya ayni dalgada baska hicbir kartin cakisma kumesinde OLAMAZ.",
@@ -1933,10 +1933,10 @@
       "agent": "xox-dev-backend",
       "deps": ["DB-BOARD-001", "CTR-BOARD-001"],
       "conflictSet": ["apps/web/app/api/rooms/**"],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/API-BOARD-001",
+      "report": "docs/board/reports/API-BOARD-001.md",
       "acceptance": [
         "Govde OPSIYONEL okunur: req.json() patlarsa {} -> roomCreateBodySchema -> parseBoardConfig -> enabledSizes kapisi -> createRoom(owner, config).",
         "KK-B14 saglanir: govde YOKSA ya da BOSSA oda {3,3} ile kurulur ve 201 doner; bugunku davranis BIT DUZEYINDE korunur (E-07 eski istemci, US-B11). Sonda: govdesiz POST bugunku yanitla ayni.",
@@ -1948,7 +1948,9 @@
         "YARIM OZELLIK UYARISI (tasarim §10.5.3): bu kart UI-CFG-001 ile PARALEL gider; ikisi birden merge edilene kadar secici uctan uca calismaz. Bu KABUL EDILIR — uctan uca kanit E2E-BOARD-001'dedir (B6).",
         "pnpm gates temiz."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "227ae27",
+      "note": "KUME DISINA CIKTI ama BILDIRDI: apps/web/lib/game/enabled-sizes.ts. ADR-0018 §3 bunu tanimliyordu ama HICBIR kartin kumesinde degildi (use-room.test.tsx ile ayni sinif planlama boslugu). Iki paralel worktree kontrol edildi, ikisi de dokunmamis. LEAD MUTASYON SONDALARI (uc, ucu de OLDU): (1) isBoardSizeEnabled hep true -> kirmizi, (2) bos govde yedegi {} yerine null -> kirmizi, (3) parseBoardConfig({}) ile sessiz 3x3 dususu -> kirmizi."
     },
     {
       "id": "UI-CFG-001",
@@ -1956,7 +1958,7 @@
       "tier": "P1",
       "wave": "B4",
       "agent": "xox-dev-web",
-      "deps": ["CTR-BOARD-001", "UI-BOARD-001", "DESIGN-001b"],
+      "deps": ["CTR-BOARD-001", "UI-BOARD-001"],
       "conflictSet": [
         "apps/web/components/board-config/**",
         "apps/web/components/home/HomeActions.tsx",
@@ -1969,6 +1971,7 @@
       "branch": null,
       "report": null,
       "acceptance": [
+        "DONGU KIRILDI (lead, 2026-08-26): deps listesinden DESIGN-001b CIKARILDI. Sebep BENIM hatamdi — DESIGN-001b-yi B2-den B5b-ye alirken ona UI-CFG-001/UI-COMP-001 bagimliligi ekledim ama BU kartin eski ters bagimliligini silmedim. Sonuc: DESIGN-001b -> UI-CFG-001 -> DESIGN-001b dongusu; ucu de sonsuza kadar bekliyordu ve E2E-BOARD-001 kapisina HIC ulasilamiyordu. ADR-0017 §10 (tasarim gecisi yapisal UI isinden SONRA) yonu belirliyor: dogru olan ters bagimliligin kalkmasi. Yeni zincir DOGRUSAL: UI-BOARD-001 -> UI-CFG-001 -> UI-COMP-001 -> DESIGN-001b -> E2E-BOARD-001.",
         "OZELLIK BU KARTIN MERGE'UYLE CANLANIR (ADR-0018 §2). B0-B3 kullaniciya GORUNMEZ; 'yayin penceresi' diye bir sey yoktur — yayin tek bir kartin merge'udur. Geri alma 2. kademesi de tam olarak bu kartin revert'udur.",
         "KK-B11 saglanir: ana sayfada oda kurarken tahta boyutu UC SECENEK olarak gorunur ve secilen boyut tahta-boyut-<n> kancasinda aria-pressed='true' tasir.",
         "KK-B12 saglanir: boyut 6 secildiginde K secenekleri TAM OLARAK 4 ve 5; boyut 11'de 4, 5, 6; boyut 3'te HIC SECENEK YOKTUR ve yerine tr.boardConfig.winLengthFixed ('3 tas (3x3 tahtada sabit)') metni gorunur.",
@@ -2100,10 +2103,10 @@
       "agent": "xox-dev-core",
       "deps": ["CORE-AI-001"],
       "conflictSet": ["packages/game-core/src/ai.ts", "packages/game-core/src/ai.test.ts"],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/CORE-AI-002",
+      "report": "docs/board/reports/CORE-AI-002.md",
       "blockedReason": null,
       "acceptance": [
         "SIRA DUZELTILDI (lead): CORE-AI-001 ile AYNI dosyayi (ai.ts) aciyor — paralel gidemezler. B2-den B2b-ye alindi, CORE-AI-001 bittikten SONRA. Ayrica bu kart ADR-0013 §1-in 3x3 yolunu bilerek butcesiz birakma kararini DEGISTIRIYOR; once ana AI yerine otursun, sonra 3x3 optimize edilsin.",
@@ -2113,8 +2116,11 @@
         "COZUM: 3x3 minimax-a alfa-beta budama ekle. Alfa-beta minimax DEGERINI DEGISTIRMEZ, yalniz budar — KK-B20-nin yenilmezlik sonucu AYNEN korunur, yalniz dugum sayisi duser",
         "KANIT 1: mevcut 642 oyunluk tumevarimsal yenilmezlik kosusu ve %98.49 mutasyon esigi DEGISMEDEN yesil kalir. Oyun sayisi degismez",
         "KANIT 2: ayni is yuku R=6 kisitlamasinda YENIDEN olculur ve <=1000 ms gosterilir. Olcum AI-SPIKE-001-in yontemiyle (esbuild bundle + CDP throttle) yapilir, CI Node-unda DEGIL",
-        "SONDA: alfa-beta budamasini devre disi birakan mutasyon, dugum sayisi iddiasini KIRMIZI dondurmeli — yoksa budama gercekten calisiyor mu bilinmez"
-      ]
+        "SONDA: alfa-beta budamasini devre disi birakan mutasyon, dugum sayisi iddiasini KIRMIZI dondurmeli — yoksa budama gercekten calisiyor mu bilinmez",
+        "LEAD OLCUMU (destekleyici, 2026-08-26): masaustu Node-unda kisitlamasiz bestMove bos 3x3 tahtada 211 ms, ilk hamleden sonra 21 ms. Bu 2. kriterle CELISMEZ — o olcum tarayicida esbuild bundle + CDP R=6 throttle altinda alinmisti (1982-2265 ms). Iki sayi birlikte sunu soyluyor: darbogaz ACILIS pozisyonu (dallanma 9), sonrasi degil."
+      ],
+      "mergeSha": "b02a05e",
+      "note": "R=6 throttle altinda 1230ms -> 48.4ms (kontrol grubuyla, ayni harness). ai.test.tsten SILINEN tek satir import; 78 satir YENI iddia. Mutasyon %98.02 -> %98.05. AJAN KENDI HATASINI YAKALADI: core.hooksPath=/dev/null ile commit atip bunun --no-verify ile ayni kapiyi atladigini fark etmis, reset --soft ile geri alip hooklar acikken yeniden atmis. LEAD SONDASI (kritik olan): budamayi DONEN DEGERI degistirecek kadar agresif yapan mutasyon (low >= high-1000) YENILMEZLIK TESTININ KENDISINI kirmiziya dondurdu, 12 test kirmizi — yani 642 oyunluk kanit deger bozan budama hatasina karsi gercekten koruyor. Ajanin bildirdigi IKI BELGE TUTARSIZLIGINI lead kapatti: ADR-0013 §1 (tarihli DUZELTME notu, metin yeniden yazilmadi) ve search.ts baslik yorumu."
     },
     {
       "id": "PERF-004",
@@ -2188,11 +2194,11 @@
       "title": "Preview E2E kapisi Vercel SSO duvarinin arkasinda kaldi — dalga dongusunun 9. adimi calismiyor",
       "priority": "P0",
       "agent": "xox-devops",
-      "status": "blocked",
+      "status": "pending-verify",
       "deps": [],
       "report": null,
       "branch": null,
-      "blockedReason": "KOD TARAFI BITTI ve OLCULDU (5edd998). Kalan tek sey secret DEGERI — kullanici B secenegini secti, degeri panosundan dogrudan GitHub-a koyacak (gh secret set), transcript-e girmeyecek. BAGLANAN: apps/e2e/bypass-headers.ts (tek kaynak), playwright.config.ts use.extraHTTPHeaders, global-setup.ts IKI context (globalSetup use blogunu OKUMAZ — ajanin dustugu nokta), e2e-preview.yml env. KANITLANAN: gercek SSO duvarina karsi her iki teshis dali da doğru mesaji verdi (secret yok → TANIMSIZ; sahte secret → REDDEDILDI). KANITLANMAYAN: gecisin KENDISI — gercek secret gelene kadar acik.",
+      "blockedReason": null,
       "acceptance": [
         "SECENEK B (TERCIH EDILEN): Protection Bypass for Automation secret-i GitHub secret VERCEL_AUTOMATION_BYPASS_SECRET olarak eklenir; playwright.config.ts extraHTTPHeaders-a x-vercel-protection-bypass ve x-vercel-set-bypass-cookie: samesitenone eklenir; e2e-preview.yml env-ine gecirilir. Preview PRIVATE kalir.",
         "SECENEK A: ssoProtection kapatilir. Preview-lar HERKESE ACIK olur — repo PUBLIC ve preview gercek Atlas kumesine (xox_test) baglaniyor. Onerilmiyor.",
@@ -2200,7 +2206,8 @@
         "Kapanis kaniti: gercek Vercel preview URL-ine karsi 21/21 yesil ve /api/health JSON donuyor (HTML DEGIL).",
         "SSO TESPITI OLCULEREK BULUNDU, varsayilmadi: govde metni (7 aday dizgenin hicbiri yok), durum kodu (duvar 401 degil HTTP 200 donuyor) ve set-cookie (Playwright yonlendirmeyi TAKIP ettigi icin zincirde tukeniyor, headersArray-de 0 adet) ELENDI. Tek kararli iz: yanitin SON ORIGIN-i (vercel.com) istenen origin-den farkli."
       ],
-      "conflictSet": ["apps/e2e/playwright.config.ts", ".github/workflows/e2e-preview.yml"]
+      "conflictSet": ["apps/e2e/playwright.config.ts", ".github/workflows/e2e-preview.yml"],
+      "note": "2026-08-27 06:39 UTC: kullanici secret DEGERINI kendi terminalinden ekledi (gh secret set, transcript-e girmedi). DOGRULANAN: gh secret list -> VERCEL_AUTOMATION_BYPASS_SECRET 2026-08-27T06:39:49Z var. Duvar hala ayakta ve degere bagli: xox-c4131xcrt-omeerdursunn.vercel.app -> header'siz HTTP 302 (SSO login), UYDURMA secret ile de HTTP 302. ssoProtection.enabled=true, all_except_custom_domains. GECIS HALA KANITLANMADI ve bu kart o yuzden done DEGIL. SEBEP KART DISI: e2e-preview.yml deployment_status + startsWith(environment,'Preview') ile tetikleniyor, ama artik her sey main'e DOGRUDAN push ediliyor -> Vercel target:production deploy uretiyor -> son 8 kosunun 8'i de SKIPPED. Vercel'deki son 20 deploy'un tamami target:production; tetiklenecek Preview deploy YOK. RERUN DA CARE DEGIL: son gercek preview kosusu 2026-08-25 (feat/PERF-002, sha 14ee4d5), bypass kodu 2026-08-26'da geldi (5edd998) — rerun eski SHA'yi checkout eder, bypass kodu o agacta yok. KAPANIS: bir sonraki main-disi dal push'unda (herhangi bir feat/* dalgasi) preview deploy dogar ve workflow GERCEKTEN kosar; 21/21 yesil gorulunce done."
     },
     {
       "id": "CI-005",
@@ -2222,5 +2229,6 @@
         "apps/web/vitest.config.ts"
       ]
     }
-  ]
+  ],
+  "wave": "B3"
 }

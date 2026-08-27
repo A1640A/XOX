@@ -17,9 +17,13 @@ import type { Board, Cell, Player } from './types'
  * N > 3 arama motoru (ADR-0013 §2–§4): aday daraltma → taktik tarama →
  * yinelemeli derinleşme + alfa-beta → duvar saati / düğüm bütçesi.
  *
- * 3×3 BURAYA UĞRAMAZ. `chooseMove` `size === 3`te bugünkü tam minimaxa
- * (`bestMove`) gider; KK-B20'nin tümevarımsal yenilmezlik kanıtı o gövdeyi
- * koşmaya devam eder (ADR-0013 §1).
+ * 3×3 BURAYA UĞRAMAZ. `chooseMove` `size === 3`te `bestMove`'a gider; KK-B20'nin
+ * tümevarımsal yenilmezlik kanıtı o gövdeyi koşmaya devam eder (ADR-0013 §1).
+ *
+ * `bestMove` de artık alfa-beta buduyor (`CORE-AI-002`, 2026-08-26) — ama BURADAKİ
+ * motorla akraba değil: orada derinlik sınırı, düğüm bütçesi, aday daraltma ve
+ * taktik tarama YOK; ağacın tamamı aranır, yalnız değeri değiştirmeyen dallar
+ * atlanır. İki yol bilerek ayrı; birini "sadeleştirmek" için diğerine bağlama.
  */
 
 /**

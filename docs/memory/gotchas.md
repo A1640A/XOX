@@ -1363,3 +1363,48 @@ koştuğunu açıkça yaz.
 **Yan ders — knip zincirleme çalışır:** bir kullanılmayan dışa verimi kaldırınca, YALNIZ onun
 kullandığı bir sonraki dışa verim açığa çıkar. `nodeBudgetCorpus`'u kapatınca `buildBoard`
 göründü. Tek seferde temizlendi sanma, temiz çıkana kadar tekrarla.
+
+## 2026-08-26 · ADR'de tanımlı ama hiçbir kartın kümesinde olmayan dosyalar
+
+Bugün **iki kez** aynı boşluk çıktı:
+
+| Dosya                                   | Tanımlandığı yer                   | Sahibi olan kart |
+| --------------------------------------- | ---------------------------------- | ---------------- |
+| `apps/web/lib/client/use-room.test.tsx` | — (kapanmış `UI-SKEL-001`'e aitti) | **yoktu**        |
+| `apps/web/lib/game/enabled-sizes.ts`    | ADR-0018 §3                        | **yoktu**        |
+
+İlkini zincir kurarken ben yakaladım (kırık dosya listesini sahiplerine eşleyerek).
+İkincisini ajan kartı yürütürken fark etti, açıkça bildirdi ve yazdı — doğru davranış.
+
+**Örüntü:** planlayıcı kartları _değiştirilecek_ dosyalardan türetiyor; **henüz var olmayan**
+ama bir ADR'nin gerektirdiği dosyalar hiçbir çakışma kümesine düşmüyor. Sonuç: ya kimse
+yazmaz, ya iki kart aynı anda yazar.
+
+**Önlem — dalga dispatch etmeden önce:** kartların çakışma kümelerinin birleşimini, o dalganın
+kabul kriterlerinin gerektirdiği dosya listesiyle karşılaştır. Kümede olmayan bir dosya
+gerekiyorsa **dispatch'ten önce** bir karta ata. Ajana "kümenin dışına çıkma" derken, kümenin
+işi yapmaya yetip yetmediğini de kontrol etmiş ol.
+
+**Ajan kümesinin dışına çıkmak zorunda kalırsa:** yazsın ama **bildirsin** — ve lead paralel
+worktree'lerde aynı dosyanın açılıp açılmadığını _ölçerek_ doğrulasın (`ls` ile; varsayımla değil).
+
+## 2026-08-26 · Worktree `.env.local`'i ALMAZ — ve bu artık `pnpm gates`'in tamamını düşürüyor
+
+Bilinen gotcha büyüdü. Eskiden bu yalnız `packages/db` testlerini etkiliyordu; bugün
+`CORE-AI-002` ajanı `pnpm gates`'in **tamamının** düştüğünü bildirdi:
+`apps/web/lib/realtime/presence.test.ts` → `MONGODB_URI tanımlı değil`. O test `game-core`
+kullanmıyor bile — yani ajan, kendi değişikliğiyle ilgisiz bir kırmızıyla karşılaştı.
+
+**Kök neden bendim:** `CORE-AI-002`'yi dispatch ederken worktree komutuna
+`cp .env.local ...` satırını koymayı **unuttum** (aynı dalgadaki `UI-BOARD-001` ve
+`API-BOARD-001` kartlarına koymuştum). Ajan zaman kaybetti ve doğru teşhisi kendisi koydu.
+
+**Çözüm (dosya kopyalamadan da olur):**
+
+```bash
+set -a; . /Users/omerdursun/PROJELER/XOX/.env.local; set +a; pnpm gates
+```
+
+**Kural:** her worktree dispatch'inde `.env.local` satırı **zorunlu**. Kartın kendisi
+veritabanına dokunmasa bile `pnpm gates` repo genelinde koşuyor ve dokunan testleri
+kapsıyor.
