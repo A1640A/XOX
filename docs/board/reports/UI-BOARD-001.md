@@ -1,8 +1,55 @@
 # UI-BOARD-001 — Board.tsx yeniden yazımı: tek ızgara kod yolu + roving tabindex
 
 - **Branch:** `feat/UI-BOARD-001` · **Worktree:** `.claude/worktrees/UI-BOARD-001`
-- **Commit:** `19f8e93e5cf2a83de2ed78af20e4fc7b6b5b6eaf`
+- **Commit'ler:** `19f8e93` (Board yeniden yazımı) · `e757555` (bu rapor, ilk hâli) · `bcec9c9` (koordinatör sondası — küçülme kilidi)
 - **Normatif kaynak:** ADR-0017, tasarım §5.3, spec KK-B49…B65/B71
+
+## Koordinatör sondası — üçüncü mutasyon bulgusu ve düzeltmesi
+
+Koordinatörün kendi sondaları `'--xox-n'` ve `tabIndex` mutasyonlarını
+kırmızıya çevirdi (bekleneni doğruladı), ama üçüncü sonda gerçek bir boşluk
+buldu:
+
+```
+Board.tsx:80
+  const safeFocusIndex = focusIndex < expectedCount ? focusIndex : 0
+                     →  const safeFocusIndex = focusIndex
+```
+
+Bu mutasyonla **tüm paket yeşil kalıyordu** — tahta küçülünce (ör. 11×11'den
+3×3'e rövanş/konfigürasyon değişimiyle) eski `focusIndex` yeni `cellCount`
+dışında kalırsa **hiçbir hücre** `tabIndex=0` olmuyordu (KK-B59 ihlali,
+tahta klavyeyle tamamen erişilemez hale gelirdi). Sınır koruması kodda
+vardı ama hiçbir test onu kilitlemiyordu.
+
+**Düzeltme:** `bcec9c9` — büyük config (11×11) ile render + odağı `hucre-100`'e
+taşı + küçük config'e (3×3, `DEFAULT_BOARD_CONFIG`) `rerender` ederek
+`safeFocusIndex`'i DOĞRUDAN çağırmadan davranışı sınayan yeni test:
+
+```
+it('tahta KÜÇÜLÜNCE (11×11 -> 3×3) odak eski hücrenin dışında kalsa bile
+    YİNE tam bir hücre tabIndex=0 olur', ...)
+```
+
+**Mutasyon disiplini uygulandı** (`conventions.md` "önce commit, sonra
+sonda, sonra geri al"):
+
+1. Test önce commit edildi (`bcec9c9`), suit yeşildi (23/23, `Board.test.tsx`).
+2. Coordinatörün verdiği TAM mutasyon `Board.tsx:80`'e uygulandı; `git diff`
+   ile GERÇEKTEN değiştiği doğrulandı.
+3. Test koşuldu — **kırmızı**, gerçek çıktı:
+   ```
+   × tahta KÜÇÜLÜNCE (11×11 -> 3×3) odak eski hücrenin dışında kalsa bile
+     YİNE tam bir hücre tabIndex=0 olur
+     → expected [] to have a length of 1 but got +0
+   Test Files  1 failed (1)
+        Tests  1 failed | 22 passed (23)
+   ```
+   Yalnız yeni test kırmızı oldu, diğer 22 test etkilenmedi (izole sonda).
+4. `git checkout -- apps/web/components/board/Board.tsx` ile geri alındı;
+   `git status --porcelain` BOŞ. Test tekrar yeşil (23/23).
+5. `pnpm gates` beş kapının TAMAMIYLA yeniden koşuldu: **`GATES_EXIT=0`**.
+   `@xox/web`: 72 dosya, **753/753** test yeşil (yeni test dahil).
 
 ## Özet
 
@@ -121,8 +168,8 @@ prop satırı ve bir import satırı — lead'e bayrak: UI-COMP-001 başlamadan
 
 ## Test sonuçları
 
-- `components/board/**`: 53/53 yeşil (`Board.test.tsx` 15, `roving-grid.test.ts` 22, `cell-label.test.ts` 5, `announcements.test.ts` 4, ek entegrasyon).
-- `apps/web` tüm paket: **752/752** yeşil (`pnpm --filter @xox/web exec vitest run`).
+- `components/board/**`: 54/54 yeşil (`Board.test.tsx` 23 — küçülme kilidi dahil —, `roving-grid.test.ts` 22, `cell-label.test.ts` 5, `announcements.test.ts` 4).
+- `apps/web` tüm paket: **753/753** yeşil (`pnpm --filter @xox/web exec vitest run`, koordinatör sondası sonrası son koşu).
 - `pnpm --filter @xox/web build`: başarılı, Tailwind arbitrary-value sınıfları (`grid-cols-[repeat(var(--xox-n),...)]`, `outline-[length:var(--xox-focus-ring-width)]` vb.) gerçek CSS'e derleniyor (üretilen `.next/static/chunks/*.css` içinde doğrulandı).
 
 ## `pnpm gates` çıktısı (özet)
@@ -136,8 +183,9 @@ $ pnpm test:coverage →
     @xox/ui-tokens 100/100/100/100
     @xox/game-core 100/100/100/100
     @xox/db        95.77/90.06/98.73/97.89 (bu karttan etkilenmedi)
-    @xox/web       93.92/88.99/93.52/96.21 — 72 dosya, 752 test, hepsi yeşil
+    @xox/web       93.92/88.99/93.52/96.21 — 72 dosya, 753 test, hepsi yeşil
 $ pnpm knip       → yalnız ön var olan config-hint'leri (30), unused export/file YOK
+GATES_EXIT=0 (koordinatör sondası SONRASI son koşu, /tmp/gates_final.log)
 GATES_EXIT=0
 ```
 
