@@ -1,4 +1,12 @@
-import { boardFromCells, evaluateStatus } from '@xox/game-core'
+// ALT YOLDAN import — ana barrel'dan DEĞİL (PERF-004). `@xox/game-core`'un ana
+// barrel'ı `ai.ts`'i koşulsuz yeniden dışa veriyor; bu dosya `@xox/shared`'ın
+// barrel'ından `export *` ile yayıldığı için, `TESTID` gibi tek bir sabit için
+// `@xox/shared`'a dokunan HER rota minimax'ı da indiriyordu (ölçüldü: yedi rota
+// 218–222 kB, bütçe 235 kB). Alt yol zinciri kırar: bu iki fonksiyon `board.ts`
+// ve `status.ts`'te ve o dosyalar `ai.ts`'e dokunmuyor.
+// Bu importları ana barrel'a GERİ ÇEVİRME — sızıntı sessizce geri gelir.
+import { boardFromCells } from '@xox/game-core/board'
+import { evaluateStatus } from '@xox/game-core/status'
 import { DISCONNECT_GRACE_SECONDS, WS_RECONNECT_BASE_MS, WS_RECONNECT_MAX_MS } from './constants'
 import type { ErrorCode } from './errors'
 import { type MoveRejectionReason, type TransportStatus, toTransportStatus } from './game-status'
