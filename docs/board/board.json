@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T07:40:22.199Z",
+  "updatedAt": "2026-08-27T07:58:32.588Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2129,13 +2129,13 @@
       "title": "shared barrel game-core-u BES rotaya yayiyor — 298 kB ortak parca",
       "tier": "P1",
       "wave": "B3",
-      "agent": "xox-dev-backend",
+      "agent": "lead",
       "deps": ["CTR-BOARD-001"],
       "conflictSet": ["packages/shared/src/index.ts", "packages/shared/src/room-client.ts"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/PERF-004",
-      "report": null,
+      "report": "docs/board/reports/PERF-004.md",
       "blockedReason": null,
       "acceptance": [
         "AJAN ROLU DUZELTILDI (lead hatasi): kart xox-perf-e atanmisti ama o ajan SALT-OKUNUR (Read/Grep/Glob/Bash — Write/Edit YOK). Uygulama karti bir uygulama ajanina gider. Olcum yarisi xox-perf tarafindan teslim edildi ve kayitli.",
@@ -2151,7 +2151,9 @@
         "OLCULMUS YAKLASIM UYARISI (PERF-003 uc yolu denedi): alt yol export + statik import SIFIR ETKI yapti (bayt bayt ayni) · ham import() KOTULESTIRDI (next start + curl ile dogrulandi, /giris HTML-i minimaxi eagerly servis etti) · ise yarayan tek sey next/dynamic + ssr:false bileşen sinirıydi. Ayni tuzaklara dusme",
         "SIRA: CTR-BOARD-001 protokol penceresini KAPATTIKTAN sonra. O kart packages/shared/src/** sahibi ve zaten sinirda; import yapisini ayni anda degistirmek onu patlatir",
         "Duzeltme sonrasi agir butce DUSURULMELI — 235 kB olculen degerden turetilmisti, sizinti kalkinca dogru sayi degil"
-      ]
+      ],
+      "mergeSha": "be6c1ad",
+      "note": "KARTIN GEREKCESI YANLIS CIKTI, olcum duzeltti. Parca duzeyinde ILK KEZ olculdu: agir rotalara ozel parca 275.6 kB ham / 68.7 kB gzip, icinde 485 zod izi ve SIFIR minimax izi. Agir(216) ile hafif(146) arasindaki 70 kB farkin TAMAMI zod. PERF-002den beri belgelenmis minimax teorisi (size-limit yorumu, PERF-003 raporu, kart gerekcesi, olcum ajaninin kok nedeni, leadin varsayimi) yanlis suclyuyu gosteriyormus. Yapilan: eklemeli alt yollar, ~2 kB. Geri alinan: index.tsten ai yeniden disa verimi (index.test.ts yakaladi, yuzey bilerek dondurulmus). /profil hafif gruba DONMEDI."
     },
     {
       "id": "W2-05",
@@ -2234,6 +2236,25 @@
         "apps/web/components/computer/game-engine.test.ts",
         "apps/web/vitest.config.ts"
       ]
+    },
+    {
+      "id": "PERF-005",
+      "title": "shared barreli istemciye ZOD sokuyor — 68.7 kB gzip, olculdu",
+      "priority": "P1",
+      "agent": "xox-dev-web",
+      "status": "todo",
+      "deps": ["UI-CFG-001", "UI-COMP-001"],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "OLCULDU (PERF-004, parca duzeyi): agir rotalara ozel parca 275.6 kB ham / 68.7 kB gzip; icinde 485 zod izi, SIFIR minimax izi. Hafif rotalarin ortak parcalarinda ne zod ne minimax var. Bu 68.7 kB, agir(216) ile hafif(146) arasindaki 70 kB farkin TAMAMI.",
+        "Cozum yonu: sema modullerini istemci yolundan ayir. TESTID / DISPLAY_NAME_MAX / ErrorCode gibi sabitler ve tipler icin bir istemci dosyasi zod indirmemeli.",
+        "COK SAYIDA tuketici dosyasina dokunur — kendi dalgasi olmali, UI-CFG-001 ve UI-COMP-001 bittikten SONRA.",
+        "KAPANIS SARTI: /profil hafif gruba (158 kB) GERI DONER ve size-limit dosyasindaki borc kapanir. PERF-004 bunu YAPAMADI ve raporunda acikca yazdi.",
+        "Disa verim ADI kaldirma kurali gecerli: shared calisma zamani listesi bugun 103 ad; degisecekse bilincli ve kayitli olsun.",
+        "ONCE OLC, SONRA DUZELT: PERF-004 tam bu kartin atasinda bes ayri kaynagin ayni yanlis suclyuyu gosterdigini ortaya cikardi. Parcayi ac, icine bak."
+      ],
+      "conflictSet": ["packages/shared/src/**", ".size-limit.mjs"]
     }
   ],
   "wave": "B4"
