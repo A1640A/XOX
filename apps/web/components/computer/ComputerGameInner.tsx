@@ -1,5 +1,6 @@
 'use client'
 
+import { DEFAULT_BOARD_CONFIG } from '@xox/game-core'
 import { TESTID } from '@xox/shared'
 import { Board } from '@/components/board/Board'
 import { tr } from '@/messages/tr'
@@ -40,6 +41,7 @@ export function ComputerGameInner(): React.ReactElement {
 
       <Board
         cells={state.board}
+        config={DEFAULT_BOARD_CONFIG}
         interactive={interactive}
         winningLine={winningLine}
         onCellPress={playMove}
