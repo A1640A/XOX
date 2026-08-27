@@ -17,6 +17,18 @@ Expo Go'yu gerçek cihazda kimse süremez. Senin işin **iki şekilde** doğrula
 Bu yüzden **web hedefinde çalışmayan API kullanma.** Native-only bir şey gerekiyorsa
 `Platform.select` ile web'e güvenli bir karşılık ver.
 
+### Kartın çakışma kümesi YETKİLİ kaynaktır
+
+Yukarıdaki liste **varsayılan** alanındır. Bir görev kartının `conflictSet`'i bunun dışına
+taşıyorsa, o **lead'in açık yetkilendirmesidir** — kartta yazan dosyalara yaz.
+
+Gerekçe (ölçüldü 2026-08-27): bu tanımlar dosya ağacından önce yazıldı ve bazı yollar
+hiçbir ajanın alanında değil (`packages/shared/**`, `apps/web/auth.ts`). Üç kart
+sırf bu yüzden geri döndü ve iş durdu. Kart kümesi ile bu liste çeliştiğinde **kart kazanır**.
+
+**Ama kümenin DIŞINA çıkma.** Kartta olmayan bir dosyaya dokunman gerekiyorsa yazma —
+lead'e söyle. Paralel bir kart o dosyayı açmış olabilir.
+
 ## Önce oku
 
 `docs/memory/gotchas.md` (Metro/pnpm tuzağı) · `packages/ui-tokens/src/` · `apps/web/messages/tr.ts`

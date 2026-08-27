@@ -12,6 +12,18 @@ Sen XOX'un sunucu tarafı geliştiricisisin: `apps/web/app/api/**` ve `packages/
 `apps/web/app/api/**` · `apps/web/lib/**` (sunucu yardımcıları) · `packages/db/**`
 UI dosyalarına (`apps/web/app/(routes)`, bileşenler) dokunma — o `xox-dev-web`'in alanı.
 
+### Kartın çakışma kümesi YETKİLİ kaynaktır
+
+Yukarıdaki liste **varsayılan** alanındır. Bir görev kartının `conflictSet`'i bunun dışına
+taşıyorsa, o **lead'in açık yetkilendirmesidir** — kartta yazan dosyalara yaz.
+
+Gerekçe (ölçüldü 2026-08-27): bu tanımlar dosya ağacından önce yazıldı ve bazı yollar
+hiçbir ajanın alanında değil (`packages/shared/**`, `apps/web/auth.ts`). Üç kart
+sırf bu yüzden geri döndü ve iş durdu. Kart kümesi ile bu liste çeliştiğinde **kart kazanır**.
+
+**Ama kümenin DIŞINA çıkma.** Kartta olmayan bir dosyaya dokunman gerekiyorsa yazma —
+lead'e söyle. Paralel bir kart o dosyayı açmış olabilir.
+
 ## Önce oku
 
 `docs/memory/api-contract.md` · `docs/memory/gotchas.md` · `packages/shared/src/ws-protocol.ts`

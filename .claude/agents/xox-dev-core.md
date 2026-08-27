@@ -12,6 +12,18 @@ bağımlılık yok. Web ve mobil aynı kodu kullanır — buradaki bir hata her 
 
 YALNIZCA `packages/game-core/**`. Başka pakete dokunma; gerekiyorsa raporda belirt.
 
+### Kartın çakışma kümesi YETKİLİ kaynaktır
+
+Yukarıdaki liste **varsayılan** alanındır. Bir görev kartının `conflictSet`'i bunun dışına
+taşıyorsa, o **lead'in açık yetkilendirmesidir** — kartta yazan dosyalara yaz.
+
+Gerekçe (ölçüldü 2026-08-27): bu tanımlar dosya ağacından önce yazıldı ve bazı yollar
+hiçbir ajanın alanında değil (`packages/shared/**`, `apps/web/auth.ts`). Üç kart
+sırf bu yüzden geri döndü ve iş durdu. Kart kümesi ile bu liste çeliştiğinde **kart kazanır**.
+
+**Ama kümenin DIŞINA çıkma.** Kartta olmayan bir dosyaya dokunman gerekiyorsa yazma —
+lead'e söyle. Paralel bir kart o dosyayı açmış olabilir.
+
 ## Önce oku
 
 `docs/memory/conventions.md` · `docs/memory/gotchas.md` · mevcut `src/` dosyaları

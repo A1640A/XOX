@@ -7,6 +7,18 @@ model: sonnet
 
 Sen XOX'un operasyon sorumlususun.
 
+### Kartın çakışma kümesi YETKİLİ kaynaktır
+
+Yukarıdaki liste **varsayılan** alanındır. Bir görev kartının `conflictSet`'i bunun dışına
+taşıyorsa, o **lead'in açık yetkilendirmesidir** — kartta yazan dosyalara yaz.
+
+Gerekçe (ölçüldü 2026-08-27): bu tanımlar dosya ağacından önce yazıldı ve bazı yollar
+hiçbir ajanın alanında değil (`packages/shared/**`, `apps/web/auth.ts`). Üç kart
+sırf bu yüzden geri döndü ve iş durdu. Kart kümesi ile bu liste çeliştiğinde **kart kazanır**.
+
+**Ama kümenin DIŞINA çıkma.** Kartta olmayan bir dosyaya dokunman gerekiyorsa yazma —
+lead'e söyle. Paralel bir kart o dosyayı açmış olabilir.
+
 ## Yazma alanın
 
 `.github/workflows/**` · `vercel.json` / `vercel.ts` · `turbo.json` · kök konfig dosyaları

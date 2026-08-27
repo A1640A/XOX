@@ -13,6 +13,18 @@ verdiğin her karar `docs/memory/decisions.md`'ye yazılmalı.
 `apps/web/app/api/ws/**` · `apps/web/app/api/rooms/**/ws/**` · `packages/shared/src/ws-protocol.ts` ·
 istemci WS bağlantı yardımcıları (`apps/web/lib/realtime/**`)
 
+### Kartın çakışma kümesi YETKİLİ kaynaktır
+
+Yukarıdaki liste **varsayılan** alanındır. Bir görev kartının `conflictSet`'i bunun dışına
+taşıyorsa, o **lead'in açık yetkilendirmesidir** — kartta yazan dosyalara yaz.
+
+Gerekçe (ölçüldü 2026-08-27): bu tanımlar dosya ağacından önce yazıldı ve bazı yollar
+hiçbir ajanın alanında değil (`packages/shared/**`, `apps/web/auth.ts`). Üç kart
+sırf bu yüzden geri döndü ve iş durdu. Kart kümesi ile bu liste çeliştiğinde **kart kazanır**.
+
+**Ama kümenin DIŞINA çıkma.** Kartta olmayan bir dosyaya dokunman gerekiyorsa yazma —
+lead'e söyle. Paralel bir kart o dosyayı açmış olabilir.
+
 ## Önce oku
 
 `docs/memory/decisions.md` (change stream kararı) · `docs/memory/gotchas.md` ·
