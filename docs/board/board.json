@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T07:19:31.275Z",
+  "updatedAt": "2026-08-27T07:23:41.237Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1896,10 +1896,10 @@
         "apps/web/components/room/RoomScreen.tsx",
         "apps/web/components/computer/ComputerGameScreen.tsx"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/UI-BOARD-001",
-      "report": null,
+      "report": "docs/board/reports/UI-BOARD-001.md",
       "acceptance": [
         "RoomScreen.tsx ve ComputerGameScreen.tsx'te YALNIZ PROP BAGLAMA SATIRLARI degisir (ADR-0017 sonuclar). Bu iki dosya ayni dalgada baska hicbir kartin cakisma kumesinde OLAMAZ.",
         "PROP SOZLESMESI: { cells: readonly Cell[]; config: BoardConfig (YENI); interactive: boolean; winningLine?: readonly number[] | null; pendingIndex?: number | null; lastMoveIndex?: number | null (YENI); onCellPress?: (index: number) => void }. config prop'u ZORUNLUDUR cunku data-kazanma UZUNLUKTAN TURETILEMEZ.",
@@ -1923,7 +1923,9 @@
         "pnpm gates temiz.",
         "CORE-CFG-001 BIRAKTI: apps/web/components/board/Board.tsx icinde const BOARD_SIZE = 3 (KENAR anlaminda) duruyor. ADR-0010 bu adin repodan TAMAMEN silinmesini istiyor — game-core=hucre, Board.tsx=kenar seklinde uc farkli anlamla kopyalanmisti."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "f8a876e",
+      "note": "LEAD SONDASI BIR BOSLUK BULDU, ajan kapatti: safeFocusIndex sinir korumasi test edilmiyordu (mutasyon uygulandi -> tum paket YESIL kaldi). Tahta kuculdugunde (11x11 -> rovans 3x3) focusIndex eski konumda kalirsa HICBIR hucre tabIndex=0 olmuyor -> tahta klavyeyle tamamen erisilemez. Ajan davranis testi yazdi (buyuk config render -> odagi tasi -> kucuk configle rerender), ayni mutasyon artik kirmizi; lead ikinci kez kendi kosup dogruladi. GECEN SONDALAR: --xox-n hep 3 -> kirmizi; roving devre disi -> 3 test kirmizi. KUME DISI: ComputerGameInner.tsx (+2 satir) — config zorunlu prop olunca kacinilmaz, ajan bildirdi, bugun UCUNCU ayni ornekten."
     },
     {
       "id": "API-BOARD-001",
@@ -2136,6 +2138,7 @@
       "report": null,
       "blockedReason": null,
       "acceptance": [
+        "ACILIYET ARTTI (olculdu 2026-08-26, UI-BOARD-001 sonrasi): en agir rota 214.79 -> 222.08 kB, butce 235 kB. Kalan pay 12.9 kB. Tahta yeniden yazimi ~7 kB ekledi ve UI-CFG-001/UI-COMP-001 daha gelmedi. Bu kart artik temizlik degil, butceyi tutan sey.",
         "SIZINTI YUZEYE CIKTI (W2-02 sonrasi): /profil 142.51 -> 216.54 kB, hafif butceyi 58.54 kB asti ve CI-i kirdi. Zincir DOGRULANDI: components/profile -> @xox/shared (DISPLAY_NAME_MAX, ErrorCode) -> shared/index.ts export * room-client -> room-client.ts import boardFromCells/evaluateStatus. Profil sayfasi TEK BIR SABIT icin minimax sirtliyor.",
         "SERT SART (2026-08-26): sizinti kapandiginda /profil HAFIF gruba GERI DONER (.size-limit.mjs LIGHT_ROUTES) ve heavy butce olculen yeni degerden turetilir. Bu kart o satiri geri almadan KAPANMAZ.",
         "OLCULDU (PERF-003, kapsami disindaydi): packages/shared/src/room-client.ts @xox/game-core ANA barrel-ini STATIK cekiyor; packages/shared/src/index.ts-in export * barrel-i bunu yalnizca TESTID gibi ufak bir sey icin @xox/shared-a dokunan HER rotaya yayiyor",
