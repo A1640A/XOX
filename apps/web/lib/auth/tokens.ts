@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import {
   MOBILE_ACCESS_TTL_SECONDS,
   MOBILE_REFRESH_TTL_SECONDS,
@@ -31,6 +32,12 @@ export interface SignedToken {
   token: string
   /** Saniye — imzalandığı andan itibaren kalan ömür. */
   expiresIn: number
+  /**
+   * Yalnız `kind==='ws-ticket'` için dolar (SEC-003) — `packages/db`'deki
+   * `WsTicket` kaydının birincil anahtarı, tek kullanımlık tüketimin
+   * (`consumeWsTicket`) karşılaştırdığı değer budur.
+   */
+  jti?: string
 }
 
 export interface VerifiedToken {
@@ -63,7 +70,26 @@ function getSecretKey(): Uint8Array {
   return new TextEncoder().encode(secret)
 }
 
-/** `AUTH_SECRET`'ten türetilen anahtarla HS256 imzalar (ADR-0006, ADR-0005). */
+/**
+ * `AUTH_SECRET`'ten türetilen anahtarla HS256 imzalar (ADR-0006, ADR-0005).
+ *
+ * SEC-003: `kind==='ws-ticket'` iken her çağrı YENİ bir `jti` (JWT ID) üretir
+ * ve token'a gömer — bu, tek kullanımlık tüketimin (`@xox/db`'deki
+ * `consumeWsTicket`) karşılaştırdığı birincil anahtardır. Overload'lar
+ * `kind:'ws-ticket'` iken dönen `jti`nin TİP DÜZEYİNDE `string` (opsiyonel
+ * değil) olmasını garanti eder — çağıran taraf `undefined` kontrolü
+ * yazmak zorunda kalmaz, unutma riski derleme zamanında kapanır.
+ */
+export async function signToken(
+  kind: 'ws-ticket',
+  userId: string,
+  extraClaims?: Record<string, unknown>,
+): Promise<SignedToken & { jti: string }>
+export async function signToken(
+  kind: Exclude<TokenKind, 'ws-ticket'>,
+  userId: string,
+  extraClaims?: Record<string, unknown>,
+): Promise<SignedToken>
 export async function signToken(
   kind: TokenKind,
   userId: string,
@@ -71,14 +97,18 @@ export async function signToken(
 ): Promise<SignedToken> {
   const ttl = TTL_SECONDS[kind]
   const expiresAt = Math.floor(Date.now() / 1000) + ttl
-  const token = await new SignJWT(extraClaims)
+  const jti = kind === 'ws-ticket' ? randomUUID() : undefined
+  let builder = new SignJWT(extraClaims)
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(userId)
     .setAudience(AUDIENCE[kind])
     .setIssuedAt()
     .setExpirationTime(expiresAt)
-    .sign(getSecretKey())
-  return { token, expiresIn: ttl }
+  if (jti !== undefined) {
+    builder = builder.setJti(jti)
+  }
+  const token = await builder.sign(getSecretKey())
+  return { token, expiresIn: ttl, ...(jti !== undefined ? { jti } : {}) }
 }
 
 /**

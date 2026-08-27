@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T07:23:41.237Z",
+  "updatedAt": "2026-08-27T08:04:19.282Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1221,10 +1221,10 @@
         "apps/web/app/api/ws/ticket/route.ts",
         "packages/shared/src/constants.ts"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/SEC-003",
+      "report": "docs/board/reports/SEC-003.md",
       "blockedReason": null,
       "acceptance": [
         "Bilet TEK KULLANIMLIK: jti + TTL kaydı (mobile-refresh-token modelinin kalıbı) ile ilk kullanımda yakılır; ikinci kullanım 4401 alır",
@@ -1234,7 +1234,9 @@
         "Cikis (signOut) elde duran bileti de iptal etmeli — bugun yalnizca Auth.js cerezi siliniyor, bilet TTL sonuna kadar calisiyor",
         "DEGERLENDIR ve karari raporla: bileti URL yerine Sec-WebSocket-Protocol alt-protokol alaninda tasimak mumkun mu? react-native-web ozel baslik gonderemedigi icin sorgu dizesi secilmisti, alt-protokol alani bu kisiti asabilir",
         "pnpm gates temiz"
-      ]
+      ],
+      "mergeSha": "99d8659",
+      "note": "LEAD SONDASI: atomik tek komutu oku-sonra-yaz uc adima bolunce yaris testi KIRMIZI dondu (expected [{ok:true},{ok:true}] to have a length of 1) — iki eszamanli tuketim de gecti, acik yeniden uretildi. Yaris testi Promise.all ile GERCEK eszamanlilik kullaniyor, sirali cagri degil; gercek Atlas xox_teste karsi 3 ardisik kosuda hep tam 1 basarili."
     },
     {
       "id": "OPS-004",
@@ -1968,9 +1970,9 @@
         "apps/web/components/room/status-text.ts",
         "apps/web/app/oda/katil/page.tsx"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/UI-CFG-001",
       "report": null,
       "acceptance": [
         "DONGU KIRILDI (lead, 2026-08-26): deps listesinden DESIGN-001b CIKARILDI. Sebep BENIM hatamdi — DESIGN-001b-yi B2-den B5b-ye alirken ona UI-CFG-001/UI-COMP-001 bagimliligi ekledim ama BU kartin eski ters bagimliligini silmedim. Sonuc: DESIGN-001b -> UI-CFG-001 -> DESIGN-001b dongusu; ucu de sonsuza kadar bekliyordu ve E2E-BOARD-001 kapisina HIC ulasilamiyordu. ADR-0017 §10 (tasarim gecisi yapisal UI isinden SONRA) yonu belirliyor: dogru olan ters bagimliligin kalkmasi. Yeni zincir DOGRUSAL: UI-BOARD-001 -> UI-CFG-001 -> UI-COMP-001 -> DESIGN-001b -> E2E-BOARD-001.",
@@ -2129,15 +2131,18 @@
       "title": "shared barrel game-core-u BES rotaya yayiyor — 298 kB ortak parca",
       "tier": "P1",
       "wave": "B3",
-      "agent": "xox-perf",
+      "agent": "lead",
       "deps": ["CTR-BOARD-001"],
       "conflictSet": ["packages/shared/src/index.ts", "packages/shared/src/room-client.ts"],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/PERF-004",
+      "report": "docs/board/reports/PERF-004.md",
       "blockedReason": null,
       "acceptance": [
+        "AJAN ROLU DUZELTILDI (lead hatasi): kart xox-perf-e atanmisti ama o ajan SALT-OKUNUR (Read/Grep/Glob/Bash — Write/Edit YOK). Uygulama karti bir uygulama ajanina gider. Olcum yarisi xox-perf tarafindan teslim edildi ve kayitli.",
+        "IKINCI KOK NEDEN (olcum ajani buldu, lead dogruladi): NE packages/shared NE packages/game-core package.json-inda sideEffects alani YOK. Bu alan yoksa bundler export * zincirini atomik kabul eder ve tree-shake garantisi bulamaz. KALDIRAC: game-core/package.json ZATEN {\".\":\"./src/index.ts\",\"./ai\":\"./src/ai.ts\"} tanimliyor — ./board ve ./status alt-yollari eklenerek src/index.ts-e hic dokunmadan cozulebilir.",
+        "PAZARLIKSIZ (lead): @xox/shared-in bugun disa verdigi HICBIR AD kaldirilmayacak. UI-CFG-001 AYNI DALGADA kosuyor ve oradan import ediyor; bir isim kaybolursa dali merge-de kirilir ve sebebi gunler sonra anlasilir. Statik zinciri KIRMAK serbest, ISIM kaldirmak degil. Tek cozum bir ismi kaldirmaksa YAPMA, leade soyle.",
         "ACILIYET ARTTI (olculdu 2026-08-26, UI-BOARD-001 sonrasi): en agir rota 214.79 -> 222.08 kB, butce 235 kB. Kalan pay 12.9 kB. Tahta yeniden yazimi ~7 kB ekledi ve UI-CFG-001/UI-COMP-001 daha gelmedi. Bu kart artik temizlik degil, butceyi tutan sey.",
         "SIZINTI YUZEYE CIKTI (W2-02 sonrasi): /profil 142.51 -> 216.54 kB, hafif butceyi 58.54 kB asti ve CI-i kirdi. Zincir DOGRULANDI: components/profile -> @xox/shared (DISPLAY_NAME_MAX, ErrorCode) -> shared/index.ts export * room-client -> room-client.ts import boardFromCells/evaluateStatus. Profil sayfasi TEK BIR SABIT icin minimax sirtliyor.",
         "SERT SART (2026-08-26): sizinti kapandiginda /profil HAFIF gruba GERI DONER (.size-limit.mjs LIGHT_ROUTES) ve heavy butce olculen yeni degerden turetilir. Bu kart o satiri geri almadan KAPANMAZ.",
@@ -2148,7 +2153,9 @@
         "OLCULMUS YAKLASIM UYARISI (PERF-003 uc yolu denedi): alt yol export + statik import SIFIR ETKI yapti (bayt bayt ayni) · ham import() KOTULESTIRDI (next start + curl ile dogrulandi, /giris HTML-i minimaxi eagerly servis etti) · ise yarayan tek sey next/dynamic + ssr:false bileşen sinirıydi. Ayni tuzaklara dusme",
         "SIRA: CTR-BOARD-001 protokol penceresini KAPATTIKTAN sonra. O kart packages/shared/src/** sahibi ve zaten sinirda; import yapisini ayni anda degistirmek onu patlatir",
         "Duzeltme sonrasi agir butce DUSURULMELI — 235 kB olculen degerden turetilmisti, sizinti kalkinca dogru sayi degil"
-      ]
+      ],
+      "mergeSha": "be6c1ad",
+      "note": "KARTIN GEREKCESI YANLIS CIKTI, olcum duzeltti. Parca duzeyinde ILK KEZ olculdu: agir rotalara ozel parca 275.6 kB ham / 68.7 kB gzip, icinde 485 zod izi ve SIFIR minimax izi. Agir(216) ile hafif(146) arasindaki 70 kB farkin TAMAMI zod. PERF-002den beri belgelenmis minimax teorisi (size-limit yorumu, PERF-003 raporu, kart gerekcesi, olcum ajaninin kok nedeni, leadin varsayimi) yanlis suclyuyu gosteriyormus. Yapilan: eklemeli alt yollar, ~2 kB. Geri alinan: index.tsten ai yeniden disa verimi (index.test.ts yakaladi, yuzey bilerek dondurulmus). /profil hafif gruba DONMEDI."
     },
     {
       "id": "W2-05",
@@ -2231,7 +2238,43 @@
         "apps/web/components/computer/game-engine.test.ts",
         "apps/web/vitest.config.ts"
       ]
+    },
+    {
+      "id": "PERF-005",
+      "title": "shared barreli istemciye ZOD sokuyor — 68.7 kB gzip, olculdu",
+      "priority": "P1",
+      "agent": "xox-dev-web",
+      "status": "todo",
+      "deps": ["UI-CFG-001", "UI-COMP-001"],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "OLCULDU (PERF-004, parca duzeyi): agir rotalara ozel parca 275.6 kB ham / 68.7 kB gzip; icinde 485 zod izi, SIFIR minimax izi. Hafif rotalarin ortak parcalarinda ne zod ne minimax var. Bu 68.7 kB, agir(216) ile hafif(146) arasindaki 70 kB farkin TAMAMI.",
+        "Cozum yonu: sema modullerini istemci yolundan ayir. TESTID / DISPLAY_NAME_MAX / ErrorCode gibi sabitler ve tipler icin bir istemci dosyasi zod indirmemeli.",
+        "COK SAYIDA tuketici dosyasina dokunur — kendi dalgasi olmali, UI-CFG-001 ve UI-COMP-001 bittikten SONRA.",
+        "KAPANIS SARTI: /profil hafif gruba (158 kB) GERI DONER ve size-limit dosyasindaki borc kapanir. PERF-004 bunu YAPAMADI ve raporunda acikca yazdi.",
+        "Disa verim ADI kaldirma kurali gecerli: shared calisma zamani listesi bugun 103 ad; degisecekse bilincli ve kayitli olsun.",
+        "ONCE OLC, SONRA DUZELT: PERF-004 tam bu kartin atasinda bes ayri kaynagin ayni yanlis suclyuyu gosterdigini ortaya cikardi. Parcayi ac, icine bak."
+      ],
+      "conflictSet": ["packages/shared/src/**", ".size-limit.mjs"]
+    },
+    {
+      "id": "SEC-005",
+      "title": "revokeWsTicketsForUser yazildi ve test edildi ama HIC CAGRILMIYOR — signOut kancasina bagla",
+      "priority": "P2",
+      "agent": "xox-dev-backend",
+      "status": "todo",
+      "deps": ["SEC-003"],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "SEC-003 fonksiyonu yazdi, test etti, dısa verdi — ama cagiran YOK. Cagrilacagi yer apps/web/auth.ts events.signOut kancasi; o dosya SEC-003 ajaninin yazma alaninin disindaydi, dogru davranip bildirdi. Raporunda eklenecek kod parcasi hazir.",
+        "KAPI KOR NOKTASI (lead olctu): knip bunu YAKALAMIYOR cunku packages/db/src/index.ts knipin GIRIS NOKTASI — oradan yeniden disa verilen her sey tanim geregi kullanilmis sayiliyor. Paketler yayinlanmadigi icin bu gercek bir bosluk. Kart kapanirken bu kor noktayi da ele al: is paketleri icin dead-export tespiti nasil yapilir.",
+        "DIKKAT — bu reponun en yarali dosyasi: auth.ts. Auth.js jwt callbackini TANIMLAMA (her giriste cerez sessizce silinir). events.signOut FARKLI bir kanca ama ayni dosyada; degisikligi minimum tut.",
+        "next-auth import eden hicbir dosya Vitest-te kosturulamaz — is mantigi zaten packages/db-de test edildi, auth.ts tarafi ince tutkal olmali."
+      ],
+      "conflictSet": ["apps/web/auth.ts"]
     }
   ],
-  "wave": "B3"
+  "wave": "B4"
 }

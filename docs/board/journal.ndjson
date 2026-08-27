@@ -1537,3 +1537,70 @@
 {"ts":"2026-08-26T23:20:00Z","event":"card.merged","card":"CORE-AI-002","note":"R=6 altinda 1230ms -> 48.4ms, kontrol grubuyla olculdu. Mutasyon %98.05. AJAN KENDI HATASINI YAKALADI VE GERI ALDI (core.hooksPath=/dev/null = --no-verify). LEAD SONDASI: deger degistiren budama mutasyonu yenilmezlik testinin KENDISINI kirdi -> 642 oyunluk kanit gercekten koruyor. Iki belge tutarsizligi kapatildi: ADR-0013 §1-e tarihli DUZELTME notu eklendi (ADR bir tarihsel kayit, metin yeniden yazilmadi) ve search.ts baslik yorumu iki yolun akraba OLMADIGINI soyleyecek sekilde guncellendi. BENIM HATAM: bu kartin dispatchinde cp .env.local satirini unutmusum, ajan ilgisiz bir kirmiziyla ugrasti"}
 {"ts":"2026-08-27T07:19:46Z","event":"subagent.stop"}
 {"ts":"2026-08-26T23:50:00Z","event":"card.merged","card":"UI-BOARD-001","note":"Lead sondasi bosluk buldu, ajan kapatti, lead tekrar dogruladi: safeFocusIndex sinir korumasi -> tahta kuculdugunde klavye kilitlenmesi. Bundle: en agir rota 222.08/235 kB, pay 12.9 kB kaldi — PERF-004 aciliyeti artti. Dalga B3 kapandi: UI-BOARD-001 + API-BOARD-001 + CORE-AI-002"}
+{"ts":"2026-08-27T00:30:00Z","event":"wave.started","wave":"B4","note":"UI-CFG-001 (OZELLIK BU MERGE-LE CANLANIR) + PERF-004 (bundle payi 12.9 kB kaldi) + SEC-003 (calinan bilet kalici oyun devralmasi). Cakisma kumeleri OLCULEREK ayrik dogrulandi; tek cakisan cift SEC-003 x DRY-002 idi (ws/ticket/route.ts), DRY-002 bu dalgaya alinmadi. GIZLI BAG: PERF-004 @xox/shared barrel-ina dokunuyor, UI-CFG-001 oradan import ediyor — dosyalar ayrik ama ANLAM ayrik degil. PERF-004-e pazarliksiz sart kondu: hicbir disa verim ADI kaldirilmayacak, yalniz statik zincir kirilacak."}
+{"ts":"2026-08-27T07:38:04Z","event":"subagent.stop"}
+{"ts":"2026-08-27T07:40:21Z","event":"subagent.stop"}
+{"ts":"2026-08-27T00:45:00Z","event":"dispatch.corrected","card":"PERF-004","note":"LEAD HATASI: kart xox-perf-e atanmisti, o ajan SALT-OKUNUR. Ajan uyusmazligi ilk cumlede bildirdi, olcum yarisini eksiksiz teslim etti ve KARTIN BILMEDIGI IKINCI KOK NEDENI buldu: ne shared ne game-core package.jsonunda sideEffects alani var. Ayrica game-core ZATEN ./ai alt-yolu tanimliyor — ./board ve ./status eklenerek src/index.ts-e dokunmadan cozulebilir. Ucunu de dogruladim. TUM PANOYU taradim: bu tek yanlis atamaymis (PERF-001 de xox-perfte ama saf olcum karti, kod kumesi yok). Kart xox-dev-backende yeniden dispatch edildi, olcum bulgulariyla birlikte."}
+{"ts":"2026-08-27T07:42:26Z","event":"file.touched","path":".claude/worktrees/PERF-004/packages/game-core/package.json"}
+{"ts":"2026-08-27T07:42:38Z","event":"file.touched","path":".claude/worktrees/PERF-004/packages/shared/src/room-client.ts"}
+{"ts":"2026-08-27T07:42:40Z","event":"file.touched","path":".claude/worktrees/SEC-003/packages/db/src/models/ws-ticket.ts"}
+{"ts":"2026-08-27T07:42:50Z","event":"file.touched","path":".claude/worktrees/SEC-003/packages/db/src/models/ws-ticket.test.ts"}
+{"ts":"2026-08-27T07:43:10Z","event":"file.touched","path":".claude/worktrees/SEC-003/packages/db/src/tickets.ts"}
+{"ts":"2026-08-27T07:43:35Z","event":"file.touched","path":".claude/worktrees/SEC-003/packages/db/src/tickets.test.ts"}
+{"ts":"2026-08-27T07:43:47Z","event":"file.touched","path":".claude/worktrees/SEC-003/packages/db/src/index.ts"}
+{"ts":"2026-08-27T07:44:29Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/size-label.ts"}
+{"ts":"2026-08-27T07:44:35Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/size-label.test.ts"}
+{"ts":"2026-08-27T07:44:35Z","event":"file.touched","path":".claude/worktrees/PERF-004/packages/game-core/src/index.ts"}
+{"ts":"2026-08-27T07:44:47Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/summary-text.ts"}
+{"ts":"2026-08-27T07:44:57Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/summary-text.test.ts"}
+{"ts":"2026-08-27T07:45:06Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/GameConfigSummary.tsx"}
+{"ts":"2026-08-27T07:45:13Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/GameConfigSummary.test.tsx"}
+{"ts":"2026-08-27T07:45:37Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/BoardConfigPicker.tsx"}
+{"ts":"2026-08-27T07:46:05Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/BoardConfigPicker.tsx"}
+{"ts":"2026-08-27T07:46:07Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/tokens.ts"}
+{"ts":"2026-08-27T07:46:11Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/BoardConfigPicker.tsx"}
+{"ts":"2026-08-27T07:46:15Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/tokens.ts"}
+{"ts":"2026-08-27T07:46:16Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/BoardConfigPicker.tsx"}
+{"ts":"2026-08-27T07:46:29Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/tokens.ts"}
+{"ts":"2026-08-27T07:46:41Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/identity.ts"}
+{"ts":"2026-08-27T07:46:50Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/identity.ts"}
+{"ts":"2026-08-27T07:46:58Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/BoardConfigPicker.test.tsx"}
+{"ts":"2026-08-27T07:47:01Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/identity.ts"}
+{"ts":"2026-08-27T07:47:04Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/BoardConfigPicker.test.tsx"}
+{"ts":"2026-08-27T07:47:18Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/identity.ts"}
+{"ts":"2026-08-27T07:47:36Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/room/status-text.ts"}
+{"ts":"2026-08-27T07:47:44Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/app/api/ws/ticket/route.ts"}
+{"ts":"2026-08-27T07:47:52Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/room/status-text.ts"}
+{"ts":"2026-08-27T07:47:53Z","event":"file.touched","path":".claude/worktrees/SEC-003/packages/shared/src/constants.ts"}
+{"ts":"2026-08-27T07:48:03Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/room/status-text.test.ts"}
+{"ts":"2026-08-27T07:48:05Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/tokens.test.ts"}
+{"ts":"2026-08-27T07:48:21Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/tokens.test.ts"}
+{"ts":"2026-08-27T07:48:41Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/room/status-text.test.ts"}
+{"ts":"2026-08-27T07:48:41Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/identity.test.ts"}
+{"ts":"2026-08-27T07:49:12Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/room/RoomScreen.tsx"}
+{"ts":"2026-08-27T07:49:17Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/lib/auth/identity.test.ts"}
+{"ts":"2026-08-27T07:49:21Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/room/RoomScreen.tsx"}
+{"ts":"2026-08-27T07:49:37Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/app/api/ws/ticket/route.test.ts"}
+{"ts":"2026-08-27T07:49:39Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/room/RoomScreen.tsx"}
+{"ts":"2026-08-27T07:49:57Z","event":"file.touched","path":".claude/worktrees/SEC-003/apps/web/app/api/ws/ticket/route.test.ts"}
+{"ts":"2026-08-27T07:50:04Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/room/RoomScreen.test.tsx"}
+{"ts":"2026-08-27T07:50:41Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/home/HomeActions.tsx"}
+{"ts":"2026-08-27T07:50:59Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/home/HomeActions.tsx"}
+{"ts":"2026-08-27T07:51:15Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/home/HomeActions.test.tsx"}
+{"ts":"2026-08-27T07:51:56Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/home/HomeActions.test.tsx"}
+{"ts":"2026-08-27T07:52:17Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/app/page.tsx"}
+{"ts":"2026-08-27T07:52:30Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/app/page.test.tsx"}
+{"ts":"2026-08-27T07:52:59Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/room-code-input.ts"}
+{"ts":"2026-08-27T07:53:08Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/room-code-input.test.ts"}
+{"ts":"2026-08-27T07:53:30Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/JoinRoomPreview.tsx"}
+{"ts":"2026-08-27T07:53:38Z","event":"file.touched","path":".claude/worktrees/PERF-004/docs/board/reports/PERF-004.md"}
+{"ts":"2026-08-27T07:53:46Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/app/oda/katil/page.tsx"}
+{"ts":"2026-08-27T07:54:12Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/app/oda/katil/page.test.tsx"}
+{"ts":"2026-08-27T07:54:26Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/JoinRoomPreview.test.tsx"}
+{"ts":"2026-08-27T07:55:21Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/BoardConfigPicker.test.tsx"}
+{"ts":"2026-08-27T07:57:20Z","event":"file.touched","path":".claude/worktrees/SEC-003/docs/board/reports/SEC-003.md"}
+{"ts":"2026-08-27T01:10:00Z","event":"theory.falsified","card":"PERF-004","note":"PERF-002den beri belgelenmis minimax sizintisi teorisi PARCA DUZEYINDE olculunce yanlislandi. Agir rotalara ozel parca 68.7 kB gzip: 485 zod izi, SIFIR minimax izi. Bes ayri kaynak (size-limit yorumu, PERF-003 raporu, kart gerekcesi, olcum ajani, lead) ayni yanlis suclyuyu gosteriyormus; zincirin her halkasi gercekti ama maliyetin kaynagi degildi. Iki degisiklik denendi, toplam ~4 kB. index.tsten ai kaldirmam index.test.ts tarafindan yakalandi (dondurulmus yuzey) ve olcum 2 kB gosterdigi icin geri alindi. Devam karti PERF-005 acildi: zodu istemci yolundan ayir, /profil hafif gruba donsun."}
+{"ts":"2026-08-27T07:58:10Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/JoinRoomPreview.tsx"}
+{"ts":"2026-08-27T07:58:18Z","event":"subagent.stop"}
+{"ts":"2026-08-27T08:02:25Z","event":"file.touched","path":".claude/worktrees/UI-CFG-001/apps/web/components/board-config/JoinRoomPreview.tsx"}
+{"ts":"2026-08-27T01:35:00Z","event":"card.merged","card":"SEC-003","note":"Lead sondasi: atomik tek komutu oku-sonra-yaz-a bolunce yaris testi kirmizi dondu, iki eszamanli tuketim de gecti — acik yeniden uretildi ve test yakaladi. KAPI KOR NOKTASI KESFEDILDI: knip is paketlerindeki olu disa verimi goremiyor cunku packages/db/src/index.ts onun GIRIS NOKTASI. revokeWsTicketsForUser yazildi+test edildi+disa verildi ama hic cagrilmiyor ve gates yesil gecti. SEC-005 acildi."}

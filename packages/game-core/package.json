@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./ai": "./src/ai.ts"
+    "./ai": "./src/ai.ts",
+    "./board": "./src/board.ts",
+    "./status": "./src/status.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
