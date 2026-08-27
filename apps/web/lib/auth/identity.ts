@@ -1,3 +1,4 @@
+import { connectDb, consumeWsTicket } from '@xox/db'
 import { auth } from '@/auth'
 import { verifyToken } from './tokens'
 
@@ -27,6 +28,12 @@ export interface ResolveIdentityOptions {
    * kabul ediyordu: saldırgan bir bileti `?ticket=`e ekleyip
    * `/api/ws/ticket`e tekrar POST ederek yenisini alabiliyor, 25 sn'de bir
    * tekrarla 30 saniyelik sızıntıyı SÜRESİZ hesap devralmaya çeviriyordu.
+   *
+   * SEC-003: `allowTicket:true` yoluyla kabul edilen bilet artık ayrıca
+   * TEK KULLANIMLIKTIR — ilk başarılı doğrulamadan sonra `@xox/db`'de
+   * "tüketildi" işaretlenir, aynı bilet ikinci kez asla kabul edilmez.
+   * Çalınan bir bilet artık en fazla BİR bağlantı açabilir, TTL sonuna
+   * kadar sınırsız yeniden kullanılamaz.
    */
   allowTicket?: boolean
 }
@@ -49,6 +56,10 @@ function readClaimName(claims: Record<string, unknown>): string {
 
 function readClaimRoom(claims: Record<string, unknown>): string | undefined {
   return typeof claims['room'] === 'string' ? claims['room'] : undefined
+}
+
+function readClaimJti(claims: Record<string, unknown>): string | null {
+  return typeof claims['jti'] === 'string' && claims['jti'].length > 0 ? claims['jti'] : null
 }
 
 /**
@@ -84,6 +95,19 @@ export async function resolveIdentity(
     if (ticket !== null) {
       const verified = await verifyToken(ticket, 'ws-ticket')
       if (verified === null) return null
+
+      // SEC-003: TEK KULLANIMLIK bilet. İmza/aud/exp/room burada zaten
+      // doğrulandı (`verifyToken`) — kalan tek soru "bu jti daha önce
+      // tüketildi mi" ve bu, `consumeWsTicket`'ın TEK atomik Mongo
+      // komutunda karara bağlanır (bkz. `@xox/db/tickets.ts`). `jti`
+      // claim'i eksikse (bu mekanizmadan önce üretilmiş bir token gibi)
+      // FAIL-CLOSED: bilet reddedilir, asla "kullanımsız" varsayılmaz.
+      const jti = readClaimJti(verified.claims)
+      if (jti === null) return null
+      await connectDb()
+      const consumed = await consumeWsTicket(jti)
+      if (!consumed.ok) return null
+
       const room = readClaimRoom(verified.claims)
       return {
         userId: verified.userId,

@@ -20,7 +20,12 @@ export const WS_RECONNECT_MAX_MS = 10_000
 export const WS_IDLE_TIMEOUT_MS = WS_HEARTBEAT_MS * 3
 /** Fonksiyon süresi dolmadan bu kadar önce 4499 ile planlı rotasyon (Z2). */
 export const WS_ROTATE_MARGIN_MS = 10_000
-/** Tek kullanımlık WS bileti ömrü — ADR-0006. */
+/**
+ * Tek kullanımlık WS bileti ömrü — ADR-0006. Tek kullanımlık disiplini bu
+ * sabitten DEĞİL, `packages/db`'deki `WsTicket` kaydı + `consumeWsTicket`'ın
+ * atomik `findOneAndUpdate`'inden gelir (SEC-003); bu sayı yalnız JWT'nin
+ * `exp`'ini ve DB kaydının TTL indeksini belirler.
+ */
 export const WS_TICKET_TTL_SECONDS = 30
 /** Bu kadar ardışık INVALID_MESSAGE bağlantıyı 4400 ile kapatır — KK-048. */
 export const MAX_PROTOCOL_VIOLATIONS = 3

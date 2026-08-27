@@ -23,6 +23,16 @@ export {
 export { Game, type GameDoc, type MoveDoc } from './models/game'
 export { Friendship, type FriendshipDoc, type FriendshipStatus } from './models/friendship'
 export { MobileRefreshToken, type MobileRefreshTokenDoc } from './models/mobile-refresh-token'
+export { WsTicket, type WsTicketDoc } from './models/ws-ticket'
+// SEC-003: WS bileti tek kullanımlıdır — tüketim `consumeWsTicket`'ın TEK
+// atomik `findOneAndUpdate` komutunda yapılır (bkz. `tickets.ts` başlığı).
+export {
+  recordWsTicket,
+  consumeWsTicket,
+  revokeWsTicketsForUser,
+  type RecordWsTicketParams,
+  type ConsumeWsTicketResult,
+} from './tickets'
 export {
   createRoom,
   joinRoom,
