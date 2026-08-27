@@ -1,4 +1,11 @@
-import { availableMoves, boardFromCells, evaluateStatus, type Board } from '@xox/game-core'
+import {
+  availableMoves,
+  boardFromCells,
+  DEFAULT_BOARD_CONFIG,
+  evaluateStatus,
+  type Board,
+  type BoardConfig,
+} from '@xox/game-core'
 import { describe, expect, it } from 'vitest'
 import {
   applyComputerMove,
@@ -13,10 +20,20 @@ const b = (s: string): Board =>
   boardFromCells(Array.from(s).map((c) => (c === '.' ? null : (c as 'X' | 'O'))))
 
 describe('createInitialState', () => {
-  it('boş tahta ve X sırası ile başlar', () => {
+  it('argümansız çağrıda boş tahta, X sırası ve DEFAULT_BOARD_CONFIG ile başlar', () => {
     const state = createInitialState()
     expect(state.board).toEqual(b('.........'))
     expect(state.status).toEqual({ kind: 'playing', turn: 'X' })
+    expect(state.config).toEqual(DEFAULT_BOARD_CONFIG)
+  })
+
+  it('UI-COMP-001: verilen konfigürasyonla (ör. {6,4}) doğru hücre sayısında başlar', () => {
+    const config: BoardConfig = { size: 6, winLength: 4 }
+    const state = createInitialState(config)
+    expect(state.board).toHaveLength(36)
+    expect(state.board.every((cell) => cell === null)).toBe(true)
+    expect(state.status).toEqual({ kind: 'playing', turn: 'X' })
+    expect(state.config).toEqual(config)
   })
 })
 
@@ -42,7 +59,11 @@ describe('applyHumanMove', () => {
   })
 
   it('oyun bittikten sonra boş hücreye tıklamak tahtayı değiştirmez (KK-025)', () => {
-    const finished = { board: b('XXXOO....'), status: evaluateStatus(b('XXXOO....')) }
+    const finished = {
+      board: b('XXXOO....'),
+      status: evaluateStatus(b('XXXOO....')),
+      config: DEFAULT_BOARD_CONFIG,
+    }
     const next = applyHumanMove(finished, 5)
     expect(next).toBe(finished)
     expect(turnAttr(next.status)).toBe('yok')
@@ -68,7 +89,11 @@ describe('applyComputerMove', () => {
   })
 
   it('oyun bittiyse bilgisayar hamlesi üretmez', () => {
-    const finished = { board: b('XXXOO....'), status: evaluateStatus(b('XXXOO....')) }
+    const finished = {
+      board: b('XXXOO....'),
+      status: evaluateStatus(b('XXXOO....')),
+      config: DEFAULT_BOARD_CONFIG,
+    }
     const next = applyComputerMove(finished, 'unbeatable')
     expect(next).toBe(finished)
   })
@@ -78,6 +103,56 @@ describe('applyComputerMove', () => {
     const next = applyComputerMove(afterHuman, 'easy', () => 0)
     // Human 0'ı oynadıktan sonra boş hücreler [1..8]; rng=0 -> listenin ilki (1).
     expect(next.board).toEqual(b('XO.......'))
+  })
+})
+
+/**
+ * UI-COMP-001: boyut/K seçimi `state.config`in İÇİNDE taşınır — bu blok
+ * `applyHumanMove`/`applyComputerMove`in `DEFAULT_BOARD_CONFIG` DIŞINDA bir
+ * konfigürasyonla da doğru çalıştığını (aralık kontrolü, kazanan tespiti,
+ * `chooseMove`'a AKTARILAN config) kanıtlar — sözde "3×3 dışı çalışıyor"
+ * iddiası tek bir `size`e özel test bırakmaz.
+ */
+describe('config plumbing (N > 3)', () => {
+  const CONFIG_6: BoardConfig = { size: 6, winLength: 4 }
+
+  it('applyHumanMove yeni konfigürasyonun ARALIĞINI kullanır (36 hücre, index 35 geçerli)', () => {
+    const state = createInitialState(CONFIG_6)
+    const next = applyHumanMove(state, 35)
+    expect(next.board[35]).toBe('X')
+    expect(next.config).toEqual(CONFIG_6)
+  })
+
+  it('applyHumanMove DEFAULT_BOARD_CONFIG (9 hücre) ARALIĞININ dışındaki bir indeksi (35) DEFAULT ile reddetmez — konfigürasyon DAİMA state.configden gelir', () => {
+    // Bu test, `isValidMove`e sabit `DEFAULT_BOARD_CONFIG` geçirilseydi
+    // 35'in "aralık dışı" reddedileceğini, gerçek davranışın ise `state.config`
+    // (6×6, 36 hücre) kullandığını AYIRT EDER.
+    const state = createInitialState(CONFIG_6)
+    const next = applyHumanMove(state, 35)
+    expect(next).not.toBe(state)
+  })
+
+  it('applyComputerMove chooseMovea config AKTARIR — easy zorlukta rng=0, 6×6 ilk hamleden sonraki 35 boş hücrenin ilkini (1) seçer', () => {
+    const afterHuman = applyHumanMove(createInitialState(CONFIG_6), 0)
+    const next = applyComputerMove(afterHuman, 'easy', () => 0)
+    expect(next.board[1]).toBe('O')
+    expect(next.config).toEqual(CONFIG_6)
+  })
+
+  it('evaluateStatus config ile 6×6/K4 kazanma hattını (default 3×3 kuralıyla DEĞİL) doğru değerlendirir', () => {
+    // Üst satırın ilk dört hücresi (0,1,2,3) 6×6/K4'te bir kazanma hattıdır;
+    // varsayılan (3,3) kuralında bu ANLAMSIZ olurdu (9 hücreye sığmaz).
+    let state = createInitialState(CONFIG_6)
+    state = applyHumanMove(state, 0) // X
+    state = applyComputerMove(state, 'easy', () => 1) // O, tahtanın son boşuna gider
+    state = applyHumanMove(state, 1) // X
+    state = applyComputerMove(state, 'easy', () => 1)
+    state = applyHumanMove(state, 2) // X
+    state = applyComputerMove(state, 'easy', () => 1)
+    state = applyHumanMove(state, 3) // X kazanır (0-1-2-3)
+
+    expect(state.status.kind).toBe('won')
+    expect(state.status.kind === 'won' && state.status.winner).toBe(HUMAN)
   })
 })
 

@@ -268,3 +268,153 @@ describe('ComputerGameScreen', () => {
     expect(marks.filter((v) => v === 'X')).toHaveLength(1)
   })
 })
+
+function filledCellCount(): number {
+  return screen.getAllByRole('gridcell').filter((cell) => cell.getAttribute('data-tas') !== '')
+    .length
+}
+
+describe('UI-COMP-001: boyut/K seçimi (oda akışından bağımsız) ve dürüst zorluk etiketi', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('BoardConfigPicker AYNI bileşen render edilir (kart §Sert şart 1) — ikinci bir seçici YAZILMADI', async () => {
+    await renderScreen()
+
+    expect(screen.getByTestId(TESTID.tahtaBoyut3)).toBeInTheDocument()
+    expect(screen.getByTestId(TESTID.tahtaBoyut6)).toBeInTheDocument()
+    expect(screen.getByTestId(TESTID.tahtaBoyut11)).toBeInTheDocument()
+    expect(screen.getByTestId(TESTID.kazanmaUzunlugu)).toBeInTheDocument()
+    // Varsayılan (KK-B42) 3×3 seçilidir, `Board` da 3×3 (9 gridcell) çizer.
+    expect(screen.getByTestId(TESTID.tahtaBoyut3)).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getAllByRole('gridcell')).toHaveLength(9)
+  })
+
+  it('KK-B42: boyut/K seçimi ODA AKIŞINDAN TAMAMEN BAĞIMSIZDIR — hiçbir seçim sunucuya istek göndermez', async () => {
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+    await renderScreen()
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut11))
+    fireEvent.click(screen.getByRole('button', { name: '6 taş' }))
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut6))
+    clickCell(0)
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('boyut seçimi tahtayı YENİ hücre sayısıyla sıfırdan kurar (11×11 → 121 hücre, hepsi boş)', async () => {
+    await renderScreen()
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut11))
+
+    const cells = screen.getAllByRole('gridcell')
+    expect(cells).toHaveLength(121)
+    expect(cells.every((cell) => cell.getAttribute('data-tas') === '')).toBe(true)
+  })
+
+  it('büyükten küçüğe geçiş (11×11 → 3×3, en kırılgan vaka) tahtayı doğru hücre sayısıyla yeniden kurar, KK-B57 hata yolu TETİKLENMEZ', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    await renderScreen()
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut11))
+    expect(screen.getAllByRole('gridcell')).toHaveLength(121)
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut3))
+
+    expect(screen.getAllByRole('gridcell')).toHaveLength(9)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(errorSpy).not.toHaveBeenCalled()
+
+    errorSpy.mockRestore()
+  })
+
+  it('süren oyunda boyut değişimi YENİ bir oyun başlatır (KK-026 disipliniyle aynı), seçili ZORLUK korunur', async () => {
+    await renderScreen()
+    vi.useFakeTimers()
+
+    fireEvent.click(screen.getByTestId(TESTID.zorlukUnbeatable))
+    clickCell(0)
+    await advanceComputerMove()
+    expect(filledCellCount()).toBe(2)
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut6))
+
+    const cells = screen.getAllByRole('gridcell')
+    expect(cells).toHaveLength(36)
+    expect(cells.every((cell) => cell.getAttribute('data-tas') === '')).toBe(true)
+    expect(screen.getByTestId(TESTID.zorlukUnbeatable)).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('ZATEN SEÇİLİ boyuta tekrar tıklamak süren oyunu SİLMEZ (setDifficultyin simetriği)', async () => {
+    await renderScreen()
+    vi.useFakeTimers()
+
+    clickCell(0)
+    await advanceComputerMove()
+    expect(filledCellCount()).toBe(2)
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut3)) // zaten aktif
+
+    expect(filledCellCount()).toBe(2)
+  })
+
+  it('reset yarışı: boyut değişiminden HEMEN önce kurulan bilgisayar zamanlayıcısı YENİ (küçük) tahtaya yazmaz', async () => {
+    await renderScreen()
+    vi.useFakeTimers()
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut11))
+    clickCell(0) // X oynar, COMPUTER_MOVE_DELAY_MS'lik zamanlayıcı 11×11 tahtası için kurulur
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut3)) // zamanlayıcı DOLMADAN boyut küçültülür
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(COMPUTER_MOVE_DELAY_MS)
+    })
+
+    // Eski (11×11) efekt temizlenmiş olmalı: yeni 3×3 tahta hâlâ tamamen boş.
+    const cells = screen.getAllByRole('gridcell')
+    expect(cells).toHaveLength(9)
+    expect(cells.every((cell) => cell.getAttribute('data-tas') === '')).toBe(true)
+  })
+
+  it('KK-B47/ADR-0013 §7: N > 3te zorluk-unbeatable "Zor" gösterir ve dürüstlük notu görünür — test-id/Difficulty DEĞİŞMEZ', async () => {
+    await renderScreen()
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut6))
+
+    const button = screen.getByTestId(TESTID.zorlukUnbeatable)
+    expect(button).toHaveAttribute('data-testid', 'zorluk-unbeatable')
+    expect(button).toHaveTextContent(tr.computer.hard)
+    expect(button).not.toHaveTextContent(tr.computer.unbeatable)
+    expect(screen.getByText(tr.computer.strengthNote)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut3))
+    expect(screen.getByTestId(TESTID.zorlukUnbeatable)).toHaveTextContent(tr.computer.unbeatable)
+    expect(screen.queryByText(tr.computer.strengthNote)).not.toBeInTheDocument()
+  })
+
+  it(
+    'gecikme TABANI (COMPUTER_MOVE_DELAY_MS) N > 3te de KORUNUR — CORE-AI-001/002 sonrası hızlanan ' +
+      'AI, 400 ms dolmadan tahtaya yazmaz (taban zamanlayıcı `chooseMove`dan ÖNCE kurulur, hesap hızından bağımsızdır)',
+    async () => {
+      await renderScreen()
+      fireEvent.click(screen.getByTestId(TESTID.tahtaBoyut11))
+      // `easy` zorluk seçilir: 11×11'de `unbeatable`/`medium` alfa-beta aramasını
+      // (gerçek zamanlayıcı OLMADAN, `Date.now` tabanlı `AI_BUDGET_MS` bütçesiyle)
+      // tetiklemek bu testi kırılgan yapardı — taban gecikme iddiası zorluktan
+      // BAĞIMSIZDIR (`use-computer-game.ts`teki `setTimeout` her zorlukta aynı).
+      fireEvent.click(screen.getByTestId(TESTID.zorlukEasy))
+      vi.useFakeTimers()
+
+      clickCell(0)
+      // Gecikmeden HEMEN önce: yalnız insanın taşı yazılmış olmalı.
+      expect(filledCellCount()).toBe(1)
+
+      await advanceComputerMove()
+      expect(filledCellCount()).toBe(2)
+    },
+  )
+})

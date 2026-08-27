@@ -1,9 +1,11 @@
 import {
   applyMove,
+  DEFAULT_BOARD_CONFIG,
   emptyBoard,
   evaluateStatus,
   isValidMove,
   type Board,
+  type BoardConfig,
   type Difficulty,
   type GameStatus,
   type Player,
@@ -33,13 +35,26 @@ export const COMPUTER: Player = 'O'
 export interface ComputerGameState {
   readonly board: Board
   readonly status: GameStatus
+  /**
+   * UI-COMP-001: boyut/K seçimi ODA AKIŞINDAN BAĞIMSIZDIR (KK-B42) — bu
+   * ekran hiçbir ağ isteği yapmaz, konfigürasyon yalnız yerel durumda yaşar.
+   * `config` STATE'İN İÇİNDE taşınır (ayrı bir `useState` DEĞİL) ki her
+   * hamle/hesaplama fonksiyonu tek bir kaynaktan (`state.config`) okusun —
+   * "hangi tahta hangi kurala göre değerlendiriliyor" sorusu asla iki farklı
+   * yerde (kapanan bir closure ve state) cevaplanmaz.
+   */
+  readonly config: BoardConfig
 }
 
-export function createInitialState(): ComputerGameState {
-  // Konfigürasyon bu ekranda VARSAYILANDIR ({3,3}); boyut seçimi UI-COMP-001'in
-  // işidir. `emptyBoard()` memoize edilmiş donmuş tek örneği döndürür.
-  const board = emptyBoard()
-  return { board, status: evaluateStatus(board) }
+/**
+ * Verilen konfigürasyonla boş bir oyun kurar. Varsayılan `DEFAULT_BOARD_CONFIG`
+ * ({3,3}) — konfigürasyonu bilmeyen çağıran (mevcut testler) hiç değişmez.
+ * `emptyBoard(config)` `BOARD_MODES`'un altı kombinasyonu için memoize
+ * edilmiş donmuş tek örneği döndürür.
+ */
+export function createInitialState(config: BoardConfig = DEFAULT_BOARD_CONFIG): ComputerGameState {
+  const board = emptyBoard(config)
+  return { board, status: evaluateStatus(board, config), config }
 }
 
 /**
@@ -53,9 +68,9 @@ export function createInitialState(): ComputerGameState {
  */
 export function applyHumanMove(state: ComputerGameState, index: number): ComputerGameState {
   if (state.status.kind !== 'playing' || state.status.turn !== HUMAN) return state
-  if (!isValidMove(state.board, index)) return state
-  const board = applyMove(state.board, index, HUMAN)
-  return { board, status: evaluateStatus(board) }
+  if (!isValidMove(state.board, index, state.config)) return state
+  const board = applyMove(state.board, index, HUMAN, state.config)
+  return { board, status: evaluateStatus(board, state.config), config: state.config }
 }
 
 /**
@@ -69,9 +84,12 @@ export function applyComputerMove(
   rng: () => number = Math.random,
 ): ComputerGameState {
   if (state.status.kind !== 'playing' || state.status.turn !== COMPUTER) return state
-  const index = chooseMove(state.board, COMPUTER, difficulty, rng)
-  const board = applyMove(state.board, index, COMPUTER)
-  return { board, status: evaluateStatus(board) }
+  // `config` `chooseMove`a AÇIKÇA geçirilir: `size === 3` tam ağaç aramasına
+  // (`bestMove`), `size > 3` bütçeli aramaya (`searchMove`) gider (ADR-0013
+  // §1) — burada YENİDEN karar verilmez, tek kapı `@xox/game-core`'dur.
+  const index = chooseMove(state.board, COMPUTER, difficulty, rng, { config: state.config })
+  const board = applyMove(state.board, index, COMPUTER, state.config)
+  return { board, status: evaluateStatus(board, state.config), config: state.config }
 }
 
 /**

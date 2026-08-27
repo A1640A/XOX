@@ -1,8 +1,8 @@
 'use client'
 
-import { DEFAULT_BOARD_CONFIG } from '@xox/game-core'
 import { TESTID } from '@xox/shared'
 import { Board } from '@/components/board/Board'
+import { BoardConfigPicker } from '@/components/board-config/BoardConfigPicker'
 import { tr } from '@/messages/tr'
 import { DifficultyPicker } from './DifficultyPicker'
 import { HUMAN, turnAttr } from './game-engine'
@@ -18,9 +18,16 @@ import { useComputerGame } from './use-computer-game'
  * grafiğinde HİÇBİR senkron yol üzerinden bulunamasın (bkz.
  * docs/board/reports/PERF-003.md — bu sınır olmadan alt yol export'u TEK
  * BAŞINA yetersizdi, ölçüldü).
+ *
+ * UI-COMP-001: boyut/K seçimi `BoardConfigPicker` ile (uygulamanın TEK
+ * seçici bileşeni, `UI-CFG-001` ürünü) YAPILIR — ikinci bir seçici YAZILMAZ.
+ * `enabledSizes` BİLEREK geçirilmez: bu, oda kurmayan yerel bir oyundur
+ * (KK-B42), ADR-0018'in operasyonel kill switch'i (`getEnabledBoardSizes`)
+ * yalnız `POST /api/rooms`'u etkiler — bileşenin kendi varsayılanı (TÜM
+ * boyutlar) burada doğru davranıştır.
  */
 export function ComputerGameInner(): React.ReactElement {
-  const { state, difficulty, setDifficulty, playMove, reset } = useComputerGame()
+  const { state, difficulty, setDifficulty, config, setConfig, playMove, reset } = useComputerGame()
 
   const interactive = state.status.kind === 'playing' && state.status.turn === HUMAN
   const winningLine = state.status.kind === 'won' ? state.status.line : null
@@ -30,18 +37,23 @@ export function ComputerGameInner(): React.ReactElement {
       <h1 className="text-2xl font-bold tracking-tight">{tr.computer.title}</h1>
       <p className="text-text-muted text-sm">{tr.computer.notCounted}</p>
 
-      <DifficultyPicker value={difficulty} onChange={setDifficulty} />
+      <div className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold">{tr.boardConfig.title}</h2>
+        <BoardConfigPicker value={config} onChange={setConfig} />
+      </div>
+
+      <DifficultyPicker value={difficulty} onChange={setDifficulty} size={config.size} />
 
       {/* Spec §2.0 deseni: `sira-gostergesi` yalnız `data-sira` taşır, gösterilen
           metin `durum-metni`dedir (bkz. `apps/web/components/room/RoomScreen.tsx`). */}
       <p data-testid={TESTID.siraGostergesi} data-sira={turnAttr(state.status)} />
       <p data-testid={TESTID.durumMetni} role="status" aria-live="polite">
-        {statusText(state.status)}
+        {statusText(state.status, config.size)}
       </p>
 
       <Board
         cells={state.board}
-        config={DEFAULT_BOARD_CONFIG}
+        config={config}
         interactive={interactive}
         winningLine={winningLine}
         onCellPress={playMove}
