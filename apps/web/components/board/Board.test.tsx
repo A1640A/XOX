@@ -275,6 +275,29 @@ describe('Board', () => {
       expect(screen.getByTestId('hucre-5')).toHaveAttribute('tabindex', '0')
       expect(screen.getByTestId('hucre-0')).toHaveAttribute('tabindex', '-1')
     })
+
+    it('tahta KÜÇÜLÜNCE (11×11 -> 3×3) odak eski hücrenin dışında kalsa bile YİNE tam bir hücre tabIndex=0 olur', async () => {
+      const user = userEvent.setup()
+      const { rerender } = render(
+        <Board cells={EMPTY_121} config={CONFIG_11} interactive onCellPress={vi.fn()} />,
+      )
+
+      // Odağı eski (büyük) tahtada bugün var olmayan bir hücreye taşı — rövanş/
+      // konfigürasyon değişimi sırasında `focusIndex` state'te KALICI kalır
+      // (Board bunu sıfırlamaz, `use-board-modes` senaryosu tam bunu üretir).
+      await user.click(screen.getByTestId('hucre-100'))
+      expect(screen.getByTestId('hucre-100')).toHaveAttribute('tabindex', '0')
+
+      rerender(
+        <Board cells={EMPTY_9} config={DEFAULT_BOARD_CONFIG} interactive onCellPress={vi.fn()} />,
+      )
+
+      const cells = screen.getAllByRole('gridcell')
+      expect(cells).toHaveLength(9)
+      const zeroTabbable = cells.filter((cell) => cell.getAttribute('tabindex') === '0')
+      // Tek tab durağı garantisi boyut küçülünce de KORUNUR — sıfır DEĞİL, tam bir.
+      expect(zeroTabbable).toHaveLength(1)
+    })
   })
 
   describe('KK-B71 — render bütçesi', () => {
