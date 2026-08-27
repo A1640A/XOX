@@ -55,21 +55,80 @@ function pickRandom(moves: readonly number[], rng: () => number): number {
 }
 
 /**
- * Derinlik cezalı minimax: erken kazanç geç kazançtan, geç kayıp erken
- * kayıptan iyidir. Böylece AI kazanmayı geciktirmez ve kaybı geciktirir.
+ * Ziyaret sayacı. GEZİCİ bir nesnedir, modül düzeyinde DEĞİL: modül durumu
+ * Stryker `perTest` altında testler arasında sızar ve bir mutantın hangi
+ * testte öldüğünü kaydırır (gotcha 2026-08-26, "Memoizasyon + Stryker
+ * `perTest`" — yalnız test sırası değişince skor %94.04'ten %84.25'e düşmüştü).
+ *
+ * Sayaç bir lüks değil, budamanın TEK gözlenebilir izidir: alfa-beta sonucu
+ * değiştirmediği için, budamayı tamamen kapatan bir değişiklik sayaç olmadan
+ * her testi yeşil bırakırdı.
  */
-function minimax(board: Board, current: Player, maximizing: Player, depth: number): number {
+interface Visits {
+  nodes: number
+}
+
+/**
+ * Derinlik cezalı minimax + alfa-beta budaması: erken kazanç geç kazançtan,
+ * geç kayıp erken kayıptan iyidir. Böylece AI kazanmayı geciktirmez ve kaybı
+ * geciktirir.
+ *
+ * BUDAMA DEĞERİ DEĞİŞTİRMEZ. `low`/`high` penceresi yalnız "bu dalın sonucu
+ * artık kökün kararını etkileyemez" olduğu anda döngüyü keser; kesilen dalın
+ * döndürdüğü sayı gerçek değerin bir SINIRIdır ve kökte hep `alpha`nın
+ * gerisinde kalır (bkz. `bestMoveStats`). Bu yüzden KK-B20'nin tümevarımsal
+ * yenilmezlik kanıtı ve `bestMove` tablosu tek karakter değişmeden geçer.
+ *
+ * `low`/`high` `alpha`/`beta`nın YEREL kopyalarıdır: parametreyi yeniden
+ * atamak (`no-param-reassign`) yerine kopya daraltılır.
+ */
+function minimax(
+  visits: Visits,
+  board: Board,
+  current: Player,
+  maximizing: Player,
+  depth: number,
+  alpha: number,
+  beta: number,
+): number {
+  visits.nodes += 1
+
   const status = evaluateStatus(board)
   if (status.kind === 'won') {
     return status.winner === maximizing ? WIN_SCORE - depth : depth - WIN_SCORE
   }
   if (status.kind === 'draw') return 0
 
-  const scores = availableMoves(board).map((move) =>
-    minimax(placeStone(board, move, current), opponentOf(current), maximizing, depth + 1),
-  )
+  // `status.kind === 'playing'` en az bir boş hücre GARANTİ eder (beraberlik
+  // tam da "boş hücre yok" demektir), yani döngü hiç dönmeden `best`in başlangıç
+  // sonsuzu dışarı sızamaz — savunmacı bir dal ULAŞILAMAZ olurdu.
+  const isMax = current === maximizing
+  let best = isMax ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY
+  let low = alpha
+  let high = beta
 
-  return current === maximizing ? Math.max(...scores) : Math.min(...scores)
+  for (const move of availableMoves(board)) {
+    const score = minimax(
+      visits,
+      placeStone(board, move, current),
+      opponentOf(current),
+      maximizing,
+      depth + 1,
+      low,
+      high,
+    )
+
+    if (isMax) {
+      best = Math.max(best, score)
+      low = Math.max(low, best)
+    } else {
+      best = Math.min(best, score)
+      high = Math.min(high, best)
+    }
+    if (low >= high) break
+  }
+
+  return best
 }
 
 /** Oyun bitmişse hamle üretilemez; kalan tek doğru cevap hatadır. */
@@ -79,24 +138,58 @@ function assertPlayable(board: Board, config: BoardConfig = DEFAULT_BOARD_CONFIG
   }
 }
 
+export interface BestMoveStats {
+  readonly move: number
+  /** `minimax` çağrısı sayısı — kök hariç ziyaret edilen pozisyonlar. */
+  readonly nodes: number
+}
+
 /**
- * Oyun teorisi anlamında en iyi hamle. `assertPlayable` sayesinde en az bir
- * hamle vardır, bu yüzden puanlama tek biçimli bir döngüdür: kök derinliği
- * tek bir yerde geçer ve "ilk hamleyi ayrı puanla" tohumlaması gerekmez.
+ * Oyun teorisi anlamında en iyi hamle + arama maliyeti. `assertPlayable`
+ * sayesinde en az bir hamle vardır, bu yüzden puanlama tek biçimli bir
+ * döngüdür: kök derinliği tek bir yerde geçer ve "ilk hamleyi ayrı puanla"
+ * tohumlaması gerekmez.
  *
  * Eşit puanlı hamlelerde en küçük indeksli olan korunur (karşılaştırma kesin
  * `>`): seçim sunucu otoritesidir ve platformlar arası yeniden üretilebilir
  * olmalıdır.
+ *
+ * SEÇİMİN BUDAMADAN ETKİLENMEDİĞİNİN GEREKÇESİ. Kök penceresi `(alpha, +∞)`:
+ * beta hiç daralmadığı için gerçek değeri `alpha`dan BÜYÜK olan her çocuk TAM
+ * puanını döndürür; kesilen çocuk ise `alpha`yı aşamayan bir ÜST SINIR
+ * döndürür (kesme koşulu zaten `alpha >= o dalın en iyisi`dir). `alpha` her
+ * adımda kaydedilen puanların maksimumuna eşit olduğundan, kesin `>` ile
+ * yapılan seçim budamasız hâlle BİREBİR aynı hamleyi verir — eşitlik bozma
+ * dahil. Bu argümanın mekanik kanıtı `ai.test.ts`'teki 642 oyunluk
+ * tümevarımsal koşu ve değişmeyen `bestMove` tablosudur.
  */
-export function bestMove(board: Board, player: Player): number {
+export function bestMoveStats(board: Board, player: Player): BestMoveStats {
   assertPlayable(board)
 
-  const scored = availableMoves(board).map((move) => ({
-    move,
-    score: minimax(placeStone(board, move, player), opponentOf(player), player, ROOT_DEPTH),
-  }))
+  const visits: Visits = { nodes: 0 }
+  let alpha = Number.NEGATIVE_INFINITY
 
-  return scored.reduce((best, candidate) => (candidate.score > best.score ? candidate : best)).move
+  const scored = availableMoves(board).map((move) => {
+    const score = minimax(
+      visits,
+      placeStone(board, move, player),
+      opponentOf(player),
+      player,
+      ROOT_DEPTH,
+      alpha,
+      Number.POSITIVE_INFINITY,
+    )
+    alpha = Math.max(alpha, score)
+    return { move, score }
+  })
+
+  const best = scored.reduce((top, candidate) => (candidate.score > top.score ? candidate : top))
+  return { move: best.move, nodes: visits.nodes }
+}
+
+/** Yalnız hamle — `chooseMove`un ve dış yüzeyin (ADR-0013 §9) gördüğü biçim. */
+export function bestMove(board: Board, player: Player): number {
+  return bestMoveStats(board, player).move
 }
 
 export interface ChooseMoveOptions {
@@ -110,9 +203,17 @@ export interface ChooseMoveOptions {
 /**
  * İKİ AYRI KOD YOLU (ADR-0013 §1).
  *
- * `size === 3` → bugünkü TAM MİNİMAX (`bestMove`), gövdesi satırı satırına
- * aynı: KK-B20'nin tümevarımsal yenilmezlik kanıtı o kodu koşmaya devam eder.
- * Budama yok, derinlik sınırı yok, bütçe yok.
+ * `size === 3` → TAM MİNİMAX (`bestMove`): KK-B20'nin tümevarımsal yenilmezlik
+ * kanıtı o kodu koşmaya devam eder. Derinlik sınırı yok, bütçe yok, sezgisel
+ * değerlendirme yok — ağaç SONUNA kadar aranır.
+ *
+ * CORE-AI-002 buraya ALFA-BETA ekledi (ADR-0013 §1'in "budama yok" cümlesi
+ * artık geçersiz). Budama aramanın DEĞERİNİ değiştirmez, yalnız kökün kararını
+ * artık etkileyemeyecek dalları atlar: `bestMove` her pozisyonda BİREBİR aynı
+ * hamleyi döndürür ve 642 oyunluk yenilmezlik koşusu (73 + 569 oyun) tek
+ * karakter değişmeden geçer. Gerekçe AI-SPIKE-001'in kırmızı bayrağıydı:
+ * budamasız 549 945 düğüm, R=6 throttle altında 1982–2265 ms — KK-023'ün
+ * 1000 ms tavanının iki katı.
  *
  * `size > 3` → `searchMove`. Tek bir birleşik fonksiyon yazıp 3×3'ü onun özel
  * hâli yapmak kanıtın koştuğu kodu DEĞİŞTİRİRDİ; o zaman "kanıt korundu" demek

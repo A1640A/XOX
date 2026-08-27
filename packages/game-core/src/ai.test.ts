@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { availableMoves, boardFromCells, emptyBoard } from './board'
 import { applyMove } from './moves'
 import { evaluateStatus } from './status'
-import { bestMove, chooseMove } from './ai'
+import { bestMove, bestMoveStats, chooseMove } from './ai'
 import { InvalidMoveError } from './errors'
 import type { Board, Difficulty, Player } from './types'
 
@@ -71,6 +71,83 @@ describe('bestMove', () => {
     ['XX.O.O...', 'X', 2, 'kazanç hattı tamamlanır'],
   ])('%s tahtasında %s için %i seçilir (%s)', (cells, player, expected) => {
     expect(bestMove(b(cells), player as Player)).toBe(expected)
+  })
+})
+
+/**
+ * Alfa-beta budaması minimax DEĞERİNİ değiştirmez, yalnız ziyaret edilen düğüm
+ * sayısını azaltır. "Değişmedi" iddiasının kanıtı bu blokta DEĞİL, yukarıdaki
+ * `bestMove` tablosunda ve aşağıdaki 642 oyunluk tümevarımsal koşudadır — ikisi
+ * de bu kartta TEK KARAKTER değişmedi.
+ *
+ * Bu blok yalnız İKİNCİ iddiayı ölçer: budama gerçekten çalışıyor mu?
+ * Düğüm sayısı gözlenebilir olmasaydı budamayı tamamen kapatan bir değişiklik
+ * (ör. pencere güncellemesini kaldırmak) bütün testleri YEŞİL bırakırdı —
+ * sonuçlar aynı, yalnız yavaş. Sayaç bu yüzden dışa veriliyor.
+ */
+describe('bestMoveStats — alfa-beta budaması', () => {
+  /**
+   * BUDAMASIZ tam minimaxın boş tahtadaki düğüm sayısı. Bu kartın ÖNCESİNDEKİ
+   * üretim kodundan ölçüldü ve AI-SPIKE-001'in tarayıcı ölçümünde de birebir
+   * aynı çıktı ("ikisi de AYNI düğüm sayısını (549 945) geziyor"); XOX oyun
+   * ağacının bilinen düğüm sayısıdır.
+   *
+   * Beklenti testin DIŞINDAN gelir: kodun bugünkü hâlinden türetilmez.
+   */
+  const FULL_MINIMAX_NODES_EMPTY = 549_945
+
+  /**
+   * TAVAN GEREKSİNİMDEN TÜRETİLDİ, implementasyondan değil.
+   *
+   * AI-SPIKE-001: budamasız 549 945 düğüm, CDP R=6 throttle altında gerçek
+   * bundle'da 1982–2265 ms. KK-023 tavanı 1000 ms. Ölçüm R'ye doğrusal ve
+   * düğüm sayısına doğrusal olduğu için 1000 ms'nin altına inmek için gereken
+   * en az azaltma 2265/1000 ≈ 2.3×'tir. Burada 10× isteniyor: en kötü R=6
+   * varsayımında bile ~4× pay bırakır (gerçek cihaz R'si ölçülmedi, bkz.
+   * AI-SPIKE-001 (a) [MANUEL] adımı hâlâ açık).
+   */
+  const REQUIRED_REDUCTION = 10
+
+  it('boş tahtada aynı hamleyi en az 10 kat daha az düğümle bulur', () => {
+    const stats = bestMoveStats(emptyBoard(), 'X')
+
+    expect(stats.move).toBe(bestMove(emptyBoard(), 'X'))
+    expect(stats.nodes * REQUIRED_REDUCTION).toBeLessThanOrEqual(FULL_MINIMAX_NODES_EMPTY)
+  })
+
+  // Açılış tek darboğaz değil; ilk hamlelerden sonraki pozisyonlarda da budama
+  // çalışmalı. Her satırın SON sütunu aynı pozisyonun BUDAMASIZ maliyetidir
+  // (kartın öncesindeki üretim kodundan ölçüldü) — kazanç satırda okunur.
+  // Düğüm sayıları ÇIPLAK yazıldı (regresyon çivisi): budamayı zayıflatan her
+  // değişiklik — sonucu bozmasa bile — bu tabloyu kırar.
+  it.each([
+    ['.........', 'X', 0, 20_865, 549_945],
+    ['X........', 'O', 4, 2_787, 59_704],
+    ['....X....', 'O', 0, 2_458, 55_504],
+    ['XOX......', 'X', 4, 200, 1_096],
+  ])(
+    '%s tahtasında %s için %i seçilir ve tam %i düğüm gezilir (budamasız %i)',
+    (cells, player, move, nodes, unpruned) => {
+      const stats = bestMoveStats(b(cells), player as Player)
+
+      expect(stats).toEqual({ move, nodes })
+      expect(stats.nodes).toBeLessThan(unpruned)
+    },
+  )
+
+  it('sayaç çağrılar arasında sıfırlanır — gezici durum, modül durumu değil', () => {
+    // Modül düzeyinde bir sayaç olsaydı ikinci çağrı birincinin üstüne toplardı;
+    // Stryker `perTest` altında bu, mutantı yanlış teste yazdırırdı.
+    const first = bestMoveStats(b('XOX......'), 'X').nodes
+    const second = bestMoveStats(b('XOX......'), 'X').nodes
+
+    expect(second).toBe(first)
+  })
+
+  it('biten oyunda sayaç üretmez, hata atar', () => {
+    expect(() => bestMoveStats(b('XXXOO....'), 'O')).toThrow(
+      expect.objectContaining({ index: -1, reason: 'game-over' }),
+    )
   })
 })
 
