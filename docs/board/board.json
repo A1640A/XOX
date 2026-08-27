@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T08:56:04.702Z",
+  "updatedAt": "2026-08-27T10:58:30.923Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2210,7 +2210,7 @@
       "title": "Preview E2E kapisi Vercel SSO duvarinin arkasinda kaldi — dalga dongusunun 9. adimi calismiyor",
       "priority": "P0",
       "agent": "xox-devops",
-      "status": "pending-verify",
+      "status": "done",
       "deps": [],
       "report": null,
       "branch": null,
@@ -2223,7 +2223,8 @@
         "SSO TESPITI OLCULEREK BULUNDU, varsayilmadi: govde metni (7 aday dizgenin hicbiri yok), durum kodu (duvar 401 degil HTTP 200 donuyor) ve set-cookie (Playwright yonlendirmeyi TAKIP ettigi icin zincirde tukeniyor, headersArray-de 0 adet) ELENDI. Tek kararli iz: yanitin SON ORIGIN-i (vercel.com) istenen origin-den farkli."
       ],
       "conflictSet": ["apps/e2e/playwright.config.ts", ".github/workflows/e2e-preview.yml"],
-      "note": "2026-08-27 06:39 UTC: kullanici secret DEGERINI kendi terminalinden ekledi (gh secret set, transcript-e girmedi). DOGRULANAN: gh secret list -> VERCEL_AUTOMATION_BYPASS_SECRET 2026-08-27T06:39:49Z var. Duvar hala ayakta ve degere bagli: xox-c4131xcrt-omeerdursunn.vercel.app -> header'siz HTTP 302 (SSO login), UYDURMA secret ile de HTTP 302. ssoProtection.enabled=true, all_except_custom_domains. GECIS HALA KANITLANMADI ve bu kart o yuzden done DEGIL. SEBEP KART DISI: e2e-preview.yml deployment_status + startsWith(environment,'Preview') ile tetikleniyor, ama artik her sey main'e DOGRUDAN push ediliyor -> Vercel target:production deploy uretiyor -> son 8 kosunun 8'i de SKIPPED. Vercel'deki son 20 deploy'un tamami target:production; tetiklenecek Preview deploy YOK. RERUN DA CARE DEGIL: son gercek preview kosusu 2026-08-25 (feat/PERF-002, sha 14ee4d5), bypass kodu 2026-08-26'da geldi (5edd998) — rerun eski SHA'yi checkout eder, bypass kodu o agacta yok. KAPANIS: bir sonraki main-disi dal push'unda (herhangi bir feat/* dalgasi) preview deploy dogar ve workflow GERCEKTEN kosar; 21/21 yesil gorulunce done."
+      "note": "KAPI CALISIYOR, GERCEK PREVIEW-A KARSI OLCULDU. Uc tur: (1) bypass bagli + cerez acik 28/8, (2) ham ws istemcisine baslik 29/7, (3) x-vercel-set-bypass-cookie kaldirildi 34/2. IKI OLCULMUS BULGU: ham ws istemcisi Playwright contextinden gecmez (extraHTTPHeaders uygulanmiyor, 302 aliyordu); ve set-bypass-cookie ZARARLI cunku Vercel iceriği servis etmek yerine araya 307 sokuyor (Location = istegin kendisi), maxRedirects:0 ile okuyan testler uygulamanin yonlendirmesi yerine bunu goruyordu.",
+      "mergeSha": "d34c9da"
     },
     {
       "id": "CI-005",
@@ -2298,6 +2299,25 @@
         "PRODUCTION DEGISIKLIGI — kullanici onayi olmadan yapma."
       ],
       "conflictSet": []
+    },
+    {
+      "id": "AUTH-003",
+      "title": "Preview E2E: iki auth akisi kirmizi — cikis sonrasi /profil ve kayit sonrasi otomatik giris",
+      "priority": "P0",
+      "agent": "xox-qa-e2e",
+      "status": "todo",
+      "deps": [],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "OLCULDU (gercek Vercel preview, CI, 3 deneme): 34 gecti / 2 kaldi. Kalan ikisi: auth.spec.ts:121 KK-011 (cikis yap -> /profil -> /giris; /profil-de KALIYOR, /giris-e donmuyor) ve auth-register.spec.ts:18 KK-001 (kayit sonrasi otomatik giris ana sayfaya donmuyor).",
+        "BU IKISI BYPASS SORUNU DEGIL: ayni kosuda browser.newContext() kullanan fixtureler (fixtures/auth.ts:60,65) uzerinden gecen 34 test YESIL. Yani bypass o contextlerde calisiyor.",
+        "BUNLAR MAIN-IN KODUNDA, e2e ayarinda degil — kapi restore edilir edilmez gorunur oldular. Birim testler yakalamiyor.",
+        "ILK BAKILACAK YER: SEC-003 bugun apps/web/lib/auth/identity.ts ve tokens.ts-e dokundu (tek kullanimlik bilet). Cerez oturumu yolunu etkilememesi gerekiyordu — DOGRULA. Ikinci aday: E2E-002 KK-011-i yerel paralel kosuda ~%40 kararsiz bulmustu ama gercek previewda hic kirmizi gormemisti; simdi 3 denemede de kirmizi, yani kararsizlik degil.",
+        "CIKIS SONRASI OTURUMUN TEMIZLENMEMESI BIR GUVENLIK SORUNUDUR. Once bunun gercek mi test artefakti mi oldugunu KANITLA, sonra duzelt.",
+        "auth.ts jwt callbacki TANIMLAMA — bu reponun en yarali tuzagi (her giriste cerez sessizce silinir)."
+      ],
+      "conflictSet": ["apps/e2e/tests/auth.spec.ts", "apps/e2e/tests/auth-register.spec.ts"]
     }
   ],
   "wave": "B5"

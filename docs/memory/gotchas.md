@@ -1523,3 +1523,33 @@ Yalnız tanım satırı çıkıyorsa çağıran yoktur.
 
 **Kart yazarken:** yeni bir dosya/fonksiyon isteyen kartın çakışma kümesine **çağıracağı
 yeri de** koy. Koyamıyorsan kart "yarım" biter ve ölü kod merge edilir.
+
+## 2026-08-27 · `x-vercel-set-bypass-cookie` araya 307 sokar — yönlendirme testlerini kırar
+
+`OPS-008`'i kapatırken bypass'ı üç turda ölçtüm; her tur bir hipotezi eledi:
+
+| Tur | Değişiklik                                                    | Sonuç              |
+| --- | ------------------------------------------------------------- | ------------------ |
+| 1   | bypass bağlı, `x-vercel-set-bypass-cookie: samesitenone` açık | 28 geçti / 8 kaldı |
+| 2   | \+ ham `ws` istemcisine başlık                                | 29 / 7             |
+| 3   | − `x-vercel-set-bypass-cookie`                                | **34 / 2**         |
+
+**Bulgu 1 — ham istemciler `use`'u almaz.** `smoke.spec.ts` `ws` kütüphanesiyle kendi
+bağlantısını kuruyor; `use.extraHTTPHeaders` oraya **uygulanmıyor** ve upgrade 302 alıyordu.
+Bu, `globalSetup` tuzağının üçüncü örneği: **Playwright'ın kendi context'inden geçmeyen her
+istemciye başlığı ELLE ver.**
+
+**Bulgu 2 — çerez kipi zararlı.** `x-vercel-set-bypass-cookie` Vercel'e içeriği doğrudan
+servis etmek yerine **araya bir 307 sokturuyor** (`Location` = isteğin KENDİSİ; çerezi kurup
+tekrar istetmek için). Tarayıcı bunu sessizce izlediği için çoğu test etkilenmiyor — ama:
+
+- `maxRedirects: 0` ile ham yönlendirmeyi okuyan testler uygulamanın `/giris?donus=…`
+  yönlendirmesi yerine Vercel'in kendi redirect'ini görüyor,
+- protokol yükseltmesi (WS) upgrade yerine 307 alıyor.
+
+Çerezin tek gerekçesi "WS başlığı taşımaz" idi; Bulgu 1 onu çözünce çerez yalnız zarar
+bırakıyor. **Geri ekleme.**
+
+**Genel ders:** bir atlatma mekanizmasının "çalıştığını" toplam yeşil sayısıyla ölçme —
+**hangi istemcinin hangi yoldan geçtiğini** ayır. Üç turun her biri farklı bir istemci
+sınıfını düzeltti.
