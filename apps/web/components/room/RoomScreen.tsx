@@ -77,9 +77,11 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
 
       <Board
         cells={state.board}
+        config={{ size: state.size, winLength: state.winLength }}
         interactive={interactive}
         winningLine={winningLine}
         pendingIndex={state.pending?.index ?? null}
+        lastMoveIndex={state.lastMove?.index ?? null}
         onCellPress={actions.move}
       />
 
