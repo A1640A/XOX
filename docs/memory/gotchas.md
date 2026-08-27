@@ -1586,3 +1586,32 @@ git merge-base --is-ancestor feat/<id> main   # dal gerçekten merge edildi mi
 
 Ayrıca `board.json`'daki tüm `report:` yollarının `main`'de **var olduğunu** doğrula —
 kırık bir referans, kaybolmuş bir dosyanın tek işaretidir.
+
+## 2026-08-27 · Playwright trace'leri SECRET taşır — public repoda artifact olarak yayımlanamaz
+
+`OPS-008` için `VERCEL_AUTOMATION_BYPASS_SECRET`'ı `x-vercel-protection-bypass` başlığı
+olarak bağladım. Başlık Playwright trace'ine **düz metin** yazılıyor ve
+`e2e-preview.yml` `playwright-report`'u **7 gün saklanan bir CI artifact'ı** olarak
+yüklüyordu. Repo **PUBLIC** → secret herkese açıktı (~4 saat).
+
+**Ölçüm:** trace zip'lerinin içinde başlık her trace'te 4 dosyada geçiyordu.
+Etkilenen üç artifact silindi, secret döndürüldü.
+
+**Düzeltme** (`e2e-preview.yml`):
+
+```yaml
+path: |
+  apps/e2e/playwright-report
+  !apps/e2e/playwright-report/data/*.zip
+```
+
+**Doğrulandı, varsayılmadı:** düzeltmeden sonraki koşuda artifact 2.1 MB → 695 kB,
+trace zip sayısı **0**, başlık **hiçbir dosyada yok**, ekran görüntüsü/HTML rapor korundu.
+
+**Genel ders:** trace yalnız bu başlığı değil **oturum çerezlerini, kimlik doğrulama
+token'larını ve test kullanıcısı bilgilerini** de taşır. Public bir repoda trace'i artifact
+olarak yayımlamak, testlerin gördüğü her secret'ı yayımlamaktır. Bir teste secret veriyorsan
+o secret'ın nereye yazıldığını takip et — `gitleaks` commit'leri tarar, **CI çıktısını taramaz.**
+
+**Sıra önemli:** sızan bir secret'ı döndürmeden ÖNCE sızıntı yolunu kapat ve kapandığını
+ÖLÇ. Aksi halde yeni secret aynı yoldan tekrar sızar.
