@@ -34,7 +34,29 @@ function environmentMismatch(dbName: string): string | null {
   return `VERCEL_ENV='${vercelEnv}' '${expected}' veritabanını bekliyor, '${dbName}' bulundu`
 }
 
+/**
+ * ROLLOUT-BOARD-001 · ADR-0018 §3, "İLK KRİTER BİR ÖLÇÜMDÜR" — Vercel Skew
+ * Protection Pro/Enterprise takımlar içindir ve bu projenin planı ADR
+ * yazıldığında DOĞRULANMADI. "Korunuyoruz" ölçüm olmadan DENMEZ (gotcha
+ * örüntü 1: kural yazılmış ama ateşlenmiyor).
+ *
+ * Yalnız BOOLEAN eklenir — DEĞER SIZDIRILMAZ: `VERCEL_DEPLOYMENT_ID`'nin
+ * KENDİSİ (dağıtım kimliği, hassas değil ama gereksiz) hiçbir zaman yanıta
+ * yazılmaz, yalnız VAR OLUP OLMADIĞI. `db` alanına DOKUNULMAZ — o alan
+ * `apps/e2e/global-setup.ts`'in bloke edici ön kontrolünün (OPS-007
+ * nöbetçisi) okuduğu kapıdır, adı/tipi/varlığı sabittir.
+ */
+function skewProtectionSignals(): { skewProtectionEnabled: boolean; deploymentIdPresent: boolean } {
+  return {
+    skewProtectionEnabled: process.env['VERCEL_SKEW_PROTECTION_ENABLED'] === '1',
+    deploymentIdPresent:
+      typeof process.env['VERCEL_DEPLOYMENT_ID'] === 'string' &&
+      process.env['VERCEL_DEPLOYMENT_ID'].length > 0,
+  }
+}
+
 export async function GET(): Promise<Response> {
+  const skew = skewProtectionSignals()
   try {
     const conn = await connectDb()
     await conn.connection.db?.admin().ping()
@@ -43,12 +65,12 @@ export async function GET(): Promise<Response> {
     const mismatch = environmentMismatch(dbName)
     if (mismatch !== null) {
       logError('GET /api/health ortam/veritabanı uyuşmazlığı', {}, new Error(mismatch))
-      return Response.json({ ok: false, db: dbName, error: mismatch }, { status: 500 })
+      return Response.json({ ok: false, db: dbName, error: mismatch, ...skew }, { status: 500 })
     }
 
-    return Response.json({ ok: true, db: dbName, at: new Date().toISOString() })
+    return Response.json({ ok: true, db: dbName, at: new Date().toISOString(), ...skew })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'bilinmeyen hata'
-    return Response.json({ ok: false, error: message }, { status: 503 })
+    return Response.json({ ok: false, error: message, ...skew }, { status: 503 })
   }
 }

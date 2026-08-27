@@ -1495,3 +1495,31 @@ grep -rn "fonksiyonAdi" packages apps | grep -v node_modules | grep -v "\.test\.
 ```
 
 Yalnız tanım + `index.ts` yeniden dışa verimi + testler çıkıyorsa çağıran yok demektir.
+
+## 2026-08-27 · knip körlüğünün ikinci biçimi: TEST REFERANSI ölü kodu gizler
+
+`revokeWsTicketsForUser` knip'ten kaçmıştı çünkü `packages/db/src/index.ts` bir **giriş
+noktası**. Aynı gün ikinci bir örnek çıktı, farklı mekanizmayla:
+
+`apps/web/components/board-config/use-board-modes.ts` yazıldı, test edildi, dışa verildi —
+ve **hiçbir üretim kodu onu çağırmıyordu.** Tek referans kendi test dosyasıydı (7 kez).
+`pnpm gates` yeşil geçti.
+
+Bu daha sinsi çünkü **her dosya için geçerli**, yalnız barrel'lar için değil: bir export'a
+test yazmak, knip'in gözünde onu "kullanılıyor" yapar.
+
+**Sonuç:** bu repoda "yazıldı + test edildi + gates yeşil" bir kodun **çağrıldığı anlamına
+gelmez.** İkisi de aynı gün, iki farklı ajan tarafından dürüstçe bildirildi — kapı değil,
+ajanlar yakaladı.
+
+**Kontrol (üretim çağrısı var mı):**
+
+```bash
+grep -rn "adi" apps packages | grep -v node_modules | grep -v "\.test\." \
+  | grep -v coverage | grep -v "\.next/"
+```
+
+Yalnız tanım satırı çıkıyorsa çağıran yoktur.
+
+**Kart yazarken:** yeni bir dosya/fonksiyon isteyen kartın çakışma kümesine **çağıracağı
+yeri de** koy. Koyamıyorsan kart "yarım" biter ve ölü kod merge edilir.

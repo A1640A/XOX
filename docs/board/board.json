@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T08:14:06.429Z",
+  "updatedAt": "2026-08-27T08:51:52.153Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2001,9 +2001,9 @@
       "agent": "xox-dev-web",
       "deps": ["UI-CFG-001", "CORE-AI-001"],
       "conflictSet": ["apps/web/components/computer/**", "apps/web/app/oyna/bilgisayar/page.tsx"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/UI-COMP-001",
       "report": null,
       "acceptance": [
         "KK-B42 saglanir: bilgisayar ekraninda boyut ve K secimi ODA AKISINDAN BAGIMSIZDIR — sunucuya ISTEK GITMEZ, oda kurulmaz. UI-CFG-001'in BoardConfigPicker'i YENIDEN KULLANILIR; ikinci bir secici bileseni YAZILMAZ. Varsayilan {3,3} -> bugunku tiklama sayisi DEGISMEZ.",
@@ -2031,10 +2031,10 @@
         "apps/web/app/api/health/route.ts",
         "apps/web/next.config.ts"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/ROLLOUT-BOARD-001",
+      "report": "docs/board/reports/ROLLOUT-BOARD-001.md",
       "acceptance": [
         "ILK KRITER BIR OLCUMDUR (ADR-0018): Vercel Skew Protection bu projede ETKIN MI? Skew Protection Pro/Enterprise takimlar icindir ve bu projenin plani DOGRULANMADI. MEKANIK SONDA: VERCEL_SKEW_PROTECTION_ENABLED === '1' ve VERCEL_DEPLOYMENT_ID VARLIGI, GET /api/health yanitina BOOLEAN olarak eklenir — DEGER SIZDIRILMAZ. Olcum yapilmadan 'korunuyoruz' DENMEYECEK (gotcha oruntu 1: kural yazilmis ama atesLenmiyor).",
         "Sonuc 0 ya da yoksa: apps/web/next.config.ts'e `deploymentId: process.env.VERCEL_DEPLOYMENT_ID` ELLE yazilir. Amac eski istemciyi PINLEMEK DEGIL, YENILEMEYE ZORLAMAKTIR — Next istemcisi x-nextjs-deployment-id uyusmazliginda tam sayfa yenilemeye duser. __vdpl cerezi bizim icin YANLIS ARACTIR (eski istemciyi hayatta tutar).",
@@ -2049,7 +2049,9 @@
         "OPS-007 NOBETCISI YURURLUKTE: E2E URETIME KARSI KOSTURULMAZ, assertTestDatabase guard'i gevsetilmez, allowlist gevsetilmez.",
         "pnpm gates temiz VE CI'in KENDISI yesil: `gh run list --workflow=CI --limit 3`."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "6642c10",
+      "note": "OPS-007 nobetcisi guvende: /api/health db alani her iki dalda BIREBIR duruyor, yalniz ...skew eklendi (git diff ile dogrulandi). ILGINC BULGU: use-board-modes.ts yazilmis ama hicbir URETIM kodu kullanmiyordu — tek referans kendi test dosyasi (7 kez). knip bunu goremiyor cunku bir test referansi export-u kullanilmis gosteriyor. Bu, ayni gun icinde IKINCI olu kod ornegi (ilki revokeWsTicketsForUser, o da knipin giris noktasi korlugundendi). Lead hooku BoardConfigPicker-a bagladi; secici zaten ayni filtreyi satir ici yapiyordu, yani hem olu kod kapandi hem kopya kalkti. Sonda: hookun filtresi bozulunca test kirmizi."
     },
     {
       "id": "E2E-BOARD-001",
@@ -2276,7 +2278,25 @@
         "next-auth import eden hicbir dosya Vitest-te kosturulamaz — is mantigi zaten packages/db-de test edildi, auth.ts tarafi ince tutkal olmali."
       ],
       "conflictSet": ["apps/web/auth.ts"]
+    },
+    {
+      "id": "OPS-009",
+      "title": "Skew Protection ve kill switch CANLI ortamda hic denenmedi — provasi yapilmali",
+      "priority": "P2",
+      "agent": "xox-devops",
+      "status": "todo",
+      "deps": ["ROLLOUT-BOARD-001"],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "ROLLOUT-BOARD-001 kodu yazdi ve test etti ama ADR-0018-in OLC-VARSAYMA adimini YAPAMADI: gercek Skew Protection degeri canli bir preview-da okunmadi ve kill switch redeploy provasi kosulmadi. Ajan bunu gizlemedi, kapsam siniri olarak acikca bildirdi.",
+        "Kill switch provasi: XOX_ENABLED_BOARD_SIZES=3 ayarla, redeploy et, 6x6 ve 11x11-in arayuzde HIC gorunmedigini ve POST /api/rooms-in 400 dondugunu DOGRULA. Sonra geri al.",
+        "Skew: /api/health-in skewProtectionEnabled ve deploymentIdPresent alanlarinin canlida gercekten true dondugunu dogrula.",
+        "ENGEL: preview-lar Vercel SSO arkasinda (OPS-008). Once o kart kapanmali ya da production custom domain uzerinden dikkatli dogrulama yapilmali.",
+        "PRODUCTION DEGISIKLIGI — kullanici onayi olmadan yapma."
+      ],
+      "conflictSet": []
     }
   ],
-  "wave": "B4"
+  "wave": "B5"
 }

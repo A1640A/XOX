@@ -4,6 +4,7 @@ import { BOARD_MODES, type BoardConfig, type BoardMode } from '@xox/game-core'
 import { TESTID } from '@xox/shared'
 import { tr } from '@/messages/tr'
 import { sizeLabel } from './size-label'
+import { useBoardModes } from './use-board-modes'
 
 export interface BoardConfigPickerProps {
   readonly value: BoardConfig
@@ -67,7 +68,12 @@ export function BoardConfigPicker({
   enabledSizes = ALL_SIZES,
   disabled = false,
 }: BoardConfigPickerProps): React.ReactElement {
-  const modes = BOARD_MODES.filter((mode) => enabledSizes.includes(mode.size))
+  // Tek türetme noktası `useBoardModes` (ROLLOUT-BOARD-001). Buradaki satır içi
+  // `BOARD_MODES.filter(...)` ile hook bit bit AYNI mantığı taşıyordu; lead
+  // birleştirdi. İkinci bir kopya açma — kapalı boyut listesi tek yerden gelmeli,
+  // yoksa biri güncellenip diğeri unutulur (bu repoda bu örüntü bu hafta altı kez
+  // hataya dönüştü).
+  const modes = useBoardModes(enabledSizes)
   const activeMode: BoardMode | undefined =
     modes.find((mode) => mode.size === value.size) ?? modes[0]
 
