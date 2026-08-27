@@ -1553,3 +1553,36 @@ bırakıyor. **Geri ekleme.**
 **Genel ders:** bir atlatma mekanizmasının "çalıştığını" toplam yeşil sayısıyla ölçme —
 **hangi istemcinin hangi yoldan geçtiğini** ayır. Üç turun her biri farklı bir istemci
 sınıfını düzeltti.
+
+## 2026-08-27 · `git commit | grep` commit HATASINI GİZLER — bugün üç kez oldu
+
+Çıktıyı kısaltmak için commit'leri şöyle koşuyordum:
+
+```bash
+git commit -q -m "..." 2>&1 | grep -iE "leak|error" | head -2
+```
+
+Lefthook başarısız olunca hata bu filtrenin desenine uymuyor ve **sessizce yutuluyor.**
+Sonraki komut (`git push`, `git merge`) "Already up to date" deyip geçiyor; commit hiç
+düşmemiş oluyor.
+
+Bugün üç kez oldu:
+
+1. `docs(perf)` — `perf` geçerli bir **kapsam değil** (commitlint reddetti).
+2. `PERF-004` raporu — prettier biçimi.
+3. **`CORE-AI-001` raporu — fark edilmedi ve worktree'de kaldı.** `board.json` o dosyayı
+   `report:` alanında işaret ediyordu ama dosya `main`'de **yoktu**. Worktree temizliğinde
+   silseydim rapor tamamen kaybolacaktı.
+
+**Kural:** commit çıktısını filtreleme. En azından `git log --oneline -1` ile **sonucu
+doğrula** — "commit komutu koştu" ile "commit düştü" farklı şeyler.
+
+**Worktree silmeden önce zorunlu iki kontrol** (biri bugün gerçek bir kaybı önledi):
+
+```bash
+git -C <worktree> status --porcelain          # commit edilmemiş iş var mı
+git merge-base --is-ancestor feat/<id> main   # dal gerçekten merge edildi mi
+```
+
+Ayrıca `board.json`'daki tüm `report:` yollarının `main`'de **var olduğunu** doğrula —
+kırık bir referans, kaybolmuş bir dosyanın tek işaretidir.
