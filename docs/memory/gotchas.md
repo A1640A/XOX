@@ -1435,3 +1435,35 @@ Bu taramayı bugün koştum: pano genelinde **tek** yanlış atama vardı (`PERF
 `PERF-001` de `xox-perf`'te ama o saf ölçüm kartı — çakışma kümesinde kod dosyası yok,
 doğru atanmış. Yani kural "salt-okunur ajan = yanlış" değil, **"kod kümesi + salt-okunur ajan
 = yanlış"**.
+
+## 2026-08-27 · Belgelenmiş bir teori de ölçülmemiş olabilir — `PERF-004`
+
+`PERF-002`'den beri repoda şu zincir yazılıydı ve herkes ona dayanıyordu:
+`shared barrel → room-client → game-core ana barrel → ai.ts ⟹ minimax her rotada`.
+
+`.size-limit.mjs`'in yorumu, `PERF-003`'ün raporu, `PERF-004`'ün kart gerekçesi, ölçüm
+ajanının kök neden analizi ve benim varsayımım — **beşi de** bu zinciri suçladı. Zincirin
+her halkası **gerçek**. Ama kimse **parça (chunk) düzeyinde** ölçmemişti.
+
+Ölçünce: ağır rotalara özel parça **68.7 kB gzip** ve içinde **485 `zod` izi, SIFIR minimax
+izi**. Ağır (216 kB) ile hafif (146 kB) arasındaki ~70 kB farkın tamamı **zod**.
+İki değişiklik denendi, toplam kazanç **~4 kB** — teori doğru olsaydı ~70 kB olmalıydı.
+
+**Ders:** "belgelenmiş", "birden çok yerde tekrarlanmış" ve "zinciri kodda doğrulanmış" bir
+teori hâlâ **yanlış suçluyu** gösterebilir. Zincirin var olduğunu doğrulamak, o zincirin
+maliyetin **kaynağı** olduğunu kanıtlamaz. Bir sızıntıyı düzeltmeden önce parçayı aç ve
+**içinde ne olduğuna bak** — ne olması gerektiğine değil.
+
+**Kullanılabilir yöntem:**
+
+```bash
+# 1) agir ve hafif bir rotanin parca listelerini karsilastir
+node -e '...' apps/web/.next/diagnostics/route-bundle-stats.json
+# 2) yalnizca agirda olan en buyuk parcayi ac, icindeki paket izlerini say
+grep -oE '(zod|next-auth|mongoose|@xox/[a-z-]+)' <parca>.js | sort | uniq -c | sort -rn
+```
+
+**İkinci ders — dondurulmuş yüzey:** `game-core/src/index.test.ts` barrel yüzeyini elle
+yazılmış bir listeyle karşılaştırıyor ve benim `ai` yeniden dışa verimini kaldırmamı yakaladı.
+Ölçüm o kaldırmanın **2 kB** kazandırdığını gösterdiği için geri aldım: bilinçli olarak
+dondurulmuş bir kamu yüzeyini 2 kB için kırmak yanlış takas. **Kapı beni durdurdu ve haklıydı.**
