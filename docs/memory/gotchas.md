@@ -1363,3 +1363,27 @@ koştuğunu açıkça yaz.
 **Yan ders — knip zincirleme çalışır:** bir kullanılmayan dışa verimi kaldırınca, YALNIZ onun
 kullandığı bir sonraki dışa verim açığa çıkar. `nodeBudgetCorpus`'u kapatınca `buildBoard`
 göründü. Tek seferde temizlendi sanma, temiz çıkana kadar tekrarla.
+
+## 2026-08-26 · ADR'de tanımlı ama hiçbir kartın kümesinde olmayan dosyalar
+
+Bugün **iki kez** aynı boşluk çıktı:
+
+| Dosya                                   | Tanımlandığı yer                   | Sahibi olan kart |
+| --------------------------------------- | ---------------------------------- | ---------------- |
+| `apps/web/lib/client/use-room.test.tsx` | — (kapanmış `UI-SKEL-001`'e aitti) | **yoktu**        |
+| `apps/web/lib/game/enabled-sizes.ts`    | ADR-0018 §3                        | **yoktu**        |
+
+İlkini zincir kurarken ben yakaladım (kırık dosya listesini sahiplerine eşleyerek).
+İkincisini ajan kartı yürütürken fark etti, açıkça bildirdi ve yazdı — doğru davranış.
+
+**Örüntü:** planlayıcı kartları _değiştirilecek_ dosyalardan türetiyor; **henüz var olmayan**
+ama bir ADR'nin gerektirdiği dosyalar hiçbir çakışma kümesine düşmüyor. Sonuç: ya kimse
+yazmaz, ya iki kart aynı anda yazar.
+
+**Önlem — dalga dispatch etmeden önce:** kartların çakışma kümelerinin birleşimini, o dalganın
+kabul kriterlerinin gerektirdiği dosya listesiyle karşılaştır. Kümede olmayan bir dosya
+gerekiyorsa **dispatch'ten önce** bir karta ata. Ajana "kümenin dışına çıkma" derken, kümenin
+işi yapmaya yetip yetmediğini de kontrol etmiş ol.
+
+**Ajan kümesinin dışına çıkmak zorunda kalırsa:** yazsın ama **bildirsin** — ve lead paralel
+worktree'lerde aynı dosyanın açılıp açılmadığını _ölçerek_ doğrulasın (`ls` ile; varsayımla değil).
