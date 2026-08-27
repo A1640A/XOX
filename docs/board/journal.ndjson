@@ -1639,3 +1639,5 @@
 {"ts":"2026-08-27T08:50:46Z","event":"file.touched","path":".claude/worktrees/UI-COMP-001/docs/board/reports/UI-COMP-001.md"}
 {"ts":"2026-08-27T08:51:24Z","event":"subagent.stop"}
 {"ts":"2026-08-27T03:05:00Z","event":"card.merged","card":"ROLLOUT-BOARD-001","note":"OPS-007 nobetcisi guvende (db alani birebir). KNIP KORLUGUNUN IKINCI BICIMI kesfedildi: use-board-modes.ts yazilmis, test edilmis, HIC CAGRILMIYOR — tek referans kendi test dosyasi. Bir test referansi export-u kullanilmis gosteriyor; bu her dosya icin gecerli, barrel-a ozgu degil. Ayni gun ikinci olu kod ornegi. Lead hooku BoardConfigPicker-a bagladi, ayni anda satir ici kopya da kalkti. OPS-009 acildi: skew ve kill switch canlida hic denenmedi (ajan kapsam siniri olarak durustce bildirdi)."}
+{"ts":"2026-08-27T08:52:27Z","event":"subagent.stop"}
+{"ts":"2026-08-27T03:30:00Z","event":"card.merged","card":"UI-COMP-001","note":"Dalga B5 kapandi. Lead sondalari ikisi de oldu: yalan etiket ve gizlenen guc notu yakalaniyor. Ajan gecikme icin yeni sayi ICAT ETMEDI, mevcut olculmus sabiti dogru yerde (chooseMove ONCESI) kullandi — gecikme hesaplama hizindan bagimsiz kaldi."}

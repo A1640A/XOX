@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T08:51:52.153Z",
+  "updatedAt": "2026-08-27T08:56:04.702Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2001,10 +2001,10 @@
       "agent": "xox-dev-web",
       "deps": ["UI-CFG-001", "CORE-AI-001"],
       "conflictSet": ["apps/web/components/computer/**", "apps/web/app/oyna/bilgisayar/page.tsx"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/UI-COMP-001",
-      "report": null,
+      "report": "docs/board/reports/UI-COMP-001.md",
       "acceptance": [
         "KK-B42 saglanir: bilgisayar ekraninda boyut ve K secimi ODA AKISINDAN BAGIMSIZDIR — sunucuya ISTEK GITMEZ, oda kurulmaz. UI-CFG-001'in BoardConfigPicker'i YENIDEN KULLANILIR; ikinci bir secici bileseni YAZILMAZ. Varsayilan {3,3} -> bugunku tiklama sayisi DEGISMEZ.",
         "KK-B67 saglanir: use-computer-game.ts'te bekleme artik TOPLANMAZ, TABAN OLUR — max(0, COMPUTER_MOVE_DELAY_MS - gercekDusunmeSuresi), olcum performance.now(). Sonda: {3,3}'te toplam gecikme ~400 ms (bugunku his degismez), {11,5}'te dusunme 800 ms surerse toplam ~800 ms, 1200 ms DEGIL. 1000 ms tepki ust siniri KORUNUR.",
@@ -2015,7 +2015,9 @@
         "size-limit: /oyna/bilgisayar rota butcesi ASILMAZ. PERF-003'un yeniden turettigi butceye karsi olculur ve olculen deger rapora yazilir.",
         "pnpm gates temiz."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "219614b",
+      "note": "BoardConfigPicker YENIDEN KULLANILDI, ikinci secici yok. Gecikme icin YENI SAYI ICAT ETMEDI — mevcut olculmus COMPUTER_MOVE_DELAY_MS (400ms, KK-023) chooseMove ONCESINDE kuruluyor, yani gecikme hesaplama hizindan yapisal olarak bagimsiz. LEAD SONDALARI (ikisi de oldu): N>3-te de Yenilmez dedirtme -> 1 test kirmizi; strengthNote-u gizleme -> 2 test kirmizi. Buyukten kucuge (11x11->3x3) vakasi da test edilmis — UI-BOARD-001-de bulunan klavye kilitlenmesi sinifi."
     },
     {
       "id": "ROLLOUT-BOARD-001",
