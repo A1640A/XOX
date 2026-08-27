@@ -1,16 +1,21 @@
-import { JoinCodeField } from '@/components/JoinCodeField'
+import { JoinRoomPreview } from '@/components/board-config/JoinRoomPreview'
 import { tr } from '@/messages/tr'
 
 /**
- * `/oda/katil` — ana sayfadaki oda kodu alanının derin bağlanabilir eşi
- * (W1-04 kriter 1). `JoinCodeField` BİREBİR aynı bileşen; normalleştirme,
- * doğrulama ve hata yüzeyi tek bir yerde yaşar, burada tekrarlanmaz.
+ * `/oda/katil` — W1-04 kriter 1'in "ana sayfadaki alanın birebir eşi" kararı
+ * `UI-CFG-001` ile BİLİNÇLİ olarak revize edildi: SB-09/US-B03 katılan
+ * oyuncunun odaya girmeden önce oyun ayarını (boyut/K) görmesini ZORUNLU
+ * kılıyor, bu da `JoinCodeField`in tek-adımlı (doğrula → hemen yönlendir)
+ * akışıyla uyuşmuyor. Bu yüzden bu sayfa artık `JoinCodeField` DEĞİL,
+ * kendi önizleme adımına sahip `JoinRoomPreview`i kullanır (bkz. o dosyanın
+ * başlık yorumu) — Home'un hızlı-katıl alanı hâlâ eski `JoinCodeField`i
+ * kullanmaya devam eder, DOKUNULMADI.
  */
 export default function OdaKatilPage(): React.ReactElement {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
       <h1 className="text-2xl font-bold">{tr.home.joinRoom}</h1>
-      <JoinCodeField />
+      <JoinRoomPreview />
     </main>
   )
 }

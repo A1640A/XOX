@@ -218,6 +218,70 @@ describe('RoomScreen', () => {
     expect(actions.reconnect).toHaveBeenCalledOnce()
   })
 
+  it('size/winLength taşımayan eski oda {3,3} olarak görünür — "undefined" sızmaz (kart §Sert şart 3)', () => {
+    // `initialRoomClientState()` zaten `{size:3, winLength:3}` varsayılanını
+    // taşır (ilk `state` mesajından ÖNCEki geçici değer) — override YOK.
+    withState({ connection: 'bagli', you: 'X', status: { kind: 'playing', turn: 'X' } })
+
+    render(<RoomScreen roomCode="ABC234" />)
+
+    const ozet = screen.getByTestId('oyun-ayari-ozeti')
+    expect(ozet).toHaveTextContent('3×3 tahta · 3 taş yan yana')
+    expect(ozet.textContent).not.toContain('undefined')
+  })
+
+  it('oyun-ayari-ozeti odanın GERÇEK size/winLength değerini gösterir', () => {
+    withState({
+      connection: 'bagli',
+      you: 'X',
+      status: { kind: 'playing', turn: 'X' },
+      size: 11,
+      winLength: 5,
+    })
+
+    render(<RoomScreen roomCode="ABC234" />)
+
+    expect(screen.getByTestId('oyun-ayari-ozeti')).toHaveTextContent('11×11 tahta · 5 taş yan yana')
+  })
+
+  it("11×11 gibi 3×3 dışı boyutlarda dar-ekran ipucu render edilir, 3×3'te edilmez", () => {
+    withState({
+      connection: 'bagli',
+      you: 'X',
+      status: { kind: 'playing', turn: 'X' },
+      size: 11,
+      winLength: 5,
+    })
+    const { unmount } = render(<RoomScreen roomCode="ABC234" />)
+    expect(
+      screen.getByText('Tahtayı daha rahat görmek için cihazını yatay çevir.'),
+    ).toBeInTheDocument()
+    unmount()
+
+    withState({ connection: 'bagli', you: 'X', status: { kind: 'playing', turn: 'X' } })
+    render(<RoomScreen roomCode="ABC234" />)
+    expect(
+      screen.queryByText('Tahtayı daha rahat görmek için cihazını yatay çevir.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('durum-metni rakibin son hamlesinin FARKINI sıra metniyle birlikte duyurur (ADR-0017 §7)', () => {
+    withState({
+      connection: 'bagli',
+      you: 'X',
+      status: { kind: 'playing', turn: 'X' },
+      size: 11,
+      winLength: 5,
+      lastMove: { index: 26, by: 'O' },
+    })
+
+    render(<RoomScreen roomCode="ABC234" />)
+
+    expect(screen.getByTestId('durum-metni')).toHaveTextContent(
+      'Rakip 3. satır 5. sütuna oynadı. Sıra sende',
+    )
+  })
+
   it('DONDURMA #1 sözleşmesi: iskelet bileşenler gerçek state alanlarına bağlı mount edilir', () => {
     withState({
       connection: 'bagli',

@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HomeActions } from './HomeActions'
 
+/** Çoğu testte üç boyutun TAMAMI sunulur — `enabledSizes` davranışı KENDİ
+ * describe bloğunda ayrıca sınanır. */
+const TUM_BOYUTLAR = [3, 6, 11]
+
 const push = vi.fn()
 let sessionValue: { data: unknown; status: string } = { data: null, status: 'unauthenticated' }
 
@@ -29,7 +33,7 @@ describe('HomeActions', () => {
   })
 
   it('girişsizken giriş/kayıt bağlantılarını gösterir', () => {
-    render(<HomeActions />)
+    render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
 
     expect(screen.getByRole('link', { name: 'Giriş yap' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Kayıt ol' })).toBeInTheDocument()
@@ -37,7 +41,7 @@ describe('HomeActions', () => {
 
   it('girişliyken hoş geldin mesajını ve CTA-ları gösterir', () => {
     signIn()
-    render(<HomeActions />)
+    render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
 
     expect(screen.getByText('Hoş geldin, Ayşe')).toBeInTheDocument()
     expect(screen.getByTestId('btn-oda-kur')).toBeInTheDocument()
@@ -50,11 +54,86 @@ describe('HomeActions', () => {
       new Response(JSON.stringify({ code: 'ABC234' }), { status: 201 }),
     )
     const user = userEvent.setup()
-    render(<HomeActions />)
+    render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
 
     await user.click(screen.getByTestId('btn-oda-kur'))
 
     expect(push).toHaveBeenCalledExactlyOnceWith('/oda/ABC234')
+  })
+
+  it('varsayılan seçim (3×3) DEĞİŞTİRİLMEDEN "Oda kur"a basılırsa {size:3,winLength:3} gönderir', async () => {
+    signIn()
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ code: 'ABC234' }), { status: 201 }),
+    )
+    const user = userEvent.setup()
+    render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
+
+    await user.click(screen.getByTestId('btn-oda-kur'))
+
+    expect(fetch).toHaveBeenCalledExactlyOnceWith(
+      '/api/rooms',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ size: 3, winLength: 3 }),
+      }),
+    )
+  })
+
+  describe('BoardConfigPicker entegrasyonu (kart §Sert şart 1/2)', () => {
+    it("picker'da seçilen boyut/K TAM OLARAK POST gövdesine gider — sessiz düşürme YOK", async () => {
+      signIn()
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(JSON.stringify({ code: 'ABC234' }), { status: 201 }),
+      )
+      const user = userEvent.setup()
+      render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
+
+      await user.click(screen.getByTestId('tahta-boyut-11'))
+      await user.click(screen.getByRole('button', { name: '6 taş' }))
+      await user.click(screen.getByTestId('btn-oda-kur'))
+
+      expect(fetch).toHaveBeenCalledExactlyOnceWith(
+        '/api/rooms',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ size: 11, winLength: 6 }),
+        }),
+      )
+    })
+
+    it('kapalı (enabledSizes dışı) bir boyut HİÇ RENDER EDİLMEZ — istemci onu seçemez bile', () => {
+      signIn()
+      render(<HomeActions enabledSizes={[3, 6]} />)
+
+      expect(screen.getByTestId('tahta-boyut-3')).toBeVisible()
+      expect(screen.getByTestId('tahta-boyut-6')).toBeVisible()
+      expect(screen.queryByTestId('tahta-boyut-11')).not.toBeInTheDocument()
+    })
+
+    it('sunucu yine de INVALID_BOARD_CONFIG dönerse (kill switch yarışı) net bir hata gösterir, sessizce 3×3 KURMAZ', async () => {
+      signIn()
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            code: 'INVALID_BOARD_CONFIG',
+            message: 'Bu tahta boyutu şu anda sunulmuyor.',
+          }),
+          { status: 400 },
+        ),
+      )
+      const user = userEvent.setup()
+      render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
+
+      await user.click(screen.getByTestId('tahta-boyut-11'))
+      await user.click(screen.getByTestId('btn-oda-kur'))
+
+      expect(push).not.toHaveBeenCalled()
+      expect(await screen.findByTestId('hata-mesaji')).toHaveAttribute(
+        'data-kod',
+        'INVALID_BOARD_CONFIG',
+      )
+    })
   })
 
   it('sunucu errorResponseSchema-a UYAN bir gövde dönerse o kodu gösterir', async () => {
@@ -65,7 +144,7 @@ describe('HomeActions', () => {
       }),
     )
     const user = userEvent.setup()
-    render(<HomeActions />)
+    render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
 
     await user.click(screen.getByTestId('btn-oda-kur'))
 
@@ -85,7 +164,7 @@ describe('HomeActions', () => {
       new Response('<html>Gateway Timeout</html>', { status: 504 }),
     )
     const user = userEvent.setup()
-    render(<HomeActions />)
+    render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
 
     await user.click(screen.getByTestId('btn-oda-kur'))
 
@@ -98,7 +177,7 @@ describe('HomeActions', () => {
     signIn()
     vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'))
     const user = userEvent.setup()
-    render(<HomeActions />)
+    render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
 
     await user.click(screen.getByTestId('btn-oda-kur'))
 

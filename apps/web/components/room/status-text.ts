@@ -1,4 +1,6 @@
-import type { Player, TransportStatus } from '@xox/shared'
+import type { BoardConfig } from '@xox/game-core'
+import type { LastMove, Player, TransportStatus } from '@xox/shared'
+import { moveAnnouncement, winningLineAnnouncement } from '@/components/board/announcements'
 import { tr } from '@/messages/tr'
 
 /** `sira-gostergesi` `data-sira` değeri (spec §2.0): oyun sürerken sıradaki taş, aksi hâlde `yok`. */
@@ -30,4 +32,41 @@ export function statusText(status: TransportStatus, you: Player | null): string 
       // tanımlanmamış (spec §5) — genel kaybetme metnine düşülür.
       return won ? tr.game.wonByAbandon : tr.game.youLost
   }
+}
+
+export interface LiveAnnouncementInput {
+  readonly status: TransportStatus
+  readonly you: Player | null
+  /** `RoomClientState.lastMove` — `move:applied` GÜNCELLER, `state` TÜMÜYLE değiştirir. */
+  readonly lastMove: LastMove | null
+  readonly size: number
+  readonly winLength: number
+}
+
+/**
+ * `durum-metni` (`role="status" aria-live="polite"`) içeriğinin BAĞLAMI
+ * (ADR-0017 §7): `board/announcements.ts`'in SAF fark-tabanlı üreticilerini
+ * (`moveAnnouncement`/`winningLineAnnouncement`, `UI-BOARD-001`'in bilerek
+ * bağlamadan bıraktığı iki fonksiyon) `statusText`'in genel sıra/sonuç
+ * metniyle TEK bir canlı bölgede birleştirir — "Rakip 4. satır 7. sütuna
+ * oynadı. Sıra sende." Tahtanın tamamı asla okunmaz, yalnız FARK.
+ *
+ * Öncelik: kazanan bir çizgiyle bitiş > son hamle > yalnız durum. Oyun
+ * çizgiyle bittiğinde son hamlenin koordinatı değil, kazanan ÇİZGİNİN
+ * koordinatları duyurulur (KK-B65) — ikisi aynı anda gösterilmez.
+ */
+export function liveAnnouncement(input: LiveAnnouncementInput): string {
+  const base = statusText(input.status, input.you)
+  const config: BoardConfig = { size: input.size, winLength: input.winLength }
+
+  if (input.status.kind === 'won' && input.status.reason === 'line' && input.status.line !== null) {
+    return `${winningLineAnnouncement(input.status.line, config)} ${base}`
+  }
+
+  if (input.lastMove !== null) {
+    const by = input.lastMove.by === input.you ? 'you' : 'opponent'
+    return `${moveAnnouncement(input.lastMove.index, config, by)} ${base}`
+  }
+
+  return base
 }
