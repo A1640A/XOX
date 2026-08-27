@@ -22,11 +22,10 @@ import { BOARD_MODES, type BoardMode } from '@xox/game-core'
  * HİÇBİR ZAMAN görünmez; bir tüketici yalnız bu listeyi render ederse kapalı
  * boyut istemcide hiç var olmaz (sessizce seçilip sonra düşürülmez).
  *
- * NOT: `BoardConfigPicker.tsx` bugün bu filtrelemeyi KENDİ İÇİNDE satır içi
- * yapıyor (`BOARD_MODES.filter(...)`, UI-CFG-001) — bu kart o dosyaya
- * DOKUNMUYOR (çakışma kümesi dışı, board-config ağacının geri kalanı donuk).
- * Aynı mantığın tek noktadan (bu hook) tüketilmesi bir sonraki temizlik
- * kartının işidir; iki yerdeki mantık ŞU AN bit bit AYNIDIR (bkz. rapor).
+ * `BoardConfigPicker.tsx` bu hook'u KULLANIR — orada ikinci bir
+ * `BOARD_MODES.filter(...)` YOKTUR. (Kart yazıldığında vardı ve bu dosya
+ * çakışma kümesi dışındaydı; lead merge öncesi birleştirdi.) Kapalı boyut
+ * listesinin tek türetme noktası burasıdır; ikinci bir kopya açma.
  */
 export function useBoardModes(enabledSizes: readonly number[]): readonly BoardMode[] {
   return useMemo(
