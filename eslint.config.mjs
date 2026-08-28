@@ -44,15 +44,57 @@ const NO_HEX_COLOR_LITERAL = {
 }
 
 /** Playwright yalnız apps/e2e içinde yaşar. Bu kural üç katmanlı savunmanın ikincisi. */
+const PLAYWRIGHT_PATTERNS = [
+  {
+    group: ['playwright', 'playwright-*', '@playwright/*'],
+    message:
+      'Playwright YALNIZCA apps/e2e içinde kullanılır. E2E testi gerekiyorsa görevi xox-qa-e2e agentına ver.',
+  },
+]
 const PLAYWRIGHT_WALL = {
+  'no-restricted-imports': ['error', { patterns: PLAYWRIGHT_PATTERNS }],
+}
+
+/**
+ * DB-004 · apps/web ham Mongoose modeline DOĞRUDAN erişemez. DB-003 "kapandı"
+ * dedi ama YANLIŞTI (bkz. docs/board/reports/DB-004.md — dört bilinen ihlalin
+ * yanında beş DAHA bulundu). Bu yüzden sınır artık İNSAN DİKKATİYLE değil
+ * LİNT'le dayatılıyor: `packages/db`'nin dışa açtığı ham Model sınıfları
+ * (`Room`, `User`, ...) `apps/web`de İTHAL EDİLEMEZ — sunucu tarafı erişim
+ * `packages/db`nin doğrulanmış fonksiyonlarından (`rooms/*`, `queries/*`)
+ * geçer. `type` importları (`RoomDoc`, `UserDoc`, ...) kapsam DIŞI — çalışma
+ * zamanı bağımlılığı yok, tip taşımak model erişimi sayılmaz.
+ *
+ * Aşağıdaki `ignores` listesindeki HER dosya docs/board/reports/DB-004.md'de
+ * TEK TEK gerekçelendirildi (ya "meşru istisna" ya "bu kartın dışında kalan,
+ * takip kartı gereken mevcut ihlal"). Yeni bir istisna eklerken raporu
+ * güncellemeden `ignores`e satır ekleme.
+ */
+const DB_MODEL_EXPORTS = ['Room', 'User', 'Game', 'Friendship', 'MobileRefreshToken', 'WsTicket']
+const DB_MODEL_WALL_MESSAGE =
+  'apps/web ham Mongoose modeline erişemez (DB-004, bkz. docs/board/reports/DB-004.md). ' +
+  "packages/db'nin rooms/*, queries/* fonksiyonlarından birini kullan; yoksa packages/db'ye " +
+  'ekle (yeni dosya = ayrı çakışma kümesi, ayrı kart).'
+/**
+ * Bu blok apps/web için `no-restricted-imports`un TEK kaynağıdır (flat
+ * config aynı kuralı MERGE etmez, DEĞİŞTİRİR) — PLAYWRIGHT_PATTERNS burada
+ * tekrar taşınmazsa Playwright duvarı apps/web'de sessizce kapanır.
+ */
+const WEB_DB_MODEL_WALL = {
   'no-restricted-imports': [
     'error',
     {
-      patterns: [
+      patterns: PLAYWRIGHT_PATTERNS,
+      paths: [
         {
-          group: ['playwright', 'playwright-*', '@playwright/*'],
-          message:
-            'Playwright YALNIZCA apps/e2e içinde kullanılır. E2E testi gerekiyorsa görevi xox-qa-e2e agentına ver.',
+          name: '@xox/db',
+          importNames: DB_MODEL_EXPORTS,
+          message: DB_MODEL_WALL_MESSAGE,
+          // `import type { User as UserModel }` çalışma zamanına HİÇ girmez
+          // (bkz. conventions.md "import type" notu) — yasağın amacı çalışma
+          // zamanı model erişimini engellemek, `authorize.test.ts`'in yaptığı
+          // gibi yalnız TİP taşımayı değil.
+          allowTypeImports: true,
         },
       ],
     },
@@ -235,6 +277,51 @@ export default tseslint.config(
   {
     files: ['apps/web/lib/log.ts'],
     rules: { 'no-console': 'off' },
+  },
+
+  // DB-004: apps/web ham Mongoose modeline erişemez (bkz. dosya başı yorumu).
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    ignores: [
+      // Test dosyaları KAPSAM DIŞI: gerçek Atlas'a koşan entegrasyon
+      // testleri (`presence.test.ts`, `double-execution.test.ts`,
+      // `mobile/refresh/route.test.ts`) kurulum/yıkım ve ham durum
+      // doğrulaması için MODELE BİLEREK doğrudan erişir — conventions.md'nin
+      // "gerçek Atlas'a koşan testler" kalıbı zaten `boundaries/dependencies`
+      // için de aynı şekilde gevşetilmiş (aşağıdaki "Test dosyaları" bloğu).
+      // Üretime çıkmayan koda üretim sınırı uygulamak yanlış negatif üretir.
+      'apps/web/**/*.test.{ts,tsx}',
+      'apps/web/**/*.spec.{ts,tsx}',
+      // --- Meşru istisnalar (gerekçe: docs/board/reports/DB-004.md §Kararlar) ---
+      // RT-PROBE-001: gerçek "health" değil, change-stream sondası; prod'da
+      // 404, karar kapısı geçti (api-contract.md) ve BİLEREK yeniden
+      // yazılmadı — sondanın tüm amacı ham sürücü/model davranışını (ready
+      // olayı, resumeToken sarmalayıcı/sürücü farkı) ölçmek, bir soyutlama
+      // bunu tam da gizlerdi.
+      'apps/web/app/api/health/realtime/route.ts',
+      // ADR-0002: `Room.watch()` instance başına TEK change stream
+      // değişmezinin tek kayıt defteri budur — Fluid instance ömrü/globalThis
+      // tekilliği web çalışma zamanı kaygısıdır, packages/db'ye taşınamaz.
+      'apps/web/lib/realtime/room-hub.ts',
+      // KK-005 sabit-zamanlı giriş: next-auth'suz ince iş mantığı katmanı
+      // (conventions.md). Sorgu, "kullanıcı yok" dalının GERÇEK argon2id
+      // `verifyFakePassword` ile AYNI fonksiyonda zamanlanmasıyla iç içe —
+      // ayırmak timing-safety'i iki modüle böler.
+      'apps/web/lib/auth/authorize.ts',
+      // Aynı kimlik katmanı: `User.create` + var-mı ön kontrolü tek yazma
+      // yeri, benzersizlik zaten Mongo'nun `email_1` indeksinde.
+      'apps/web/app/api/auth/register/route.ts',
+      // --- DB-004 SIRASINDA KEŞFEDİLEN, BU KARTIN ÇAKIŞMA KÜMESİ DIŞINDA
+      // kalan MEVCUT ihlaller. DB-003'ün "kapandı" iddiasının bu kart
+      // listesinden bile eksik olduğunun kanıtı (docs/board/reports/DB-004.md
+      // §Keşfedilen ek ihlaller). Dokunulmadı — ayrı bir kart gerekir.
+      'apps/web/app/api/rooms/\\[code\\]/ws/route.ts',
+      'apps/web/app/api/profile/route.ts',
+      'apps/web/lib/theme.ts',
+      'apps/web/app/api/auth/mobile/shared.ts',
+      'apps/web/app/api/auth/mobile/refresh/route.ts',
+    ],
+    rules: { ...WEB_DB_MODEL_WALL },
   },
 
   // React Native — yalnız mobil
