@@ -108,3 +108,23 @@ R1/tek-okuma-kaynağı gerekçesi).
 
 `kopuk` ve `devredildi` davranışça TAM TERSTİR (biri yeniden dener, diğeri asla) — tek bir DOM
 değerine sıkıştırılamaz, bkz. `decisions.md`.
+
+## `rooms.turnDeadline` ARTIK YAZILIYOR — AS-08 kapandı (W2-01, Dalga 2)
+
+`turnDeadline` P0 boyunca **daima `null`**du. Dalga 2'den itibaren:
+
+| Yazan             | Değer                                                             |
+| ----------------- | ----------------------------------------------------------------- |
+| `joinRoom`        | oyun başlarken `now + MOVE_TIMEOUT_SECONDS`                       |
+| `applyMove`       | oyun sürüyorsa `now + MOVE_TIMEOUT_SECONDS`; oyun bittiyse `null` |
+| `resign`          | `null`                                                            |
+| `settleDeadlines` | `null` (sonuçla aynı CAS)                                         |
+| `startRematch`    | `null` — **bilinen açık**, bkz. decisions.md                      |
+
+`settleDeadlines(code, now)` artık gerçekten yazıyor: `casUpdateRoom({ code, version,
+state:'playing' })` ile **tam olarak biri** yazar (çift yürütme idempotansı, ADR-0004).
+Sonuç `forfeitStatus(winner, 'timeout'|'abandon')` → `rooms.result` + `games.endReason`.
+
+**Uyarı — `move:applied` `turnDeadline` TAŞIMIYOR.** İstemcinin gördüğü sayaç tam `state`
+mesajları arasında bayatlar. Sunucu otoritesi doğrudur; düzeltme için takip kartı gerekiyor
+(decisions.md, 2026-08-28).

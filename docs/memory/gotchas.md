@@ -1615,3 +1615,64 @@ o secret'ın nereye yazıldığını takip et — `gitleaks` commit'leri tarar, 
 
 **Sıra önemli:** sızan bir secret'ı döndürmeden ÖNCE sızıntı yolunu kapat ve kapandığını
 ÖLÇ. Aksi halde yeni secret aynı yoldan tekrar sızar.
+
+## 2026-08-28 · `boardFromCells(cells)` VARSAYILANI 3×3'tür — 11×11 odada `RangeError` FIRLATIR
+
+`packages/game-core/src/board.ts`:
+
+```ts
+export function boardFromCells(cells, config: BoardConfig = DEFAULT_BOARD_CONFIG): Board {
+  if (cells.length !== cellCount(config)) throw new RangeError(...)
+}
+```
+
+`dueSettlement` bunu **config vermeden** çağırıyordu. `settleDeadlines` iskelet olduğu sürece
+o satır hiç koşmadı, yani hata görünmezdi. W2-01 gövdeyi doldurunca yol canlandı: 11×11 bir
+odada süre dolduğunda her temasta `RangeError` üretilecek, `session.ts` onu yutacak
+(`logError`) ve **oyun sonsuza kadar askıda kalacaktı** — üstelik tembel yol her `ping`de
+tetiklendiği için log seli olarak.
+
+**Düzeltme:** okuma tarafının TEK kapısı `resolveBoardConfig(room)` kullanılır
+(`boardFromCells(room.board, config)`). Test: 121 hücrelik tahtada süre aşımı.
+
+**Genel ders:** _iskelet bir fonksiyonun İÇİNDEKİ kod ölçülmemiş koddur._ "Kurallar zaten
+yazılı, W2-01 yalnız yazma yolunu açacak" notu bu hatayı sakladı — bir sonraki kart
+iskeletin gövdesini açarken içindeki her satırı YENİ kod gibi incelemeli.
+
+## 2026-08-28 · `seedTestUsers` `$setOnInsert` kullanıyor → E2E oyunları `stats`i KALICI kirletiyor (main'de KIRMIZI)
+
+`packages/db/src/seed.test.ts` → "varsayılan profil alanlarını kurar" testi
+`e2e-user-1`/`e2e-user-2` için `stats === {0,0,0}` iddia ediyor. Ama:
+
+- `seedTestUsers` `stats`/`elo`/`ratedGames`'i `$setOnInsert` ile yazıyor → **var olan
+  kullanıcıda ASLA sıfırlanmaz**.
+- `apps/e2e` gerçek oyunlar oynuyor ve `finishGame` aynı kullanıcıların `stats`ini artırıyor.
+
+Sonuç: bir E2E koşusundan sonra `pnpm gates` **paylaşılan Atlas'ta kalıcı olarak kırmızı**
+kalıyor. 2026-08-28 03:12'de ölçüldü: `{wins:1, losses:2, draws:0}`.
+**W2-01'in değişikliğiyle ilgisi YOK** — `main`'de de birebir aynı şekilde kırmızıydı
+(aynı komut `main` checkout'unda koşturulup doğrulandı).
+
+**Geçici çare (W2-01 bunu yaptı):** iki kullanıcının `stats`/`elo`/`ratedGames`i elle
+sıfırlandı, test yeşile döndü. **Bu bir düzeltme DEĞİL:** bir sonraki E2E koşusu aynı
+kırmızıyı geri getirir.
+
+**Kalıcı çözüm (ayrı kart):** ya `seed.test.ts` iddiadan önce `stats`i sıfırlasın, ya
+`seedTestUsers` bu alanları `$set` ile yazsın (E2E'nin "temiz başlangıç" beklentisiyle de
+uyumlu). İkisi de `packages/db` içinde ve W2-01'in çakışma kümesi dışındaydı.
+
+**Genel ders:** paylaşılan bir veritabanına karşı koşan bir test, o veritabanını DEĞİŞTİREN
+başka bir süitin varlığında ancak kendi ön koşulunu kendisi kurarsa güvenilirdir.
+`$setOnInsert` "varsayılanı kur" demektir, "varsayılana döndür" demek DEĞİL.
+
+## 2026-08-28 · `packages/db/src/rooms/index.ts` DONUK ve bir test listeyi KİLİTLİYOR
+
+`rooms/index.ts` DB-002'den beri donmuş; `rooms/skeletons.test.ts` dışa aktarım listesini
+`toSorted()` ile birebir karşılaştırıyor. Yeni bir modül (`rooms/deadlines.ts`) eklerken o
+barrel'a satır eklemek testi kırar. Doğru desen zaten repoda var (`getRoomSummary`,
+`resolveBoardConfig`): **üst barrel'dan (`packages/db/src/index.ts`) doğrudan kendi
+modülünden dışa ver.**
+
+Ayrıca: `dueSettlement` BİLEREK dışa verilmedi — tek üretim çağıranı `settleDeadlines`.
+Kararı paket dışına açmak ikinci bir yazma yolunu davet ederdi ve knip bunu yakalayamazdı
+(bir test referansı export'u "kullanılıyor" gösterir).

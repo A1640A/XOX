@@ -235,6 +235,54 @@ describe('joinRoom', () => {
     })
   })
 
+  describe('AS-08 / W2-01: oyun başlarken hamle saati kurulur', () => {
+    /** Sahte saat — `Date.now()` BEKLENMEZ. Çıplak sayı bilerek. */
+    const NOW = 1_767_225_600_000
+
+    it('2. koltuk dolunca AYNI yazmada turnDeadline now + 60 sn olur', async () => {
+      const code = freshCode()
+      const x = seat()
+      await Room.create({ code, state: 'waiting', seats: { X: x, O: null }, version: 3 })
+
+      const result = await joinRoom(code, seat(), 'o-conn', NOW)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      createdGameIds.push(String(result.room.gameId))
+      expect(result.room.state).toBe('playing')
+      expect(result.room.turnDeadline?.getTime()).toBe(NOW + 60_000)
+      // `startedAt` ile AYNI saatten türer — tek kaynak.
+      expect(result.room.startedAt?.getTime()).toBe(NOW)
+    })
+
+    it('NÖTR OLMAYAN ikinci an: farklı `nowMs` farklı deadline yazar', async () => {
+      const code = freshCode()
+      await Room.create({ code, state: 'waiting', seats: { X: seat(), O: null }, version: 3 })
+
+      const result = await joinRoom(code, seat(), 'o-conn', NOW + 999_000)
+
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      createdGameIds.push(String(result.room.gameId))
+      expect(result.room.turnDeadline?.getTime()).toBe(NOW + 999_000 + 60_000)
+    })
+
+    it('oyun BAŞLAMAYAN yolda (yalnız X koltuğu) saat KURULMAZ', async () => {
+      const code = freshCode()
+      await Room.create({
+        code,
+        state: 'waiting',
+        seats: { X: null, O: null },
+        version: 1,
+      })
+
+      const result = await joinRoom(code, seat(), 'x-conn', NOW)
+
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      expect(result.room.state).toBe('waiting')
+      expect(result.room.turnDeadline).toBeNull()
+    })
+  })
+
   it('waiting durumunda kurucu dönerse oda waiting kalır, oyun BAŞLAMAZ (§4)', async () => {
     const code = freshCode()
     const x = seat()

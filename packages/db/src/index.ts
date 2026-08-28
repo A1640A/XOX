@@ -55,6 +55,12 @@ export { getRoomSummary, type RoomSummary } from './rooms/summary'
 // index.ts` DB-002'den beri DONUK olduğu için `getRoomSummary` ile aynı
 // desende doğrudan kendi modülünden dışa verilir.
 export { resolveBoardConfig } from './rooms/board-config'
+// ADR-0004 "çift yürütme"nin ZAMANLAYICI yolu `apps/web`te yaşıyor ama "hangi
+// alanlar son tarih taşır" bilgisi burada TEK kopya (W2-01) — `rooms/index.ts`
+// donuk olduğu için `getRoomSummary` ile aynı desende doğrudan dışa verilir.
+// `dueSettlement` BİLEREK dışa verilmiyor: tek üretim çağıranı `settleDeadlines`
+// ve kararı paket dışına açmak ikinci bir yazma yolunu davet ederdi.
+export { nextDeadlineAt, type DeadlineFields } from './rooms/deadlines'
 export {
   getFriendsView,
   hasFinishedGameTogether,

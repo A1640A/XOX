@@ -7,7 +7,7 @@ import {
   nextPlayer,
 } from '@xox/game-core'
 import type { Board, BoardConfig } from '@xox/game-core'
-import { toTransportStatus } from '@xox/shared'
+import { MOVE_TIMEOUT_SECONDS, toTransportStatus } from '@xox/shared'
 import type { MoveRejectionReason } from '@xox/shared'
 import { Room } from '../models/room'
 import { resolveBoardConfig } from './board-config'
@@ -52,6 +52,7 @@ export async function applyMove(
   code: string,
   userId: string,
   index: number,
+  now: number = Date.now(),
 ): Promise<TransitionResult> {
   const room = await Room.findOne({ code }).lean()
   if (room === null) return { ok: false, code: 'ROOM_NOT_FOUND' }
@@ -73,8 +74,12 @@ export async function applyMove(
   const transport = toTransportStatus(status)
 
   const set: Record<string, unknown> = {
-    // P0: MOVE_TIMEOUT_SECONDS uygulanmaz — deadline daima null (AS-08).
-    turnDeadline: null,
+    // W2-01/AS-08: sıra karşı tarafa geçtiği anda saat yeniden kurulur; oyun
+    // bittiyse `null`a döner (biten oyunda kesinleştirilecek son tarih yoktur
+    // ve `dueSettlement` zaten `state !== 'playing'`te durur — bu ikinci
+    // savunma hattı, odayı okuyan başka bir gözün bayat bir tarih görmemesi).
+    // `now` DIŞARIDAN gelir: testler sahte saatle deterministik koşar.
+    turnDeadline: transport.kind === 'playing' ? new Date(now + MOVE_TIMEOUT_SECONDS * 1000) : null,
   }
   if (transport.kind !== 'playing') {
     set['state'] = 'finished'
