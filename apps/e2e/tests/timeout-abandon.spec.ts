@@ -221,25 +221,20 @@ test.describe('E2E-004 · KK-072 · grace dolunca terk galibiyeti', () => {
 })
 
 /**
- * ⚠️ BİLİNEN KIRMIZI — `test.fixme` ile karantinada (kart notu: "flake
- * retries ile gizlenmez; kök neden rapora yazılır" — bu KIRMIZI DEĞİL,
- * bilinçli KARANTİNA, sebebi burada VE raporda).
+ * KARANTİNA KALDIRILDI (lead, 2026-08-28) — `UI-004` `OpponentLeftBanner`ın gövdesini
+ * doldurdu; banner artık gerçekten DOM'a çıkıyor ve bu iki test koşabilir.
  *
- * `apps/web/components/room/OpponentLeftBanner.tsx` HÂLÂ İSKELET: `props`i
- * okur ama HER ZAMAN `null` döner (dosyanın kendi yorumu bunu itiraf ediyor —
- * "W2-01 ... bu bileşeni doldurur", W2-01 raporu bunu "borç" olarak devretmiş,
- * `E2E-003` raporu bunu zaten "minor, P1 kapsamında bilinen eksik" diye not
- * düşmüştü). `RoomScreen.tsx` bileşeni GERÇEK `state.graceEndsAt`/
- * `state.serverOffsetMs` ile mount ediyor (veri BORUSU eksiksiz), yalnız
- * SUNUM katmanı boş — yani KK-070/071'in metin/sayaç iddiası şu an DOM'da
- * hiçbir zaman doğru olamaz. Testler kartın istediği KATI biçimde
- * (gevşetilmeden) yazıldı ve gerçekten kırmızı olduğu doğrulandı — sonra
- * `pnpm gates`i BEKLENEN bir kırmızıyla kilitlememek için `fixme` ile
- * karantinaya alındı. `OpponentLeftBanner.tsx` doldurulunca bu iki `fixme`
- * KALDIRILIP testler aktif edilmeli; gövde ZATEN hazır.
+ * Tarihçe: testler kartın istediği KATI biçimde (gevşetilmeden) yazıldı, gerçekten
+ * kırmızı olduğu doğrulandı, sonra `pnpm gates`i BEKLENEN bir kırmızıyla kilitlememek
+ * için karantinaya alındı. Bileşen o sırada `void props; return null` iskeletiydi —
+ * veri borusu eksiksizdi (`RoomScreen` gerçek `graceEndsAt`/`serverOffsetMs` geçiyordu),
+ * yalnız sunum katmanı boştu.
+ *
+ * Doğru sıra buydu: testi gevşetmek yerine karantinaya al, eksiği ayrı kartla kapat,
+ * sonra karantinayı kaldır. Testlerin GÖVDESİ hiç değiştirilmedi.
  */
-test.describe('E2E-004 · KK-070/071 · terk bildirimi metni (BİLİNEN KIRMIZI)', () => {
-  twoPlayersTest.fixme(
+test.describe('E2E-004 · KK-070/071 · terk bildirimi metni', () => {
+  twoPlayersTest(
     'KK-070: rakip sekmeyi kapatınca 2 sn içinde grace metni görünür',
     async ({ twoPlayers }) => {
       const code = await createRoom(twoPlayers.playerOne)
@@ -255,7 +250,7 @@ test.describe('E2E-004 · KK-070/071 · terk bildirimi metni (BİLİNEN KIRMIZI)
     },
   )
 
-  twoPlayersTest.fixme(
+  twoPlayersTest(
     'KK-071: rakip grace içinde dönünce "Rakip geri döndü." görünür ve sayaç kaybolur',
     async ({ twoPlayers, playerOneContext }) => {
       const code = await createRoom(twoPlayers.playerOne)

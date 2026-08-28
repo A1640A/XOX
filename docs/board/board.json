@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T01:56:55.667Z",
+  "updatedAt": "2026-08-28T02:01:14.226Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2392,9 +2392,9 @@
       "title": "KK-070/071 gorunen yuzu yok — OpponentLeftBanner + grace geri sayimi",
       "priority": "P1",
       "agent": "xox-dev-web",
-      "status": "todo",
+      "status": "done",
       "deps": ["W2-01"],
-      "report": null,
+      "report": "docs/board/reports/UI-004.md",
       "branch": null,
       "acceptance": [
         "@xox/shared zaten opponentLeftVisible() yardimcisini sunuyor — kural mantigini YENIDEN YAZMA, onu tuket.",
@@ -2402,7 +2402,9 @@
         "W2-01 devretti: sunucu tarafi TAMAMEN calisiyor, eksik olan yalniz Turkce banner + grace geri sayimi. Dosya W2-01-in conflictSetinde YOKTU.",
         "apps/web/components/room/OpponentLeftBanner.tsx — metin messages/tr.ts icinde anahtar olarak yasar."
       ],
-      "conflictSet": ["apps/web/components/room/OpponentLeftBanner.tsx", "apps/web/messages/tr.ts"]
+      "conflictSet": ["apps/web/components/room/OpponentLeftBanner.tsx", "apps/web/messages/tr.ts"],
+      "mergeSha": "374a0fb",
+      "note": "Gorunurluk karari @xox/shared opponentLeftVisible-dan geliyor, ADR-0007-nin 2 sn esigi yeniden turetilmedi. Geri sayim serverOffsetMs uyguluyor. LEAD SONDALARI: yardimci yerine ham graceEndsAt kontrolu -> 1 kirmizi; geri sayimdan serverOffsetMs cikarilinca -> 1 kirmizi. (Ilk sondami yanlis yere kurdum — gorunurluk cagrisinda offset sifirlaninca 899 test yesil kaldi; ajan onu geri sayimda sinadigini soylemisti ve hakliydi.) Lead E2E-004-un iki test.fixme karantinasini KALDIRDI, test govdeleri hic degistirilmedi."
     },
     {
       "id": "CI-006",
