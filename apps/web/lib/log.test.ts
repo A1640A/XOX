@@ -98,6 +98,26 @@ describe('lib/log — maskeleme sondası', () => {
     spy.mockRestore()
   })
 
+  it('SINIF 1B — WS bileti `?ticket=` sorgusunda JWT-DIŞI (nokta içermeyen, opak) bir biçimde olsa da maskelenir (koruma yalnız JWT desenine benzerlikten GELMEZ)', () => {
+    // SINIF 1 testi bilerek jose/JWT biçimli sahte bir bilet kullanıyor — bu
+    // yüzden `JWT_PATTERN` tek başına o testi geçirir, `TICKET_QUERY_PATTERN`
+    // hiç ateşlenmese de fark edilmez (bkz. bu dosyanın SEC-004 sondası,
+    // aşağıda). Burada bilerek NOKTASIZ, jose ile alakasız opak bir bilet
+    // biçimi kurgulanır (`optk_<32 alfanumerik>`) — gerçek bir jose çıktısı
+    // DEĞİL, yalnızca "yarın bilet biçimi değişirse" senaryosunu temsil eder.
+    // Bu değer `JWT_PATTERN`e (üç nokta ayraçlı segment) UYMAZ; test yalnızca
+    // `TICKET_QUERY_PATTERN`in `?ticket=` önekini görüp ardından geleni
+    // biçimden bağımsız maskelediğini kanıtlar.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const opaqueTicket = 'optk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'
+    logError(`WS upgrade başarısız: /api/rooms/ABC234/ws?ticket=${opaqueTicket}`, {})
+    const output = outputOf(spy)
+    expect(output).not.toContain(opaqueTicket)
+    expect(output).toContain('?ticket=[GİZLİ]')
+    console.info('[sonda SINIF-1B · JWT-dışı bilet çıktı]', output)
+    spy.mockRestore()
+  })
+
   it('SINIF 2 — çerez değeri: `Cookie:` başlığındaki Auth.js oturum çerezi maskelenir', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const cookieHeader = `Cookie: __Secure-authjs.session-token=${FAKE_SESSION_COOKIE_VALUE}; theme=koyu`
