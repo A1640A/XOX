@@ -1722,3 +1722,6 @@
 {"ts":"2026-08-28T00:26:29Z","event":"subagent.stop"}
 {"ts":"2026-08-28T00:27:56Z","event":"subagent.stop"}
 {"ts":"2026-08-28T00:30:51Z","event":"file.touched","path":".claude/worktrees/PERF-005/.size-limit.mjs"}
+{"ts":"2026-08-28T00:42:07Z","event":"file.touched","path":"packages/db/src/seed.ts"}
+{"ts":"2026-08-28T00:42:49Z","event":"file.touched","path":"packages/db/src/seed.test.ts"}
+{"ts":"2026-08-28T03:45:00Z","event":"wave.started","wave":"G2-2","note":"DB-005 (P0, kosunun engeli: her E2E kosusu gatesi kiriyor) + CTR-004 (W2-01in devrettigi, karar zaten verilmis) + W2-03 (kritik yol, arkasinda E2E-005 ve HRD-002). Kumeler ayrik. CTR-004 ve W2-03 ikisi de packages/shared-a dokunuyor/oradan import ediyor — CTR-004-e disa verim adi kaldirma yasagi kondu. W2-03-e SEC-003-un tek kullanimlik bileti hatirlatildi: her yeniden baglanma YENI bilet almali, yoksa kopan baglantidan sonra kullanici sessizce disarida kalir."}

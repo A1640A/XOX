@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T00:39:58.177Z",
+  "updatedAt": "2026-08-28T00:42:58.810Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -699,9 +699,9 @@
       "agent": "xox-dev-mobile",
       "deps": ["UI-SKEL-001", "AUTH-001", "CTR-002", "TXT-001", "CTR-BOARD-001"],
       "conflictSet": ["apps/mobile/**", "apps/web/app/api/auth/mobile/**"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W2-03",
       "report": null,
       "acceptance": [
         "KK-092: spec §4.2'deki tüm rotalar tanımlı ve expo-router _layout ağacından erişilebilir — index, giris, kayit, oyna/bilgisayar, oda/katil, oda/[kod], profil, siralama, gecmis, arkadaslar (route snapshot testi)",
@@ -1406,9 +1406,9 @@
       "agent": "xox-dev-backend",
       "deps": [],
       "conflictSet": ["packages/db/src/seed.ts", "packages/db/src/seed.test.ts"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/DB-005",
       "report": null,
       "blockedReason": null,
       "acceptance": [
@@ -2360,10 +2360,10 @@
       "title": "move:applied turnDeadline TASIMIYOR — istemci sayaci state mesajlari arasinda bayatliyor",
       "priority": "P1",
       "agent": "xox-dev-realtime",
-      "status": "todo",
+      "status": "in_wave",
       "deps": ["W2-01"],
       "report": null,
-      "branch": null,
+      "branch": "feat/CTR-004",
       "acceptance": [
         "W2-01 ajani devretti (kartin son maddesi, kumesi disindaydi). Sunucu otoritesi DOGRU ama istemcinin geri sayimi tam state mesajlari arasinda bayatliyor ve ~60 sn sonra 0 gosteriyor.",
         "KARAR ZATEN VERILDI ve yazildi: move:applied semasina alan EKLENMELI. Her hamlede tam state yayinlamak REDDEDILDI (R1 fan-out butcesi, 2026-08-25 karari).",
@@ -2391,5 +2391,5 @@
       "conflictSet": ["apps/web/components/room/OpponentLeftBanner.tsx", "apps/web/messages/tr.ts"]
     }
   ],
-  "wave": "G2-1"
+  "wave": "G2-2"
 }
