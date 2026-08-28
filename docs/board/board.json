@@ -2549,12 +2549,15 @@
         "E2E-005 gercek Chromiumda yeniden uretti, lead dogruladi: apps/web/app/api/auth/mobile/callback/route.ts:45 PLATFORMDAN BAGIMSIZ xox://auth deep linki uretiyor. Web hedefinde expo-web-browser popup akisi ayni originde gercek bir http sayfasi bekliyor (Linking.createURL(auth) -> /auth) ve apps/mobile/app/auth.tsx HIC YOK.",
         "Belirti: popup chrome-error://chromewebdata-e dusuyor, ana sayfa sonsuza dek \"Tarayicida giris aciliyor...\" durumunda kaliyor. Yerelde DETERMINISTIK, kararsizlik degil.",
         "callback route platformu ayirt etmeli (state/query ile) VE mobil tarafta /auth alim rotasi yazilmali.",
-        "E2E-005 testi test.skip ile tam gerekce yazilarak birakildi, ISKELETI HAZIR — bu kart kapaninca skip kaldirilip kosulacak."
+        "E2E-005 testi test.skip ile tam gerekce yazilarak birakildi, ISKELETI HAZIR — bu kart kapaninca skip kaldirilip kosulacak.",
+        "KISMEN KAPANDI 2026-08-28: ALICI UC hazir, ama BLOKER KULLANICI ACISINDAN HALA ACIK -> W2-07. Kirmizi kanit: route.ts stash ile bugli haline dondurulunce 2 failed (\"expected xox: to be http:\"), fix sonrasi 7/7 yesil. Guvenlik: expo-web-browser web implementasyonu OKUNDU — redirect_uri aga hic gonderilmiyor, istemcinin localStorageinda duruyor; User-Agent/Referer ile native/web ayrimi YAPILAMAZ (ikisi de gercek tarayici). Acik yonlendirme kapali: redirect_uri asla dogrudan Locationa yazilmaz, sabit allowlist (MOBILE_WEB_AUTH_ORIGINS, varsayilan http://localhost:8081) ile tam origin+/auth eslesmesi aranir, eslesmezse xox:// davranisina duser; eslesende bile hedef origin+pathnameden YENIDEN kurulur.",
+        "LEAD HATASI: kartin cakisma kumesi DARDI. Tam cozum apps/mobile/lib/auth/browser-login.ts ve apps/web/app/api/auth/mobile/authorize/route.ts dosyalarini da gerektiriyor; ikisi de kume disindaydi. Bu, W3-01de yapilan hatanin AYNISI (dar kume -> ozellik yarim kaldi)."
       ],
       "conflictSet": ["apps/mobile/app/auth.tsx", "apps/web/app/api/auth/mobile/callback/route.ts"],
-      "status": "todo",
-      "report": null,
-      "branch": null
+      "status": "done",
+      "report": "docs/board/reports/W2-06.md",
+      "branch": null,
+      "attempts": 1
     },
     {
       "id": "SEC-006",
@@ -2701,6 +2704,30 @@
         "CI-003 olctu: bugun gercek bir Preview olayina karsi kosan run 33134842205 KIRMIZI — timeout-abandon.spec.ts (KK-070/071/072) 3 test failed, profile.spec.ts (KK-083) 1 flaky. Run 33133885483 ise basariliydi.",
         "Bu kirmizi bir kapinin CALISTIGININ kanitidir — kapatmak icin testi zayiflatma. Once KK-070/071/072 nin gercekten mi kirildigini yoksa preview ortamina mi duyarli oldugunu OLC.",
         "Urun hatasi cikarsa AYRI kart ac; test kirilganligi cikarsa kirilganligin KAYNAGINI duzelt (bekleme/senkronizasyon), timeout buyutme."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "W2-07",
+      "title": "BLOKER (yarim): hicbir istemci redirect_uri GONDERMIYOR — mobil web girisi hala kirik",
+      "tier": "P1",
+      "wave": "4",
+      "agent": "xox-dev-mobile",
+      "deps": ["W2-06"],
+      "conflictSet": [
+        "apps/mobile/lib/auth/browser-login.ts",
+        "apps/web/app/api/auth/mobile/authorize/route.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "W2-06 yalniz ALICI ucu hazirladi: callback artik allowliste uyan bir redirect_uri kabul ediyor. Ama browser-login.ts bu parametreyi authorize istegine EKLEMIYOR ve authorize route onu callbacke TASIMIYOR — yani bugun hicbir istemci gondermiyor ve mobil web girisi KULLANICI ICIN HALA KIRIK.",
+        "ONCE KIRMIZI: uctan uca (browser-login -> authorize -> callback) web hedefinde girisin BUGUN basarisiz oldugunu gosteren testi yaz ve kirmizi ciktiyi rapora yapistir.",
+        "W2-06nin guvenlik sozlesmesini BOZMA: redirect_uri allowliste karsi dogrulanir, hedef origin+pathnameden yeniden kurulur, eslesmezse xox:// davranisina duser. Allowlisti gevsetme.",
+        "Native yol AYNEN korunur — redirect_uri gondermeyen istemci bugunku davranisi gorur.",
+        "KAPANIS SARTI: mobil web hedefinde gercek bir giris akisinin tamamlandigi gosterilecek. \"Alici uc hazir\" YETMEZ — W2-06 zaten oydu."
       ],
       "blockedReason": null
     }
