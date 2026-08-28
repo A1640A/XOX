@@ -4,6 +4,7 @@ import { Game } from './models/game'
 import { MobileRefreshToken } from './models/mobile-refresh-token'
 import { Room } from './models/room'
 import { User } from './models/user'
+import { WsTicket } from './models/ws-ticket'
 
 export interface ExpectedIndex {
   collection: string
@@ -37,6 +38,9 @@ export const EXPECTED_INDEXES: readonly ExpectedIndex[] = [
   { collection: 'friendships', key: { userB: 1, status: 1 } },
   { collection: 'mobileRefreshTokens', key: { jti: 1 }, unique: true },
   { collection: 'mobileRefreshTokens', key: { expiresAt: 1 }, expireAfterSeconds: 0 },
+  { collection: 'wsTickets', key: { jti: 1 }, unique: true },
+  { collection: 'wsTickets', key: { expiresAt: 1 }, expireAfterSeconds: 0 },
+  { collection: 'wsTickets', key: { userId: 1, usedAt: 1 } },
 ] as const
 
 /**
@@ -80,6 +84,7 @@ const MODELS: readonly IndexableModel[] = [
   { collection: asIndexCollection(User.collection) },
   { collection: asIndexCollection(Friendship.collection) },
   { collection: asIndexCollection(MobileRefreshToken.collection) },
+  { collection: asIndexCollection(WsTicket.collection) },
 ]
 
 /** Mongo'nun `createIndex` çağrısında varsayılan olarak ürettiği isimle aynı biçim. */
