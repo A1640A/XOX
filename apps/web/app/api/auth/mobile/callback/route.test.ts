@@ -114,4 +114,114 @@ describe('GET /api/auth/mobile/callback', () => {
       expect(location).not.toContain('ECONNREFUSED')
     },
   )
+
+  /**
+   * W2-06 — P1 BLOKER: `apps/web/app/api/auth/mobile/callback/route.ts`
+   * başarılı girişte KOŞULSUZ `xox://auth?...`e 307 dönüyordu. Web hedefinde
+   * (Expo web build, `expo-web-browser`in GERÇEK web implementasyonu —
+   * `ExpoWebBrowser.web.ts`, kaynağı okunarak doğrulandı) `xox://` bir şey
+   * ifade etmez; tarayıcı bilinmeyen şemaya top-level yönlendirmede
+   * "sayfaya ulaşılamıyor" gösterir (E2E-005'te gerçek Chromium'da ölçüldü,
+   * `docs/board/reports/E2E-005.md`). Bu describe bloğundaki İLK test
+   * DÜZELTMEDEN ÖNCE KIRMIZIYDI — kanıt `docs/board/reports/W2-06.md`de.
+   */
+  describe('W2-06 — web hedefi: allowlist edilmiş redirect_uri', () => {
+    it(
+      'oturumluysa VE redirect_uri allowlist origin + /auth ise, xox:// DEĞİL o hedefe ' +
+        '(http/https) 307 döner; token/refresh AYNI şekilde doğrulanabilir kalır',
+      async () => {
+        mockAuth.mockResolvedValue({ user: { id: 'user-77', name: 'Web Kullanıcı' } })
+
+        const { GET } = await import('./route')
+        const response = await GET(
+          makeRequest(
+            'https://xox.test/api/auth/mobile/callback?state=web-state-1&' +
+              `redirect_uri=${encodeURIComponent('http://localhost:8081/auth')}`,
+          ),
+        )
+
+        expect(response.status).toBe(307)
+        const location = response.headers.get('location')
+        expect(location).not.toBeNull()
+        const target = new URL(location!)
+
+        // Bugünkü hatanın tam tersi: DEEP LINK DEĞİL, gerçek bir http(s) URL'i.
+        expect(target.protocol).toBe('http:')
+        expect(target.origin).toBe('http://localhost:8081')
+        expect(target.pathname).toBe('/auth')
+        expect(target.searchParams.get('state')).toBe('web-state-1')
+
+        const token = target.searchParams.get('token')
+        const refresh = target.searchParams.get('refresh')
+        expect(token).not.toBeNull()
+        expect(refresh).not.toBeNull()
+
+        const { verifyToken } = await import('@/lib/auth/tokens')
+        expect((await verifyToken(token!, 'mobile-access'))?.userId).toBe('user-77')
+        expect((await verifyToken(refresh!, 'mobile-refresh'))?.userId).toBe('user-77')
+      },
+    )
+
+    it(
+      'redirect_uri allowlist DIŞINDAYSA (açık yönlendirme denemesi) YOK SAYILIR — ' +
+        'bugünkü tek davranışa (xox://) düşer, saldırganın hedefine ASLA gitmez',
+      async () => {
+        mockAuth.mockResolvedValue({ user: { id: 'user-78', name: 'Saldırgan Denemesi' } })
+
+        const { GET } = await import('./route')
+        const response = await GET(
+          makeRequest(
+            'https://xox.test/api/auth/mobile/callback?state=s2&' +
+              `redirect_uri=${encodeURIComponent('https://evil.example/auth')}`,
+          ),
+        )
+
+        const location = response.headers.get('location')
+        expect(location).not.toBeNull()
+        const target = new URL(location!)
+        expect(target.protocol).toBe('xox:')
+        expect(location).not.toContain('evil.example')
+      },
+    )
+
+    it('redirect_uri allowlist origin ama path /auth DEĞİLSE YOK SAYILIR', async () => {
+      mockAuth.mockResolvedValue({ user: { id: 'user-79', name: 'X' } })
+
+      const { GET } = await import('./route')
+      const response = await GET(
+        makeRequest(
+          'https://xox.test/api/auth/mobile/callback?state=s3&' +
+            `redirect_uri=${encodeURIComponent('http://localhost:8081/baska-yol')}`,
+        ),
+      )
+
+      const target = new URL(response.headers.get('location')!)
+      expect(target.protocol).toBe('xox:')
+    })
+
+    it(
+      'DB yazması başarısız olursa VE redirect_uri geçerliyse hata da AYNI web hedefine ' +
+        'gider (error=SERVER_ERROR) — token/refresh o durumda da hiç üretilmez/sızmaz',
+      async () => {
+        mockAuth.mockResolvedValue({ user: { id: 'user-80', name: 'Y' } })
+        mockCreate.mockRejectedValue(new Error('ECONNREFUSED 127.0.0.1:27017'))
+
+        const { GET } = await import('./route')
+        const response = await GET(
+          makeRequest(
+            'https://xox.test/api/auth/mobile/callback?state=s4&' +
+              `redirect_uri=${encodeURIComponent('http://localhost:8081/auth')}`,
+          ),
+        )
+
+        const target = new URL(response.headers.get('location')!)
+        expect(target.protocol).toBe('http:')
+        expect(target.origin).toBe('http://localhost:8081')
+        expect(target.searchParams.get('error')).toBe('SERVER_ERROR')
+        expect(target.searchParams.get('state')).toBe('s4')
+        expect(target.searchParams.get('token')).toBeNull()
+        expect(target.searchParams.get('refresh')).toBeNull()
+      },
+    )
+  })
 })
