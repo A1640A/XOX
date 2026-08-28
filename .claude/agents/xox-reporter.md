@@ -15,7 +15,9 @@ cat docs/board/journal.ndjson
 ls docs/board/reports/
 git log --oneline main --since="12 hours ago"
 git tag -l 'good/wave-*'
-cat docs/board/danger.log 2>/dev/null
+# OPS-005: `cat` YAPMA — dosyada 176+ tarihsel olay var, hepsini basmak raporu boğar.
+# Her olay bir SATIR ve zaman damgasıyla başlar; koşu penceresindekileri süz:
+grep -E '^[0-9]{8}T[0-9]{6}Z	' docs/board/danger.log 2>/dev/null | tail -20
 ```
 
 ## Üret: `docs/reports/<tarih>-night-run.md`

@@ -1337,15 +1337,20 @@
       "agent": "xox-devops",
       "deps": [],
       "conflictSet": [".claude/hooks/destructive-snapshot.sh"],
-      "status": "todo",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/OPS-005.md",
       "blockedReason": null,
       "acceptance": [
         "82 adet rescue/* tag-i birikti (yalniz yerel, push edilmedi). Eskilerini buda, saklama politikasi tanimla",
         "MEKANIZMANIN YARISI OLU: .claude/danger.log HIC OLUSMAMIS. Yani kurtarma noktasi var ama NEYIN yapilmak uzere oldugu kayitli degil — geri donebilirsin ama neye ve neden donduugunu bilemezsin",
-        "SONDA: yikici bir islem tetikle, hem tag hem danger.log satirinin olustugunu GOSTER. Bu gecenin 1 numarali oruntusu (mekanizma var ama atesLenmiyor) tam olarak burada, ustelik harness-in kendisinde"
+        "SONDA: yikici bir islem tetikle, hem tag hem danger.log satirinin olustugunu GOSTER. Bu gecenin 1 numarali oruntusu (mekanizma var ama atesLenmiyor) tam olarak burada, ustelik harness-in kendisinde",
+        "KAPANDI 2026-08-29 (lead yurttu) — KARTIN IDDIASI YANLISTI: danger.log HIC olusmamis degil, docs/board/danger.log-da 176 gercek olay var ve sonda mekanizmanin ATESLENDIGINI gosterdi (gercek tag + gercek stash SHA 1eae3183). Kartin yanilma sebebi: .gitignore:40 logu disliyor, kartı yazan gitte aradi. Bu ignore DOGRU ve KALDIRILMADI — log tam komut metnini tutuyor, repo PUBLIC.",
+        "YENI KUSUR 1 (olculdu): $cmd loga HAM yaziliyordu, cok satirli komutlar satir-yonelimli TSV-yi bozuyordu. 1557 ham satir = 176 gercek olay (~9 kat sisme). Sonuclari: log ayristirilamiyor; gece kosusunun devre kesicisi TEK olay icin defalarca atesleniyor; reporter/status talimatlari pratikte 1557 satir basiyor. DUZELTME: komut JSON.stringify ile TEK satira kodlaniyor, dogrulandi.",
+        "YENI KUSUR 2: saklama politikasi yoktu ve tag sayisi kartin dedigi 82 degil 175-ti. Hooka budama eklendi (en yeni 50). Dogrulandi: tetikleme sonrasi 50. head -n -N GNU-ya ozgu, macOS-ta yok — sayarak yapildi.",
+        "GECMIS KAYITLAR DUZELTILMEDI — adli kayit geriye donuk yeniden yazilmaz. Hem eski hem yeni kayitla calisan capa: ^[0-9]{8}T[0-9]{6}Z\\t",
+        "KAPSAM DISI (bildirildi): .claude/agents/xox-reporter.md ve .claude/commands/xox-status.md talimatlari duzeltilen kusur yuzunden gecersizdi (cat danger.log / bos degilse goster), son N olaya cevrildi. Hicbir agent bu dosyalarda calismiyordu."
       ]
     },
     {
