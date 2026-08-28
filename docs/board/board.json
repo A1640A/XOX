@@ -2503,14 +2503,18 @@
       "title": "OPS-004 sonrasi eskimis middleware.ts yorum referanslari",
       "priority": "P3",
       "agent": "xox-dev-web",
-      "status": "todo",
+      "status": "done",
       "deps": ["OPS-004"],
-      "report": null,
+      "report": "docs/board/reports/DOC-001.md",
       "branch": null,
       "acceptance": [
         "OPS-004 middleware.ts -> proxy.ts tasidi. Bes dosyanin YORUMLARINDA hala middleware.ts geciyor: auth.config.ts, auth.config.test.ts, TopBar.tsx, HomeActions.tsx, lib/theme.ts. Davranisa etkisi YOK, yalniz isim tutarliligi.",
         "DIKKAT — KOR DEGISTIRME YAPMA: proxy.ts ve proxy.test.ts icindeki middleware.ts gecisleri TARIHSELDIR ve DOGRUDUR (gecisin kendisini anlatiyorlar). Lead bunu fark edip otomatik degistirmeyi iptal etti. Her referansi TEK TEK oku: bugunku dosyayi mi kastediyor (guncelle) yoksa gecmisi mi anlatiyor (birak)?",
-        "Yalniz yorum degisikligi — kod davranisi degismemeli, pnpm gates yesil kalmali."
+        "Yalniz yorum degisikligi — kod davranisi degismemeli, pnpm gates yesil kalmali.",
+        "KAPANDI 2026-08-29 (lead yurttu — daha once kor perl degistirmesiyle neredeyse bozdugum kart). Yontem: (1) gercek dosya adlari dogrulandi (middleware.ts ve middleware.test.ts YOK, proxy.ts/proxy.test.ts VAR), (2) proxy.ts ve proxy.test.ts icindeki TARIHSEL atiflar okundu ve DOKUNULMADI, (3) degistirme yalniz tam dosya adi belirteclerine uygulandi.",
+        "BILEREK DEGISTIRILMEYEN: auth.config.test.ts:69 \"middleware matcher\" bir dosya adi DEGIL, MIDDLEWARE_MATCHER SABITININ adina atif (sabit hala auth.config.ts:40 de o adi tasiyor) — \"proxy\" yazmak testi sabitle tutarsiz yapardi.",
+        "KOD DAVRANISI DEGISMEDI: 18 ekleme / 18 silme, birebir simetrik, her satir yorum. Kod gibi gorunen tek satir bir JSX yorumuydu ({/* ... */}), elle dogrulandi. pnpm gates exit 0. Merge ca1f531.",
+        "ONERI (kapsam disi): MIDDLEWARE_MATCHER sabiti hala eski adi tasiyor; yeniden adlandirmak KOD degisikligidir ve auth.config.test.ts parity zincirine dokunur."
       ],
       "conflictSet": [
         "apps/web/auth.config.ts",
@@ -2518,7 +2522,9 @@
         "apps/web/components/TopBar.tsx",
         "apps/web/components/home/HomeActions.tsx",
         "apps/web/lib/theme.ts"
-      ]
+      ],
+      "attempts": 1,
+      "tier": "P3"
     },
     {
       "id": "UI-005",
@@ -2725,14 +2731,19 @@
       "agent": "xox-qa-e2e",
       "deps": [],
       "conflictSet": ["apps/e2e/tests/timeout-abandon.spec.ts", "apps/e2e/tests/profile.spec.ts"],
-      "status": "todo",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/E2E-007.md",
       "acceptance": [
         "CI-003 olctu: bugun gercek bir Preview olayina karsi kosan run 33134842205 KIRMIZI — timeout-abandon.spec.ts (KK-070/071/072) 3 test failed, profile.spec.ts (KK-083) 1 flaky. Run 33133885483 ise basariliydi.",
         "Bu kirmizi bir kapinin CALISTIGININ kanitidir — kapatmak icin testi zayiflatma. Once KK-070/071/072 nin gercekten mi kirildigini yoksa preview ortamina mi duyarli oldugunu OLC.",
-        "Urun hatasi cikarsa AYRI kart ac; test kirilganligi cikarsa kirilganligin KAYNAGINI duzelt (bekleme/senkronizasyon), timeout buyutme."
+        "Urun hatasi cikarsa AYRI kart ac; test kirilganligi cikarsa kirilganligin KAYNAGINI duzelt (bekleme/senkronizasyon), timeout buyutme.",
+        "KAPANDI 2026-08-29 — TESHIS karti olarak. Ajan HICBIR testi zayiflatmadi, timeout buyutmedi, retry eklemedi. Uc bulgu ayristirildi:",
+        "KK-070/071 (grace banner metni) = TEST KIRILGANLIGI ve ZATEN main-de duzeltilmis (480ab66). Eski kod timeout:2_000 ile 1sn setInterval tikine dayali bir bannera sifir paylik iddia kuruyordu. Ama duzeltme hic canli Previewa karsi kosmadi — sonraki her main commiti Production-a deploy oldu ve allowlist onu DOGRU sekilde atladi.",
+        "KK-072 (30sn gracete terk-galibiyeti) = URUN HATASI SUPHESI, test kirilganligi DEGIL. Kanit: 3/3 ayni basarisizlik (orijinal + 2 retry, her biri TAZE oda), 40sn boyunca \"Sira rakipte\"de takili, sifir ilerleme. AYNI kosuda KK-074 (timeout yolu, orta-oturum yeniden zamanlama gerektirmiyor) GECTI. -> Ayri kart: BUG-001.",
+        "KK-083 (profil tema) = flaky (ayni kosunun kendi retrylerinde 2 basarisiz + 1 basarili). Kaynak: es zamanli uzun iki-oyunculu testlerle kaynak cekismesi suphesi. Timeout buyutmek gercek sebebe dokunmadan kurali ihlal ederdi — DEGISIKLIK YAPILMADI.",
+        "IZIN REDDI (Omer bilmeli): `vercel env pull` izin siniflandiricisi tarafindan ENGELLENDI, .env.local VERCEL_AUTOMATION_BYPASS_SECRET icermiyor. Ajan etrafindan dolasmayi DENEMEDI ve \"DOGRULANMADI\" yazdi. Canli Preview E2E dogrulamasi bu yuzden yapilamadi."
       ],
       "blockedReason": null
     },
@@ -2821,6 +2832,33 @@
         "Gereken akis: giris -> oda -> tek kullanimlik WS bileti -> WS bagla -> bekle -> close kodunun 4499 oldugunu ve istemcinin GECIKMESIZ (backoff sifirlanarak) yeniden bagLandigini GOZLE. Gecen sureyi rapora yaz (ADR-0007 Z2).",
         "1006 gorulurse bu bir BASARISIZLIKTIR — rotasyon calismiyor demektir, istemci ag hatasi sanip ustel geri cekilmeye girer ve kullanici her rotasyonda donma yasar.",
         "PRODUCTION-a yazma yapma. Gozlem odakli; test odasi kullan."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "BUG-001",
+      "title": "URUN HATASI SUPHESI: 30sn grace dolunca terk-galibiyeti YAZILMIYOR (KK-072)",
+      "tier": "P1",
+      "wave": "4",
+      "agent": "xox-dev-realtime",
+      "deps": [],
+      "conflictSet": [
+        "apps/web/lib/realtime/session.ts",
+        "apps/web/lib/realtime/session.test.ts",
+        "apps/web/lib/realtime/room-hub.ts"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "E2E-007 KANITI: canli Preview kosusu 33134842205-te KK-072 3/3 ayni sekilde basarisiz — her retry TAZE oda, 40sn boyunca \"Sira rakipte\"de takili, sifir ilerleme. AYNI kosuda KK-074 (saf timeout yolu) GECTI. Fark: KK-072 orta-oturumda zaten kurulmus 60sn turnDeadline zamanlayicisinin 30sn graceEndsAt-e YENIDEN ZAMANLANMASINI gerektiriyor.",
+        "LEAD OLCTU — BIRIM TESTI KOR: session.test.ts:726 yalnizca `settlementTimer.scheduled` CAGRI SAYISINI dogruluyor (toBe(before+1)). Sahte schedule() (satir 114-115) `room` argumanini ATIYOR. Yani yeniden zamanlama YANLIS bir son tarih hesaplasa bile test YESIL kalir. Kor nokta tam burasi.",
+        "LEAD OLCTU — SUPHE DISI KALANLAR: timers.ts createSettlementTimer once cancel() edip nextDeadlineAt(room) ile yeniden kuruyor, DOGRU gorunuyor. packages/db/src/rooms/deadlines.ts nextDeadlineAt gercekten min(turnDeadline, graceEndsAt) aliyor, DOGRU. Yani hata bu ikisinde DEGIL — daha yukarida (session.ts onRoomChange akisi) ya da dagitik ortamda.",
+        "GUCLU ADAY (lead onerisi, DOGRULANMALI): deadlines.ts kurali \"iki koltuk da bagli degil -> null (KK-076)\". Vercel Fluid-da iki oyuncunun WS baglantilari FARKLI instancelara dusebilir; in-memory settlementTimer yalniz bir instance-ta yasar. Tembel yol (her mesajda settleDeadlines) bunu kurtarmali — kalan oyuncu 25sn-de bir ping atiyor. Neden kurtarmadigini OLC.",
+        "ONCE KIRMIZI: hatayi birim/entegrasyon seviyesinde yeniden uret. sahte schedule() argumani YUTMAYACAK sekilde duzeltilmeli ve yeniden zamanlanan son tarihin DEGERI dogrulanmali. Kirmizi uretemezsen hata dagitik ortamda demektir — o zaman Vercel/Atlas loglarina bak ve bulgunu yaz.",
+        "KAPANIS: bir oyuncu ayrildiktan 30sn sonra KALAN oyuncunun ekraninda galibiyetin gorundugunu kanitlayan bir test. Timeout buyuterek gecistirme.",
+        "KULLANICI ETKISI: rakip ayrildiginda kalan oyuncu oyunun bitmesini SONSUZA KADAR bekleyebilir. ELO yazilmaz, oda kapanmaz."
       ],
       "blockedReason": null
     }
