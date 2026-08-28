@@ -1720,3 +1720,25 @@ biri testi "düzeltir" ve tuzak sessizce kapanır.
 **Kural:** bir sembolün "üretimden çağrılmadığı" ölçümü, onun _silinebilir_ olduğunu
 kanıtlamaz. Silmeden önce sor: **bu sembol kaybolursa hangi test kızarır?** Cevap "hiçbiri,
 çünkü testi de gider" ise o bir kapıdır, borç değil. Kart: `CLEANUP-001`.
+
+## 2026-08-29 · Bir kartın KAPSAMI, sorunun kapsamıyla aynı olmayabilir — bu gece 4 kez
+
+Kartlar bir ölçümün özetidir; ölçüm eksikse kart da eksiktir. Bu gece dört kez, kartın
+kendi iddiası yanlış ya da dar çıktı ve **her seferinde kartı düzelten şey yeni bir ölçüm
+oldu, tartışma değil.**
+
+| Kart       | Kartın dediği                                    | Ölçümün bulduğu                                                                                                   |
+| ---------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `PERF-006` | "sonda COLLSCAN'e bakıyor, SORT'a bakmıyor"      | Test **üretim kodunu hiç çağırmıyordu** — sorgu şeklini elle kopyalamıştı. Lead'in mutasyonu bu yüzden etkisizdi. |
+| `OPS-005`  | "`.claude/danger.log` HİÇ oluşmamış"             | Log `docs/board/danger.log`'da ve 176 olay var. Kart `.gitignore`'daki dosyayı git'te aradığı için yok sanmış.    |
+| `DRY-003`  | "son ÜÇ kopya"                                   | Kalan kopya sayısı **beşti** — `leaderboard` ve `matches` kümenin dışındaydı.                                     |
+| `W2-05`    | "maliyeti ölç ve raporla" (maliyet tek seferlik) | Maliyet **kalıcı**: çerez yalnız `/profil`de istemci tarafında yazılıyor, Server Component'ten yazılamaz.         |
+
+**Kural:** bir kartı dispatch etmeden önce **kartın kendi iddiasını da bir sonda gibi gör.**
+Dispatch mesajına şunu koy: _"kartın iddiasını önce DOĞRULA; yanlışsa düzelt ve bildir."_
+`PERF-006`, `OPS-005` ve `DRY-003` bu sayede yakalandı — üçünde de agent ya da lead
+"kart böyle diyor" deyip geçmedi.
+
+**İkinci kural:** bir agent kendi kartının eksik olduğunu bildirirse (**`DRY-003` bunu yaptı**),
+bu bir kusur değil, **doğru davranıştır** — kapsam dışına taşmadı ama gerçeği de gizlemedi.
+Kalan işi ayrı bir karta al (`DRY-004`), agentı "yarım bıraktı" diye işaretleme.
