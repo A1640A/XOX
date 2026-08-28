@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T02:43:00.999Z",
+  "updatedAt": "2026-08-28T02:45:45.549Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -785,9 +785,9 @@
       "agent": "xox-qa-e2e",
       "deps": ["W2-03", "W2-04"],
       "conflictSet": ["apps/e2e/tests/mobile-web.spec.ts", "apps/e2e/tests/health.spec.ts"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/E2E-005",
       "report": null,
       "acceptance": [
         "KK-090 yeşil: `expo export -p web` çıktısı (dist/) statik olarak servis edilir ve duman testi ana ekranı yükler",
@@ -875,7 +875,7 @@
         "apps/web/components/room/EmojiTray.tsx",
         "apps/web/app/davet/**"
       ],
-      "status": "done",
+      "status": "in_wave",
       "attempts": 0,
       "branch": "feat/W3-03",
       "report": "docs/board/reports/W3-03.md",
@@ -2499,10 +2499,10 @@
       "title": "Terk ile kazaninca YANLIS \"Rakip geri dondu\" banneri cikiyor",
       "priority": "P2",
       "agent": "xox-dev-web",
-      "status": "todo",
+      "status": "in_wave",
       "deps": [],
       "report": null,
-      "branch": null,
+      "branch": "feat/UI-005",
       "acceptance": [
         "E2E-DIAG buldu: OpponentLeftBanner, graceEndsAt non-null -> null gecisinde 5 sn boyunca \"Rakip geri dondu.\" gosteriyor. Ama settle.ts grace DOLDUGUNDA da (terk galibiyeti) disconnected:null yaziyor — KOSULSUZ. Sonuc: kazanan oyuncu ayni anda hem dogru \"terk ile kazandin\" metnini hem YANLIS \"rakip geri dondu\" bannerini goruyor.",
         "Celiskili UI. KK-072-nin testid tabanli iddiasini etkilemiyor (o yuzden E2E yakalamadi) ama gercek bir UX kusuru.",
@@ -2527,5 +2527,5 @@
       "conflictSet": ["packages/db/src/queries/matches.test.ts"]
     }
   ],
-  "wave": "G2-3"
+  "wave": "G2-4"
 }

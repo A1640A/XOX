@@ -1963,3 +1963,4 @@
 {"ts":"2026-08-28T02:33:36Z","event":"file.touched","path":"docs/board/reports/W3-02.md"}
 {"ts":"2026-08-28T02:35:13Z","event":"file.touched","path":".claude/worktrees/W3-02/docs/board/reports/W3-02.md"}
 {"ts":"2026-08-28T02:35:46Z","event":"subagent.stop"}
+{"ts":"2026-08-28T05:50:00Z","event":"wave.started","wave":"G2-4","note":"W3-03 (leadin kume daraltma hatasini kapatiyor) + UI-005 (E2E-DIAGin buldugu celiskili banner) + E2E-005 (mobil web, W2-03u gercek tarayicida dogrulayacak). Ucune de rapor worktreeye yazilmasi acikca soylendi — bu gece bir ajan raporunu ana checkouta yazip mainin kapilarini kirmisti. E2E-005e Argon2id CPU cekismesi kararsizligi da bildirildi (E2E-DIAG olctu), yeni testler her seferinde kullanici kaydetmesin."}
