@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod/mini'
 
 /**
  * Uygulama genelindeki tek hata kodu birliği (tasarım §2.3).
@@ -8,6 +8,13 @@ import { z } from 'zod'
  * `message-keys.ts` üzerinden bu enum'a karşı doğrulanır. `hata-mesaji`
  * bileşeni `data-kod` niteliğine bu kodu yazar, metni tabloya bakarak seçer —
  * bileşende gömülü metin yoktur.
+ *
+ * **PERF-005:** `zod` yerine `zod/mini` (v4'ün resmi ağaç-sallanabilir API'si,
+ * `z.enum`/`z.infer`/`.safeParse`/`.options` klasikle BİREBİR aynı davranır —
+ * `packages/shared/src/rest-contract/error-response.ts`'in yorumuna bkz).
+ * Bu dosya `ws-protocol.ts` gibi klasik `zod` kullanan modüllerin İÇİNE
+ * (`z.object({..., code: errorCodeSchema})`) sorunsuz İÇ İÇE geçer — zod v4
+ * mini/klasik aynı `@zod/core` şema nesnelerini üretir, doğrulandı (bkz. rapor).
  */
 export const errorCodeSchema = z.enum([
   'UNAUTHENTICATED',
