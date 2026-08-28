@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextAuthConfig } from 'next-auth'
 
 /**
- * Korunan rotalar (KK-007). ELLE yazılır — `middleware.ts`'in `config.matcher`'ından
+ * Korunan rotalar (KK-007). ELLE yazılır — `proxy.ts`'in `config.matcher`'ından
  * TÜRETİLMEZ; aksi halde biri buradan silinirse hem matcher hem bu liste aynı anda
  * kör kalır ve hiçbir test bunu yakalayamaz (gotchas.md "kendine-referanslı test").
  */
@@ -16,20 +16,20 @@ export const PROTECTED_ROUTE_PREFIXES = [
 ] as const
 
 /**
- * `middleware.ts`'in `config.matcher`'ıyla BİREBİR AYNI OLMAK ZORUNDA liste.
- * `middleware.ts`'e IMPORT EDİLEMEZ — denendi, Next.js Turbopack derleyicisi
+ * `proxy.ts`'in `config.matcher`'ıyla BİREBİR AYNI OLMAK ZORUNDA liste.
+ * `proxy.ts`'e IMPORT EDİLEMEZ — denendi, Next.js Turbopack derleyicisi
  * "matcher needs to be a static string or array of static strings" diyerek
- * reddetti (canlı `pnpm build` hatasıyla kanıtlandı, `middleware.ts`'teki
+ * reddetti (canlı `pnpm build` hatasıyla kanıtlandı, `proxy.ts`'teki
  * nota bak); `matcher` orada AYRICA, literal olarak elle yazılmak zorunda.
  *
- * Bu listenin varlık nedeni: `middleware.ts` `next-auth` import ettiği için
+ * Bu listenin varlık nedeni: `proxy.ts` `next-auth` import ettiği için
  * Vitest'te ÇALIŞTIRILAMIYOR (next-auth'un derlenmiş çıktısı `next/server`'ı
  * uzantısız import ediyor — gotchas.md). Bir kaynak-metin sondası
  * (`readFileSync` + `toContain`) tek başına dizinin SESSİZCE kısaltılmasını
  * ya da fazladan girdi eklenmesini güvenilir biçimde yakalamaz. Bu listeyi
  * (next-auth'suz, gerçekten import edilebilir bir dosyada) tanımlayıp
- * `middleware.test.ts`te `toStrictEqual` ile hem kendisine (elle yazılmış
- * kart listesine) hem `middleware.ts`ten ayrıştırılan literale karşı
+ * `proxy.test.ts`te `toStrictEqual` ile hem kendisine (elle yazılmış
+ * kart listesine) hem `proxy.ts`ten ayrıştırılan literale karşı
  * kilitlemek mümkün oluyor — ikisi arasında sessiz bir sapma artık testte
  * görünür.
  *
@@ -54,7 +54,7 @@ function isProtectedPath(pathname: string): boolean {
 
 /**
  * Kenar-güvenli yapılandırma (ADR-0009 E). `mongoose` / `@node-rs/argon2` gibi
- * yerel ikili gerektiren HİÇBİR şey import etmez — `middleware.ts` bunu doğrudan
+ * yerel ikili gerektiren HİÇBİR şey import etmez — `proxy.ts` bunu doğrudan
  * kullanır ve build kenar çalışma zamanında patlamaz.
  */
 export const authConfig = {

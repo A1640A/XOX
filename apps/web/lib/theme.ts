@@ -6,7 +6,7 @@ import { THEME_COOKIE } from './theme-cookie'
 /**
  * `<html data-tema>` için sunucu tarafı tema çözümü (DONDURMA #2, spec KK-083).
  *
- * `@/auth` BİLEREK import edilmez — oturum kapısı `middleware.ts`'tedir ve bu
+ * `@/auth` BİLEREK import edilmez — oturum kapısı `proxy.ts`'tedir ve bu
  * kural AUTH-001 ile paralelliği koruyan tek şeydir (kart metni). Bu dosya
  * next-auth'un `Session` tipini de import ETMEZ; çağıran (`app/layout.tsx`)
  * kendi çözdüğü `session.user.id`'yi düz bir `string`/`Promise<string>`

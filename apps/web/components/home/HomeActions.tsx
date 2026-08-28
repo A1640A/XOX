@@ -26,7 +26,7 @@ export interface HomeActionsProps {
 /**
  * `useSession()` gerektirdiği için 'use client' — `@/auth` server modülü
  * BİLEREK import edilmez (kart §10, AUTH-001 ile paralellik sözleşmesi).
- * Girişsiz kullanıcı zaten middleware'de `/oyna`, `/oda` gibi korunan
+ * Girişsiz kullanıcı zaten `proxy.ts`'te `/oyna`, `/oda` gibi korunan
  * rotalardan `/giris`e yönlendirilir (KK-007); burada girişsizken yalnızca
  * "giriş yap/kayıt ol" bağlantıları gösterilir.
  */
@@ -110,7 +110,7 @@ function SignedInActions({
     <div className="flex w-full flex-col gap-6">
       <p className={mutedText}>{tr.home.welcome.replace('{ad}', displayName)}</p>
       <div className="flex gap-2">
-        {/* `prefetch={false}` — AUTH-004. `/oyna/:path*` `middleware.ts`in matcher'ında,
+        {/* `prefetch={false}` — AUTH-004. `/oyna/:path*` `proxy.ts`in matcher'ında,
             yani bu KORUMALI bir rota. Otomatik prefetch arka planda bir oturum isteği
             başlatır; "Çıkış yap"tan SONRA tamamlanırsa kendi `Set-Cookie`'siyle silmeyi
             geri alır ve oturum canlı kalır. `prefetch-guard.test.ts` bu kuralı tüm

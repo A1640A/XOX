@@ -15,7 +15,7 @@ describe('auth.config — split config kenar-güvenliği', () => {
 })
 
 describe('authorized callback — KK-007 korunan rota yönlendirmesi', () => {
-  // Kart metninden ELLE kopyalanmıştır — middleware.ts'in matcher'ından
+  // Kart metninden ELLE kopyalanmıştır — proxy.ts'in matcher'ından
   // TÜRETİLMEZ (gotchas.md "kendine-referanslı test").
   const PROTECTED_PATHS_FROM_KART = [
     '/oyna/oda-1',
@@ -68,9 +68,9 @@ describe('authorized callback — KK-007 korunan rota yönlendirmesi', () => {
 
   it('MIDDLEWARE_MATCHER kart metnindeki middleware matcher’ıyla BİREBİR aynıdır (sıra dahil)', () => {
     // Elle yazılmış, bağımsız bir liste — MIDDLEWARE_MATCHER'ın kendisinden
-    // TÜRETİLMEDİ. `middleware.test.ts` bunu middleware.ts'in gerçek literal
+    // TÜRETİLMEDİ. `proxy.test.ts` bunu proxy.ts'in gerçek literal
     // dizisiyle ayrıca karşılaştırır (parity zinciri: kart → burası →
-    // middleware.ts).
+    // proxy.ts).
     expect([...MIDDLEWARE_MATCHER]).toStrictEqual([
       '/oyna/:path*',
       '/oda/:path*',
