@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials'
 import { authConfig } from './auth.config'
 import { authorizeCredentials } from './lib/auth/authorize'
 import { applySessionUser } from './lib/auth/session-callback'
+import { revokeTicketsOnSignOut } from './lib/auth/signout-cleanup'
 
 /**
  * Adapter ALANI YOK (ADR-0009 A) — Credentials sağlayıcısı kullanıcı
@@ -38,6 +39,26 @@ export const {
      */
     session({ session, token }) {
       return applySessionUser(session, token)
+    },
+  },
+  events: {
+    /**
+     * SEC-005 — SEC-003'ün yazdığı `revokeWsTicketsForUser`ı çıkış yoluna
+     * bağlar. `@auth/core`'un `session.strategy === 'jwt'` dalı bu olayı
+     * yalnız `{ token }` şekliyle çağırır (`{ session }` yalnız adapter'lı
+     * kurulumlarda gelir, ADR-0009 A'da adapter YOK). `token` `jwt.decode`
+     * başarısız olursa `null` OLABİLİR — `revokeTicketsOnSignOut` bu durumu
+     * (`undefined` `sub`) sessizce yok sayar, fırlatmaz.
+     *
+     * `revokeTicketsOnSignOut` KENDİSİ asla fırlatmaz (bkz. dosyasındaki
+     * not) — `@auth/core`'un `signOut` uygulaması zaten bu çağrıyı bir
+     * try/catch içine alıp hata olsa bile çerezi temizlemeye devam eder;
+     * yani bilet iptali başarısız olsa da çıkış (AUTH-004'ün düzelttiği
+     * çerez temizliği) HİÇBİR KOŞULDA geciktirilmez/kırılmaz.
+     */
+    async signOut(message) {
+      const token = 'token' in message ? message.token : null
+      await revokeTicketsOnSignOut(token?.sub)
     },
   },
 })
