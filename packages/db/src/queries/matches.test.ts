@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { HISTORY_PAGE_SIZE } from '@xox/shared'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { connectDb, disconnectDb } from '../client'
 import { buildPairKey, deriveParticipants } from '../pair'
 import { Game } from '../models/game'
@@ -74,21 +73,43 @@ describe('getMatchHistory (gerçek xox_test)', () => {
     return id
   }
 
-  it('KK-117: sorgu şekli find({participants,finishedAt:{$ne:null}}).sort({finishedAt:-1}).limit(N) — COLLSCAN YOK', async () => {
-    // Üretim kodunun (`getMatchHistory`) KULLANDIĞI TAM sorgu şekli —
-    // `games`'in `{participants:1, finishedAt:-1}` bileşik indeksiyle
-    // (`models/game.ts`) BİREBİR eşleşiyor; plan veri hacminden BAĞIMSIZ
-    // (sorgu şekline bakar, veriye değil).
-    const plan = await Game.find(
-      { participants: 'sonda-kullanici', finishedAt: { $ne: null } },
-      'players',
-    )
-      .sort({ finishedAt: -1 })
-      .limit(HISTORY_PAGE_SIZE)
-      .explain('executionStats')
+  it('KK-117: getMatchHistory ÜRETİMDE KURDUĞU sorgu şekliyle — COLLSCAN YOK, ayrı SORT aşaması YOK', async () => {
+    // PERF-006: Önceki sürüm burada `Game.find(...).sort({finishedAt:-1})...`
+    // şeklini EL İLE tekrar yazıyordu — üretim kodunu (`getMatchHistory`)
+    // hiç çağırmıyordu. Sonuç: birileri `matches.ts` içindeki `.sort(...)`
+    // alanını `finishedAt`ten `createdAt`e çevirse bile bu test YEŞİL
+    // kalıyordu, çünkü kendi hardcode'ladığı şekli sınıyordu, üretimin
+    // GERÇEKTEN kurduğu şekli değil. Bu yüzden gerçek sorguyu `Game.find`
+    // spy'ıyla YAKALAYIP ondan `.explain()` çağırıyoruz — mutasyon üretim
+    // kodunda olursa spy'ın yakaladığı `sort` da değişir, sonda bunu görür.
+    const findSpy = vi.spyOn(Game, 'find')
 
-    const planText = JSON.stringify(plan)
-    expect(planText).not.toContain('COLLSCAN')
+    try {
+      await getMatchHistory('sonda-kullanici')
+
+      const builtQuery = findSpy.mock.results[0]?.value as ReturnType<typeof Game.find> | undefined
+      expect(builtQuery).toBeDefined()
+      if (builtQuery === undefined) return
+
+      const filter = builtQuery.getFilter()
+      const projection = builtQuery.projection()
+      const options = builtQuery.getOptions() as { sort?: unknown; limit?: number }
+
+      const plan = await Game.find(filter, projection)
+        .sort(options.sort as Record<string, 1 | -1>)
+        .limit(options.limit ?? 0)
+        .explain('executionStats')
+
+      const planText = JSON.stringify(plan)
+      expect(planText).not.toContain('COLLSCAN')
+      // Ayrı bir SORT aşaması, planlayıcının indeksten sıralı gelen sonucu
+      // KULLANMADIĞI, belleğe alıp yeniden sıraladığı anlamına gelir —
+      // bileşik indeks tam bu yüzden `{participants:1, finishedAt:-1}`
+      // sırasıyla kurulu (`models/game.ts`).
+      expect(planText).not.toContain('"stage":"SORT"')
+    } finally {
+      findSpy.mockRestore()
+    }
   })
 
   it('KK-116: bitmiş oyunları en yeniden en eskiye sıralar', async () => {
