@@ -1,8 +1,29 @@
 name: E2E (preview)
 
 # Vercel preview hazır olduğunda tetiklenir — gerçek deploy'a karşı koşar.
+#
+# CI-003 (2026-08-28) — "iş hiç koşmuyor" TEŞHİSİ: bu bir kod hatası DEĞİLDİ, bir SÜREÇ
+# boşluğuydu. `main` bu projede Vercel Production Branch'i; `main`'e düşen her deploy
+# GitHub'a `environment: "Production"` olarak bildirilir ve aşağıdaki allowlist onu (doğru
+# şekilde) atlar. Normal dalga döngüsünde worktree branch'leri LOKAL kalır, origin'e hiç
+# push edilmez — yani deployment_status olarak gerçek bir "Preview" ortamı üretecek bir olay
+# zaten oluşmuyordu. OPS-006 (Vercel projesi taşınması) + CI-004 (denylist→allowlist) sonrası
+# bir branch/PR GERÇEKTEN push edildiğinde iş artık fiilen çalışıyor ve gerçek sonuç
+# üretiyor — kanıt `docs/board/reports/CI-003.md`'de (run 33133885483 başarı,
+# 33134842205 gerçek kırmızı: 3 test başarısız + 1 flaky). Yani otomatik tetikleyici SAĞLIKLI;
+# eksik olan, normal SOP'ta hiçbir şeyin bir branch'i origin'e push etmemesiydi.
+#
+# Bunu gidermek için `workflow_dispatch` eklendi: bir preview URL'i verilerek iş elle de
+# tetiklenebilir, otomatik deployment_status olayını beklemeye gerek kalmaz (ör. merge
+# öncesi devops/qa-e2e doğrulaması için).
 on:
   deployment_status:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: 'Test edilecek preview URL (ör. https://xox-abc123-omeerdursunn.vercel.app) — PRODUCTION alan adı YASAK'
+        required: true
+        type: string
 
 jobs:
   e2e:
@@ -16,14 +37,20 @@ jobs:
     # production veritabanının silinmesini engelledi.
     #
     # Ders: bir kapının izin verdiği şeyi saymak, yasakladığı şeyi saymaktan güvenlidir.
-    # Beklenmeyen bir etiket artık ÇALIŞTIRMAZ, atlar.
+    # Beklenmeyen bir etiket artık ÇALIŞTIRMAZ, atlar. `workflow_dispatch` elle tetiklendiğinde
+    # `deployment_status` alanları yoktur; `startsWith(<yok>, 'Preview')` boş string'e düşer ve
+    # false döner — bu yüzden manuel yol ayrı bir OR kolu olarak eklendi, allowlist'i gevşetmedi.
     if: >-
-      github.event.deployment_status.state == 'success' &&
-      startsWith(github.event.deployment_status.environment, 'Preview')
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+      startsWith(github.event.deployment_status.environment, 'Preview'))
     runs-on: ubuntu-latest
     env:
       CI: '1'
-      E2E_BASE_URL: '${{ github.event.deployment_status.environment_url }}'
+      E2E_BASE_URL: >-
+        ${{ github.event_name == 'workflow_dispatch'
+            && inputs.preview_url
+            || github.event.deployment_status.environment_url }}
       MONGODB_URI: '${{ secrets.MONGODB_URI }}'
       MONGODB_DB: xox_test
       # OPS-008 — proje `omeerdursunn` takımına taşınınca o takımın varsayılanı devreye
@@ -35,6 +62,29 @@ jobs:
       # herkese açardı. Otomasyon duvardan bu anahtarla geçiyor.
       VERCEL_AUTOMATION_BYPASS_SECRET: '${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}'
     steps:
+      - name: 'Guard: manuel tetiklemede preview_url PRODUCTION alanına bakmasın'
+        # Sonraki adım veritabanını SIFIRLAR (MONGODB_DB=xox_test, güvende) ama
+        # E2E_BASE_URL gerçek istekleri buraya gönderir — preview_url yanlışlıkla
+        # üretim alan adına verilirse test trafiği/kayıt işlemleri CANLI SİTEYE gider.
+        # Bu yalnız `workflow_dispatch` girdisini denetler; `deployment_status.environment_url`
+        # zaten Vercel'in kendi ürettiği preview alanıdır, elle girilmez.
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PREVIEW_URL: ${{ inputs.preview_url }}
+        run: |
+          case "$PREVIEW_URL" in
+            *xox.omerdursun.com*)
+              echo "::error::preview_url production alan adini gosteriyor ($PREVIEW_URL) — durduruldu"
+              exit 1
+              ;;
+            https://*)
+              echo "preview_url dogrulandi: $PREVIEW_URL"
+              ;;
+            *)
+              echo "::error::preview_url gecerli bir https:// URL degil ($PREVIEW_URL)"
+              exit 1
+              ;;
+          esac
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v6
         with: { version: 11.15.1 }
