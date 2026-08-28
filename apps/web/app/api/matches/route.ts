@@ -1,13 +1,10 @@
 import { connectDb, getMatchHistory } from '@xox/db'
-import { matchesResponseSchema, type ErrorCode, type ErrorResponse } from '@xox/shared'
+import { matchesResponseSchema } from '@xox/shared'
 import { resolveIdentity } from '@/lib/auth/identity'
+import { errorJson } from '@/lib/http/error-json'
 import { logError } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
-}
 
 /**
  * KK-116/117 — `/gecmis`in tek REST yüzeyi (`docs/memory/api-contract.md`).
