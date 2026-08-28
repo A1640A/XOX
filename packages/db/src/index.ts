@@ -78,3 +78,9 @@ export {
   type LeaderboardEntry,
   type LeaderboardView,
 } from './queries/leaderboard'
+export {
+  getMatchHistory,
+  type MatchEntry,
+  type MatchOpponent,
+  type MatchResult as MatchHistoryResult,
+} from './queries/matches'
