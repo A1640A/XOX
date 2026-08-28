@@ -105,8 +105,12 @@ function SignedInActions({
     <div className="flex flex-col gap-4">
       <p>{tr.home.welcome.replace('{ad}', displayName)}</p>
       <div className="flex gap-2">
-        {/* /oyna/bilgisayar Dalga 1'de (W1-01) gelir — bağlantı şimdiden kurulur. */}
-        <Link href="/oyna/bilgisayar" data-testid={TESTID.btnBilgisayaraKarsi}>
+        {/* `prefetch={false}` — AUTH-004. `/oyna/:path*` `middleware.ts`in matcher'ında,
+            yani bu KORUMALI bir rota. Otomatik prefetch arka planda bir oturum isteği
+            başlatır; "Çıkış yap"tan SONRA tamamlanırsa kendi `Set-Cookie`'siyle silmeyi
+            geri alır ve oturum canlı kalır. `prefetch-guard.test.ts` bu kuralı tüm
+            bileşenlerde dayatıyor — kaldırırsan o test kırmızıya döner. */}
+        <Link href="/oyna/bilgisayar" prefetch={false} data-testid={TESTID.btnBilgisayaraKarsi}>
           {tr.home.playVsComputer}
         </Link>
       </div>
