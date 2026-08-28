@@ -1,22 +1,14 @@
 import { connectDb, recordWsTicket } from '@xox/db'
-import {
-  roomCodeSchema,
-  type ErrorCode,
-  type ErrorResponse,
-  type WsTicketResponse,
-} from '@xox/shared'
+import { roomCodeSchema, type WsTicketResponse } from '@xox/shared'
 import { z } from 'zod'
 import { resolveIdentity } from '@/lib/auth/identity'
 import { signToken } from '@/lib/auth/tokens'
+import { errorJson } from '@/lib/http/error-json'
 import { logError } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
 
 const ticketBodySchema = z.object({ roomCode: roomCodeSchema })
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
-}
 
 /**
  * KK-010 / ADR-0006 — bilet (1) Bearer ya da (2) Auth.js çerezi ile

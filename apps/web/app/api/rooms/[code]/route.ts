@@ -1,22 +1,13 @@
 import { connectDb, getRoomSummary } from '@xox/db'
-import {
-  canJoinRoom,
-  roomCodeSchema,
-  roomStateResponseSchema,
-  type ErrorCode,
-  type ErrorResponse,
-} from '@xox/shared'
+import { canJoinRoom, roomCodeSchema, roomStateResponseSchema } from '@xox/shared'
 import { resolveIdentity } from '@/lib/auth/identity'
+import { errorJson } from '@/lib/http/error-json'
 import { logError } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
 
 interface RouteContext {
   params: Promise<{ code: string }>
-}
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
 }
 
 /**

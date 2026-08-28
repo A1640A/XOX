@@ -1,12 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { connectDb, User } from '@xox/db'
-import {
-  registerBodySchema,
-  type ErrorCode,
-  type ErrorResponse,
-  type RegisterBody,
-} from '@xox/shared'
+import { registerBodySchema, type ErrorCode, type RegisterBody } from '@xox/shared'
 import { hashPassword } from '@/lib/auth/password'
+import { errorJson } from '@/lib/http/error-json'
 import { logError } from '@/lib/log'
 import { checkIpRateLimit } from '@/lib/rate-limit/ip-limit'
 import { rateLimitedResponse } from '@/lib/rate-limit/response'
@@ -29,10 +25,6 @@ function fieldErrorCode(field: unknown): ErrorCode {
   if (field === 'password') return 'WEAK_PASSWORD'
   if (field === 'displayName') return 'INVALID_NAME'
   return 'INVALID_MESSAGE'
-}
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
 }
 
 function isDuplicateKeyError(error: unknown): boolean {
