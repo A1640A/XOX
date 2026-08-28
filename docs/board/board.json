@@ -1298,17 +1298,23 @@
         "apps/web/lib/realtime/room-hub.ts",
         "packages/db/src/index.ts"
       ],
-      "status": "todo",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/DB-004.md",
       "blockedReason": null,
       "acceptance": [
         "DB-003 ajani DURUSTCE bildirdi: kartinin \"apps/web-de mongoose modeline uzanan tek yer kapanir\" iddiasi GENEL OLARAK YANLISTI. Kalan dogrudan model importlari: app/api/health/realtime/route.ts (Room, RoomDoc), app/api/auth/register/route.ts (User), lib/auth/authorize.ts (User), lib/realtime/room-hub.ts (Room, RoomDoc)",
         "ONCE KARAR VER, sonra uygula: bu sinir GERCEKTEN istenen bir sinir mi? health/realtime bir sonda ucu, room-hub change stream kurmak icin Room.watch() cagirmak ZORUNDA (baska yolu yok), authorize/register kimlik katmani. Her biri icin ya mesru istisna gerekcesi yaz ya da packages/db-ye tasi. Gerekcesiz birakma",
         "ASIL IS: karar ne olursa olsun ESLint ile DAYATILIR. Bu gecenin 1 numarali oruntusu \"kural yazilmis ama atesLenmiyor\" — bir siniri yalniz insan dikkatiyle korumak o oruntunun ta kendisi. eslint-plugin-boundaries ya da no-restricted-imports ile yaz, mesru istisnalari ACIKCA listele",
         "KURAL GERCEKTEN ATESLENIYOR MU: yasakli bir import ekle, lint KIRMIZI donsun, sonra geri al. Sondanin cikitisi rapora yazilir. eslint.config.mjs bu gece BIR KEZ sessizce olu kaldi (cozumleyici yanlisti, boundaries VE no-cycle ikisi de hic calismiyordu ama lint yesildi) — yesil tek basina kanit degildir",
-        "pnpm gates temiz"
+        "pnpm gates temiz",
+        "KAPANDI 2026-08-29. KART YINE EKSIKTI (gecenin 5. ornegi): DB-003 dort ihlal listelemisti, tam tarama DOKUZ dokunma noktasi buldu.",
+        "MEKANIZMA: no-restricted-imports + paths/importNames/allowTypeImports, apps/web/**/*.{ts,tsx} kapsaminda. Ham Model siniflari (Room, User, Game, Friendship, MobileRefreshToken, WsTicket) yasak; TIP importlari kapsam disi (calisma zamani bagimliligi yok).",
+        "AJANIN YAKALADIGI INCE TUZAK: ESLint flat config ayni kurali MERGE ETMEZ, DEGISTIRIR. PLAYWRIGHT_PATTERNS yeni web blogunda tekrar tasinmasaydi PLAYWRIGHT DUVARI apps/web-de SESSIZCE KAPANACAKTI (ihlal edilemez kural 1).",
+        "LEAD BAGIMSIZ DOGRULAMA — uc sonda: (A) istisna listesinde OLMAYAN yeni bir dosyaya `import { User }` eklendi -> lint exit 1, dogru mesaj. (B) KURAL 1 sondasi: apps/web-de `@playwright/test` importu -> lint exit 1, Playwright duvari SAGLAM. (C) yanlis pozitif sondasi: `import type { UserDoc }` -> lint exit 0. Ucu de gecti.",
+        "Merge 1a1ac48. pnpm gates exit 0.",
+        "AJAN DURUSTCE BILDIRDI: bes ihlal kapsam disindaydi ve gecici olarak ignore listesine alindi (duzenlenemedikleri icin) -> DB-007."
       ]
     },
     {
@@ -2276,20 +2282,28 @@
       "title": "game-engine.test.ts yenilmezlik sondasi YUKE DUYARLI — paralel kosuda kirmizi veriyor",
       "priority": "P3",
       "agent": "xox-test-writer",
-      "status": "todo",
+      "status": "done",
       "deps": [],
-      "report": null,
+      "report": "docs/board/reports/CI-005.md",
       "branch": null,
       "acceptance": [
         "OLCULDU 2026-08-26: turbo test:coverage --force (5 paket paralel) + arka planda bir agent koserken 207 oyunluk yenilmezlik sondasi 1 kez kirmizi verdi. Tek basina 707/707 yesil; --concurrency=2 ile de 707/707 yesil. Yani IDDIA dogru, ZAMANLAMA kirilgan.",
         "Sondanin kendisi degerli (9 acilis varyanti x 207 oyun) — SILME, kapsamini DARALTMA.",
         "Cozum yonu: bu testi ayri bir vitest projesine/etiketine al ve seri kostur, ya da acik bir timeout ver. Yesil kalmasi CPU bosluguna bagli olmamali.",
-        "CI-da henuz gorulmedi (runner daha az yuklu) — ama CI yuklendiginde flaky olacak sinifta."
+        "CI-da henuz gorulmedi (runner daha az yuklu) — ama CI yuklendiginde flaky olacak sinifta.",
+        "KAPANDI 2026-08-29. AJAN DURUSTCE BILDIRDI: orijinal kirilganligi YENIDEN URETEMEDI — 3x/5x CPU asiri-abonelik, gercek 5-paket paralel turbo kosusu ve gercekten es zamanli calisan baska bir agent altinda bile kirmizi almadi.",
+        "MUHTEMEL SEBEP (olculdu): CORE-AI-002 ayni gun 3x3 minimaxa alfa-beta budamasi ekledi; sonda ~15sn iken ~2-4sn-ye indi. Kartin orijinal olcumu budama ONCESI koda karsiydi. Yani kart yanlis degildi, DUNYASI degisti.",
+        "YINE DE IZOLE EDILDI (savunmaci, dogru karar): Vitest 4 test.projects ile tek dosyalik web-yenilmezlik projesi, fileParallelism: false. Sonda artik apps/web-in diger ~95 test dosyasiyla ayni worker havuzunu paylasmiyor.",
+        "GOTCHA (rapora islendi): Vitest 4-te poolOptions.threads.singleThread KALDIRILDI — DEPRECATED uyarisi verip SESSIZCE yok sayiyor. Yerine fileParallelism: false.",
+        "LEAD BAGIMSIZ DOGRULAMA — iki sonda: (A) KAPSAM: OPENINGS 9 eleman, GAMES_PER_OPENING 23, expect(games).toBe(207) yerinde; test dosyasinda degisen TEK sey yorum. Daraltilmamis. (B) EN ONEMLISI — ayri projeye alinan test VARSAYILAN kosudan DUSMUS mu: hayir. test:coverage 96 dosya / 958 test (degisiklik oncesiyle birebir ayni) ve verbose ciktida \"|web-yenilmezlik| components/computer/game-engine.test.ts\" satirlari gorunuyor. Mekanizma gercekten atesleniyor.",
+        "Merge sonrasi pnpm gates exit 0. CI runnerinda henuz dogrulanmadi — merge sonrasi gh run list ile teyit edilecek."
       ],
       "conflictSet": [
         "apps/web/components/computer/game-engine.test.ts",
         "apps/web/vitest.config.ts"
-      ]
+      ],
+      "attempts": 1,
+      "tier": "P3"
     },
     {
       "id": "PERF-005",
@@ -2829,7 +2843,7 @@
       "agent": "xox-devops",
       "deps": [],
       "conflictSet": [],
-      "status": "todo",
+      "status": "blocked",
       "attempts": 0,
       "branch": null,
       "report": null,
@@ -2838,9 +2852,10 @@
         "Rotasyon deadline - WS_ROTATE_MARGIN_MS (10sn) aninda atesleniyor (apps/web/lib/realtime/rotate.ts). vercel.json maxDuration:\"max\" — canli bir WS oturumunu ~13 dakika acik tutmak gerekiyor.",
         "Gereken akis: giris -> oda -> tek kullanimlik WS bileti -> WS bagla -> bekle -> close kodunun 4499 oldugunu ve istemcinin GECIKMESIZ (backoff sifirlanarak) yeniden bagLandigini GOZLE. Gecen sureyi rapora yaz (ADR-0007 Z2).",
         "1006 gorulurse bu bir BASARISIZLIKTIR — rotasyon calismiyor demektir, istemci ag hatasi sanip ustel geri cekilmeye girer ve kullanici her rotasyonda donma yasar.",
-        "PRODUCTION-a yazma yapma. Gozlem odakli; test odasi kullan."
+        "PRODUCTION-a yazma yapma. Gozlem odakli; test odasi kullan.",
+        "BLOKLANDI 2026-08-29 (lead olctu, varsaymadi): curl -L ile preview /api/health istegi https://vercel.com/login?next=%2Fsso-api... adresine yonlendi. Preview SSO arkasinda."
       ],
-      "blockedReason": null
+      "blockedReason": "Her iki dogrulama yolu da kapali. (1) PREVIEW: lead olctu — preview URL vercel.com/login-e yonleniyor, yani SSO arkasinda; gecmek icin VERCEL_AUTOMATION_BYPASS_SECRET gerekiyor, .env.local-de YOK ve `vercel env pull` IZIN SINIFLANDIRICISI tarafindan engellendi (E2E-007 ajani da ayni duvara carpti). (2) PRODUCTION: gozlem icin hesap gerekiyor, hesap acmak xox_prod-a YAZMAK demek — kart ve lead kisiti bunu yasakliyor. COZUM: Omer `vercel env pull` iznini acacak ya da bypass secretini .env.local-e koyacak."
     },
     {
       "id": "BUG-001",
@@ -2888,6 +2903,35 @@
         "KAPANIS: git grep -c \"^function errorJson\" -- apps/web/app/api  ->  SIFIR. Artik tek bir yerel tanim yok.",
         "pnpm gates exit 0. Merge 407ff87.",
         "ORUNTU (kayda gecti): bir kartin KAPSAMI sorunun kapsamiyla ayni olmayabilir. Bu gece uc kez oldu — PERF-006 (test uretim kodunu hic cagirmiyordu), OPS-005 (kart yanlis dosyaya bakiyordu), DRY-003 (sayi eksikti)."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "DB-007",
+      "title": "DB-004 sinirinin GECICI istisnalari — bes dosya hala ham modele erisiyor",
+      "tier": "P2",
+      "wave": "4",
+      "agent": "xox-dev-backend",
+      "deps": ["DB-004"],
+      "conflictSet": [
+        "apps/web/app/api/rooms/[code]/ws/route.ts",
+        "apps/web/app/api/profile/route.ts",
+        "apps/web/lib/theme.ts",
+        "apps/web/app/api/auth/mobile/shared.ts",
+        "apps/web/app/api/auth/mobile/refresh/route.ts",
+        "eslint.config.mjs"
+      ],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "DB-004 siniri LINT ile dayatildi ama bes dosya kartin cakisma kumesi disinda kaldigi icin GECICI olarak ignore listesine alindi. Bunlar mesru istisna DEGIL — kapatilmamis ihlaller.",
+        "DIKKAT: bir ignore listesi, kapinin kendisini sessizce ise yaramaz hale getirebilir. Bu bes satir kaldirilana kadar sinir TAM degildir.",
+        "Her dosya icin: ya packages/db-ye tasi (queries/* konvansiyonuna uygun yeni fonksiyon) ya da MESRU istisna gerekcesi yaz ve raporda belgele. Gerekcesiz birakma.",
+        "ONCELIK SIRASI onerisi: authorize.ts ve register/route.ts icin DB-004 ajani zaten dogru cozumu tarif etti — packages/db/src/queries/auth.ts. Once o.",
+        "KAPANIS: ignore listesinden kaldirilan HER dosya icin lint yesil kalmali VE o dosyaya yasakli bir import eklendiginde lint KIRMIZI donmeli (kapinin gercekten kapandiginin kaniti).",
+        "KURAL 1 KORUNMALI: eslint.config.mjs-e dokunan herkes, apps/web-de @playwright/test importunun HALA lint kirmizisi verdigini sondayla dogrulamali (flat config kurali MERGE etmez, DEGISTIRIR)."
       ],
       "blockedReason": null
     }
