@@ -5,14 +5,15 @@ import { Game } from './models/game'
 import { MobileRefreshToken } from './models/mobile-refresh-token'
 import { Room } from './models/room'
 import { User } from './models/user'
+import { WsTicket } from './models/ws-ticket'
 import { createIndexSafely, ensureIndexes, EXPECTED_INDEXES, type ExpectedIndex } from './indexes'
 
 /**
- * `MODELS` artık BEŞ koleksiyona yazıyor (Room/Game/User/Friendship/
- * MobileRefreshToken) — bir testte yalnız BİRİNİ mock'layıp diğerlerini
+ * `MODELS` artık ALTI koleksiyona yazıyor (Room/Game/User/Friendship/
+ * MobileRefreshToken/WsTicket) — bir testte yalnız BİRİNİ mock'layıp diğerlerini
  * gerçek (bağlantısız) mongoose koleksiyonuna bırakmak, o koleksiyonların
  * `bufferCommands` zaman aşımına (varsayılan 10 sn) düşüp testi yavaşlatır/
- * kırar. Bu yüzden HER testte beşi birden mock'lanır.
+ * kırar. Bu yüzden HER testte altısı birden mock'lanır.
  */
 function mockAllCollectionsResolved(): {
   room: ReturnType<typeof vi.fn>
@@ -20,6 +21,7 @@ function mockAllCollectionsResolved(): {
   user: ReturnType<typeof vi.fn>
   friendship: ReturnType<typeof vi.fn>
   mobileRefreshToken: ReturnType<typeof vi.fn>
+  wsTicket: ReturnType<typeof vi.fn>
 } {
   return {
     room: vi.spyOn(Room.collection, 'createIndex').mockResolvedValue('ok'),
@@ -29,6 +31,7 @@ function mockAllCollectionsResolved(): {
     mobileRefreshToken: vi
       .spyOn(MobileRefreshToken.collection, 'createIndex')
       .mockResolvedValue('ok'),
+    wsTicket: vi.spyOn(WsTicket.collection, 'createIndex').mockResolvedValue('ok'),
   }
 }
 
@@ -197,10 +200,10 @@ describe('createIndexSafely — üretim yolu (createIndex), syncIndexes DEĞİL'
 })
 
 describe('EXPECTED_INDEXES — elle yazılmış beklenti tablosu', () => {
-  it('tüm modellerin (Room/Game/User/Friendship/MobileRefreshToken) koleksiyonlarını kapsar', () => {
+  it('tüm modellerin (Room/Game/User/Friendship/MobileRefreshToken/WsTicket) koleksiyonlarını kapsar', () => {
     const collections = new Set(EXPECTED_INDEXES.map((entry) => entry.collection))
     expect(collections).toEqual(
-      new Set(['rooms', 'games', 'users', 'friendships', 'mobileRefreshTokens']),
+      new Set(['rooms', 'games', 'users', 'friendships', 'mobileRefreshTokens', 'wsTickets']),
     )
   })
 
@@ -212,8 +215,26 @@ describe('EXPECTED_INDEXES — elle yazılmış beklenti tablosu', () => {
     expect(emailIndex?.unique).toBe(true)
   })
 
-  it('tasarım §3.6 tam 12 indeks tanımlar (silme sessizce fark edilmesin diye çıplak sayı)', () => {
-    expect(EXPECTED_INDEXES).toHaveLength(12)
+  it('wsTickets.jti benzersizdir — SEC-003 tek kullanımlık tüketim buna dayanır', () => {
+    const jtiIndex = EXPECTED_INDEXES.find(
+      (entry) =>
+        entry.collection === 'wsTickets' &&
+        JSON.stringify(entry.key) === JSON.stringify({ jti: 1 }),
+    )
+    expect(jtiIndex?.unique).toBe(true)
+  })
+
+  it('wsTickets.expiresAt TTL indeksidir (expireAfterSeconds: 0) — mobileRefreshTokens ile aynı kalıp', () => {
+    const ttlIndex = EXPECTED_INDEXES.find(
+      (entry) =>
+        entry.collection === 'wsTickets' &&
+        JSON.stringify(entry.key) === JSON.stringify({ expiresAt: 1 }),
+    )
+    expect(ttlIndex?.expireAfterSeconds).toBe(0)
+  })
+
+  it('tasarım §3.6 tam 15 indeks tanımlar (silme sessizce fark edilmesin diye çıplak sayı)', () => {
+    expect(EXPECTED_INDEXES).toHaveLength(15)
   })
 })
 
@@ -223,7 +244,12 @@ describe('ensureIndexes — üretim çağrı yolu (mock)', () => {
   })
 
   it('her modelin koleksiyonunda YALNIZ kendi beklenen indekslerini createIndex ile kurar', async () => {
-    const { room: roomCreate, game: gameCreate, user: userCreate } = mockAllCollectionsResolved()
+    const {
+      room: roomCreate,
+      game: gameCreate,
+      user: userCreate,
+      wsTicket: wsTicketCreate,
+    } = mockAllCollectionsResolved()
 
     await ensureIndexes()
 
@@ -236,6 +262,12 @@ describe('ensureIndexes — üretim çağrı yolu (mock)', () => {
     expect(gameCreate).toHaveBeenCalledWith({ finishedAt: -1 }, {})
     expect(userCreate).toHaveBeenCalledWith({ email: 1 }, { unique: true })
     expect(userCreate).toHaveBeenCalledWith({ elo: -1 }, expect.any(Object))
+    expect(wsTicketCreate).toHaveBeenCalledWith({ jti: 1 }, { unique: true })
+    expect(wsTicketCreate).toHaveBeenCalledWith(
+      { expiresAt: 1 },
+      { expireAfterSeconds: expect.any(Number) },
+    )
+    expect(wsTicketCreate).toHaveBeenCalledWith({ userId: 1, usedAt: 1 }, {})
   })
 
   it('bir koleksiyonda IndexOptionsConflict çıksa bile diğer indeksler kurulmaya devam eder', async () => {
@@ -351,7 +383,7 @@ describe('İndeksler — tasarım §3.6 tam liste (canlı xox_test)', () => {
     },
   )
 
-  it('tasarım §3.6 tam 12 indeks tanımlar (11 yeni + games.finishedAt önceden mevcuttu)', () => {
-    expect(EXPECTED_INDEXES).toHaveLength(12)
+  it('tasarım §3.6 tam 15 indeks tanımlar (11 yeni + games.finishedAt önceden mevcuttu + wsTickets üçü DB-006)', () => {
+    expect(EXPECTED_INDEXES).toHaveLength(15)
   })
 })
