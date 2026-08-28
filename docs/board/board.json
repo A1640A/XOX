@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-27T23:53:02.418Z",
+  "updatedAt": "2026-08-28T00:23:17.810Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2327,9 +2327,9 @@
       "title": "GUVENLIK: cikis yap oturumu temizlemiyor — prefetch yaristi Set-Cookie silmeyi geri aliyor",
       "priority": "P0",
       "agent": "xox-dev-web",
-      "status": "in_wave",
+      "status": "done",
       "deps": [],
-      "report": null,
+      "report": "docs/board/reports/AUTH-004.md",
       "branch": "feat/AUTH-004",
       "acceptance": [
         "AJAN DUZELTILDI (lead): xox-dev-backend -> xox-dev-web. Kartin kume dosyalari o ajanin varsayilan yazma alaninda degildi. Ajan tanimlarina 2026-08-28-de eklenen madde geregi KART KUMESI YETKILI KAYNAKTIR.",
@@ -2344,7 +2344,9 @@
         "apps/web/components/TopBar.tsx",
         "apps/web/components/profile/ProfileContent.tsx",
         "apps/web/auth.ts"
-      ]
+      ],
+      "mergeSha": "5281c5b",
+      "note": "Ajan TopBar-in DORT statik baglantisini kapatti ve raporunda matcher-in tam bu dordu kapsadigini soyledi. LEAD SUPURMESI bunu YANLISLADI: matcher ALTI kalip iceriyor (/oyna/:path* ve /oda/:path* de var) ve HomeActions.tsx-teki /oyna/bilgisayar baglantisi ACIKTA KALMISTI. Ajan kendi artik notunda bu riski sezmisti ama olcmemisti. Lead tek tek yama yerine NOBETCI TEST yazdi (prefetch-guard.test.ts): kaynak tarayip MIDDLEWARE_MATCHER ile karsilastiriyor, dinamik kaliplari da kapsiyor. Sonda: iki dosyadan da prefetch={false} kaldirilinca nobetci kirmizi donuyor ve ihlal eden dosyayi adiyla soyluyor. auth.ts DOKUNULMADI (bos diff)."
     }
   ],
   "wave": "G2-1"
