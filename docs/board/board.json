@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T01:04:51.209Z",
+  "updatedAt": "2026-08-28T01:06:56.167Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -758,9 +758,9 @@
       "agent": "xox-qa-e2e",
       "deps": ["W2-01", "W2-02"],
       "conflictSet": ["apps/e2e/tests/timeout-abandon.spec.ts", "apps/e2e/tests/profile.spec.ts"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/E2E-004",
       "report": null,
       "acceptance": [
         "KK-070, KK-071, KK-072 yeşil: rakip sekmesini kapatır -> grace metni + geri sayan sayaç 2 sn içinde; 30 sn içinde dönüş -> oyun sürer; dönmezse abandon galibiyeti ve games.endReason==='abandon' Atlas'ta doğrulanır",
@@ -809,9 +809,9 @@
         "apps/web/app/siralama/**",
         "apps/web/app/api/leaderboard/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W3-01",
       "report": null,
       "acceptance": [
         "W2-01 DEVRETTI: rovansin ILK hamlesi suresiz — rooms/rematch.ts turnDeadline:null yaziyor. joinRoomdaki satirin aynisi konmali.",
