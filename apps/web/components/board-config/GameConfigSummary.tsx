@@ -13,5 +13,9 @@ export interface GameConfigSummaryProps {
  * bunu çağırır; ikisi de aynı testid ve aynı metin şablonunu paylaşır.
  */
 export function GameConfigSummary({ config }: GameConfigSummaryProps): React.ReactElement {
-  return <p data-testid={TESTID.oyunAyariOzeti}>{boardConfigSummaryText(config)}</p>
+  return (
+    <p data-testid={TESTID.oyunAyariOzeti} className="text-text-muted text-sm">
+      {boardConfigSummaryText(config)}
+    </p>
+  )
 }

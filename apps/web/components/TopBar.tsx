@@ -34,9 +34,12 @@ import { tr } from '@/messages/tr'
 export function TopBar(): React.ReactElement {
   const { data: session } = useSession()
 
+  const navLink =
+    'text-text-muted transition-colors duration-150 hover:text-text motion-reduce:transition-none'
+
   return (
-    <header className="border-border flex items-center justify-between border-b p-4 text-sm">
-      <Link href="/" className="font-bold">
+    <header className="border-border bg-surface flex items-center justify-between border-b px-4 py-3 text-sm">
+      <Link href="/" className="font-serif text-lg font-semibold tracking-tight text-text">
         {tr.app.name}
       </Link>
       {session ? (
@@ -44,23 +47,27 @@ export function TopBar(): React.ReactElement {
           {/* İnceleme minor bulgusu: `name` Auth.js'in varsayılan tipinde
               `string | null | undefined` — nullish ise rozet BOŞ render
               edilirdi. `HomeActions.tsx`'teki aynı yedek (`email`) kullanılır. */}
-          <Link href="/profil" prefetch={false}>
+          <Link href="/profil" prefetch={false} className={navLink}>
             {session.user.name ?? session.user.email}
           </Link>
-          <Link href="/siralama" prefetch={false}>
+          <Link href="/siralama" prefetch={false} className={navLink}>
             {tr.leaderboard.title}
           </Link>
-          <Link href="/gecmis" prefetch={false}>
+          <Link href="/gecmis" prefetch={false} className={navLink}>
             {tr.history.title}
           </Link>
-          <Link href="/arkadaslar" prefetch={false}>
+          <Link href="/arkadaslar" prefetch={false} className={navLink}>
             {tr.friends.title}
           </Link>
         </nav>
       ) : (
         <nav className="flex items-center gap-4">
-          <Link href="/giris">{tr.auth.signIn}</Link>
-          <Link href="/kayit">{tr.auth.signUp}</Link>
+          <Link href="/giris" className={navLink}>
+            {tr.auth.signIn}
+          </Link>
+          <Link href="/kayit" className={navLink}>
+            {tr.auth.signUp}
+          </Link>
         </nav>
       )}
     </header>

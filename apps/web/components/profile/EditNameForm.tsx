@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { DISPLAY_NAME_MAX, DISPLAY_NAME_MIN, type ErrorCode } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { buttonSecondary, textInput } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 export interface EditNameFormProps {
@@ -36,7 +37,7 @@ export function EditNameForm({
       }}
       className="flex flex-col gap-2"
     >
-      <label className="flex flex-col gap-1" htmlFor="profil-ad">
+      <label className="flex flex-col gap-1 text-sm font-medium text-text" htmlFor="profil-ad">
         {tr.auth.displayName}
         <input
           id="profil-ad"
@@ -47,15 +48,15 @@ export function EditNameForm({
           onChange={(event) => {
             setName(event.target.value)
           }}
-          className="border-border border p-2"
+          className={textInput}
         />
       </label>
-      <button type="submit" disabled={pending} className="self-start">
+      <button type="submit" disabled={pending} className={`${buttonSecondary} self-start`}>
         {tr.common.save}
       </button>
       <ErrorBanner code={error} />
       {savedMessage !== null ? (
-        <p role="status" aria-live="polite">
+        <p role="status" aria-live="polite" className="text-win text-sm font-medium">
           {savedMessage}
         </p>
       ) : null}

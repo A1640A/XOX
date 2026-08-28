@@ -106,7 +106,11 @@ export function OpponentLeftBanner({
     const remainingMs = graceEndsAt - (now + serverOffsetMs)
     const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1_000))
     return (
-      <p role="status" aria-live="polite">
+      <p
+        role="status"
+        aria-live="polite"
+        className="border-danger text-danger rounded-[6px] border px-3 py-2 text-sm font-medium"
+      >
         {tr.connection.opponentDisconnected.replace('{saniye}', String(remainingSeconds))}
       </p>
     )
@@ -114,7 +118,11 @@ export function OpponentLeftBanner({
 
   if (returnedVisible) {
     return (
-      <p role="status" aria-live="polite">
+      <p
+        role="status"
+        aria-live="polite"
+        className="border-win text-win rounded-[6px] border px-3 py-2 text-sm font-medium"
+      >
         {tr.connection.opponentReturned}
       </p>
     )

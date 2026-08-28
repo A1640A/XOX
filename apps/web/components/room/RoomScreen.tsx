@@ -5,6 +5,7 @@ import { TESTID } from '@xox/shared'
 import { Board } from '@/components/board/Board'
 import { GameConfigSummary } from '@/components/board-config/GameConfigSummary'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { buttonSecondary, card, mutedText } from '@/components/ui/styles'
 import { useRoom } from '@/lib/client/use-room'
 import { tr } from '@/messages/tr'
 import { ConnectionBadge } from './ConnectionBadge'
@@ -63,15 +64,19 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-6">
-      <header className="flex items-center justify-between">
+      <header className={`${card} flex items-center justify-between`}>
         <div className="flex items-center gap-2">
-          <p data-testid={TESTID.odaKodu}>{roomCode}</p>
+          <p data-testid={TESTID.odaKodu} className="font-mono text-lg tracking-[0.15em] text-text">
+            {roomCode}
+          </p>
           <CopyButton label={tr.room.copyCode} getValue={() => roomCode} />
         </div>
         <ConnectionBadge status={state.connection} onRetry={actions.reconnect} />
       </header>
 
-      <p data-testid={TESTID.rakipAdi}>{opponent?.name ?? tr.room.waitingOpponent}</p>
+      <p data-testid={TESTID.rakipAdi} className={mutedText}>
+        {opponent?.name ?? tr.room.waitingOpponent}
+      </p>
 
       {/* `oyun-ayari-ozeti` — oda/bekleme/katılma ekranlarının ÜÇÜNDE de aynı
           kanca, aynı metin şablonu (testids.ts). Katılan oyuncu ne oynayacağını
@@ -83,7 +88,7 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
       {/* ADR-0017 §7: 11×11 gibi geniş tahtalarda dar/dikey ekranda tahtayı
           görmek zorlaşır — yalnız CSS ile, JS ölçümü olmadan (KK-B50). */}
       {config.size > 3 && (
-        <p className="hidden text-sm opacity-70 max-sm:block">{tr.boardConfig.narrowScreen}</p>
+        <p className={`${mutedText} hidden text-sm max-sm:block`}>{tr.boardConfig.narrowScreen}</p>
       )}
 
       {/* Spec §2.0: iki AYRI kimlik — `sira-gostergesi` yalnız `data-sira`
@@ -91,7 +96,12 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
           `role="status"`: sıra değişimi ve oyun sonucu ekran okuyucuya
           duyurulsun (inceleme minor bulgusu — önceden HİÇ duyurulmuyordu). */}
       <p data-testid={TESTID.siraGostergesi} data-sira={turnAttr(state.status)} />
-      <p data-testid={TESTID.durumMetni} role="status" aria-live="polite">
+      <p
+        data-testid={TESTID.durumMetni}
+        role="status"
+        aria-live="polite"
+        className="text-base font-medium text-text"
+      >
         {liveAnnouncement({
           status: state.status,
           you: state.you,
@@ -130,6 +140,7 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
         data-testid={TESTID.btnPesEt}
         disabled={state.status.kind !== 'playing'}
         onClick={handleResignClick}
+        className={`${buttonSecondary} w-fit`}
       >
         {tr.room.resign}
       </button>

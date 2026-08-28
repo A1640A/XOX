@@ -11,6 +11,7 @@ import {
   TESTID,
   type ErrorCode,
 } from '@xox/shared'
+import { buttonPrimary, monoField } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 import { ErrorBanner } from './ErrorBanner'
 
@@ -96,7 +97,7 @@ export function JoinCodeField(): React.ReactElement {
       }}
       className="flex flex-col gap-2"
     >
-      <label htmlFor="join-code" className="text-sm font-medium">
+      <label htmlFor="join-code" className="text-sm font-medium text-text">
         {tr.home.codePlaceholder}
       </label>
       <div className="flex gap-2">
@@ -107,7 +108,7 @@ export function JoinCodeField(): React.ReactElement {
             setValue(normalizeInput(event.target.value))
           }}
           placeholder={tr.home.codePlaceholder}
-          className="border-border flex-1 border p-2"
+          className={`${monoField} w-40 flex-1`}
           // DÜZELTME (W1-05, E2E-002'nin bulduğu gerçek hata): native `maxLength`
           // BURADA KASITLI OLARAK KULLANILMIYOR. Tarayıcı `maxLength`'i React'in
           // `onChange`'i devreye girmeden ÖNCE, ham (normalize edilmemiş) metin
@@ -128,7 +129,12 @@ export function JoinCodeField(): React.ReactElement {
           // karakter dışını reddediyor, yani biçim doğrulaması native
           // niteliğe hiçbir zaman tek başına dayanmıyordu.
         />
-        <button type="submit" data-testid={TESTID.btnOdayaKatil} disabled={pending}>
+        <button
+          type="submit"
+          data-testid={TESTID.btnOdayaKatil}
+          disabled={pending}
+          className={buttonPrimary}
+        >
           {tr.home.joinRoom}
         </button>
       </div>

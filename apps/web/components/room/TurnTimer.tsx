@@ -60,10 +60,18 @@ export function TurnTimer({
   // Negatife düşmez: sunucu zaten sonlandıracak, ekranda "-3 sn" görünmesin.
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000))
 
+  const hurry = seconds <= HURRY_THRESHOLD_SECONDS
+
   return (
-    <p data-testid={TESTID.sureSayaci} data-kalan={seconds} role="timer" aria-live="off">
+    <p
+      data-testid={TESTID.sureSayaci}
+      data-kalan={seconds}
+      role="timer"
+      aria-live="off"
+      className={`font-mono text-sm ${hurry ? 'text-danger font-semibold' : 'text-text-muted'}`}
+    >
       {tr.game.timeLeft.replace('{saniye}', String(seconds))}
-      {seconds <= HURRY_THRESHOLD_SECONDS && <span> {tr.game.hurry}</span>}
+      {hurry && <span> {tr.game.hurry}</span>}
     </p>
   )
 }

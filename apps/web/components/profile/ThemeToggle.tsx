@@ -1,6 +1,7 @@
 'use client'
 
 import type { Theme } from '@xox/ui-tokens'
+import { buttonToggle } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 export interface ThemeToggleProps {
@@ -32,7 +33,7 @@ export function ThemeToggle({ theme, pending, onChange }: ThemeToggleProps): Rea
         onClick={() => {
           onChange('acik')
         }}
-        className="border-border bg-surface text-text rounded border px-3 py-2 aria-pressed:font-bold"
+        className={buttonToggle}
       >
         {tr.profile.themeLight}
       </button>
@@ -43,7 +44,7 @@ export function ThemeToggle({ theme, pending, onChange }: ThemeToggleProps): Rea
         onClick={() => {
           onChange('koyu')
         }}
-        className="border-border bg-surface text-text rounded border px-3 py-2 aria-pressed:font-bold"
+        className={buttonToggle}
       >
         {tr.profile.themeDark}
       </button>

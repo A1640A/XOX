@@ -1,6 +1,7 @@
 'use client'
 
 import type { RoomCode } from '@xox/shared'
+import { mutedText } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 import { CopyButton } from './CopyButton'
 
@@ -25,7 +26,7 @@ export interface InviteLinkProps {
 export function InviteLink({ roomCode }: InviteLinkProps): React.ReactElement {
   return (
     <section className="flex flex-col gap-1">
-      <p>{tr.room.shareHint}</p>
+      <p className={`${mutedText} text-sm`}>{tr.room.shareHint}</p>
       <CopyButton
         label={tr.room.copyLink}
         getValue={() => `${window.location.origin}/davet/${roomCode}`}

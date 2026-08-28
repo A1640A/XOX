@@ -69,7 +69,7 @@ export function EmojiTray({ onSend, lastEmoji }: EmojiTrayProps): React.ReactEle
               onClick={() => {
                 onSend(emoji)
               }}
-              className="border-border rounded border px-2 py-1 text-lg"
+              className="border-border bg-surface hover:bg-surface-raised hover:border-text rounded-[6px] border px-2 py-1 text-lg transition-colors duration-150 motion-reduce:transition-none"
             >
               {emoji}
             </button>
