@@ -1,4 +1,4 @@
-export { colors, themes, type ColorScheme, type ColorToken, type Theme } from './colors'
+export { themes, type ColorToken, type Theme } from './colors'
 export { cssVariables, cssVariableTokenNames, nativeColors, themeCss, themeCssBlock } from './css'
 export { contrastRatio, meetsTextContrast } from './contrast'
 export { radius, spacing, type SpacingToken } from './spacing'
