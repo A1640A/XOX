@@ -40,7 +40,15 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }): Promise<React.ReactElement> {
-  const [tema, session] = await Promise.all([resolveTheme(), auth()])
+  // W2-05: `auth()` TEK kez çağrılır, aynı promise hem `resolveTheme`'e
+  // (çerez yoksa `users.theme`i okumak için) hem `session`'a paylaşılır —
+  // çerez zaten varsa bu promise `resolveTheme` içinde hiç `await`
+  // edilmez, ikinci bir `auth()` çağrısı da olmaz.
+  const sessionPromise = auth()
+  const [tema, session] = await Promise.all([
+    resolveTheme(sessionPromise.then((s) => s?.user.id)),
+    sessionPromise,
+  ])
 
   return (
     <html lang="tr" data-tema={tema}>
