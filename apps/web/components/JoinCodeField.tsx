@@ -39,11 +39,39 @@ function normalizeInput(raw: string): string {
   return normalized.slice(0, ROOM_CODE_LENGTH)
 }
 
-export function JoinCodeField(): React.ReactElement {
+export interface JoinCodeFieldProps {
+  /**
+   * UI-002 (iki bağımsız hata düğümü kartı): `HomeActions` bu bileşeni KENDİ
+   * "Oda kur" hatasıyla aynı ekranda gösterir. İkisi kendi `useState`ini
+   * tutup kendi `<ErrorBanner>`ini basarsa, aynı anda iki `role="alert"`
+   * düğümü DOLABİLİR (ekran okuyucu için yarışan iki duyuru, görsel olarak
+   * iki kutu). Bu yüzden `error`/`onErrorChange` VERİLİRSE bileşen KONTROLLÜ
+   * moda geçer: kendi state'ini KULLANMAZ, kendi `<ErrorBanner>`ini BASMAZ —
+   * hata sahibi tek merkez (çağıran taraf) olur ve tek bir banner render
+   * edilir. Prop'lar verilmezse (bugün `JoinCodeField.test.tsx`'in tamamı
+   * bu moddadır) davranış AYNEN eskisi gibi kalır: kendi state'i, kendi
+   * banner'ı — bu bileşen `/oda/katil` dışında BAĞIMSIZ da kullanılabilir
+   * kalmalı.
+   */
+  readonly error?: ErrorCode | null
+  readonly onErrorChange?: (code: ErrorCode | null) => void
+}
+
+export function JoinCodeField({
+  error: controlledError,
+  onErrorChange,
+}: JoinCodeFieldProps = {}): React.ReactElement {
   const router = useRouter()
   const [value, setValue] = useState('')
-  const [error, setError] = useState<ErrorCode | null>(null)
+  const [internalError, setInternalError] = useState<ErrorCode | null>(null)
   const [pending, setPending] = useState(false)
+
+  // Kontrollü/kontrolsüz ayrımı: `onErrorChange` VERİLDİYSE çağıran taraf
+  // hata durumunu SAHİPLENMİŞTİR — kendi `internalError`'ımızı asla okumayız
+  // ki iki ayrı "doğru" değer birbirinden sapmasın.
+  const isControlled = onErrorChange !== undefined
+  const error = isControlled ? (controlledError ?? null) : internalError
+  const setError = isControlled ? onErrorChange : setInternalError
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
@@ -138,7 +166,10 @@ export function JoinCodeField(): React.ReactElement {
           {tr.home.joinRoom}
         </button>
       </div>
-      <ErrorBanner code={error} />
+      {/* Kontrollü moddayken banner'ı BASMIYORUZ — tek gerçek kaynak (çağıran
+          tarafın kendi `<ErrorBanner>`i) zaten aynı `error` değerini gösterir.
+          Basmaya devam edersek UI-002'nin ta kendisini burada yeniden üretiriz. */}
+      {!isControlled && <ErrorBanner code={error} />}
     </form>
   )
 }

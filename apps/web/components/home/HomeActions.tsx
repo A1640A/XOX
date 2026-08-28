@@ -142,7 +142,13 @@ function SignedInActions({
       </div>
 
       <div className="border-border border-t pt-4">
-        <JoinCodeField />
+        {/* UI-002: `error`/`onErrorChange` bilerek geçiriliyor — bu bileşenin
+            "Oda kur" hatası ile `JoinCodeField`in "koda katıl" hatası AYNI
+            `error` state'ini paylaşır. Aksi halde ikisi kendi state'ini
+            tutar ve aynı anda iki `role="alert"` düğümü ekranda kalabilir
+            (bkz. `JoinCodeField.tsx`'teki `JoinCodeFieldProps` yorumu). Tek
+            paylaşılan state = altta TEK `<ErrorBanner>` render edilir. */}
+        <JoinCodeField error={error} onErrorChange={setError} />
       </div>
       <ErrorBanner code={error} />
     </div>
