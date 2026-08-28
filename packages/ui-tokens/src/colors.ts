@@ -49,13 +49,3 @@ export const themes = {
 
 export type Theme = keyof typeof themes
 export type ColorToken = keyof (typeof themes)['acik']
-
-/**
- * Geriye dönük takma ad. `apps/mobile/app/index.tsx` bu dalgadan önce `colors.light`
- * üzerinden yazıldı; bu görevin çakışma kümesi `apps/mobile/app/**`'i kapsamıyor, bu yüzden
- * kırılmasın diye `themes`'ten türetilen bir görünüm olarak korunuyor. Yeni kod `themes`
- * kullanmalı — sonraki dalgada `apps/mobile/app/index.tsx` `themes.acik`'e taşınınca bu
- * takma ad kaldırılabilir.
- */
-export const colors = { light: themes.acik, dark: themes.koyu } as const
-export type ColorScheme = keyof typeof colors

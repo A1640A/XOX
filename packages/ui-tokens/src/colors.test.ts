@@ -27,8 +27,3 @@ describe('themes', () => {
     }
   })
 })
-
-// `colors.light`/`colors.dark` (geriye dönük takma ad) burada kasıtlı olarak test EDİLMİYOR:
-// gövdesi `{ light: themes.acik, dark: themes.koyu }` — kendisiyle karşılaştıran bir test
-// tanım gereği asla kırılamaz (reviewer bulgusu, bkz. docs/board/reports/UI-001.md). Modül
-// yüklendiğinde nesne literali zaten çalıştığı için satır kapsamı bundan etkilenmiyor.

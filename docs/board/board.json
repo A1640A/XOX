@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T01:43:55.260Z",
+  "updatedAt": "2026-08-28T01:53:52.119Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -699,10 +699,10 @@
       "agent": "xox-dev-mobile",
       "deps": ["UI-SKEL-001", "AUTH-001", "CTR-002", "TXT-001", "CTR-BOARD-001"],
       "conflictSet": ["apps/mobile/**", "apps/web/app/api/auth/mobile/**"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W2-03",
-      "report": null,
+      "report": "docs/board/reports/W2-03.md",
       "acceptance": [
         "KK-092: spec §4.2'deki tüm rotalar tanımlı ve expo-router _layout ağacından erişilebilir — index, giris, kayit, oyna/bilgisayar, oda/katil, oda/[kod], profil, siralama, gecmis, arkadaslar (route snapshot testi)",
         "apps/mobile/lib/use-room.ts AYNI roomClientReducer + ws-client'ı useSyncExternalStore ile sarar; mobilde ayrı reducer, ayrı kural, ayrı uzlaşma mantığı YOK",
@@ -719,7 +719,9 @@
         "apps/mobile `colors.light`/`colors.dark` geriye-donuk takma adindan `themes.acik`/`themes.koyu` kullanimina tasinir ve takma ad packages/ui-tokens-tan kaldirilir. Iki isim = kalici kayma riski.",
         "BAGLAYICI (ADR-0018 hat 3, tasarim §6): bu kart CTR-BOARD-001'e BAGIMLIDIR — mobil tahta GENISLEMIS protokole karsi yazilir, dar protokole karsi yazilip sonra genisletilmez. Boylece 'eski mobil x yeni oda' durumu HIC VAR OLMAZ. AS-B02'nin (mobilde 121 basilabilir eleman) karari bu kartindir: olcum tutmazsa 11x11 mobilde GIZLENIR, web'de yayinlanir — bu, tahta boyutu kartlarini BLOKLAMAZ."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "f345300",
+      "note": "Auth koprusu SIFIRDAN yazildi (dizin bostu). Donmeli refresh ATOMIK — lead sondasi: findOneAndDelete -> findOne cevrilince 3 test kirmizi. Tek kullanimlik bilet + reconnect kanitlandi (uc soket, iki bilet, sifir sessiz kilitlenme). Web hedefi derleniyor. Ajan yol boyunca gercek bir hata buldu: app/ icindeki test dosyasini expo-router rota saniyor ve vitest-i web paketine surukluyordu. ACIK KALANLAR: KK-093 Expo Go manuel dogrulama (insan bekliyor), AS-B02 dokunma hedefi olcumu yapilmadi, siralama/gecmis backend uclari yok (rotalar iskelet)."
     },
     {
       "id": "W2-04",
