@@ -46,6 +46,44 @@ describe('seedTestUsers', () => {
     }
   })
 
+  // DB-005: seed önceden `$setOnInsert` kullanıyordu — var olan kullanıcıda
+  // stats/elo/ratedGames HİÇ sıfırlanmıyordu. E2E gerçek oyunlar oynayıp
+  // `finishGame`'in kullandığı gerçek yazma yolunu (`$inc: {'stats.<alan>':1}`,
+  // bkz. rooms/finish.ts) tetikliyor; bir sonraki seed koşusu bu kirliliği
+  // GERİ ALMALI. Bu test kirliliği gerçek üretim yazma şekliyle üretir —
+  // `$setOnInsert`e geri dönülürse bu test kırmızı olur.
+  it('kirlenmiş istatistikleri bir sonraki koşuda bilinen sıfır duruma GERİ DÖNDÜRÜR', async () => {
+    await seedTestUsers()
+
+    const [user1, user2] = TEST_USERS
+    await User.bulkWrite([
+      { updateOne: { filter: { _id: user1._id }, update: { $inc: { 'stats.wins': 1 } } } },
+      {
+        updateOne: {
+          filter: { _id: user2._id },
+          update: { $inc: { 'stats.losses': 2, 'stats.draws': 1 } },
+        },
+      },
+    ])
+    await User.updateOne({ _id: user1._id }, { $set: { elo: 1400 }, $inc: { ratedGames: 3 } })
+
+    const dirtied = await User.findById(user1._id).lean()
+    expect(dirtied?.stats.wins).toBe(1)
+    expect(dirtied?.elo).toBe(1400)
+    expect(dirtied?.ratedGames).toBe(3)
+    const dirtied2 = await User.findById(user2._id).lean()
+    expect(dirtied2?.stats).toStrictEqual({ wins: 0, losses: 2, draws: 1 })
+
+    await seedTestUsers()
+
+    for (const user of TEST_USERS) {
+      const found = await User.findById(user._id).lean()
+      expect(found?.stats).toStrictEqual({ wins: 0, losses: 0, draws: 0 })
+      expect(found?.elo).toBe(1200)
+      expect(found?.ratedGames).toBe(0)
+    }
+  })
+
   // Son test: bu CLI dalı disconnectDb() çağırır. resetModules ile taze bir
   // içe aktarma tetiklenmezse ES modülü zaten yüklü sayılır ve üst seviye
   // gövde ikinci kez ÇALIŞMAZ (reset.test.ts'teki kalıpla aynı).

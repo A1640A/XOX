@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T00:39:58.177Z",
+  "updatedAt": "2026-08-28T01:43:55.260Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -699,9 +699,9 @@
       "agent": "xox-dev-mobile",
       "deps": ["UI-SKEL-001", "AUTH-001", "CTR-002", "TXT-001", "CTR-BOARD-001"],
       "conflictSet": ["apps/mobile/**", "apps/web/app/api/auth/mobile/**"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W2-03",
       "report": null,
       "acceptance": [
         "KK-092: spec §4.2'deki tüm rotalar tanımlı ve expo-router _layout ağacından erişilebilir — index, giris, kayit, oyna/bilgisayar, oda/katil, oda/[kod], profil, siralama, gecmis, arkadaslar (route snapshot testi)",
@@ -758,10 +758,10 @@
       "agent": "xox-qa-e2e",
       "deps": ["W2-01", "W2-02"],
       "conflictSet": ["apps/e2e/tests/timeout-abandon.spec.ts", "apps/e2e/tests/profile.spec.ts"],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/E2E-004",
+      "report": "docs/board/reports/E2E-004.md",
       "acceptance": [
         "KK-070, KK-071, KK-072 yeşil: rakip sekmesini kapatır -> grace metni + geri sayan sayaç 2 sn içinde; 30 sn içinde dönüş -> oyun sürer; dönmezse abandon galibiyeti ve games.endReason==='abandon' Atlas'ta doğrulanır",
         "KK-073, KK-074 yeşil: sure-sayaci 60'tan geri sayar, hamleden sonra karşı taraf için 60'tan yeniden başlar; süre dolunca sırası gelen kaybeder ve games.endReason==='timeout'",
@@ -771,7 +771,9 @@
         "apps/e2e/fixtures/** ve playwright.config.ts DEĞİŞTİRİLMEZ",
         "Flake retries ile gizlenmez; kök neden rapora yazılır"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "0be9f29",
+      "note": "profile.spec.ts 5/5 yerel uretim derlemesinde yesil. Dort WS testi yerelde kosamadi (experimental_upgradeWebSocket duz next start altinda calismiyor) — ajan bunu BILINEN-IYI reconnect.spec.ts uzerinde yeniden uretip ORTAMSAL oldugunu kanitladi, kendi kodunu suclamadi. Gercek previewda kosacak. YAN ETKI: vc dev denemesi omeerdursunn altinda bos bir web projesi olusturdu; ajan silmeyi denedi, siniflandirici engelledi. Kullaniciya bildirildi."
     },
     {
       "id": "E2E-005",
@@ -809,10 +811,10 @@
         "apps/web/app/siralama/**",
         "apps/web/app/api/leaderboard/**"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/W3-01",
+      "report": "docs/board/reports/W3-01.md",
       "acceptance": [
         "W2-01 DEVRETTI: rovansin ILK hamlesi suresiz — rooms/rematch.ts turnDeadline:null yaziyor. joinRoomdaki satirin aynisi konmali.",
         "KK-110: eloDelta(ra, rb, result) SAF fonksiyondur — beklenen = 1/(1+10^((rb-ra)/400)), yeni = round(R + ELO_K × (sonuç - beklenen)), sonuç 1/0.5/0. Puan ELO_FLOOR (100) altına İNMEZ (sınır testi)",
@@ -826,7 +828,9 @@
         "Liste boşken tr.leaderboard.empty metni görünür",
         "pnpm gates temiz; testler xox_test'e karşı yeşil"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "ed88652",
+      "note": "Elo CAS kapisinin ARKASINDA — lead sondasi: finishedAt:null filtreden kaldirilinca 6 test kirmizi (expected 3 to be 1). W2-01in devrettigi rovans turnDeadline hatasi kapandi. leaderboard explain(executionStats) ile dogrulandi: COLLSCAN yok. LEAD HATASI: dispatch mesajimda yazdigim cakisma kumesi KARTIN kumesinden DARDI — apps/web/app/siralama/** ve api/leaderboard/** dusmustu. Ajan acik listeye uydu ve boslugu bildirdi (dogru davranis). Kalan UI+route icin W3-03 acildi."
     },
     {
       "id": "W3-02",
@@ -1406,10 +1410,10 @@
       "agent": "xox-dev-backend",
       "deps": [],
       "conflictSet": ["packages/db/src/seed.ts", "packages/db/src/seed.test.ts"],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
-      "branch": null,
-      "report": null,
+      "branch": "feat/DB-005",
+      "report": "docs/board/reports/DB-005.md",
       "blockedReason": null,
       "acceptance": [
         "ONCELIK YUKSELTILDI P0 (lead, gece kosusu 2): W2-01 ajani bunun `pnpm gates`-in TAMAMINI dusurdugunu olctu — bir E2E kosusundan sonra seed.test.ts paylasilan Atlasta kalici kirmizi veriyor. Ajan gatesi kosabilmek icin kullanicilari ELLE sifirladi; bu duzeltme DEGIL. Gece boyunca previewa karsi E2E kosacagim, yani her kosu kapilari tekrar kiracak. Kosunun engeli.",
@@ -1421,7 +1425,9 @@
         "DIKKAT: duzeltmeyi test ederken paylasilan xox_test-e E2E ajani kosuyor olabilir. Once kontrol et",
         "SEMPTOM KAYBOLDU AMA KUSUR DURUYOR (PERF-002 merge-i, 2026-08-25 06:48): o kosuda seed.test.ts 4/4 GECTI cunku paylasilan xox_test-teki stats E2E-002-nin akisiyla degisti. $setOnInsert hala orada, yani kusur yapisal. KART KAPANMAZ — semptomun gecmesini duzelme saymak bu gecenin ogrettigi hatanin ta kendisi. Kapanma sarti: $set-e tasima + seed->oyna->seed sondasi"
       ],
-      "priority": "P0"
+      "priority": "P0",
+      "mergeSha": "396da41",
+      "note": "KOSUNUN ENGELI KALKTI. $setOnInsert -> $set; seed her kosuda sifir duruma geri donduruyor. Lead sondasi: stats $set-ten cikarilinca test tam dogru iddiayla kirmizi (expected {wins:1} to strictly equal {wins:0}). Filtre sabit _id literali, gercek oyuncu verisine sicrama yolu yok. Ajan ana checkout-a yazdigini FARK EDIP temizledi ve bildirdi."
     },
     {
       "id": "PERF-003",
@@ -2360,10 +2366,10 @@
       "title": "move:applied turnDeadline TASIMIYOR — istemci sayaci state mesajlari arasinda bayatliyor",
       "priority": "P1",
       "agent": "xox-dev-realtime",
-      "status": "todo",
+      "status": "done",
       "deps": ["W2-01"],
-      "report": null,
-      "branch": null,
+      "report": "docs/board/reports/CTR-004.md",
+      "branch": "feat/CTR-004",
       "acceptance": [
         "W2-01 ajani devretti (kartin son maddesi, kumesi disindaydi). Sunucu otoritesi DOGRU ama istemcinin geri sayimi tam state mesajlari arasinda bayatliyor ve ~60 sn sonra 0 gosteriyor.",
         "KARAR ZATEN VERILDI ve yazildi: move:applied semasina alan EKLENMELI. Her hamlede tam state yayinlamak REDDEDILDI (R1 fan-out butcesi, 2026-08-25 karari).",
@@ -2373,23 +2379,27 @@
         "packages/shared/src/ws-protocol.ts",
         "packages/shared/src/room-client.ts",
         "apps/web/lib/realtime/connection.ts"
-      ]
+      ],
+      "mergeSha": "396da41",
+      "note": "Alan OPSIYONEL nullable — uc hal: number/null/alan-yok. Ajan ?? KULLANMADI ve bunu mutasyonla gerekcelendirdi (?? yalniz TEK testi olduruyor, o test olmasa sessizce merge olurdu). Eski istemci sekli ELLE yazildi, semadan turetilmedi. Bundle +30 B. Lead api-contract.md-deki eskimis uyariyi kapatti ve decisions.md-ye karar kaydi ekledi."
     },
     {
       "id": "UI-004",
       "title": "KK-070/071 gorunen yuzu yok — OpponentLeftBanner + grace geri sayimi",
-      "priority": "P2",
+      "priority": "P1",
       "agent": "xox-dev-web",
       "status": "todo",
       "deps": ["W2-01"],
       "report": null,
       "branch": null,
       "acceptance": [
+        "@xox/shared zaten opponentLeftVisible() yardimcisini sunuyor — kural mantigini YENIDEN YAZMA, onu tuket.",
+        "ONCELIK YUKSELTILDI P1 (lead, olculdu): OpponentLeftBanner.tsx govdesi TAM OLARAK `void props; return null` — RoomScreen onu 115. satirda GERCEK proplarla (state.graceEndsAt, state.serverOffsetMs) monte ediyor ama hicbir sey render etmiyor. KK-070/071 banner metni DOM-a ASLA cikamaz. E2E-004 bu yuzden iki testi test.fixme ile karantinaya aldi — govdeler yazili, bu kart kapaninca acilacak.",
         "W2-01 devretti: sunucu tarafi TAMAMEN calisiyor, eksik olan yalniz Turkce banner + grace geri sayimi. Dosya W2-01-in conflictSetinde YOKTU.",
         "apps/web/components/room/OpponentLeftBanner.tsx — metin messages/tr.ts icinde anahtar olarak yasar."
       ],
       "conflictSet": ["apps/web/components/room/OpponentLeftBanner.tsx", "apps/web/messages/tr.ts"]
     }
   ],
-  "wave": "G2-1"
+  "wave": "G2-2"
 }

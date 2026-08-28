@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { REMATCH_OFFER_TTL_SECONDS } from '@xox/shared'
+import { MOVE_TIMEOUT_SECONDS, REMATCH_OFFER_TTL_SECONDS } from '@xox/shared'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { connectDb, disconnectDb } from '../client'
 import { Game } from '../models/game'
@@ -338,6 +338,44 @@ describe('offerRematch / acceptRematch — KK-055…058 (spec §3.8)', () => {
       // size/winLength DEĞİŞMEZ (ADR-0014 §4) — rövanş yalnız tahtayı temizler.
       expect(result.room.size).toBe(11)
       expect(result.room.winLength).toBe(5)
+    },
+  )
+
+  it(
+    'W2-01 DEVRİ KAPANDI: rövanşın İLK hamlesi artık SÜRESİZ DEĞİL — kabul ' +
+      'sonrası turnDeadline nowMs + MOVE_TIMEOUT_SECONDS olarak yazılır',
+    async () => {
+      const f = await finishedRoom({ version: 30 })
+      const nowMs = 1_800_000_000_000
+      await offerRematch(f.code, f.xId, nowMs)
+
+      const result = await acceptRematch(f.code, f.oId, nowMs)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error(`beklenmeyen red: ${result.code}`)
+      expect(result.room.turnDeadline).not.toBeNull()
+      // Çıplak sayı bilerek: `joinRoom`daki AYNI hesap — sabitten türetilmiş
+      // tek bir beklenti bu kaymayı fark etmezdi.
+      expect(result.room.turnDeadline?.getTime()).toBe(nowMs + MOVE_TIMEOUT_SECONDS * 1_000)
+
+      const room = await readRoom(f.code)
+      expect(room.turnDeadline?.getTime()).toBe(nowMs + MOVE_TIMEOUT_SECONDS * 1_000)
+    },
+  )
+
+  it(
+    'KARŞILIKLI teklif yoluyla başlayan rövanşta da turnDeadline kurulur ' +
+      '(startRematch iki çağrı yerinden de aynı davranır)',
+    async () => {
+      const f = await finishedRoom({ version: 30 })
+      const nowMs = 1_900_000_000_000
+      await offerRematch(f.code, f.xId, nowMs)
+
+      const result = await offerRematch(f.code, f.oId, nowMs)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error(`beklenmeyen red: ${result.code}`)
+      expect(result.room.turnDeadline?.getTime()).toBe(nowMs + MOVE_TIMEOUT_SECONDS * 1_000)
     },
   )
 

@@ -121,7 +121,9 @@ describe('connection · tahta deltası (§5.3)', () => {
         moves: [{ index: 0, by: 'X', at: new Date(NOW) }],
       }),
     )
-    expect(h.sent).toStrictEqual([{ type: 'move:applied', index: 0, by: 'X', version: 11 }])
+    expect(h.sent).toStrictEqual([
+      { type: 'move:applied', index: 0, by: 'X', version: 11, turnDeadline: null },
+    ])
   })
 
   it('YAZAN bağlantı da kendi hamlesini bu yoldan öğrenir (R1)', () => {
@@ -135,7 +137,9 @@ describe('connection · tahta deltası (§5.3)', () => {
         moves: [{ index: 0, by: 'X', at: new Date(NOW) }],
       }),
     )
-    expect(h.sent).toStrictEqual([{ type: 'move:applied', index: 0, by: 'X', version: 11 }])
+    expect(h.sent).toStrictEqual([
+      { type: 'move:applied', index: 0, by: 'X', version: 11, turnDeadline: null },
+    ])
   })
 
   it('version 2 atlarsa tam state gönderilir (boşluk → resync)', () => {
@@ -207,9 +211,76 @@ describe('connection · tahta deltası (§5.3)', () => {
       }),
     )
     expect(h.sent).toStrictEqual([
-      { type: 'move:applied', index: 0, by: 'X', version: 11 },
-      { type: 'move:applied', index: 4, by: 'O', version: 12 },
+      { type: 'move:applied', index: 0, by: 'X', version: 11, turnDeadline: null },
+      { type: 'move:applied', index: 4, by: 'O', version: 12, turnDeadline: null },
     ])
+  })
+})
+
+/**
+ * CTR-004 — ince yol `turnDeadline` TAŞIR. W2-01 `rooms.turnDeadline`'ı gerçek
+ * değerlerle yazmaya başladı; ince yol onu taşımadığı için istemcinin sayacı
+ * iki tam `state` arasında bayatlıyordu.
+ *
+ * Bu blok SUNUCUNUN GERÇEKTEN DOLDURDUĞUNU kanıtlar — şemanın alanı kabul
+ * etmesi tek başına yetmez (alan opsiyonel olduğu için sunucu onu hiç
+ * göndermese de protokol testi yeşil kalırdı).
+ */
+describe('connection · ince yol süre hedefi (CTR-004)', () => {
+  it('rooms.turnDeadline epoch ms olarak move:applied ile gider', () => {
+    const h = harness()
+    const deadline = new Date(NOW + 60_000)
+    h.conn.onRoomChange(
+      makeRoom({
+        version: 11,
+        board: cells('X........'),
+        moves: [{ index: 0, by: 'X', at: new Date(NOW) }],
+        turnDeadline: deadline,
+      }),
+    )
+    expect(h.sent).toStrictEqual([
+      { type: 'move:applied', index: 0, by: 'X', version: 11, turnDeadline: NOW + 60_000 },
+    ])
+  })
+
+  it('oyunu bitiren hamlede hedef null gider — game:over ile aynı turda', () => {
+    const h = harness(
+      makeRoom({
+        board: cells('XX.OO....'),
+        moves: [
+          { index: 0, by: 'X', at: new Date(NOW) },
+          { index: 3, by: 'O', at: new Date(NOW) },
+          { index: 1, by: 'X', at: new Date(NOW) },
+          { index: 4, by: 'O', at: new Date(NOW) },
+        ],
+        turnDeadline: new Date(NOW + 60_000),
+      }),
+    )
+    h.conn.onRoomChange(
+      makeRoom({
+        version: 11,
+        state: 'finished',
+        board: cells('XXXOO....'),
+        moves: [
+          { index: 0, by: 'X', at: new Date(NOW) },
+          { index: 3, by: 'O', at: new Date(NOW) },
+          { index: 1, by: 'X', at: new Date(NOW) },
+          { index: 4, by: 'O', at: new Date(NOW) },
+          { index: 2, by: 'X', at: new Date(NOW) },
+        ],
+        turnDeadline: null,
+        result: { kind: 'won', winner: 'X', line: [0, 1, 2], reason: 'line' },
+      }),
+    )
+
+    expect(h.sent.map((m) => m.type)).toStrictEqual(['game:over', 'move:applied'])
+    expect(h.sent[1]).toStrictEqual({
+      type: 'move:applied',
+      index: 2,
+      by: 'X',
+      version: 11,
+      turnDeadline: null,
+    })
   })
 })
 
@@ -318,7 +389,7 @@ describe('connection · türetilmiş olaylar', () => {
         status: { kind: 'won', winner: 'X', line: [0, 1, 2], reason: 'line' },
         endedAt: NOW + 500,
       },
-      { type: 'move:applied', index: 2, by: 'X', version: 11 },
+      { type: 'move:applied', index: 2, by: 'X', version: 11, turnDeadline: null },
     ])
   })
 })

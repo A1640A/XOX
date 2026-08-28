@@ -231,6 +231,98 @@ describe('§5.6/3 — move:applied, version > state.version + 1 (boşluk)', () =
   })
 })
 
+// ─── CTR-004 — sayaç move:applied ile tazelenir ───────────────────────────
+
+describe('CTR-004 — move:applied süre hedefini TAZELER', () => {
+  const T0 = 1_770_000_060_000
+  const T1 = 1_770_000_120_000
+
+  it('yankıdaki hedef durumu günceller — sayaç bayatlamaz', () => {
+    const durum = bagliDurum({ turnDeadline: T0 })
+    const { state } = roomClientReducer(
+      durum,
+      sunucudan({ type: 'move:applied', index: 2, by: 'X', version: 4, turnDeadline: T1 }),
+    )
+
+    expect(state.turnDeadline).toBe(T1)
+  })
+
+  it('null hedef sayacı DURDURUR (hamle oyunu bitirdi)', () => {
+    const durum = bagliDurum({ turnDeadline: T0 })
+    const { state } = roomClientReducer(
+      durum,
+      sunucudan({ type: 'move:applied', index: 2, by: 'X', version: 4, turnDeadline: null }),
+    )
+
+    expect(state.turnDeadline).toBeNull()
+  })
+
+  it('alan YOKSA (CTR-004 öncesi sunucu) önceki hedef KORUNUR — çerçeve yine uygulanır', () => {
+    const durum = bagliDurum({ turnDeadline: T0 })
+    const { state } = roomClientReducer(
+      durum,
+      sunucudan({ type: 'move:applied', index: 2, by: 'X', version: 4 }),
+    )
+
+    expect(state.turnDeadline).toBe(T0)
+    expect(state.board[2]).toBe('X')
+    expect(state.version).toBe(4)
+  })
+
+  it('yinelenen/eski yankı hedefi DEĞİŞTİRMEZ (sürüm kapısı önce koşar)', () => {
+    const durum = bagliDurum({ turnDeadline: T0 })
+    const sonuc = roomClientReducer(
+      durum,
+      sunucudan({ type: 'move:applied', index: 2, by: 'X', version: 3, turnDeadline: T1 }),
+    )
+
+    expect(sonuc.state.turnDeadline).toBe(T0)
+    expect(sonuc.state).toBe(durum)
+  })
+
+  it('sürüm boşluğunda hedef DEĞİŞMEZ, resync istenir', () => {
+    const durum = bagliDurum({ turnDeadline: T0 })
+    const { state, effects } = roomClientReducer(
+      durum,
+      sunucudan({ type: 'move:applied', index: 2, by: 'X', version: 9, turnDeadline: T1 }),
+    )
+
+    expect(state.turnDeadline).toBe(T0)
+    expect(effects).toEqual([{ type: 'resync' }])
+  })
+
+  /**
+   * BAYATLAMA SONDASI (kartın asıl şikâyeti). İki tam `state` mesajı ARASINDA
+   * üç hamle geçiyor; CTR-004 öncesinde `turnDeadline` ilk `state`in değerinde
+   * takılı kalıyor ve ~60 sn sonra 0 gösteriyordu.
+   */
+  it('iki state ARASINDAKİ her hamlede hedef ilerler', () => {
+    const hedefler = [T0 + 60_000, T0 + 120_000, T0 + 180_000]
+    let durum = roomClientReducer(
+      initialRoomClientState(),
+      sunucudan(tamDurumMesaji({ version: 7, turnDeadline: T0 })),
+    ).state
+    expect(durum.turnDeadline).toBe(T0)
+
+    const gorulen: (number | null)[] = []
+    hedefler.forEach((hedef, i) => {
+      durum = roomClientReducer(
+        durum,
+        sunucudan({
+          type: 'move:applied',
+          index: i,
+          by: i % 2 === 0 ? 'X' : 'O',
+          version: 8 + i,
+          turnDeadline: hedef,
+        }),
+      ).state
+      gorulen.push(durum.turnDeadline)
+    })
+
+    expect(gorulen).toStrictEqual(hedefler)
+  })
+})
+
 describe('§5.6/4 — move:applied, version <= state.version (yinelenen yankı)', () => {
   it.each([
     ['aynı sürüm', 3],
