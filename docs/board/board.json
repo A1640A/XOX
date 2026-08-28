@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T03:09:30.944Z",
+  "updatedAt": "2026-08-28T03:15:17.597Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -785,10 +785,10 @@
       "agent": "xox-qa-e2e",
       "deps": ["W2-03", "W2-04"],
       "conflictSet": ["apps/e2e/tests/mobile-web.spec.ts", "apps/e2e/tests/health.spec.ts"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/E2E-005",
-      "report": null,
+      "report": "docs/board/reports/E2E-005.md",
       "acceptance": [
         "KK-090 yeşil: `expo export -p web` çıktısı (dist/) statik olarak servis edilir ve duman testi ana ekranı yükler",
         "KK-091 yeşil: mobil web hedefinde giriş -> oda kur -> kod görünür -> ikinci istemci (web) aynı odaya katılır -> hamle iki tarafta <= 1500 ms içinde senkron olur",
@@ -797,7 +797,9 @@
         "KK-100 OPS-001'e bağlı olarak ATLANIR (test.skip + gerekçe) ve raporda tek açık kriter olarak işaretlenir",
         "apps/e2e/fixtures/** ve playwright.config.ts DEĞİŞTİRİLMEZ"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "40be821",
+      "note": "KK-101/104/090 yerel uretim derlemesinde yesil. KK-104-u gercek tarayicida olctu — Analytics client-side enjekte oldugu icin curl ile yakalanamazdi. BLOKER BULDU (KK-091): mobil web girisi tamamen calismiyor; lead dogruladi (callback route satir 45 kosulsuz xox:// uretiyor, apps/mobile/app/auth.tsx YOK, apps/webde CORS destegi YOK). W2-03 \"web hedefi derleniyor\" demisti ve DOGRUYDU — derlenmek ile calismak farkli seyler; bu ayrimi E2E yakaladi."
     },
     {
       "id": "W3-01",
@@ -2528,6 +2530,55 @@
         "KAPANIS: siralamayi indeksten saptiran mutasyon testi KIRMIZI dondurmeli."
       ],
       "conflictSet": ["packages/db/src/queries/matches.test.ts"]
+    },
+    {
+      "id": "W2-06",
+      "title": "BLOKER: mobil web girisi calismiyor — callback kosulsuz xox:// donuyor, /auth alim rotasi yok",
+      "priority": "P1",
+      "agent": "xox-dev-mobile",
+      "deps": ["W2-03"],
+      "acceptance": [
+        "E2E-005 gercek Chromiumda yeniden uretti, lead dogruladi: apps/web/app/api/auth/mobile/callback/route.ts:45 PLATFORMDAN BAGIMSIZ xox://auth deep linki uretiyor. Web hedefinde expo-web-browser popup akisi ayni originde gercek bir http sayfasi bekliyor (Linking.createURL(auth) -> /auth) ve apps/mobile/app/auth.tsx HIC YOK.",
+        "Belirti: popup chrome-error://chromewebdata-e dusuyor, ana sayfa sonsuza dek \"Tarayicida giris aciliyor...\" durumunda kaliyor. Yerelde DETERMINISTIK, kararsizlik degil.",
+        "callback route platformu ayirt etmeli (state/query ile) VE mobil tarafta /auth alim rotasi yazilmali.",
+        "E2E-005 testi test.skip ile tam gerekce yazilarak birakildi, ISKELETI HAZIR — bu kart kapaninca skip kaldirilip kosulacak."
+      ],
+      "conflictSet": ["apps/mobile/app/auth.tsx", "apps/web/app/api/auth/mobile/callback/route.ts"],
+      "status": "todo",
+      "report": null,
+      "branch": null
+    },
+    {
+      "id": "SEC-006",
+      "title": "apps/web-de CORS destegi YOK — farkli-origin dagitimda tum kimlikli fetchler kirilir",
+      "priority": "P2",
+      "agent": "xox-dev-backend",
+      "deps": [],
+      "acceptance": [
+        "E2E-005 olctu ve bir test ile kanitladi: apps/webde hicbir Access-Control-Allow-Origin yok. Farkli origin-den kimlikli fetch tarayici tarafindan engelleniyor.",
+        "W2-06 kopruyu duzeltse bile mobil web AYRI bir originde dagitilirsa ticket/register/refresh cagrilarinin HEPSI ayrica kirilir.",
+        "KARAR GEREKIYOR: mobil web ayni originde mi dagitilacak (CORS gereksiz) yoksa ayri mi (CORS sart, allowlist ile)? Once bunu netlestir — genis bir CORS acmak guvenlik yuzeyi ekler."
+      ],
+      "conflictSet": ["apps/web/app/api/**"],
+      "status": "todo",
+      "report": null,
+      "branch": null
+    },
+    {
+      "id": "OPS-010",
+      "title": "Mobil web hedefinin dagitim karari — su an hicbir yerde yayinlanmiyor",
+      "priority": "P3",
+      "agent": "xox-devops",
+      "deps": [],
+      "acceptance": [
+        "E2E-005 mobil web dist-ini kendi Node http sunucusuyla servis etmek zorunda kaldi cunku HICBIR gercek dagitimi yok. 12 rota derleniyor ve 200 donuyor ama kimse erisemiyor.",
+        "Karar: ayri bir Vercel projesi mi, ayni proje altinda alt yol mu, yoksa hic yayinlanmayacak mi? W2-06 ve SEC-006 bu karara bagli.",
+        "PRODUCTION DEGISIKLIGI — kullanici onayi olmadan yapma."
+      ],
+      "conflictSet": [],
+      "status": "todo",
+      "report": null,
+      "branch": null
     }
   ],
   "wave": "G2-4"
