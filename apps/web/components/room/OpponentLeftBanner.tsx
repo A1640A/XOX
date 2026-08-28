@@ -10,6 +10,20 @@ export interface OpponentLeftBannerProps {
   /** `state.serverOffsetMs` — istemci saat sapmasını düzeltmek için. */
   readonly serverOffsetMs: number
   /**
+   * `state.status.kind !== 'playing'` — UI-005/E2E-DIAG: `graceEndsAt`in
+   * `null`'a düşmesi TEK BAŞINA "rakip geri döndü" anlamına gelmez.
+   * `packages/db/src/rooms/settle.ts` grace süresi DOLUP terk galibiyetiyle
+   * sonuçlandığında da `disconnected`i (dolayısıyla `graceEndsAt`i)
+   * KOŞULSUZ temizler — aynı `state` mesajında oyun biter (`status.kind`
+   * `'playing'` olmaktan çıkar). Bu bayrak olmadan kazanan oyuncu aynı anda
+   * hem doğru "rakip terk etti, kazandın" sonucunu hem de yanlış "Rakip
+   * geri döndü." banner'ını görür. Ayrım burada, `graceEndsAt`in null'a
+   * düştüğü RENDER'daki `status.kind` üzerinden yapılır — gerçek yeniden
+   * bağlanmada oyun `'playing'` kalmaya devam ettiği için bu bayrak `false`
+   * olur ve KK-071 metni değişmeden çıkar.
+   */
+  readonly gameEnded?: boolean
+  /**
    * Duvar saati okuma noktası — `TurnTimer` ile aynı enjeksiyon konvansiyonu
    * (`rng` deseninin zaman karşılığı). Üretimde varsayılan `Date.now`; testte
    * sahte bir saat verilerek saat sapması senaryoları deterministik kurulur.
@@ -41,6 +55,7 @@ const RETURNED_VISIBLE_MS = 5_000
 export function OpponentLeftBanner({
   graceEndsAt,
   serverOffsetMs,
+  gameEnded = false,
   clock = Date.now,
 }: OpponentLeftBannerProps): React.ReactElement | null {
   // Yalnız geri sayımı tazelemek için: değerin kendisi kullanılmaz, kalan
@@ -53,11 +68,15 @@ export function OpponentLeftBanner({
   const [hiddenReturnedAt, setHiddenReturnedAt] = useState<number | null>(null)
 
   useEffect(() => {
-    if (previousGraceEndsAtRef.current !== null && graceEndsAt === null) {
+    // `gameEnded`, `graceEndsAt`in null'a düştüğü AYNI render'daki değeridir
+    // (server tek bir `state` mesajında ikisini birden değiştirir — bkz.
+    // `settle.ts`). Oyun bittiyse bu geçiş terk galibiyetidir, gerçek dönüş
+    // değil: "Rakip geri döndü." üretilmez (UI-005/E2E-DIAG).
+    if (previousGraceEndsAtRef.current !== null && graceEndsAt === null && !gameEnded) {
       setReturnedAt(clock())
     }
     previousGraceEndsAtRef.current = graceEndsAt
-  }, [graceEndsAt, clock])
+  }, [graceEndsAt, gameEnded, clock])
 
   useEffect(() => {
     if (graceEndsAt === null) return undefined

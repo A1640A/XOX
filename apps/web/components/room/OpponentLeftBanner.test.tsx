@@ -127,6 +127,81 @@ describe('OpponentLeftBanner (KK-070/071)', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
+  it(
+    'UI-005/E2E-DIAG: terk galibiyetiyle sonuçlanınca (gameEnded=true) "Rakip geri döndü." ' +
+      'ASLA gösterilmez — settle.ts grace dolduğunda disconnected:null yazsa da bu bir dönüş ' +
+      'değildir',
+    () => {
+      vi.useFakeTimers()
+      const fake = CLIENT_NOW
+      const graceEndsAt = CLIENT_NOW + GRACE_MS - 2_000
+
+      const view = render(
+        <OpponentLeftBanner
+          graceEndsAt={graceEndsAt}
+          serverOffsetMs={0}
+          gameEnded={false}
+          clock={() => fake}
+        />,
+      )
+      expect(screen.getByRole('status')).toHaveTextContent('Rakibin bağlantısı koptu')
+
+      // Aynı `state` mesajında hem `graceEndsAt` null'a düşer hem oyun biter
+      // (terk galibiyeti) — `settle.ts`in koşulsuz `disconnected:null` yazması.
+      view.rerender(
+        <OpponentLeftBanner
+          graceEndsAt={null}
+          serverOffsetMs={0}
+          gameEnded={true}
+          clock={() => fake}
+        />,
+      )
+      act(() => {
+        vi.advanceTimersByTime(0)
+      })
+
+      expect(screen.queryByText('Rakip geri döndü.')).not.toBeInTheDocument()
+      // Süre geçse de kalıcı olarak çıkmaz — hiç tetiklenmedi.
+      act(() => {
+        vi.advanceTimersByTime(5_000)
+      })
+      expect(screen.queryByText('Rakip geri döndü.')).not.toBeInTheDocument()
+    },
+  )
+
+  it(
+    'UI-005: gerçek yeniden bağlanmada (gameEnded=false, oyun HÂLÂ sürüyor) KK-071 metni ' +
+      'değişmeden çıkmaya devam eder — terk-ayrımı doğru dönüşleri bastırmaz',
+    () => {
+      vi.useFakeTimers()
+      const fake = CLIENT_NOW
+      const graceEndsAt = CLIENT_NOW + GRACE_MS - 2_000
+
+      const view = render(
+        <OpponentLeftBanner
+          graceEndsAt={graceEndsAt}
+          serverOffsetMs={0}
+          gameEnded={false}
+          clock={() => fake}
+        />,
+      )
+
+      view.rerender(
+        <OpponentLeftBanner
+          graceEndsAt={null}
+          serverOffsetMs={0}
+          gameEnded={false}
+          clock={() => fake}
+        />,
+      )
+      act(() => {
+        vi.advanceTimersByTime(0)
+      })
+
+      expect(screen.getByRole('status')).toHaveTextContent('Rakip geri döndü.')
+    },
+  )
+
   it('graceEndsAt hiç null olmadan (ilk mount kopukken) yalnızca KK-070 gösterir, KK-071 tetiklenmez', () => {
     const graceEndsAt = CLIENT_NOW + GRACE_MS - 2_000
     render(<OpponentLeftBanner graceEndsAt={graceEndsAt} serverOffsetMs={0} clock={clock} />)
