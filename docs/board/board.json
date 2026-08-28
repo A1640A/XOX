@@ -2463,21 +2463,28 @@
       "title": "errorJson son uc kopya: profile, friends, auth/mobile/refresh",
       "priority": "P3",
       "agent": "xox-dev-backend",
-      "status": "todo",
+      "status": "done",
       "deps": ["DRY-002"],
-      "report": null,
+      "report": "docs/board/reports/DRY-003.md",
       "branch": null,
       "acceptance": [
         "DRY-002 dort routeu tek kaynaga bagladi ve grep ile UC kopya daha oldugunu gosterdi: apps/web/app/api/profile/route.ts, api/friends/route.ts, api/auth/mobile/refresh/route.ts. Kapsam disindaydi, dokunmadi.",
         "Tek kaynak HAZIR: apps/web/lib/http/error-json.ts. Yeniden yazma, bagla.",
         "DAVRANIS DEGISMEMELI — her routeun gövdesi, durum kodu ve ErrorCode birebir ayni kalmali. auth/mobile/** bu gece W2-03 tarafindan yazildi, kendi hata sekli olabilir; ONCE OKU.",
-        "Surucu ayrintisi sizmadigi testlerini gevsetme."
+        "Surucu ayrintisi sizmadigi testlerini gevsetme.",
+        "KAPANDI 2026-08-29. Uc route (profile, friends, auth/mobile/refresh) apps/web/lib/http/error-json.ts-e baglandi. auth/mobile/refresh ONCE okundu; govdesi digerleriyle birebir ayniydi, zorlama gerekmedi.",
+        "DAVRANIS KANITI: ayni komut oncesi/sonrasi — 3 dosya / 37 test yesil -> 37 test yesil. Surucu-detayi-sizmaz testi (friends) gevsetilmedi. pnpm gates exit 0; @xox/web icin --force tekrar kosuldu, Cached: 0 cached, 958/958.",
+        "LEAD DOGRULAMASI: diffi satir satir okudum — yalniz yerel errorJson silinmis, paylasilan import edilmis, kullanilmayan tip importlari temizlenmis. Hicbir durum kodu/mesaj/try-catch akisi degismemis. Paylasilan errorJson silinen kopyalarla BIREBIR ayni govdeye sahip.",
+        "AJAN KENDI KARTININ EKSIK OLDUGUNU BILDIRDI: leaderboard ve matches route-larinda IKI kopya daha vardi, cakisma kumesi disi oldugu icin dokunmadi. -> DRY-004 (lead bitirdi).",
+        "Merge 3d9c427."
       ],
       "conflictSet": [
         "apps/web/app/api/profile/route.ts",
         "apps/web/app/api/friends/route.ts",
         "apps/web/app/api/auth/mobile/refresh/route.ts"
-      ]
+      ],
+      "attempts": 1,
+      "tier": "P3"
     },
     {
       "id": "DB-006",
@@ -2859,6 +2866,28 @@
         "ONCE KIRMIZI: hatayi birim/entegrasyon seviyesinde yeniden uret. sahte schedule() argumani YUTMAYACAK sekilde duzeltilmeli ve yeniden zamanlanan son tarihin DEGERI dogrulanmali. Kirmizi uretemezsen hata dagitik ortamda demektir — o zaman Vercel/Atlas loglarina bak ve bulgunu yaz.",
         "KAPANIS: bir oyuncu ayrildiktan 30sn sonra KALAN oyuncunun ekraninda galibiyetin gorundugunu kanitlayan bir test. Timeout buyuterek gecistirme.",
         "KULLANICI ETKISI: rakip ayrildiginda kalan oyuncu oyunun bitmesini SONSUZA KADAR bekleyebilir. ELO yazilmaz, oda kapanmaz."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "DRY-004",
+      "title": "errorJson SON iki kopya (leaderboard, matches) — DRY-003 takibi",
+      "tier": "P3",
+      "wave": "4",
+      "agent": "xox-dev-backend",
+      "deps": ["DRY-003"],
+      "conflictSet": ["apps/web/app/api/leaderboard/route.ts", "apps/web/app/api/matches/route.ts"],
+      "status": "done",
+      "attempts": 1,
+      "branch": null,
+      "report": "docs/board/reports/DRY-004.md",
+      "acceptance": [
+        "KAPANDI 2026-08-29 (lead yurttu). DRY-003 ajani durustce bildirdi: kartin \"son uc kopya\" basligi eksikti, gercek sayi UCTU degil BESTI.",
+        "OLCULDU: her iki dosyada da ErrorCode ve ErrorResponse YALNIZ yerel errorJson-da kullaniliyordu (2 gecis / 2 gecis), dolayisiyla importlar tamamen kaldirildi.",
+        "DAVRANIS KANITI: ayni komut oncesi/sonrasi — 2 dosya / 13 test yesil -> 13 test yesil, birebir.",
+        "KAPANIS: git grep -c \"^function errorJson\" -- apps/web/app/api  ->  SIFIR. Artik tek bir yerel tanim yok.",
+        "pnpm gates exit 0. Merge 407ff87.",
+        "ORUNTU (kayda gecti): bir kartin KAPSAMI sorunun kapsamiyla ayni olmayabilir. Bu gece uc kez oldu — PERF-006 (test uretim kodunu hic cagirmiyordu), OPS-005 (kart yanlis dosyaya bakiyordu), DRY-003 (sayi eksikti)."
       ],
       "blockedReason": null
     }
