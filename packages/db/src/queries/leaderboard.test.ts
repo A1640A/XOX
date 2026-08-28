@@ -85,6 +85,19 @@ describe('leaderboard sorguları (gerçek xox_test)', () => {
   })
 
   it(
+    'W3-03: getLeaderboardTop dönen her satırda ratedGames sayısını taşır ' +
+      '(leaderboardResponseSchema alanı zorunlu kılıyor)',
+    async () => {
+      const userId = await makeUser({ elo: 500_015, ratedGames: 12 })
+
+      const top = await getLeaderboardTop()
+
+      const entry = top.find((e) => e.userId === userId)
+      expect(entry?.ratedGames).toBe(12)
+    },
+  )
+
+  it(
     `KK-115: ratedGames < LEADERBOARD_MIN_RATED_GAMES (${String(LEADERBOARD_MIN_RATED_GAMES)}) ` +
       'olan kullanıcı listeye HİÇ GİRMEZ',
     async () => {
@@ -134,6 +147,7 @@ describe('leaderboard sorguları (gerçek xox_test)', () => {
     expect(self?.rank).toBe(3)
     expect(self?.elo).toBe(500_203)
     expect(self?.stats).toStrictEqual({ wins: 3, losses: 1, draws: 4 })
+    expect(self?.ratedGames).toBe(8)
   })
 
   it('getLeaderboardSelf: eşik altındaki kullanıcı için null döner (sırası anlamsız)', async () => {
