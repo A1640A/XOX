@@ -46,6 +46,21 @@ const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
 /** `?ticket=<jose JWT>` — WS upgrade bileti, oda odaklı olabilir (ADR-0006). */
 const TICKET_QUERY_PATTERN = /([?&]ticket=)[^\s&"'`]+/gi
 
+/**
+ * SEC-007 — `Authorization: Bearer <token>` başlığı, biçimden BAĞIMSIZ.
+ * `TICKET_QUERY_PATTERN` yalnız `?ticket=` SORGU yolunu kapsıyordu; bilet
+ * `Authorization` başlığı METNİ olarak loglanırsa (ör. hata mesajına
+ * gömülü) hiçbir desen onu görmüyordu — JWT-dışı (noktasız, opak) bilet bu
+ * yoldan düz metin sızıyordu. Yakalanan değer aşağıdaki `JWT_LIKE_PATTERN`e
+ * uyuyorsa BURADA dokunulmadan bırakılır; `JWT_PATTERN` (altta) onu zaten
+ * yakalayıp `[JWT_GİZLİ]` ile değiştirir — aksi halde jose biçimli biletler
+ * için mevcut testlerin beklediği sınıf-özel etiket kaybolurdu.
+ */
+const AUTHORIZATION_BEARER_PATTERN = /(\bAuthorization\s*:\s*Bearer\s+)([^\s"'`]+)/gi
+
+/** `AUTHORIZATION_BEARER_PATTERN` yakalayıcısının jose/JWT biçimine (üç nokta ayraçlı segment) uyup uymadığını sınayan ÇAPALI kopya. */
+const JWT_LIKE_PATTERN = /^[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}$/
+
 /** Üç noktalı base64url dizisi — jose/JWT'nin genel biçimi (bilet + mobil token'lar). */
 const JWT_PATTERN = /\b[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g
 
@@ -92,6 +107,9 @@ function maskText(input: string): string {
     (_match, name: string) => `${name}=${REDACTED}`,
   )
   masked = masked.replace(TICKET_QUERY_PATTERN, (_match, prefix: string) => `${prefix}${REDACTED}`)
+  masked = masked.replace(AUTHORIZATION_BEARER_PATTERN, (_match, prefix: string, token: string) =>
+    JWT_LIKE_PATTERN.test(token) ? `${prefix}${token}` : `${prefix}${REDACTED}`,
+  )
   masked = masked.replace(JWT_PATTERN, JWT_REDACTED)
   masked = masked.replace(EMAIL_PATTERN, EMAIL_REDACTED)
   masked = maskCookieHeader(masked)
@@ -123,10 +141,24 @@ function isRoomCodeKey(key: string): boolean {
   return normalized === 'roomcode' || normalized === 'room_code'
 }
 
+/**
+ * SEC-007 — `context.ticket` alanı. `maskText` yalnız jose/JWT biçimini
+ * (nokta ayraçlı) yakalar; JWT-dışı (noktasız, opak) bir bilet bu alanda hiç
+ * eşleşmiyordu. Alan adı `ticket` ise değer BİÇİMDEN BAĞIMSIZ tamamen
+ * gizlenir — düzeltme kimliği bulanıklaştırmaz (`userId`/`roomCode` gibi
+ * korelasyon için hash'lenmez), çünkü bilet zaten kısa ömürlü ve tekil
+ * kullanımlıktır (bkz. dosya başı, `AUTH_SECRET` HMAC ile korelasyon burada
+ * amaçlanmıyor).
+ */
+function isTicketKey(key: string): boolean {
+  return key.toLowerCase() === 'ticket'
+}
+
 function maskValue(key: string, value: unknown): unknown {
   if (typeof value === 'string') {
     if (isUserIdKey(key)) return tagIdentifier('user', value)
     if (isRoomCodeKey(key)) return tagIdentifier('room', value)
+    if (isTicketKey(key)) return REDACTED
     return maskText(value)
   }
   if (Array.isArray(value)) return value.map((entry) => maskValue(key, entry))
