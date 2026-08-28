@@ -1,216 +1,43 @@
-import { z } from 'zod'
-import {
-  DISPLAY_NAME_MAX,
-  DISPLAY_NAME_MIN,
-  HISTORY_PAGE_SIZE,
-  LEADERBOARD_SIZE,
-  MAX_PASSWORD_LENGTH,
-  MIN_PASSWORD_LENGTH,
-} from './constants'
-import { errorCodeSchema } from './errors'
-import { endReasonSchema } from './game-status'
-import {
-  boardConfigSchema,
-  boardSizeSchema,
-  epochMsSchema,
-  playersSchema,
-  roomCodeSchema,
-  winLengthSchema,
-} from './primitives'
-
 /**
  * REST yüzeyinin gövde ve yanıt şemaları (tasarım §7).
  *
  * Sunucu doğrulaması istemciden **bağımsızdır** (KK-003): tarayıcıdaki form
  * kısıtları yardımcıdır, kapı burasıdır. Her route handler gövdeyi bu
  * şemalardan geçirir ve hatayı `errorResponseSchema` biçiminde döner.
- */
-
-// ─── Ortak parçalar ───────────────────────────────────────────────────────
-export const errorResponseSchema = z.object({ code: errorCodeSchema, message: z.string() })
-
-export const displayNameSchema = z.string().trim().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX)
-export const emailSchema = z.email().toLowerCase()
-export const passwordSchema = z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH)
-export const themeSchema = z.enum(['acik', 'koyu'])
-export const statsSchema = z.object({
-  wins: z.number().int().nonnegative(),
-  losses: z.number().int().nonnegative(),
-  draws: z.number().int().nonnegative(),
-})
-const userRefSchema = z.object({ userId: z.string().min(1), name: z.string().min(1) })
-
-// ─── POST /api/auth/register ──────────────────────────────────────────────
-export const registerBodySchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-  displayName: displayNameSchema,
-})
-export const registerResponseSchema = z.object({ userId: z.string().min(1) })
-
-// ─── POST /api/rooms · GET /api/rooms/[code] ──────────────────────────────
-export const roomStateSchema = z.enum(['waiting', 'playing', 'finished'])
-export const roomCreateResponseSchema = z.object({ code: roomCodeSchema })
-/**
- * `POST /api/rooms` gövdesi (KK-B14/B15, ADR-0015 §2). `boardConfigSchema`'nın
- * `.partial()`'ı — gövde tamamen yok da olabilir (`req.json()` patlarsa `{}`),
- * bu durumda sunucu `parseBoardConfig(undefined)` ile `{3,3}`'e düşer ve
- * bugünkü davranış bit düzeyinde korunur.
- */
-export const roomCreateBodySchema = boardConfigSchema.partial()
-
-/**
- * CTR-003 payı (tasarım §12.5, bu pencerede ÜCRETSİZ kapatılır — ADR-0015 §7):
- * oda katılabilirliğinin TEK türetme noktası. Yalnız `waiting` durumdaki VE
- * en az bir boş koltuğu olan oda katılınabilir (§4 yaşam döngüsü).
  *
- * CTR-001'in bilinen kusuru tam buydu: mantık `apps/web/app/api/rooms/[code]/
- * route.ts`'te YEREL yazılmıştı, `packages/shared` dondurulduğu için
- * `ROOM-API-001` onu değiştiremedi. Bu kartta fonksiyon `shared`'a çıkar;
- * route BAĞLAMASI (bu fonksiyonu çağırmak) `CTR-003`'te kalır — o kart artık
- * ikinci bir unfreeze GEREKTİRMEZ.
+ * **PERF-005:** Bu dosya artık yalnızca bir yeniden-dışa-verim toplayıcısıdır —
+ * gerçek şema tanımları `./rest-contract/*` altında UÇ NOKTA BAŞINA ayrı
+ * dosyalarda yaşar. Neden: `@xox/shared`'ın barrel'ı (`index.ts`)
+ * `export *` ile bu dosyayı geçiyordu ve TEK bir modül olduğu için `/profil`
+ * gibi yalnız `errorResponseSchema`+`profileResponseSchema`'ya ihtiyaç duyan
+ * bir rota, `registerBodySchema`/`leaderboardResponseSchema`/`matchesResponseSchema`/
+ * `friendsResponseSchema`/`mobileTokenPairSchema` gibi TAMAMEN alakasız 20'den
+ * fazla şemayı da indiriyordu (485 zod izi, ölçüldü — bkz. `docs/board/reports/
+ * PERF-004.md`). `package.json`'a eklenen `"sideEffects": false` bundler'a
+ * KULLANILMAYAN modülleri tamamen düşürme izni veriyor ama bu yalnız MODÜL
+ * GRANÜLERLİĞİNDE çalışıyor — aynı dosyadaki kullanılmayan komşu şemalar
+ * düşürülmüyor (ölçüldü: `/giris` -70 kB, `/profil` yalnız -3 kB, çünkü
+ * `/profil` hâlâ TEK `rest-contract.ts`'in TAMAMINI çekiyordu). Çözüm: her
+ * uç noktanın şemasını kendi dosyasına taşımak, böylece bir tüketici yalnız
+ * ihtiyacı olan uç noktanın modülünü (ve onun gerçek transitive
+ * bağımlılıklarını) indirir.
  *
- * `roomStateResponseSchema`'nın kendi değişmezi de AYNI fonksiyonu çağırır:
- * iki yerde aynı mantığın iki kopyası olursa biri güncellenip diğeri
- * unutulabilir (bkz. "sabitin regex kopyası" gotcha örüntüsü).
+ * `@xox/shared`'ın kamuya açık yüzeyi (bu dosyanın dışa verdiği adlar)
+ * BİREBİR AYNI kaldı — yalnızca iç dosya yapısı değişti. Kanıt:
+ * `docs/board/reports/PERF-005.md` (öncesi/sonrası 103 ad karşılaştırması).
  */
-export function canJoinRoom(
-  state: z.infer<typeof roomStateSchema>,
-  seats: Pick<z.infer<typeof playersSchema>, 'X' | 'O'>,
-): boolean {
-  const bosKoltukVar = seats.X === null || seats.O === null
-  return state === 'waiting' && bosKoltukVar
-}
-
-/**
- * `canJoin` türetilmiş bir alandır, bağımsız bir bayrak değil: **yalnız**
- * `waiting` odada ve boş koltuk varsa doğrudur (§4 yaşam döngüsü). Değişmez
- * dayatılmazsa "bitmiş + iki koltuk dolu + canJoin:true" gibi bir yanıt
- * sözleşmeye uyar, istemci katıl düğmesini açar ve WS 4403 ile kapanır.
- *
- * `size`/`winLength` ZORUNLU alanlardır (SB-09, US-B03): katılan oyuncu
- * odaya girmeden önce hangi oyunu oynayacağını görebilmelidir.
- */
-export const roomStateResponseSchema = z
-  .object({
-    code: roomCodeSchema,
-    state: roomStateSchema,
-    seats: playersSchema,
-    canJoin: z.boolean(),
-    size: boardSizeSchema,
-    winLength: winLengthSchema,
-  })
-  .superRefine((room, ctx) => {
-    if (room.canJoin !== canJoinRoom(room.state, room.seats)) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'canJoin yalnız bekleyen ve boş koltuğu olan odada true olabilir',
-      })
-    }
-  })
-
-// ─── POST /api/ws/ticket ──────────────────────────────────────────────────
-export const wsTicketResponseSchema = z.object({
-  ticket: z.string().min(1),
-  /** Saniye — ADR-0006, WS_TICKET_TTL_SECONDS. */
-  expiresIn: z.number().int().positive(),
-})
-
-// ─── GET/PATCH /api/profile ───────────────────────────────────────────────
-export const profileResponseSchema = z.object({
-  name: z.string().min(1),
-  email: z.email(),
-  stats: statsSchema,
-  elo: z.number().int(),
-  ratedGames: z.number().int().nonnegative(),
-  theme: themeSchema,
-})
-/** Kısmi güncelleme: yalnız ad ve tema değiştirilebilir (KK-082/083). */
-export const profileUpdateBodySchema = z.strictObject({
-  name: displayNameSchema.optional(),
-  theme: themeSchema.optional(),
-})
-
-// ─── GET /api/leaderboard ─────────────────────────────────────────────────
-export const leaderboardEntrySchema = z.object({
-  rank: z.number().int().positive(),
-  userId: z.string().min(1),
-  name: z.string().min(1),
-  elo: z.number().int(),
-  wins: z.number().int().nonnegative(),
-  losses: z.number().int().nonnegative(),
-  draws: z.number().int().nonnegative(),
-  ratedGames: z.number().int().nonnegative(),
-})
-export const leaderboardResponseSchema = z.object({
-  entries: z.array(leaderboardEntrySchema).max(LEADERBOARD_SIZE),
-  /** Kullanıcı ilk 50'de değilse kendi satırı ayrıca gelir (KK-115). */
-  you: leaderboardEntrySchema.nullable(),
-})
-
-// ─── GET /api/matches ─────────────────────────────────────────────────────
-export const matchResultSchema = z.enum(['win', 'loss', 'draw'])
-/**
- * Değişmez: **puanlıysa delta vardır, puansızsa yoktur** —
- * `rated === (eloDelta !== null)`. `transportStatusSchema`'daki kalıbın aynısı.
- * Dayatılmazsa `{rated:true, eloDelta:null}` satırı geçmişte puanlı görünür ama
- * ELO sütununda "—" çizilir; kullanıcı puanının nereye gittiğini göremez ve
- * E2E bunu yakalayamaz, çünkü sözleşme izin veriyordur.
- */
-export const matchSchema = z
-  .object({
-    gameId: z.string().min(1),
-    finishedAt: epochMsSchema,
-    opponent: userRefSchema,
-    result: matchResultSchema,
-    endReason: endReasonSchema.nullable(),
-    rated: z.boolean(),
-    /** Puansız oyunda null — listede "—" gösterilir (KK-116). */
-    eloDelta: z.number().int().nullable(),
-  })
-  .superRefine((match, ctx) => {
-    if (match.rated !== (match.eloDelta !== null)) {
-      ctx.addIssue({ code: 'custom', message: 'rated ile eloDelta tutarsız' })
-    }
-  })
-export const matchesResponseSchema = z.object({
-  matches: z.array(matchSchema).max(HISTORY_PAGE_SIZE),
-})
-
-// ─── /api/friends ─────────────────────────────────────────────────────────
-export const friendSchema = userRefSchema.extend({ elo: z.number().int() })
-export const friendsResponseSchema = z.object({
-  friends: z.array(friendSchema),
-  incoming: z.array(friendSchema),
-  outgoing: z.array(friendSchema),
-})
-export const friendRequestBodySchema = z.object({ userId: z.string().min(1) })
-export const friendActionBodySchema = z.object({
-  userId: z.string().min(1),
-  action: z.enum(['accept', 'reject']),
-})
-
-// ─── POST /api/auth/mobile/refresh ────────────────────────────────────────
-export const mobileRefreshBodySchema = z.object({ refresh: z.string().min(1) })
-export const mobileTokenPairSchema = z.object({
-  token: z.string().min(1),
-  refresh: z.string().min(1),
-  /** Access token'ın saniye cinsinden kalan ömrü. */
-  expiresIn: z.number().int().positive(),
-})
-
-export type ErrorResponse = z.infer<typeof errorResponseSchema>
-export type RegisterBody = z.infer<typeof registerBodySchema>
-export type RoomState = z.infer<typeof roomStateSchema>
-export type RoomCreateBody = z.infer<typeof roomCreateBodySchema>
-export type RoomStateResponse = z.infer<typeof roomStateResponseSchema>
-export type WsTicketResponse = z.infer<typeof wsTicketResponseSchema>
-export type Theme = z.infer<typeof themeSchema>
-export type ProfileResponse = z.infer<typeof profileResponseSchema>
-export type ProfileUpdateBody = z.infer<typeof profileUpdateBodySchema>
-export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>
-export type LeaderboardResponse = z.infer<typeof leaderboardResponseSchema>
-export type MatchResult = z.infer<typeof matchResultSchema>
-export type Match = z.infer<typeof matchSchema>
-export type Friend = z.infer<typeof friendSchema>
-export type MobileTokenPair = z.infer<typeof mobileTokenPairSchema>
+export * from './rest-contract/display-name'
+export * from './rest-contract/email'
+export * from './rest-contract/error-response'
+export * from './rest-contract/friends'
+export * from './rest-contract/leaderboard'
+export * from './rest-contract/matches'
+export * from './rest-contract/mobile'
+export * from './rest-contract/password'
+export * from './rest-contract/profile-response'
+export * from './rest-contract/profile-update'
+export * from './rest-contract/register'
+export * from './rest-contract/rooms'
+export * from './rest-contract/stats'
+export * from './rest-contract/theme'
+export * from './rest-contract/ws-ticket'
