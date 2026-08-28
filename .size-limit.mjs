@@ -143,10 +143,45 @@ const LIGHT_LIMIT = '158 kB'
 // PERF-005 bilerek (a)'yı YAPMADI (dokunma listesi `components/profile/**`'i açıkça
 // yasaklıyor) ve (b)'yi tek başına KARARLAŞTIRMADI (bütçe politikası, paralel kartları
 // etkileyebilir) — ikisi de lead onayı bekliyor, rapora bkz.
-const LIGHT_ROUTES = new Set(['/_not-found', '/oyna/bilgisayar'])
+// ── LEAD KARARI 2026-08-28: (b) seçildi — ÜÇÜNCÜ katman ────────────────────────────
+//
+// (a) reddedilmedi, ERTELENDİ: istemci tarafı `safeParse` MEŞRU bir savunmadır; onu yalnız
+// bütçe rakamını tutturmak için sökmek, ölçüyü ürüne tercih etmek olurdu. Ayrı bir kartın
+// konusu, bu kartın değil.
+//
+// (b) seçildi çünkü bu dosyanın kendi felsefesiyle tutarlı: sınıflandırma bir HEDEF değil
+// BETİMLEMEDİR. Ölçüm ÜÇ ayrı küme gösteriyor; ikiye zorlamak gerçeği gizlerdi:
+//
+//   ağır  (paylaşılan `@xox/shared` + oda/oyun ağacı)
+//     /oda/[kod] 223.88 · / 218.96 · /oda/katil 214.94 · /arkadaslar 214.23
+//   orta  (istemci tarafı ŞEMA DOĞRULAMASI yapan rotalar — `zod/mini` tabanı)
+//     /profil 168.36 · /kayit 167.19
+//   hafif (zod'a hiç dokunmayan)
+//     /oyna/bilgisayar 146.81 · /giris 146.66 · /_not-found 145.16 · /davet/[kod] 145.16
+//
+// `/giris` ve `/davet/[kod]` bu kartla ÖLÇÜLEBİLİR biçimde hafif sınıfa geçti — etiketleri
+// artık gerçeği yansıtıyor; önceden ağır grupta duruyorlardı.
+//
+// Bütçeler aynı formülle türetildi (grubun EN AĞIR ÖLÇÜLEN üyesi + ~%5-10 pay), "şu an ne
+// ise o"dan değil:
+//   ağır  223.88 × 1.05  ≈ 235 (DEĞİŞMEDİ — pay bilerek dar, regresyon erken yakalansın)
+//   orta  168.36 × 1.09  ≈ 184
+//   hafif 146.81 × 1.076 ≈ 158 (DEĞİŞMEDİ)
+//
+// ORTA katman bir mazeret değil, bir SÖZLEŞMEDİR: bu iki rota şema doğrulaması yaptığı
+// için oradadır. Doğrulamayı kaldıran bir kart onları hafif gruba taşımalı; yeni bir rota
+// buraya girecekse gerekçesi "zod tabanı" olmalı, "biraz büyük" değil.
+//
+// Lead sondası: `MEDIUM_LIMIT` 150 kB'ye düşürülünce `size-limit` KIRMIZI döndü — katman
+// gerçekten dayatıyor, süs değil.
+const LIGHT_ROUTES = new Set(['/_not-found', '/oyna/bilgisayar', '/giris', '/davet/[kod]'])
+const MEDIUM_ROUTES = new Set(['/profil', '/kayit'])
+const MEDIUM_LIMIT = '184 kB'
 
 function limitFor(route) {
-  return LIGHT_ROUTES.has(route) ? LIGHT_LIMIT : HEAVY_LIMIT
+  if (LIGHT_ROUTES.has(route)) return LIGHT_LIMIT
+  if (MEDIUM_ROUTES.has(route)) return MEDIUM_LIMIT
+  return HEAVY_LIMIT
 }
 
 // `@size-limit/time` her check için ayrı bir headless Chrome örneği açıyor. 7 rota
