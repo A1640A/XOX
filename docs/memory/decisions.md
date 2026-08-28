@@ -378,3 +378,35 @@ girdisinden değil — gerçek oyuncu verisine sıçrama yolu yok.
 
 **`$setOnInsert` başka yerde:** `queries/friends.ts:54` — orada **bilinçli** ("yalnız yoksa
 oluştur, var olan pending/accepted durumu ezme", KK-125/126). Aynı tuzak değil, dokunulmadı.
+
+## 2026-08-28 · Expo web hedefi YAYINLANMAZ — o bir derleme/test artefaktıdır (OPS-010)
+
+**Karar:** mobil web (`apps/mobile` web export) hiçbir yere dağıtılmıyor. Ne ayrı bir
+Vercel projesi, ne ana proje altında alt yol. Yerel/CI'da statik olarak servis edilerek
+test edilmeye devam edilecek.
+
+**Neden:** rota kümeleri karşılaştırıldı ve mobil web, Next.js sitesinin **kopyası** çıktı:
+
+| Mobil (Expo web)                                                                                                   | Web (Next.js)              |
+| ------------------------------------------------------------------------------------------------------------------ | -------------------------- |
+| `index · giris · kayit · profil · gecmis · siralama · arkadaslar · oda/[kod] · oda/katil · oyna/bilgisayar · auth` | aynısı **+ `davet/[kod]`** |
+
+Yayınlamak, aynı oyunun iki farklı adreste iki rakip web arayüzü olması demekti: çift
+bakım, çift güvenlik yüzeyi, kullanıcı için "hangisi gerçek site?" sorusu. Next.js sitesi
+telefonda zaten çalışıyor — mobil web'in ekleyeceği kullanıcı değeri yok.
+
+**Expo web hedefi neden yine de duruyor:** (1) mobil kod tabanını dürüst tutan bir derleme
+hedefi — web'de derlenmeyen bir şey genellikle gerçek bir taşınabilirlik hatasıdır;
+(2) E2E'nin mobil ekranları cihaz/emülatör olmadan sınamasını sağlıyor. Testin kendi
+statik sunucusuyla servis edilmesi normaldir, dağıtım gerektirmez.
+
+**Bu kararın zincirleme sonuçları:**
+
+- `W2-07` (mobil web girişi) **P1 bloker DEĞİL** — yalnız geliştirme/test deneyimi. P3.
+  `W2-06`'nın indirdiği alıcı uç ve allowlist güvenlik sözleşmesi yerinde kalıyor.
+- `SEC-006` (CORS yok) **şimdilik gereksiz** — farklı-origin bir dağıtım planlanmıyor.
+  Kart kapatılmıyor ama P2'den P3'e iniyor; farklı-origin bir hedef gündeme gelirse
+  ÖNCE bu karar geri alınır, sonra CORS yazılır.
+
+**Geri alınabilir:** karar bir dağıtım yapmamaktan ibaret; ileride mobil web'e gerçek bir
+kullanıcı gerekçesi çıkarsa ayrı Vercel projesi tek adımda kurulur.

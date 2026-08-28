@@ -60,13 +60,21 @@ board oku → bağımlılığı çözülmüş + çakışma kümesi ayrık görev
   → integrator: sırayla main'e merge → devops: preview deploy
   → qa-e2e: preview'a karşı koş → rapor
   → board+journal+state.md COMMIT + good/wave-N tag
+  → DALGANIN SONUNDA TEK PUSH (aşağı bak)
   → her 3 dalgada memory-curator
 ```
+
+**Dalga boyunca yerelde commit'le, push'u dalga sonuna sakla.** Her push CI'ı yeniden
+tetikliyor; art arda push atınca koşular birbirini iptal ediyordu ve gerçek kırmızı beş
+gece görünmedi (`CI-007`/`CI-008`). `ci.yml`deki `cancel-in-progress: false` ağdır,
+disiplinin yerine geçmez: tek push = tek koşu = doğrulanmış bir ağaç. Push'tan sonra
+`gh run list --workflow=CI --limit 1` ile **sonucu bekle**, bir sonraki dalgayı
+kırmızının üstüne kurma.
 
 ## Definition of Done (lead mekanik doğrular)
 
 ```bash
-pnpm gates    # typecheck + lint + format:check + test:coverage + knip
+pnpm gates    # check:dead-exports + typecheck + lint + format:check + test:coverage + knip
 ```
 
 **Merge sonrası `pnpm gates` YETMEZ.** Turbo cache worktree'ler arası paylaşılır ve
@@ -80,9 +88,11 @@ sonuç üretir (2026-08-25: CI 5 saat kırmızı kaldı, kimse fark etmedi). Mer
 doğrulama listesine ekle: `gh run list --workflow=CI --limit 3`.
 
 1. Kırmızı test önce yazıldı, sonra yeşile döndü
-2. `pnpm gates` temiz — **beş kapının hepsi**: `typecheck` + `lint` + `format:check` +
-   `test:coverage` + `knip`. Tek tek görev koşup "yeşil" deme; `format:check` ve `knip`
-   atlanınca CI iki kez kırıldı.
+2. `pnpm gates` temiz — **altı kapının hepsi**: `check:dead-exports` + `typecheck` +
+   `lint` + `format:check` + `test:coverage` + `knip`. Tek tek görev koşup "yeşil" deme;
+   `format:check` ve `knip` atlanınca CI iki kez kırıldı. **Kapı listesini `ci.yml`e
+   KOPYALAMA** — CI de `pnpm gates` çağırır, tek kaynak budur (altıncı kapı eklenince
+   `ci.yml`deki kopya liste eskidi ve kapı CI'da hiç koşmadı, `CI-007`).
 3. Kapsam eşiği aşıldı (`game-core` ayrıca `pnpm mutation`)
 4. `xox-reviewer` bulgusu yok ya da gerekçesi journal'da
 5. `docs/board/reports/<task>.md` yazıldı **ve `main`'de var** (`git cat-file -e main:<yol>`)

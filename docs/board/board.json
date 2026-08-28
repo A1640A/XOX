@@ -2566,6 +2566,7 @@
       "agent": "xox-dev-backend",
       "deps": [],
       "acceptance": [
+        "ONCELIK DUSTU 2026-08-28: OPS-010 farkli-origin bir dagitim OLMAYACAGINA karar verdi, dolayisiyla CORS simdilik gereksiz. Kart KAPATILMIYOR — farkli-origin bir hedef gundeme gelirse ONCE OPS-010 geri alinir, SONRA bu kart P1 e ciker.",
         "E2E-005 olctu ve bir test ile kanitladi: apps/webde hicbir Access-Control-Allow-Origin yok. Farkli origin-den kimlikli fetch tarayici tarafindan engelleniyor.",
         "W2-06 kopruyu duzeltse bile mobil web AYRI bir originde dagitilirsa ticket/register/refresh cagrilarinin HEPSI ayrica kirilir.",
         "KARAR GEREKIYOR: mobil web ayni originde mi dagitilacak (CORS gereksiz) yoksa ayri mi (CORS sart, allowlist ile)? Once bunu netlestir — genis bir CORS acmak guvenlik yuzeyi ekler."
@@ -2573,7 +2574,8 @@
       "conflictSet": ["apps/web/app/api/**"],
       "status": "todo",
       "report": null,
-      "branch": null
+      "branch": null,
+      "tier": "P3"
     },
     {
       "id": "OPS-010",
@@ -2584,12 +2586,15 @@
       "acceptance": [
         "E2E-005 mobil web dist-ini kendi Node http sunucusuyla servis etmek zorunda kaldi cunku HICBIR gercek dagitimi yok. 12 rota derleniyor ve 200 donuyor ama kimse erisemiyor.",
         "Karar: ayri bir Vercel projesi mi, ayni proje altinda alt yol mu, yoksa hic yayinlanmayacak mi? W2-06 ve SEC-006 bu karara bagli.",
-        "PRODUCTION DEGISIKLIGI — kullanici onayi olmadan yapma."
+        "PRODUCTION DEGISIKLIGI — kullanici onayi olmadan yapma.",
+        "KAPANDI 2026-08-28 — KARAR: YAYINLANMAYACAK. Omer karari lead e birakti; rota kumeleri karsilastirildi ve mobil web Next.js sitesinin KOPYASI cikti (web de ayrica davet/[kod] var). Yayinlamak ayni oyunun iki rakip web arayuzu olmasi demekti. Expo web hedefi derleme/test artefakti olarak kaliyor. Gerekce: docs/memory/decisions.md 2026-08-28.",
+        "ZINCIRLEME: W2-07 P1 bloker DEGIL -> P3. SEC-006 simdilik gereksiz -> P3. Farkli-origin hedef gundeme gelirse ONCE bu karar geri alinir."
       ],
       "conflictSet": [],
-      "status": "todo",
+      "status": "done",
       "report": null,
-      "branch": null
+      "branch": null,
+      "attempts": 1
     },
     {
       "id": "PERF-007",
@@ -2657,14 +2662,16 @@
       "agent": "xox-devops",
       "deps": ["CI-007"],
       "conflictSet": [".github/workflows/ci.yml"],
-      "status": "todo",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/CI-007.md",
       "acceptance": [
         "OLCUM (CI-007, lead): son 15 CI kosusunun HICBIRI yesil degil — 3 failure, geri kalani cancelled. Iptaller dalga sirasinda art arda atilan pushlardan. Sonuc: cogu commit CI dan hic gecmedi ve kirmizi bes gece fark edilmedi.",
         "Karar gerekiyor (lead/Omer): (a) concurrency grubu + cancel-in-progress: false, (b) dalga sonunda TEK push, (c) PR akisina gecis. Secilen secenegin GEREKCESI yazilacak.",
-        "KAPANIS SARTI: degisiklikten sonra art arda iki push atilip HER IKISININ de kosuyu tamamladigi gosterilecek (run idleri raporda). \"Artik iptal olmaz\" demek yetmez."
+        "KAPANIS SARTI: degisiklikten sonra art arda iki push atilip HER IKISININ de kosuyu tamamladigi gosterilecek (run idleri raporda). \"Artik iptal olmaz\" demek yetmez.",
+        "KAPANDI 2026-08-28 — OMER'IN KARARI: secenek (b) dalga sonunda TEK push. CLAUDE.md dalga donguse eklendi: dalga boyunca yerelde commitle, push'u sona sakla, push sonrasi gh run list ile SONUCU bekle.",
+        "AYRICA (rutin karar): ci.yml concurrency cancel-in-progress true -> FALSE. Iptallerin teknik kaynagi buydu. Disiplin push sayisini azaltir, bu ayar ise DUSEN her pushun dogrulanmasini garanti eder — ikisi birbirinin yerine gecmez."
       ],
       "blockedReason": null
     },
@@ -2709,8 +2716,8 @@
     },
     {
       "id": "W2-07",
-      "title": "BLOKER (yarim): hicbir istemci redirect_uri GONDERMIYOR — mobil web girisi hala kirik",
-      "tier": "P1",
+      "title": "Mobil web girisi uctan uca calismiyor (yalniz gelistirme/test — OPS-010 sonrasi bloker DEGIL)",
+      "tier": "P3",
       "wave": "4",
       "agent": "xox-dev-mobile",
       "deps": ["W2-06"],
@@ -2723,6 +2730,7 @@
       "branch": null,
       "report": null,
       "acceptance": [
+        "ONCELIK DUSTU 2026-08-28: OPS-010 mobil webin yayinlanmayacagina karar verdi. Bu artik KULLANICIYI ETKILEYEN bir bloker degil, yalniz gelistirme/test deneyimi. W2-06 nin indirdigi alici uc ve allowlist guvenlik sozlesmesi yerinde kaliyor.",
         "W2-06 yalniz ALICI ucu hazirladi: callback artik allowliste uyan bir redirect_uri kabul ediyor. Ama browser-login.ts bu parametreyi authorize istegine EKLEMIYOR ve authorize route onu callbacke TASIMIYOR — yani bugun hicbir istemci gondermiyor ve mobil web girisi KULLANICI ICIN HALA KIRIK.",
         "ONCE KIRMIZI: uctan uca (browser-login -> authorize -> callback) web hedefinde girisin BUGUN basarisiz oldugunu gosteren testi yaz ve kirmizi ciktiyi rapora yapistir.",
         "W2-06nin guvenlik sozlesmesini BOZMA: redirect_uri allowliste karsi dogrulanir, hedef origin+pathnameden yeniden kurulur, eslesmezse xox:// davranisina duser. Allowlisti gevsetme.",

@@ -5,9 +5,15 @@ on:
     branches: [main]
   pull_request:
 
+# CI-008: `cancel-in-progress` BİLEREK `false`. Eskiden `true` idi ve dalga
+# sırasında art arda atılan her push bir öncekinin koşusunu iptal ediyordu —
+# son 15 koşunun çoğu `cancelled` olarak bitti, gerçek kırmızı beş gece
+# görünmedi (bkz. CI-007). Asıl disiplin `CLAUDE.md`de: dalga boyunca yerelde
+# commit'le, dalga sonunda TEK push at. Buradaki `false` o disiplinin ağıdır:
+# yine de iki push düşerse İKİSİ de doğrulanır, hiçbir commit atlanmaz.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   CI: '1'
