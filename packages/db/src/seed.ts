@@ -17,6 +17,13 @@ export const TEST_USERS = [
  */
 export const TEST_USER_PASSWORD = 'XoxTest!2026'
 
+/**
+ * `$setOnInsert` KULLANMA — bu kartın kendi konusu (DB-005). Bu kullanıcılar yalnız
+ * E2E/entegrasyon testleri içindir (`TEST_USERS`, sabit `_id`); gerçek oyuncu verisiyle
+ * ASLA çakışmaz. E2E koşuları bu kullanıcılarla gerçek oyun oynayıp `stats`/`elo`/
+ * `ratedGames`'i kirletiyor — seed her koştuğunda bilinen sıfır duruma GERİ DÖNDÜRÜR,
+ * yoksa `seed.test.ts` bir E2E koşusundan sonra paylaşılan Atlas'ta kalıcı kırmızı kalır.
+ */
 export async function seedTestUsers(): Promise<void> {
   await connectDb()
   const passwordHash = await hash(TEST_USER_PASSWORD)
@@ -24,8 +31,10 @@ export async function seedTestUsers(): Promise<void> {
     await User.updateOne(
       { _id: user._id },
       {
-        $set: { name: user.name, email: user.email, passwordHash },
-        $setOnInsert: {
+        $set: {
+          name: user.name,
+          email: user.email,
+          passwordHash,
           stats: { wins: 0, losses: 0, draws: 0 },
           elo: ELO_START,
           ratedGames: 0,
