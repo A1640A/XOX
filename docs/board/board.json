@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T02:01:14.226Z",
+  "updatedAt": "2026-08-28T02:02:25.272Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1145,10 +1145,10 @@
         "apps/web/app/api/auth/register/route.ts",
         "apps/web/app/api/ws/ticket/route.ts"
       ],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/DRY-002.md",
       "blockedReason": null,
       "acceptance": [
         "errorJson dört route dosyasından kaldırılıp apps/web/lib/http/error-json.ts içinde tek export olur",
@@ -1156,7 +1156,9 @@
         "Yarın gövdeye requestId eklenmesi tek dosyada mümkün olur — DRY görevinin var oluş sebebi budur",
         "knip ölü export bildirmez",
         "pnpm gates temiz"
-      ]
+      ],
+      "mergeSha": "9bdb512",
+      "note": "Dort route tek kaynaga bagli; cagri siteleri hic degismedi (git diff yalniz import/tanim). Surucu ayrintisi testleri gevsetilmedi. Ajan ilk commitinin lefthook format hatasiyla dustugunu FARK ETTI ve grepleme yerine gercek ciktiyi okudugunu belirtti — bu geceki dersin uygulanmasi. Kapsam disinda UC kopya daha bildirdi -> DRY-003."
     },
     {
       "id": "DB-003",
@@ -2423,6 +2425,27 @@
         "Hangisini secersen sec: once MEVCUT iki olu kodu geri koyup sondanin onlari YAKALADIGINI goster, sonra kaldir. Yakalamayan bir kapi eklemek kapi sayisini artirir, guveni artirmaz."
       ],
       "conflictSet": ["knip.json", "package.json"]
+    },
+    {
+      "id": "DRY-003",
+      "title": "errorJson son uc kopya: profile, friends, auth/mobile/refresh",
+      "priority": "P3",
+      "agent": "xox-dev-backend",
+      "status": "todo",
+      "deps": ["DRY-002"],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "DRY-002 dort routeu tek kaynaga bagladi ve grep ile UC kopya daha oldugunu gosterdi: apps/web/app/api/profile/route.ts, api/friends/route.ts, api/auth/mobile/refresh/route.ts. Kapsam disindaydi, dokunmadi.",
+        "Tek kaynak HAZIR: apps/web/lib/http/error-json.ts. Yeniden yazma, bagla.",
+        "DAVRANIS DEGISMEMELI — her routeun gövdesi, durum kodu ve ErrorCode birebir ayni kalmali. auth/mobile/** bu gece W2-03 tarafindan yazildi, kendi hata sekli olabilir; ONCE OKU.",
+        "Surucu ayrintisi sizmadigi testlerini gevsetme."
+      ],
+      "conflictSet": [
+        "apps/web/app/api/profile/route.ts",
+        "apps/web/app/api/friends/route.ts",
+        "apps/web/app/api/auth/mobile/refresh/route.ts"
+      ]
     }
   ],
   "wave": "G2-2"
