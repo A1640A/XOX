@@ -2424,18 +2424,20 @@
       "title": "knip is paketlerindeki olu disa verimi goremiyor — alti kapi onerisi",
       "priority": "P2",
       "agent": "xox-devops",
-      "status": "in_wave",
+      "status": "done",
       "deps": [],
-      "report": null,
-      "branch": "feat/CI-006",
+      "report": "docs/board/reports/CI-006.md",
+      "branch": null,
       "acceptance": [
         "IKI BAGIMSIZ KOR NOKTA olculdu (SEC-005 raporu): (1) knip.json packages/* icin entry:[\"src/index.ts\"] tanimliyor; entry dosyasinin exportlari ASLA unused sayilmiyor — bu varsayim yayinlanan kutuphaneler icin dogru, bizimkiler yayinlanmiyor. (2) knip bir exportun YALNIZ kendi *.test.ts-inden import edilmesini de kullanim sayiyor.",
         "KANIT: bu hafta IKI olu kod merge oldu ve gates yesil gecti — revokeWsTicketsForUser (kor nokta 1, SEC-005 canlandirdi) ve useBoardModes (kor nokta 2, lead bagladi).",
         "ONERI A: entry listesini yalniz gercekten CLI-dan cagrilan dosyalarla sinirla (seed.ts/reset.ts). DOGRULANMADI, canli denenmeli.",
         "ONERI B: kniptin disinda deterministik bir olu-disa-verim sondasi — her index.ts re-exportu icin tanim + kendi test dosyasi disinda en az bir kullanim ara. pnpm gates-e ALTINCI kapi olarak eklenebilir.",
-        "Hangisini secersen sec: once MEVCUT iki olu kodu geri koyup sondanin onlari YAKALADIGINI goster, sonra kaldir. Yakalamayan bir kapi eklemek kapi sayisini artirir, guveni artirmaz."
+        "Hangisini secersen sec: once MEVCUT iki olu kodu geri koyup sondanin onlari YAKALADIGINI goster, sonra kaldir. Yakalamayan bir kapi eklemek kapi sayisini artirir, guveni artirmaz.",
+        "KAPANDI 2026-08-28: Option A (knip entry daraltma) CANLI denendi ve REDDEDILDI — iki bilinen olu kod hala yakalanmadi, cunku kor nokta 2 (kendi testi = kullanim) entry ayarindan bagimsiz. Option B uygulandi: scripts/dead-export-probe.mjs, altinci kapi, ~0.1s. LEAD DOGRULAMASI: temiz agacta exit 0; taze bir olu disa verim eklendiginde exit 1 ve dogru dosya:satir. Merge 1606ff9. pnpm gates exit 0. turbo --force: Cached: 0 cached, 13/13 successful."
       ],
-      "conflictSet": ["knip.json", "package.json"]
+      "conflictSet": ["knip.json", "package.json"],
+      "attempts": 1
     },
     {
       "id": "DRY-003",
@@ -2598,6 +2600,27 @@
         "Secenekler: agir rotalarda next/dynamic siniri (PERF-003 deseni), sema kullanimini azaltma, ya da olculerek butce revizyonu. Hangisini secersen OLCUMLE gerekcelendir."
       ],
       "conflictSet": []
+    },
+    {
+      "id": "CLEANUP-001",
+      "title": "CI-006 baseline: 16 gercek olu disa verim — TEK TEK degerlendir, TOPLU SILME",
+      "tier": "P3",
+      "wave": "4",
+      "agent": "xox-dev-core",
+      "deps": ["CI-006"],
+      "conflictSet": ["scripts/dead-export-probe.baseline.json"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "TUZAK 1 — lead olctu: baseline 16 kalem AYNI SEY DEGIL. meetsTextContrast (ui-tokens/contrast.ts) uretim kodundan cagrilmiyor AMA kendi testi ALL_THEMES x TEXT_TOKENS gezip >=4.5:1 kontrasti dogruluyor. Yani fonksiyonun KENDISI erisilebilirlik kapisidir; silinirse kontrast kapisi SESSIZCE kalkar. contrastRatio icin de ayni soruyu sor.",
+        "TUZAK 2 — lead olctu: MAX_PROTOCOL_VIOLATIONS (shared/constants.ts) TERSI durum. Sinir GERCEKTEN uygulaniyor ama connection.ts:349 kendi yerel MAX_CONSECUTIVE_VIOLATIONS sabitiyle (satir 49 cipla sayinin BILEREK secildigini acikliyor: sabitten turetilmis test kor kalir). Shared kopyasi bir DECOY — dogruluk kaynagi gibi duruyor, degil. Degeri 5 yapilsa davranis degismez, yalniz kendi testi kizarir ve test duzeltilerek sessizce kapatilir. Bunun SILINMESI dogru.",
+        "Her kalemi uc siniftan birine ata ve GEREKCESINI yaz: (a) SIL — gercekten olu; (b) BIRAK — test-ici kapi/assertion yardimcisi, baseline da kalir ve NEDENI baseline yaninda belgelenir; (c) URETIMDE CAGRILMALI — eksik davranis, AYRI kart ac.",
+        "(a) sinifi silindikten sonra pnpm gates exit 0 VE node scripts/dead-export-probe.mjs exit 0",
+        "Hicbir testi ZAYIFLATMA. Bir export silinince testi de siliniyorsa, o testin neyi korudugunu ONCE yaz. Koruma kaybi varsa o kalem (a) degildir."
+      ],
+      "blockedReason": null
     }
   ],
   "wave": "G2-4"
