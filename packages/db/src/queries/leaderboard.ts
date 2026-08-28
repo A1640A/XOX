@@ -7,6 +7,16 @@ export interface LeaderboardEntry {
   name: string
   elo: number
   stats: { wins: number; losses: number; draws: number }
+  /**
+   * W3-03: `@xox/shared`'ın `leaderboardResponseSchema`sı (W3-01) bu alanı
+   * satır başına ZORUNLU kılıyordu ama bu dosya hiç projekte etmiyordu —
+   * `/api/leaderboard` sözleşmeyi karşılayamıyordu. Yalnız EKLENDİ: projeksiyon
+   * listesine bir alan katmak sıralama/filtre PLANINI etkilemez (`name`/`stats`
+   * zaten indekste değil, sorgu FETCH aşamasını zaten gerektiriyordu) — `find`
+   * + `sort` + `limit` ŞEKLİ aşağıda değişmedi, kanıt: `leaderboard.test.ts`
+   * KK-117 explain testi bu değişiklikten SONRA da COLLSCAN/SORT içermiyor.
+   */
+  ratedGames: number
 }
 
 export interface LeaderboardView {
@@ -34,7 +44,7 @@ export async function getLeaderboardTop(
 ): Promise<LeaderboardEntry[]> {
   const docs = await User.find(
     { ratedGames: { $gte: LEADERBOARD_MIN_RATED_GAMES } },
-    'name elo stats',
+    'name elo stats ratedGames',
   )
     .sort({ elo: -1 })
     .limit(limit)
@@ -45,6 +55,7 @@ export async function getLeaderboardTop(
     name: doc.name,
     elo: doc.elo,
     stats: doc.stats,
+    ratedGames: doc.ratedGames,
   }))
 }
 
@@ -70,6 +81,7 @@ export async function getLeaderboardSelf(userId: string): Promise<LeaderboardEnt
     name: user.name,
     elo: user.elo,
     stats: user.stats,
+    ratedGames: user.ratedGames,
   }
 }
 
