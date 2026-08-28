@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type z } from 'zod'
+import { z } from 'zod'
 import { EMOJI_PALETTE } from './constants'
 import { clientMessageSchema, serverMessageSchema, stateMessageSchema } from './ws-protocol'
 
@@ -444,5 +444,65 @@ describe('serverMessageSchema', () => {
 
   it('bilinmeyen sunucu mesajını reddeder', () => {
     expect(serverMessageSchema.safeParse({ type: 'kaboom' }).success).toBe(false)
+  })
+})
+
+/**
+ * CTR-004 — `move:applied` artık `turnDeadline` TAŞIR.
+ *
+ * Alan OPSİYONELDİR, bu yüzden yukarıdaki `zorunluAlanHaritasi` tablosu onu
+ * GÖREMEZ (`zorunluAlanCiftleri` isteğe bağlı alanları bilerek eler). Şemadan
+ * silinirse orayı KIRMAZ — kilit bu bloktur, silinmemeli.
+ */
+describe('CTR-004 — move:applied.turnDeadline (§2.5 genişletme)', () => {
+  const yanki = { type: 'move:applied', index: 4, by: 'X', version: 2 } as const
+
+  it('epoch ms hedefi taşır ve KIRPILMAZ', () => {
+    const sonuc = serverMessageSchema.safeParse({ ...yanki, turnDeadline: 1_770_000_060_000 })
+    expect(sonuc.success).toBe(true)
+    if (!sonuc.success) return
+    expect(sonuc.data).toStrictEqual({ ...yanki, turnDeadline: 1_770_000_060_000 })
+  })
+
+  it('null olabilir — hamle oyunu bitirdiğinde sayaç durur', () => {
+    const sonuc = serverMessageSchema.safeParse({ ...yanki, turnDeadline: null })
+    expect(sonuc.success).toBe(true)
+    if (!sonuc.success) return
+    expect(sonuc.data).toStrictEqual({ ...yanki, turnDeadline: null })
+  })
+
+  it('OPSİYONELDİR — alanı hiç göndermeyen ESKİ sunucunun çerçevesi geçerli kalır', () => {
+    const sonuc = serverMessageSchema.safeParse(yanki)
+    expect(sonuc.success).toBe(true)
+    if (!sonuc.success) return
+    expect(Object.prototype.hasOwnProperty.call(sonuc.data, 'turnDeadline')).toBe(false)
+  })
+
+  it('kesirli sayıyı, metni ve undefined DIŞI çöpü reddeder', () => {
+    expect(serverMessageSchema.safeParse({ ...yanki, turnDeadline: 1.5 }).success).toBe(false)
+    expect(serverMessageSchema.safeParse({ ...yanki, turnDeadline: '1770000060000' }).success).toBe(
+      false,
+    )
+    expect(serverMessageSchema.safeParse({ ...yanki, turnDeadline: {} }).success).toBe(false)
+  })
+
+  /**
+   * GERİYE DÖNÜK UYUMLULUK KANITI. `eskiIstemciSemasi` CTR-004 ÖNCESİ
+   * `move:applied` şeklinin elle yazılmış kopyasıdır — `ws-protocol.ts`'ten
+   * TÜRETİLMEZ (türetilseydi yeni alanla birlikte büyür ve hiçbir şey
+   * kanıtlamazdı). Sürüm atlamış bir mobil istemci bu şemayla ayrıştırır.
+   */
+  it('ESKİ İSTEMCİ KIRILMAZ — yeni alanı sessizce kırpar, dört alanı aynen okur', () => {
+    const eskiIstemciSemasi = z.object({
+      type: z.literal('move:applied'),
+      index: z.number().int().min(0).max(120),
+      by: z.enum(['X', 'O']),
+      version: z.number().int().nonnegative(),
+    })
+
+    const sonuc = eskiIstemciSemasi.safeParse({ ...yanki, turnDeadline: 1_770_000_060_000 })
+    expect(sonuc.success).toBe(true)
+    if (!sonuc.success) return
+    expect(sonuc.data).toStrictEqual(yanki)
   })
 })

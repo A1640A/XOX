@@ -221,7 +221,19 @@ export function createRoomConnection(deps: RoomConnectionDeps): RoomConnection {
       room.version === previous.version + 1 && room.moves.length === previous.moveCount + 1
     const lastMove = room.moves[room.moves.length - 1]
     if (thin && lastMove !== undefined) {
-      send({ type: 'move:applied', index: lastMove.index, by: lastMove.by, version: room.version })
+      send({
+        type: 'move:applied',
+        index: lastMove.index,
+        by: lastMove.by,
+        version: room.version,
+        // CTR-004 — sayaç bu yolda tazelenir. `applyMove` her hamlede
+        // `rooms.turnDeadline`'ı yeniden yazıyor (W2-01); alan taşınmazsa
+        // istemci iki tam `state` arasında oyunun BAŞLANGIÇ hedefinde asılı
+        // kalıyor ve ~60 sn sonra 0 gösteriyordu. Oyunu bitiren hamlede
+        // `turnDeadline` odada `null`dır ve `null` OLARAK gider — atlanmaz:
+        // atlanan alan istemcide "bilgi yok" demektir ve eski hedefi korurdu.
+        turnDeadline: room.turnDeadline === null ? null : room.turnDeadline.getTime(),
+      })
       return
     }
     // Boşluk, rövanş, presence yazımı, resync: tam durum tek doğru cevaptır

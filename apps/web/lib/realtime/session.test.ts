@@ -718,7 +718,11 @@ describe('session · change stream olayları', () => {
       }),
     )
 
-    expect(f.sent).toStrictEqual([{ type: 'move:applied', index: 0, by: 'X', version: 11 }])
+    // `turnDeadline` CTR-004 ile ince yola eklendi; bu fixture'ın odasında
+    // hedef yok, dolayısıyla `null` gider ("hedef yok", "bilgi yok" DEĞİL).
+    expect(f.sent).toStrictEqual([
+      { type: 'move:applied', index: 0, by: 'X', version: 11, turnDeadline: null },
+    ])
     expect(f.settlementTimer.scheduled).toBe(before + 1)
   })
 

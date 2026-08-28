@@ -86,6 +86,30 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
     index: cellIndexSchema,
     by: playerSchema,
     version: z.number().int().nonnegative(),
+    /**
+     * Sıradaki oyuncunun yeni süre hedefi (CTR-004). `state` mesajları
+     * ARASINDA geçen her hamlede sayacın bayatlamasını engeller: W2-01
+     * `rooms.turnDeadline`'ı her hamlede yeniden yazıyor ama ince yol onu
+     * taşımadığı için istemci oyunun BAŞLANGIÇ hedefinde takılı kalıyordu
+     * (~60 sn sonra 0 gösteriyor, oysa sunucu hâlâ süre veriyor).
+     *
+     * Üç ayrı anlamı vardır, ikisi değil:
+     *   `number`    → yeni hedef,
+     *   `null`      → hedef YOK (hamle oyunu bitirdi; sayaç durur),
+     *   ALAN YOK    → sunucu bu bilgiyi göndermiyor (CTR-004 öncesi sürüm);
+     *                 istemci son bildiği hedefi KORUR.
+     *
+     * Bu yüzden `.optional()` — geriye dönük uyumluluğun İKİ yönü de var:
+     * eski istemci fazla anahtarı zaten kırpar; yeni istemci ise ESKİ bir
+     * sunucunun çerçevesini `turnDeadline` zorunlu olsaydı tümüyle REDDEDER
+     * ve yankıyı kaçırıp tahtayı dondururdu.
+     *
+     * `serverTime` bilerek EKLENMEDİ: saat sapması `state`ten gelen
+     * `serverOffsetMs` ile zaten düzeltiliyor ve o değer en geç 300 sn'lik
+     * Z2 rotasyonunda tazeleniyor — her hamlede ikinci bir damga taşımak
+     * R1 fan-out bütçesini karşılıksız büyütürdü.
+     */
+    turnDeadline: epochMsSchema.nullable().optional(),
   }),
   z.object({
     type: z.literal('move:rejected'),
