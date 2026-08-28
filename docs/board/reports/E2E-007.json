@@ -1,0 +1,80 @@
+{
+  "task": "E2E-007",
+  "wave": null,
+  "mode": "diagnosis-only",
+  "compared": [
+    {
+      "runId": 33133885483,
+      "headSha": "69f56bf702d411cb7856a29f0e674c6e44940631",
+      "headBranch": "chore/gece2-preview-dogrulama",
+      "createdAt": "2026-08-28T01:46:32Z",
+      "conclusion": "success"
+    },
+    {
+      "runId": 33134842205,
+      "headSha": "6da73f2c82623aeadeb60db70045bca7bc3f24f3",
+      "headBranch": "chore/gece2-karantina-sonrasi",
+      "createdAt": "2026-08-28T02:05:23Z",
+      "conclusion": "failure",
+      "passed": 43,
+      "failed": 3,
+      "flaky": 1
+    }
+  ],
+  "liveRerun": {
+    "attempted": true,
+    "result": "DOGRULANMADI",
+    "reason": "VERCEL_AUTOMATION_BYPASS_SECRET bu ortamda yok; vercel env pull Claude Code izin sinif­landiricisi tarafindan engellendi, atlatma denenmedi."
+  },
+  "gatesExitCode": 0,
+  "filesChanged": [],
+  "findings": [
+    {
+      "id": "KK-070-071",
+      "severity": "was-flaky-now-fixed-unverified",
+      "test": "timeout-abandon.spec.ts › KK-070/071 · terk bildirimi metni",
+      "expected": "Rakibin bağlantısı koptu (banner metni ~2s içinde görünür)",
+      "actual": "3/3 denemede 2000ms içinde bulunamadı",
+      "classification": "test-fragility",
+      "rootCause": "OpponentLeftBanner 1s setInterval tikiyle 2000ms eşiğini faz-hizasız değerlendiriyor; test payı sıfırdı.",
+      "fixCommit": "480ab66a2e17af23bb4e82e89b000d70960425da",
+      "fixAlreadyInMain": true,
+      "fixVerifiedLive": false,
+      "suspectedFile": null,
+      "action": "none-required-in-this-card"
+    },
+    {
+      "id": "KK-072",
+      "severity": "major",
+      "test": "timeout-abandon.spec.ts › KK-072 · grace dolunca terk galibiyeti",
+      "expected": "\"Rakibin oyunu terk etti — kazandın!\" 40sn içinde",
+      "actual": "3/3 denemede 40000ms boyunca değişmeden \"Sıra rakipte\" kaldı",
+      "classification": "suspected-product-bug",
+      "confidence": "medium",
+      "evidence": [
+        "Aynı runda KK-074 (turnDeadline tek-seferlik kurulum yolu) geçti — settlement mekanizması genel olarak çalışıyor",
+        "KK-072 turnDeadline'dan (60s) daha kısa bir grace deadline'a (30s) YENİDEN kurulum gerektiriyor",
+        "session.test.ts'teki mevcut testler bu 'zaten kurulu zamanlayıcının DAHA KISA bir deadline'a yeniden kurulması' senaryosunu değer bazında doğrulamıyor (yalnız çağrı sayacı)"
+      ],
+      "suspectedFile": "apps/web/lib/realtime/room-hub.ts",
+      "suspectedFile2": "apps/web/lib/realtime/session.ts",
+      "action": "new-card-recommended",
+      "testModified": false,
+      "modificationForbiddenReason": "timeout büyütme/assertion gevşetme kart tarafından yasak; hipotez doğrulanmadan test maskesi eklenmedi"
+    },
+    {
+      "id": "KK-083",
+      "severity": "flaky",
+      "test": "profile.spec.ts › KK-083 · tema seçimi",
+      "expected": "kayıt sonrası 15sn içinde '/' yönlendirmesi",
+      "actual": "2/3 denemede 15000ms aşıldı, 3. denemede geçti",
+      "classification": "environment-contention",
+      "rootCauseHypothesis": "Aynı anda koşan uzun süreli (30-70s) iki-oyunculu testlerle (timeout-abandon.spec.ts) CPU/Atlas kaynak çekişmesi — dosyaya özgü kod kusuru için kanıt yok",
+      "suspectedFile": null,
+      "action": "backlog-note",
+      "testModified": false
+    }
+  ],
+  "commit": null,
+  "mergePush": "not-performed"
+}
