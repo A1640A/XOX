@@ -10,6 +10,7 @@ import {
   type Match,
 } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { headingDisplay, mutedText } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 import { matchReasonText } from './reason-text'
 
@@ -81,50 +82,58 @@ export function HistoryContent(): React.ReactElement | null {
     }
   }, [status])
 
-  if (status === 'loading') return <p>{tr.common.loading}</p>
+  if (status === 'loading') return <p className={mutedText}>{tr.common.loading}</p>
   // Middleware zaten girişsizi `/giris`e yönlendirir; bu yalnız bir güvenlik ağıdır.
   if (session === null) return null
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">{tr.history.title}</h1>
+      <h1 className={`${headingDisplay} text-2xl`}>{tr.history.title}</h1>
 
       {loadError !== null ? <ErrorBanner code={loadError} /> : null}
-      {matches === null && loadError === null ? <p>{tr.common.loading}</p> : null}
-      {matches !== null && matches.length === 0 ? <p>{tr.history.empty}</p> : null}
+      {matches === null && loadError === null ? (
+        <p className={mutedText}>{tr.common.loading}</p>
+      ) : null}
+      {matches !== null && matches.length === 0 ? (
+        <p className={mutedText}>{tr.history.empty}</p>
+      ) : null}
 
       {matches !== null && matches.length > 0 ? (
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-border border-b">
-              <th scope="col" className="p-2 font-semibold">
+              <th scope="col" className={`p-2 font-semibold ${mutedText}`}>
                 {tr.history.date}
               </th>
-              <th scope="col" className="p-2 font-semibold">
+              <th scope="col" className={`p-2 font-semibold ${mutedText}`}>
                 {tr.history.opponent}
               </th>
-              <th scope="col" className="p-2 font-semibold">
+              <th scope="col" className={`p-2 font-semibold ${mutedText}`}>
                 {tr.history.result}
               </th>
-              <th scope="col" className="p-2 font-semibold">
+              <th scope="col" className={`p-2 font-semibold ${mutedText}`}>
                 {tr.history.eloChange}
               </th>
             </tr>
           </thead>
           <tbody>
             {matches.map((match, index) => (
-              <tr key={match.gameId} data-testid={historyRowTestId(index)} className="align-top">
-                <td className="p-2 whitespace-nowrap">
+              <tr
+                key={match.gameId}
+                data-testid={historyRowTestId(index)}
+                className="border-border align-top border-b last:border-0"
+              >
+                <td className="text-text-muted p-2 font-mono whitespace-nowrap">
                   {dateFormatter.format(new Date(match.finishedAt))}
                 </td>
-                <td className="p-2">{match.opponent.name}</td>
-                <td className="p-2">
+                <td className="p-2 text-text">{match.opponent.name}</td>
+                <td className="p-2 text-text">
                   <span>{resultLabel(match.result)}</span>
-                  <p className="text-xs opacity-80">
+                  <p className={`${mutedText} text-xs`}>
                     {matchReasonText(match.result, match.endReason)}
                   </p>
                 </td>
-                <td className="p-2">
+                <td className="p-2 font-mono text-text">
                   {formatEloDelta(match)}
                   {!match.rated ? <span className="sr-only"> ({tr.history.unrated})</span> : null}
                 </td>

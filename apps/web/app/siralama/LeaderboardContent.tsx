@@ -11,6 +11,7 @@ import {
   type LeaderboardResponse,
 } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { headingDisplay, mutedText } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 /**
@@ -72,33 +73,37 @@ export function LeaderboardContent(): React.ReactElement | null {
     }
   }, [status])
 
-  if (status === 'loading') return <p>{tr.common.loading}</p>
+  if (status === 'loading') return <p className={mutedText}>{tr.common.loading}</p>
   // Middleware zaten girişsizi `/giris`e yönlendirir; bu yalnız bir güvenlik ağıdır.
   if (session === null) return null
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">{tr.leaderboard.title}</h1>
-      <p className="text-xs opacity-80">{tr.leaderboard.requirement}</p>
+      <h1 className={`${headingDisplay} text-2xl`}>{tr.leaderboard.title}</h1>
+      <p className={`${mutedText} text-xs`}>{tr.leaderboard.requirement}</p>
 
       {loadError !== null ? <ErrorBanner code={loadError} /> : null}
-      {data === null && loadError === null ? <p>{tr.common.loading}</p> : null}
-      {data !== null && data.entries.length === 0 ? <p>{tr.leaderboard.empty}</p> : null}
+      {data === null && loadError === null ? (
+        <p className={mutedText}>{tr.common.loading}</p>
+      ) : null}
+      {data !== null && data.entries.length === 0 ? (
+        <p className={mutedText}>{tr.leaderboard.empty}</p>
+      ) : null}
 
       {data !== null && data.entries.length > 0 ? (
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-border border-b">
-              <th scope="col" className="p-2 font-semibold">
+              <th scope="col" className={`p-2 font-semibold ${mutedText}`}>
                 {tr.leaderboard.rank}
               </th>
-              <th scope="col" className="p-2 font-semibold">
+              <th scope="col" className={`p-2 font-semibold ${mutedText}`}>
                 {tr.leaderboard.player}
               </th>
-              <th scope="col" className="p-2 font-semibold">
+              <th scope="col" className={`p-2 font-semibold ${mutedText}`}>
                 {tr.leaderboard.elo}
               </th>
-              <th scope="col" className="p-2 font-semibold">
+              <th scope="col" className={`p-2 font-semibold ${mutedText}`}>
                 {tr.leaderboard.record}
               </th>
             </tr>
@@ -108,28 +113,28 @@ export function LeaderboardContent(): React.ReactElement | null {
               <tr
                 key={entry.userId}
                 data-testid={leaderboardRowTestId(entry.rank - 1)}
-                className="align-top"
+                className="border-border align-top border-b last:border-0"
               >
-                <td className="p-2">{entry.rank}</td>
-                <td className="p-2">{entry.name}</td>
-                <td className="p-2">{entry.elo}</td>
-                <td className="p-2">{recordText(entry)}</td>
+                <td className="p-2 font-mono text-text">{entry.rank}</td>
+                <td className="p-2 text-text">{entry.name}</td>
+                <td className="p-2 font-mono text-text">{entry.elo}</td>
+                <td className="text-text-muted p-2 font-mono">{recordText(entry)}</td>
               </tr>
             ))}
             {data.you !== null ? (
               <tr
                 data-testid={leaderboardRowTestId(data.you.rank - 1)}
-                className="border-border align-top border-t font-semibold"
+                className="border-border bg-surface-raised align-top border-t font-semibold"
               >
-                <td className="p-2">{data.you.rank}</td>
-                <td className="p-2">
+                <td className="p-2 font-mono text-text">{data.you.rank}</td>
+                <td className="p-2 text-text">
                   {data.you.name}
-                  <span className="ml-2 text-xs font-normal opacity-80">
+                  <span className={`${mutedText} ml-2 text-xs font-normal`}>
                     ({tr.leaderboard.yourRank})
                   </span>
                 </td>
-                <td className="p-2">{data.you.elo}</td>
-                <td className="p-2">{recordText(data.you)}</td>
+                <td className="p-2 font-mono text-text">{data.you.elo}</td>
+                <td className="text-text-muted p-2 font-mono">{recordText(data.you)}</td>
               </tr>
             ) : null}
           </tbody>

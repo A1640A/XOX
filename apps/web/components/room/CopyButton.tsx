@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { buttonGhostSmall } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 export interface CopyButtonProps {
@@ -42,6 +43,7 @@ export function CopyButton({ label, getValue, testId }: CopyButtonProps): React.
       data-testid={testId}
       data-kopyalandi={copied ? 'true' : undefined}
       onClick={handleClick}
+      className={buttonGhostSmall}
     >
       {copied ? tr.common.copied : label}
     </button>

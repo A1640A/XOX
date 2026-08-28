@@ -1,5 +1,12 @@
 import { TESTID } from '@xox/shared'
+import { badgeBase, buttonGhostSmall } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
+
+function badgeToneClassName(status: ConnectionBadgeProps['status']): string {
+  if (status === 'bagli') return 'border-win text-win'
+  if (status === 'devredildi') return 'border-border text-text-muted'
+  return 'border-danger text-danger'
+}
 
 export interface ConnectionBadgeProps {
   readonly status: 'baglaniyor' | 'bagli' | 'kopuk' | 'devredildi'
@@ -28,10 +35,12 @@ export interface ConnectionBadgeProps {
  */
 export function ConnectionBadge({ status, onRetry }: ConnectionBadgeProps): React.ReactElement {
   return (
-    <p data-testid={TESTID.baglantiDurumu} data-durum={status}>
-      {connectionLabel(status)}
+    <p data-testid={TESTID.baglantiDurumu} data-durum={status} className="flex items-center gap-2">
+      <span className={`${badgeBase} ${badgeToneClassName(status)}`}>
+        {connectionLabel(status)}
+      </span>
       {status === 'kopuk' && onRetry ? (
-        <button type="button" onClick={onRetry}>
+        <button type="button" onClick={onRetry} className={buttonGhostSmall}>
           {tr.common.retry}
         </button>
       ) : null}
