@@ -15,21 +15,21 @@ import { tr } from '@/messages/tr'
  * istemci hook'undan okunur, `SessionProvider` `app/layout.tsx`'te kurulur.
  *
  * **AUTH-004 güvenlik düzeltmesi — `prefetch={false}`:** bu dört bağlantı
- * (`/profil`, `/siralama`, `/gecmis`, `/arkadaslar`) `middleware.ts`'in
+ * (`/profil`, `/siralama`, `/gecmis`, `/arkadaslar`) `proxy.ts`'in
  * `config.matcher`'ıyla BİREBİR aynı korumalı kümedir (bkz. `auth.config.ts`
  * `MIDDLEWARE_MATCHER`). Next.js `<Link>`'in varsayılan otomatik prefetch'i
  * (görünüme girince/hover'da) bu yolları arka planda GET'ler; istek
- * `middleware.ts`'teki `auth()` sarmalayıcısından geçer ve JWT hâlâ geçerliyse
+ * `proxy.ts`'teki `auth()` sarmalayıcısından geçer ve JWT hâlâ geçerliyse
  * oturum çerezini YENİDEN YAZAR (rolling `Set-Cookie`). Kullanıcı `/profil`
  * sayfasındayken bu dört bağlantı zaten viewport'ta olduğu için otomatik
  * prefetch tetiklenir; "Çıkış yap" tıklanıp `signOut()` çerezi `Max-Age=0`
  * ile sildikten SONRA bu prefetch isteklerinden biri tamamlanırsa, kendi
  * `Set-Cookie`'siyle silmeyi geri alır — kullanıcı çıkış yaptığını görür ama
  * oturum teknik olarak canlı kalır (paylaşılan cihazda hesap devralma).
- * `middleware.ts` YALNIZ bu altı yolu eşliyor (matcher), dolayısıyla prefetch'i
+ * `proxy.ts` YALNIZ bu altı yolu eşliyor (matcher), dolayısıyla prefetch'i
  * tam bu dört bağlantıda kapatmak yarışın KAYNAĞINI SIFIRLAR — kısmi bir
  * yama değil. Diğer bağlantılar (`/`, `/giris`, `/kayit`) matcher'a girmediği
- * için `middleware.ts` onlarda hiç çalışmaz, dokunulmadı.
+ * için `proxy.ts` onlarda hiç çalışmaz, dokunulmadı.
  */
 export function TopBar(): React.ReactElement {
   const { data: session } = useSession()
