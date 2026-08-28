@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T02:02:25.272Z",
+  "updatedAt": "2026-08-28T02:13:33.053Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -846,9 +846,9 @@
         "apps/web/app/gecmis/**",
         "apps/web/app/api/matches/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W3-02",
       "report": null,
       "acceptance": [
         "GET /api/matches sorgusu find({participants: uid, finishedAt:{$ne:null}}).sort({finishedAt:-1}).limit(HISTORY_PAGE_SIZE); explain('executionStats') çıktısında COLLSCAN YOK — participants eşitliği indeks öneki, finishedAt ikinci alan (KK-117)",
@@ -1090,10 +1090,10 @@
       "agent": "xox-perf",
       "deps": ["UI-SKEL-001", "WS-001"],
       "conflictSet": [],
-      "status": "todo",
+      "status": "done",
       "attempts": 0,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/PERF-001.md",
       "acceptance": [
         "size-limit calistirilir; 180 kB gzip butcesine karsi gercek sayi raporlanir.",
         "'use client' sayilir; her birinin gercekten state/effect/event ihtiyaci var mi degerlendirilir.",
@@ -1101,7 +1101,9 @@
         "WS: bir hamlede kac mesaj gidiyor, tam state mi delta mi, heartbeat araligi makul mu.",
         "OLCMEDIGIN SEYI RAPORLAMA — sayi ver ya da 'olculmedi' yaz."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "6da73f2",
+      "note": "Olcum karti (salt-okunur ajan, dogru atanmis). bundle 224.04 kB en agir, 10/10 rota butcede, dokuz kartlik dalgadan sonra SURUKLENME YOK. client component 23 (naif grep 24 buluyordu; biri yorumdaki sahte pozitif — ajan ilk-kod-satiri kontroluyle duzeltti). unindexed_queries: [] — yedi sicak sorgu explain ile IXSCAN/EXPRESS_IXSCAN. ws_messages_per_move: 3 (~194-198 B); CTR-004un +31 B iddiasi dogrulandi. GERCEK KOR NOKTA BULDU -> DB-006."
     },
     {
       "id": "MEM-001",
@@ -1257,9 +1259,9 @@
       "agent": "xox-devops",
       "deps": ["WS-001", "SEC-002"],
       "conflictSet": ["apps/web/middleware.ts", "apps/web/proxy.ts"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/OPS-004",
       "report": null,
       "blockedReason": null,
       "acceptance": [
@@ -2446,7 +2448,24 @@
         "apps/web/app/api/friends/route.ts",
         "apps/web/app/api/auth/mobile/refresh/route.ts"
       ]
+    },
+    {
+      "id": "DB-006",
+      "title": "WsTicket indeksleri EXPECTED_INDEXES listesinde YOK — ensureIndexes onlari hic kurmuyor",
+      "priority": "P1",
+      "agent": "xox-dev-backend",
+      "status": "todo",
+      "deps": [],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "PERF-001 olctu: packages/db/src/indexes.ts icindeki EXPECTED_INDEXES/MODELS listesi WsTicket-i HIC icermiyor (Room/Game/User/Friendship/MobileRefreshToken var). wsTickets koleksiyonunun uc indeksi (jti unique, expiresAt TTL, userId+usedAt) su an YALNIZCA mongoose autoIndex ile var — canli sorgulandi, ucu de mevcut.",
+        "IKI SONUC: (1) indexes.test.ts-in \"tasarim §3.6 tam liste\" iddiasi WsTicket-a hic bakmiyor; ws-ticket.ts-ten bir indeks satiri silinse test YAKALAMAZ. (2) migrate.ts -> ensureIndexes() ve /api/admin/migrate runbooku bu uc indeksi asla acikca kurmuyor — dosyanin KENDI yorumunun diger bes koleksiyon icin kacindigi risk (autoIndex ne zaman biter belli degil) WsTicket icin hic kapatilmamis.",
+        "consumeWsTicket HER WS baglanti kurulumunda hot pathte kosuyor (SEC-003). Su an olculebilir yavaslama YOK — bu bir test/production-garanti kor noktasi, performans regresyonu degil.",
+        "KAPANIS: WsTicket EXPECTED_INDEXES-e eklenir; ws-ticket.ts-ten bir indeks silinince indexes.test.ts KIRMIZI doner (sonda ile goster)."
+      ],
+      "conflictSet": ["packages/db/src/indexes.ts", "packages/db/src/indexes.test.ts"]
     }
   ],
-  "wave": "G2-2"
+  "wave": "G2-3"
 }
