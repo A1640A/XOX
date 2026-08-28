@@ -300,6 +300,10 @@ describe('RoomScreen', () => {
     expect(lastPropsOf(OpponentLeftBanner)).toStrictEqual({
       graceEndsAt: 6_789,
       serverOffsetMs: 42,
+      // UI-005: bu state 'playing' olduğu için false. Prop'un DOĞRU bağlandığını
+      // (yalnız var olduğunu değil) alttaki ayrı test kanıtlıyor — burada true
+      // olsaydı bu satır sessizce yanlış bir kablolamayı da kabul ederdi.
+      gameEnded: false,
     })
     expect(lastPropsOf(InviteLink)).toStrictEqual({ roomCode: 'ABC234' })
     expect(lastPropsOf(EmojiTray)).toStrictEqual({
@@ -308,4 +312,23 @@ describe('RoomScreen', () => {
     })
     expect(lastPropsOf(FriendAddButton)).toStrictEqual({ opponentId: 'u2', visible: false })
   })
+
+  it(
+    'UI-005: oyun BİTTİĞİNDE OpponentLeftBanner gameEnded=true alır — grace dolup terk ' +
+      'galibiyetiyle sonuçlanmak ile GERÇEK yeniden bağlanma aynı sinyali (graceEndsAt null) ' +
+      'üretiyor; ayrımı yalnız bu prop taşıyor',
+    () => {
+      withState({
+        connection: 'bagli',
+        you: 'X',
+        graceEndsAt: null,
+        serverOffsetMs: 42,
+        status: { kind: 'won', winner: 'X', line: null, reason: 'abandon' },
+      })
+
+      render(<RoomScreen roomCode="ABC234" />)
+
+      expect(lastPropsOf(OpponentLeftBanner)).toMatchObject({ gameEnded: true })
+    },
+  )
 })

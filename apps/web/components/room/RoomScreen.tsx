@@ -112,7 +112,18 @@ export function RoomScreen({ roomCode }: RoomScreenProps): React.ReactElement {
       />
 
       <TurnTimer deadline={state.turnDeadline} serverOffsetMs={state.serverOffsetMs} />
-      <OpponentLeftBanner graceEndsAt={state.graceEndsAt} serverOffsetMs={state.serverOffsetMs} />
+      {/* `gameEnded` UI-005: `graceEndsAt`in null'a düşmesi İKİ ayrı olayın aynı
+          sinyali — gerçek yeniden bağlanma ve grace'in dolup terk/timeout
+          galibiyetiyle bitmesi. `settle.ts` ikincisinde `disconnected:null` ile
+          `state:'finished'`i TEK CAS yazmasında birlikte yazar, yani oyun aynı
+          anda biter; gerçek dönüşte oyun `'playing'` kalır. Bu prop olmadan
+          kazanan oyuncu doğru "terk etti" metniyle birlikte YANLIŞ "rakip geri
+          döndü" bannerını da görüyordu (E2E-DIAG bulgusu). */}
+      <OpponentLeftBanner
+        graceEndsAt={state.graceEndsAt}
+        serverOffsetMs={state.serverOffsetMs}
+        gameEnded={state.status.kind !== 'playing'}
+      />
 
       <button
         type="button"
