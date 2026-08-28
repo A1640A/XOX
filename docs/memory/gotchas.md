@@ -1695,3 +1695,28 @@ node -e 'const b=require("./docs/board/board.json");
 
 Daraltmak bilinçli bir karar olabilir — ama o zaman **kartta da daralt** ve kalanı ayrı bir
 karta yaz. Yoksa "bitti" ile "tamamlandı" arasında sessiz bir fark oluşur.
+
+## 2026-08-28 · "Ölü dışa verim" listesi GERÇEK bir kapıyı gizleyebilir (CI-006 baseline)
+
+`CI-006` altıncı kapıyı (`scripts/dead-export-probe.mjs`) getirdi ve temiz `main` ağacında
+**16 gerçek ölü dışa verim** buldu; hepsi baseline'a "bilinen borç" olarak yazıldı. Bu liste
+topluca silinecek bir yığın DEĞİLDİR — lead ölçtü, içinde birbirinin zıddı iki sınıf var:
+
+**1. Üretimden çağrılmıyor ama KAPININ KENDİSİ.**
+`meetsTextContrast` (`packages/ui-tokens/src/contrast.ts`) hiçbir üretim dosyasından
+çağrılmıyor. Ama kendi testi `ALL_THEMES × TEXT_TOKENS` gezip her metin tokenının hem `bg`
+hem `surface` üzerinde **≥ 4.5:1** kontrast sağladığını doğruluyor. Yani fonksiyon bir
+"kullanılmayan yardımcı" değil, **tek erişilebilirlik kontrast kapısı.** Silinseydi kapı
+sessizce kalkardı ve hiçbir test kızarmazdı (testi de birlikte silineceği için).
+
+**2. Uygulanıyor GİBİ duran ama DECOY olan.**
+`MAX_PROTOCOL_VIOLATIONS` (`packages/shared/src/constants.ts`) doğruluk kaynağı gibi duruyor;
+`apps/web/lib/realtime/connection.ts:41` yorumu bile ona atıf yapıyor. Ama sınır gerçekte
+`connection.ts:349`'daki **yerel** `MAX_CONSECUTIVE_VIOLATIONS` ile uygulanıyor ve satır 49
+çıplak sayının BİLEREK seçildiğini açıklıyor (sabitten türetilmiş test, sabit değişince kör
+kalır). Shared'daki kopyayı 5 yapmak davranışı DEĞİŞTİRMEZ — yalnız kendi testi kızarır,
+biri testi "düzeltir" ve tuzak sessizce kapanır.
+
+**Kural:** bir sembolün "üretimden çağrılmadığı" ölçümü, onun _silinebilir_ olduğunu
+kanıtlamaz. Silmeden önce sor: **bu sembol kaybolursa hangi test kızarır?** Cevap "hiçbiri,
+çünkü testi de gider" ise o bir kapıdır, borç değil. Kart: `CLEANUP-001`.
