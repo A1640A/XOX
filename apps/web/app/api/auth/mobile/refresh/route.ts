@@ -1,21 +1,13 @@
 import { connectDb, MobileRefreshToken } from '@xox/db'
-import {
-  mobileRefreshBodySchema,
-  type ErrorCode,
-  type ErrorResponse,
-  type MobileTokenPair,
-} from '@xox/shared'
+import { mobileRefreshBodySchema, type MobileTokenPair } from '@xox/shared'
 import { verifyToken } from '@/lib/auth/tokens'
+import { errorJson } from '@/lib/http/error-json'
 import { logError } from '@/lib/log'
 import { checkIpRateLimit } from '@/lib/rate-limit/ip-limit'
 import { rateLimitedResponse } from '@/lib/rate-limit/response'
 import { issueMobileTokenPair } from '../shared'
 
 export const dynamic = 'force-dynamic'
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
-}
 
 function readClaimJti(claims: Record<string, unknown>): string | null {
   return typeof claims['jti'] === 'string' && claims['jti'].length > 0 ? claims['jti'] : null
