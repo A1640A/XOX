@@ -183,4 +183,21 @@ describe('HomeActions', () => {
 
     expect(await screen.findByTestId('hata-mesaji')).toHaveAttribute('data-kod', 'NETWORK')
   })
+
+  it('UI-002: "Oda kur" ve oda koduna katıl hatası AYNI ANDA tetiklenirse tek hata düğümü kalmalı', async () => {
+    signIn()
+    vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'))
+    const user = userEvent.setup()
+    render(<HomeActions enabledSizes={TUM_BOYUTLAR} />)
+
+    // JoinCodeField kendi hatasını üretir: kısa/geçersiz kod, istemci tarafında reddedilir.
+    await user.type(screen.getByLabelText('Oda kodu (6 hane)'), 'IO01')
+    await user.click(screen.getByTestId('btn-odaya-katil'))
+
+    // HomeActions kendi hatasını üretir: ağ isteği reddedilir.
+    await user.click(screen.getByTestId('btn-oda-kur'))
+
+    const banners = await screen.findAllByTestId('hata-mesaji')
+    expect(banners).toHaveLength(1)
+  })
 })
