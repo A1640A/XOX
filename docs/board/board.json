@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T03:02:31.068Z",
+  "updatedAt": "2026-08-28T03:07:18.994Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -875,7 +875,7 @@
         "apps/web/components/room/EmojiTray.tsx",
         "apps/web/app/davet/**"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W3-03",
       "report": "docs/board/reports/W3-03.md",
@@ -890,7 +890,8 @@
         "pnpm gates temiz"
       ],
       "blockedReason": null,
-      "mergeSha": "3dc98c8"
+      "mergeSha": "99bb19a",
+      "note": "AJAN GERCEK BOSLUK BULDU: leaderboardResponseSchema her satirda ratedGames istiyordu, db katmani onu HIC dondurmuyordu (donen nesne yalniz name+elo; leaddoğruladi, maindeki bes gecis filtre ve self-lookup) — route asla .parse()den gecemezdi, kart bu duzeltme olmadan TAMAMLANAMAZDI. Kapsam disi ama zorunlu; minimal (+13/-1), find/sort/limit tek karakter degismedi, TDD ile once kirmizi, KK-117 explain testi sonrasinda da yesil. /siralama 214.43 kB."
     },
     {
       "id": "W3-04",
