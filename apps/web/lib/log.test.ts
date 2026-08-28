@@ -118,6 +118,40 @@ describe('lib/log — maskeleme sondası', () => {
     spy.mockRestore()
   })
 
+  it('SINIF 1C — SEC-007: `context.ticket` alanı JWT-DIŞI (noktasız, opak) bir bilet olsa da HAM olarak asla çıkmaz', () => {
+    // SEC-004'ün sondası yalnız `?ticket=` SORGU YOLUNU kanıtladı
+    // (`TICKET_QUERY_PATTERN`). `context.ticket` bambaşka bir alandır:
+    // `maskContext` bugün yalnız `userId`/`roomCode` anahtarlarını özel
+    // işliyor, `ticket` anahtarı `maskText`e düşüyor — ki `maskText` de
+    // yalnız jose/JWT biçimini (nokta ayraçlı) yakalıyor. Noktasız opak bir
+    // bilet burada HİÇBİR desene uymuyor ve düz metin sızıyor.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const opaqueTicket = 'optk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6'
+    logError('WS bağlantı reddedildi', { ticket: opaqueTicket })
+    const output = outputOf(spy)
+    expect(output).not.toContain(opaqueTicket)
+    console.info('[sonda SINIF-1C · context.ticket çıktı]', output)
+    spy.mockRestore()
+  })
+
+  it('SINIF 1D — SEC-007: `Authorization: Bearer <opak-bilet>` başlık METNİ (sorgu değil) maskelenir, biçimden bağımsız', () => {
+    // SINIF 1'deki `Authorization: Bearer ${jwt}` örneği JWT_PATTERN'in
+    // (nokta ayraçlı) yakaladığı bir biçim kullanıyor — o test bu yolu
+    // GERÇEKTEN sınamıyor, yalnız tesadüfen geçiyor. Burada bilerek
+    // noktasız, JWT_PATTERN'e UYMAYAN opak bir bilet kullanılıyor.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const opaqueTicket = 'optk_z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4'
+    logError(
+      'WS upgrade başarısız',
+      {},
+      new Error(`bilet doğrulanamadı: Authorization: Bearer ${opaqueTicket}`),
+    )
+    const output = outputOf(spy)
+    expect(output).not.toContain(opaqueTicket)
+    console.info('[sonda SINIF-1D · Authorization header çıktı]', output)
+    spy.mockRestore()
+  })
+
   it('SINIF 2 — çerez değeri: `Cookie:` başlığındaki Auth.js oturum çerezi maskelenir', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const cookieHeader = `Cookie: __Secure-authjs.session-token=${FAKE_SESSION_COOKIE_VALUE}; theme=koyu`
