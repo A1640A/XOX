@@ -1924,3 +1924,4 @@
 {"ts":"2026-08-28T01:57:57Z","event":"subagent.stop"}
 {"ts":"2026-08-28T01:59:41Z","event":"file.touched","path":"docs/board/reports/DRY-002.md"}
 {"ts":"2026-08-28T02:00:52Z","event":"subagent.stop"}
+{"ts":"2026-08-28T05:10:00Z","event":"preview.verify","note":"UI-004 sonrasi: KK-070/071 karantinasi kaldirildi, iki test aktif. Beklenti 46/46. Onceki kosu 44 gecti / 2 atlandi idi."}

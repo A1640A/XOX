@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T02:02:25.272Z",
+  "updatedAt": "2026-08-28T02:04:41.979Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -846,9 +846,9 @@
         "apps/web/app/gecmis/**",
         "apps/web/app/api/matches/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/W3-02",
       "report": null,
       "acceptance": [
         "GET /api/matches sorgusu find({participants: uid, finishedAt:{$ne:null}}).sort({finishedAt:-1}).limit(HISTORY_PAGE_SIZE); explain('executionStats') çıktısında COLLSCAN YOK — participants eşitliği indeks öneki, finishedAt ikinci alan (KK-117)",
@@ -1090,7 +1090,7 @@
       "agent": "xox-perf",
       "deps": ["UI-SKEL-001", "WS-001"],
       "conflictSet": [],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
       "branch": null,
       "report": null,
@@ -1257,9 +1257,9 @@
       "agent": "xox-devops",
       "deps": ["WS-001", "SEC-002"],
       "conflictSet": ["apps/web/middleware.ts", "apps/web/proxy.ts"],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/OPS-004",
       "report": null,
       "blockedReason": null,
       "acceptance": [
@@ -2448,5 +2448,5 @@
       ]
     }
   ],
-  "wave": "G2-2"
+  "wave": "G2-3"
 }
