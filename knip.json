@@ -9,7 +9,7 @@
       "entry": [
         "app/**/{page,layout,route,error,not-found,loading}.tsx",
         "app/**/route.ts",
-        "middleware.ts",
+        "proxy.ts",
         "next.config.ts"
       ],
       "project": ["**/*.{ts,tsx}"],
