@@ -1,6 +1,7 @@
-import { DISCONNECT_GRACE_SECONDS, MOVE_TIMEOUT_SECONDS } from '@xox/shared'
+import { DISCONNECT_GRACE_SECONDS, ELO_START, MOVE_TIMEOUT_SECONDS } from '@xox/shared'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { connectDb } from '../client'
+import { eloDelta } from '../elo'
 import { Game } from '../models/game'
 import { Room } from '../models/room'
 import type { RoomDoc } from '../models/room'
@@ -27,8 +28,16 @@ interface SeedOptions {
   presence?: RoomDoc['presence']
   state?: RoomDoc['state']
   board?: RoomDoc['board']
+  moves?: RoomDoc['moves']
   withGame?: boolean
 }
+
+/** ELO_MIN_MOVES (3) eşiğini geçen, puanlı sayılmaya uygun bir hamle listesi. */
+const RATED_MOVES: RoomDoc['moves'] = [
+  { index: 0, by: 'X', at: new Date(NOW - 50_000) },
+  { index: 1, by: 'O', at: new Date(NOW - 40_000) },
+  { index: 2, by: 'X', at: new Date(NOW - 30_000) },
+]
 
 const CONNECTED: RoomDoc['presence'] = {
   X: { connId: 'conn-x', since: new Date(NOW - 60_000) },
@@ -53,6 +62,7 @@ async function seed(options: SeedOptions = {}): Promise<string | null> {
     seats: { X: { userId: UX, name: 'Ada' }, O: { userId: UO, name: 'Kaan' } },
     presence: options.presence ?? CONNECTED,
     board: options.board ?? Array<null>(9).fill(null),
+    moves: options.moves ?? [],
     turnDeadline: options.turnDeadline ?? null,
     disconnected: options.disconnected ?? null,
     gameId,
@@ -207,7 +217,11 @@ describe('settleDeadlines — çift yürütmenin yazma ucu (ADR-0004)', () => {
         { _id: UX, email: 'stlx@example.test', name: 'Ada', passwordHash: 'x' },
         { _id: UO, email: 'stlo@example.test', name: 'Kaan', passwordHash: 'x' },
       ])
-      const gameId = await seed({ turnDeadline: new Date(NOW - 1), withGame: true })
+      const gameId = await seed({
+        turnDeadline: new Date(NOW - 1),
+        moves: RATED_MOVES,
+        withGame: true,
+      })
 
       // İki yürütme yolu da AYNI imzayı çağırır (`session.ts`: `onDue` ve
       // tembel kontrol ikisi de `db.settleDeadlines(code, now())`). Yarışı
@@ -230,6 +244,19 @@ describe('settleDeadlines — çift yürütmenin yazma ucu (ADR-0004)', () => {
       expect(game?.endReason).toBe('timeout')
       expect((await User.findById(UO).lean())?.stats.wins).toBe(1)
       expect((await User.findById(UX).lean())?.stats.losses).toBe(1)
+
+      // W3-01/dispatch talebi: ELO da TAM OLARAK BİR KEZ uygulanmış olmalı —
+      // timeout'ta kaybeden `dueSettlement`in belirlediği taraf (X süresi
+      // dolduğu için O kazanır, KK-074). Çift uygulansaydı X ELO_START-24,
+      // O ELO_START+24 olurdu.
+      const expectedWinnerDelta = eloDelta(ELO_START, ELO_START, 1)
+      const expectedLoserDelta = eloDelta(ELO_START, ELO_START, 0)
+      expect(game?.rated).toBe(true)
+      expect(game?.eloDelta).toStrictEqual({ X: expectedLoserDelta, O: expectedWinnerDelta })
+      expect((await User.findById(UO).lean())?.elo).toBe(ELO_START + expectedWinnerDelta)
+      expect((await User.findById(UX).lean())?.elo).toBe(ELO_START + expectedLoserDelta)
+      expect((await User.findById(UO).lean())?.ratedGames).toBe(1)
+      expect((await User.findById(UX).lean())?.ratedGames).toBe(1)
     },
   )
 

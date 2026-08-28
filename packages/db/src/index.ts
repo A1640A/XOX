@@ -6,6 +6,7 @@ export { connectDb, disconnectDb, getDbName, getMongoClient, getMongoUri } from 
 export { loadEnvLocal } from './load-env'
 export { generateRoomCode } from './room-code'
 export { buildPairKey, deriveParticipants } from './pair'
+export { eloDelta, type EloOutcome } from './elo'
 export { resetDatabase } from './reset'
 export { TEST_USERS, TEST_USER_PASSWORD, seedTestUsers } from './seed'
 export { EXPECTED_INDEXES, ensureIndexes, type ExpectedIndex } from './indexes'
@@ -70,3 +71,10 @@ export {
   type FriendEntry,
   type FriendsView,
 } from './queries/friends'
+export {
+  getLeaderboardSelf,
+  getLeaderboardTop,
+  getLeaderboardView,
+  type LeaderboardEntry,
+  type LeaderboardView,
+} from './queries/leaderboard'

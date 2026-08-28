@@ -1,4 +1,7 @@
+import { ELO_MIN_MOVES, ELO_PAIR_MAX_RATED, ELO_PAIR_WINDOW_HOURS } from '@xox/shared'
 import type { Player, TransportStatus } from '@xox/shared'
+import { eloDelta } from '../elo'
+import type { EloOutcome } from '../elo'
 import { Game } from '../models/game'
 import type { GameDoc } from '../models/game'
 import type { RoomDoc, RoomResult } from '../models/room'
@@ -46,24 +49,67 @@ function statsWrites(
   ]
 }
 
+/** ELO formülünün "skor"u — koltuğun kendi bakış açısından 1/0.5/0 (KK-110). */
+function outcomeFor(seat: Player, status: FinishedStatus): EloOutcome {
+  if (status.kind === 'draw') return 0.5
+  return status.winner === seat ? 1 : 0
+}
+
 /**
- * `games` CAS'ı + `users.stats` (KK-052/053, tasarım §9). Sıra:
+ * KK-112/113 — bir oyunun PUANLI sayılıp sayılmayacağı. İki bağımsız kapı:
+ *
+ * 1. Toplam hamle `ELO_MIN_MOVES`'tan (3) az ise puansız — anında pes ederek
+ *    puan aktarımı çalışmasın.
+ * 2. Aynı `pairKey` için son `ELO_PAIR_WINDOW_HOURS` (24) saatte zaten
+ *    `ELO_PAIR_MAX_RATED` (3) puanlı oyun oynanmışsa sonrakiler puansızdır —
+ *    stats sayaçları YİNE DE artar (çağıran bunu ayrı ele alır), yalnız ELO
+ *    değişmez. Sayım `games{pairKey, finishedAt}` indeksinden gelir (§3.6).
+ */
+async function isEligibleForRating(
+  pairKey: string,
+  movesCount: number,
+  nowMs: number,
+): Promise<boolean> {
+  if (movesCount < ELO_MIN_MOVES) return false
+  const windowStart = new Date(nowMs - ELO_PAIR_WINDOW_HOURS * 60 * 60 * 1000)
+  const recentRatedCount = await Game.countDocuments({
+    pairKey,
+    rated: true,
+    finishedAt: { $gte: windowStart },
+  })
+  return recentRatedCount < ELO_PAIR_MAX_RATED
+}
+
+/**
+ * `games` CAS'ı + `users.stats` + ELO (KK-052/053/110…114, tasarım §9). Sıra:
  *
  * 1. `Game.findOneAndUpdate({ _id, finishedAt: null }, …)` — `null` dönerse
  *    **başkası zaten bitirmiştir, hiçbir şey yapılmaz.** Yarışın tek kazananı
- *    bu CAS'tır: iki instance aynı bitişi görse de sayaç bir kez artar.
- * 2. `users.stats` `$inc` (ELO/`rated` W3-01'in işi; bu tur `rated:false`).
- * 3. `settledAt` damgası.
+ *    bu CAS'tır: iki instance aynı bitişi görse de ELO da stats da bir kez
+ *    uygulanır (aşağıdaki adımların TAMAMI bu `if (settled === null) return`
+ *    kapısının ARKASINDADIR).
+ * 2. `rated` uygunluğu (`isEligibleForRating`) hesaplanır — puanlıysa ELO
+ *    deltaları `eloDelta` (saf fonksiyon, `elo.ts`) ile hesaplanır.
+ * 3. `games.rated`/`games.eloDelta` yazılır; `users.stats` her zaman, `elo`/
+ *    `ratedGames` yalnız puanlıysa TEK `bulkWrite`'ta `$inc` edilir.
+ * 4. `settledAt` damgası.
  *
- * 2–3 arasında instance ölürse `finishedAt != null && settledAt == null` olan
+ * 2–4 arasında instance ölürse `finishedAt != null && settledAt == null` olan
  * bir oyun kalır; onarım işi v1'de YAZILMAZ (kabul edilen, ölçülebilir açık —
  * `settledAt` alanı tam bu yüzden var).
  *
  * Sayaçlar `settled.players`'tan okunur, `room.seats`'ten DEĞİL: koltuklar
  * rövanşta takas ediliyor (KK-058) ve oda dokümanı bir sonraki oyuna ait
  * olabilir; kimin hangi koltukta oynadığının otoritesi `games`'tir (B3).
+ *
+ * `nowMs` DIŞARIDAN gelir (`joinRoom`/`applyMove` konvansiyonunun aynısı):
+ * ELO_PAIR_WINDOW_HOURS penceresi testte sahte saatle deterministik ölçülür.
  */
-export async function finishGame(room: RoomDoc, status: TransportStatus): Promise<void> {
+export async function finishGame(
+  room: RoomDoc,
+  status: TransportStatus,
+  nowMs: number = Date.now(),
+): Promise<void> {
   // Tasarlanmış no-op'lar (istisna değil): sürmekte olan bir oyunun ve oyunu
   // hiç başlamamış bir odanın kesinleştirilecek sonucu yoktur.
   if (status.kind === 'playing') return
@@ -94,15 +140,45 @@ export async function finishGame(room: RoomDoc, status: TransportStatus): Promis
     },
     { returnDocument: 'after', runValidators: true },
   ).lean()
+  // Yarışı kaybettik: başkası (öbür yürütme yolu, öbür instance) zaten
+  // bitirmiş. Buradan sonraki HİÇBİR adım (ELO dahil) çalışmaz — bu satırın
+  // ALTI, ELO'nun "tam bir kez" uygulandığının TEK garantisidir.
   if (settled === null) return
 
+  const rated = await isEligibleForRating(settled.pairKey, settled.moves.length, nowMs)
+
+  const eloDeltas: Record<Player, number> = { X: 0, O: 0 }
+  if (rated) {
+    const [userX, userO] = await Promise.all([
+      User.findById(settled.players.X, 'elo').lean(),
+      User.findById(settled.players.O, 'elo').lean(),
+    ])
+    const eloX = userX?.elo ?? undefined
+    const eloO = userO?.elo ?? undefined
+    if (eloX !== undefined && eloO !== undefined) {
+      eloDeltas.X = eloDelta(eloX, eloO, outcomeFor('X', status))
+      eloDeltas.O = eloDelta(eloO, eloX, outcomeFor('O', status))
+    }
+  }
+
+  await Game.updateOne({ _id: gameId }, { $set: { rated, eloDelta: eloDeltas } })
+
+  const statsByUser = new Map(statsWrites(settled.players, status).map((w) => [w.userId, w.field]))
+  const userIds: [string, Player][] = [
+    [settled.players.X, 'X'],
+    [settled.players.O, 'O'],
+  ]
   await User.bulkWrite(
-    statsWrites(settled.players, status).map((write) => ({
-      updateOne: {
-        filter: { _id: write.userId },
-        update: { $inc: { [`stats.${write.field}`]: 1 } },
-      },
-    })),
+    userIds.map(([userId, seat]) => {
+      const inc: Record<string, number> = {}
+      const field = statsByUser.get(userId)
+      if (field !== undefined) inc[`stats.${field}`] = 1
+      if (rated) {
+        inc['elo'] = eloDeltas[seat]
+        inc['ratedGames'] = 1
+      }
+      return { updateOne: { filter: { _id: userId }, update: { $inc: inc } } }
+    }),
   )
 
   await Game.updateOne({ _id: gameId }, { $set: { settledAt: new Date() } })
