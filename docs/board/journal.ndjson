@@ -1894,3 +1894,5 @@
 {"ts":"2026-08-28T01:35:56Z","event":"file.touched","path":".claude/worktrees/W2-03/apps/web/app/api/auth/mobile/refresh/route.test.ts"}
 {"ts":"2026-08-28T01:38:47Z","event":"file.touched","path":"docs/board/reports/E2E-004.md"}
 {"ts":"2026-08-28T01:40:40Z","event":"subagent.stop"}
+{"ts":"2026-08-28T01:43:41Z","event":"file.touched","path":".claude/worktrees/W2-03/apps/mobile/lib/auth/session.tsx"}
+{"ts":"2026-08-28T04:50:00Z","event":"card.merged","card":"E2E-004","note":"Ajan URUN HATASI buldu: OpponentLeftBanner iskelet (void props; return null) ama RoomScreen gercek proplarla monte ediyor — KK-070/071 banneri DOM-a asla cikamaz. Lead dogruladi, UI-004 P1-e yukseltildi. Ajan WS testlerinin yerelde kosmadigini kendi kodunu suclamadan ORTAMSAL diye kanitladi (bilinen-iyi reconnect.spec.ts uzerinde yeniden uretti). YAN ETKI: vc dev denemesi omeerdursunn altinda bos bir web projesi olusturdu, silinemedi (siniflandirici), kullaniciya bildirilecek."}

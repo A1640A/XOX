@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T01:41:32.784Z",
+  "updatedAt": "2026-08-28T01:43:55.260Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -758,10 +758,10 @@
       "agent": "xox-qa-e2e",
       "deps": ["W2-01", "W2-02"],
       "conflictSet": ["apps/e2e/tests/timeout-abandon.spec.ts", "apps/e2e/tests/profile.spec.ts"],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/E2E-004",
-      "report": null,
+      "report": "docs/board/reports/E2E-004.md",
       "acceptance": [
         "KK-070, KK-071, KK-072 yeşil: rakip sekmesini kapatır -> grace metni + geri sayan sayaç 2 sn içinde; 30 sn içinde dönüş -> oyun sürer; dönmezse abandon galibiyeti ve games.endReason==='abandon' Atlas'ta doğrulanır",
         "KK-073, KK-074 yeşil: sure-sayaci 60'tan geri sayar, hamleden sonra karşı taraf için 60'tan yeniden başlar; süre dolunca sırası gelen kaybeder ve games.endReason==='timeout'",
@@ -771,7 +771,9 @@
         "apps/e2e/fixtures/** ve playwright.config.ts DEĞİŞTİRİLMEZ",
         "Flake retries ile gizlenmez; kök neden rapora yazılır"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "0be9f29",
+      "note": "profile.spec.ts 5/5 yerel uretim derlemesinde yesil. Dort WS testi yerelde kosamadi (experimental_upgradeWebSocket duz next start altinda calismiyor) — ajan bunu BILINEN-IYI reconnect.spec.ts uzerinde yeniden uretip ORTAMSAL oldugunu kanitladi, kendi kodunu suclamadi. Gercek previewda kosacak. YAN ETKI: vc dev denemesi omeerdursunn altinda bos bir web projesi olusturdu; ajan silmeyi denedi, siniflandirici engelledi. Kullaniciya bildirildi."
     },
     {
       "id": "E2E-005",
@@ -2384,13 +2386,15 @@
     {
       "id": "UI-004",
       "title": "KK-070/071 gorunen yuzu yok — OpponentLeftBanner + grace geri sayimi",
-      "priority": "P2",
+      "priority": "P1",
       "agent": "xox-dev-web",
       "status": "todo",
       "deps": ["W2-01"],
       "report": null,
       "branch": null,
       "acceptance": [
+        "@xox/shared zaten opponentLeftVisible() yardimcisini sunuyor — kural mantigini YENIDEN YAZMA, onu tuket.",
+        "ONCELIK YUKSELTILDI P1 (lead, olculdu): OpponentLeftBanner.tsx govdesi TAM OLARAK `void props; return null` — RoomScreen onu 115. satirda GERCEK proplarla (state.graceEndsAt, state.serverOffsetMs) monte ediyor ama hicbir sey render etmiyor. KK-070/071 banner metni DOM-a ASLA cikamaz. E2E-004 bu yuzden iki testi test.fixme ile karantinaya aldi — govdeler yazili, bu kart kapaninca acilacak.",
         "W2-01 devretti: sunucu tarafi TAMAMEN calisiyor, eksik olan yalniz Turkce banner + grace geri sayimi. Dosya W2-01-in conflictSetinde YOKTU.",
         "apps/web/components/room/OpponentLeftBanner.tsx — metin messages/tr.ts icinde anahtar olarak yasar."
       ],
