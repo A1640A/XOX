@@ -86,13 +86,102 @@ const LIGHT_LIMIT = '158 kB'
 // "Hafif" sınıflandırması bir HEDEF değil, BETİMLEME idi. HEAVY_LIMIT'e (235 kB)
 // DOKUNULMADI.
 //
-// Borç şimdi **PERF-005**'te: zod'u istemci yolundan ayır. Kapandığında `/profil` hafif
-// gruba GERİ DÖNER. `PERF-004` bunu YAPAMADI ve raporunda açıkça yazdı —
-// bkz. `docs/board/reports/PERF-004.md`.
-const LIGHT_ROUTES = new Set(['/_not-found', '/oyna/bilgisayar'])
+// ✅ PERF-005 (2026-08-28) — zod istemci yolundan AYRILDI, ama `/profil` hafif GRUBA
+// DÖNMEDİ. Bulgu PERF-004'ün varsayımını YİNE düzeltti — bu sefer yönü doğruydu (zod),
+// ama "485 iz = 20+ kullanılmayan şema tanımı" teorisi de eksikti.
+//
+// Yapılan: `packages/shared/src/rest-contract.ts` uç nokta başına ayrı dosyalara
+// bölündü (`rest-contract/*.ts`, her biri kendi şemasını taşır) + `package.json`'a
+// `"sideEffects": false` eklendi. Bu, bir rotanın hiç zod şeması KULLANMADIĞI
+// durumda TÜM zod grafiğinin (`primitives`/`errors`/`game-status`/`rest-contract`/
+// `ws-protocol`) modül-granülerliğinde tamamen düşmesini SAĞLADI — `/giris` (hiç
+// runtime şeması kullanmıyor, yalnız `ErrorCode` TİPİ) 216 kB'den **146.65 kB**'ye
+// düştü (−70 kB, TAM olarak PERF-004'ün beklediği kazanç, ama başka bir rotada).
+//
+// AMA `/profil` yalnız ~3-5 kB kazandı çünkü `ProfileContent.tsx` (dokunulamaz
+// tüketici dosyası) GERÇEKTEN `errorResponseSchema`+`profileResponseSchema`'yı
+// runtime'da kullanıyor (`.safeParse()` ile sunucu yanıtını doğruluyor). Parça
+// içeriği incelendiğinde (`485 zod izi` — PERF-004'ünkiyle AYNI SAYI) asıl maliyetin
+// "kullanılmayan şema tanımları" değil, **klasik `zod`'un kendi çekirdeğinin taban
+// ağırlığı** (~60-65 kB gzip, HANGİ şemanın tanımlı olduğundan bağımsız — `z.object()`
+// tek başına tüm `ZodType` hiyerarşisini sürüklüyor) olduğu ortaya çıktı. Dosya
+// bölme bunu ÇÖZEMEZ; zod'un KENDİSİ ağaç-sallanabilir değil.
+//
+// Çözüm: yalnız `/profil`'in gerçekten kullandığı zincir (`errors.ts` →
+// `rest-contract/error-response.ts` → `rest-contract/profile-response.ts` →
+// `stats.ts`/`theme.ts`) `zod` yerine **`zod/mini`**'ye (v4'ün resmi ağaç-sallanabilir
+// API'si) taşındı — `.safeParse()`/`.options`/`z.infer` klasikle BİREBİR aynı davranır
+// ve mini şemalar klasik `z.object()`'in İÇİNE sorunsuz iç içe geçer (doğrulandı,
+// `ws-protocol.ts` klasik kalmaya devam ediyor ve `errorCodeSchema`'yı hâlâ kendi
+// `z.discriminatedUnion`'ının içinde kullanıyor). `profileUpdateBodySchema` (yalnız
+// SUNUCU route'unun tükettiği PATCH şeması) `profileResponseSchema`'dan AYRI dosyaya
+// (`profile-update.ts`) taşındı — aksi hâlde istemci hiç kullanmasa bile aynı modülde
+// kalıp taşınırdı.
+//
+// Ölçülen SONUÇ (`pnpm --filter @xox/web build && pnpm exec size-limit`):
+//   /profil    217.16 → **168.36 kB** (−48.8 kB) — hafif bütçeye (158 kB) hâlâ 10 kB UZAK
+//   /kayit     216.42 → **167.18 kB** (−49.2 kB) — aynı sebep (KayitForm `errorCodeSchema` kullanıyor)
+//   /giris     216.30 → **146.65 kB** (−69.7 kB) — HİÇ zod kullanmıyor, tamamen düştü
+//   /oda/[kod] 222.82 → 223.87 kB (+1.05 kB)     — heavy bütçenin (235) rahat içinde;
+//                                                  `zod/mini` + klasik `zod`'un AYNI ANDA
+//                                                  bulunması küçük bir çakışma payı ekliyor
+//   /,/oda-katil/arkadaslar: küçük net iyileşme (~1-2 kB)
+//
+// `/profil` (ve `/kayit`) 158 kB'ye NEDEN ULAŞAMIYOR: kalan ~10-23 kB `zod/mini`'nin
+// KENDİ çekirdek taban maliyeti (obje/dize/sayı/enum doğrulama motoru + `safeParse`
+// altyapısı) — bu, TANIMLANAN şema sayısından bağımsız bir TABAN, daha fazla dosya
+// bölme ya da tree-shaking ayarıyla küçültülemez. Gerçek kapanış iki yoldan biri:
+//   (a) `components/profile/**` (ve `KayitForm.tsx`) istemci tarafı yanıt doğrulamasını
+//       (`errorResponseSchema`/`errorCodeSchema.safeParse`) TAMAMEN kaldırır — sunucu
+//       zaten otoriter (KK-003), istemci kendi yanıtını doğrulamak yerine TS tipine
+//       güvenebilir. Bu, PERF-005'in çakışma kümesi DIŞINDA bir tüketici dosyası
+//       değişikliği ister.
+//   (b) Ya da bu iki rota `HEAVY_LIMIT`'in altında ama `LIGHT_LIMIT`'in üstünde YENİ
+//       bir "medium" katmana taşınır (dürüst bir üçüncü bütçe — bkz. `docs/board/
+//       reports/PERF-005.md` önerisi) — bütçe GERÇEĞİ ölçmeye devam eder, `/profil`
+//       "hafif" ETİKETİNİ zorla almaz.
+// PERF-005 bilerek (a)'yı YAPMADI (dokunma listesi `components/profile/**`'i açıkça
+// yasaklıyor) ve (b)'yi tek başına KARARLAŞTIRMADI (bütçe politikası, paralel kartları
+// etkileyebilir) — ikisi de lead onayı bekliyor, rapora bkz.
+// ── LEAD KARARI 2026-08-28: (b) seçildi — ÜÇÜNCÜ katman ────────────────────────────
+//
+// (a) reddedilmedi, ERTELENDİ: istemci tarafı `safeParse` MEŞRU bir savunmadır; onu yalnız
+// bütçe rakamını tutturmak için sökmek, ölçüyü ürüne tercih etmek olurdu. Ayrı bir kartın
+// konusu, bu kartın değil.
+//
+// (b) seçildi çünkü bu dosyanın kendi felsefesiyle tutarlı: sınıflandırma bir HEDEF değil
+// BETİMLEMEDİR. Ölçüm ÜÇ ayrı küme gösteriyor; ikiye zorlamak gerçeği gizlerdi:
+//
+//   ağır  (paylaşılan `@xox/shared` + oda/oyun ağacı)
+//     /oda/[kod] 223.88 · / 218.96 · /oda/katil 214.94 · /arkadaslar 214.23
+//   orta  (istemci tarafı ŞEMA DOĞRULAMASI yapan rotalar — `zod/mini` tabanı)
+//     /profil 168.36 · /kayit 167.19
+//   hafif (zod'a hiç dokunmayan)
+//     /oyna/bilgisayar 146.81 · /giris 146.66 · /_not-found 145.16 · /davet/[kod] 145.16
+//
+// `/giris` ve `/davet/[kod]` bu kartla ÖLÇÜLEBİLİR biçimde hafif sınıfa geçti — etiketleri
+// artık gerçeği yansıtıyor; önceden ağır grupta duruyorlardı.
+//
+// Bütçeler aynı formülle türetildi (grubun EN AĞIR ÖLÇÜLEN üyesi + ~%5-10 pay), "şu an ne
+// ise o"dan değil:
+//   ağır  223.88 × 1.05  ≈ 235 (DEĞİŞMEDİ — pay bilerek dar, regresyon erken yakalansın)
+//   orta  168.36 × 1.09  ≈ 184
+//   hafif 146.81 × 1.076 ≈ 158 (DEĞİŞMEDİ)
+//
+// ORTA katman bir mazeret değil, bir SÖZLEŞMEDİR: bu iki rota şema doğrulaması yaptığı
+// için oradadır. Doğrulamayı kaldıran bir kart onları hafif gruba taşımalı; yeni bir rota
+// buraya girecekse gerekçesi "zod tabanı" olmalı, "biraz büyük" değil.
+//
+// Lead sondası: `MEDIUM_LIMIT` 150 kB'ye düşürülünce `size-limit` KIRMIZI döndü — katman
+// gerçekten dayatıyor, süs değil.
+const LIGHT_ROUTES = new Set(['/_not-found', '/oyna/bilgisayar', '/giris', '/davet/[kod]'])
+const MEDIUM_ROUTES = new Set(['/profil', '/kayit'])
+const MEDIUM_LIMIT = '184 kB'
 
 function limitFor(route) {
-  return LIGHT_ROUTES.has(route) ? LIGHT_LIMIT : HEAVY_LIMIT
+  if (LIGHT_ROUTES.has(route)) return LIGHT_LIMIT
+  if (MEDIUM_ROUTES.has(route)) return MEDIUM_LIMIT
+  return HEAVY_LIMIT
 }
 
 // `@size-limit/time` her check için ayrı bir headless Chrome örneği açıyor. 7 rota
