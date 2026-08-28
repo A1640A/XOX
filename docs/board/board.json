@@ -991,16 +991,21 @@
       "deps": ["E2E-005"],
       "conflictSet": ["apps/web/vercel.json"],
       "status": "todo",
-      "attempts": 0,
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/HRD-002.md",
       "acceptance": [
         "Production deploy alınır; https://<production-url>/api/health {\"ok\":true,\"db\":\"xox_prod\"} döner",
         "KK-101 production tarafı: preview xox_test, production xox_prod — ortam karışması yok, iki URL'in health çıktısı rapora yapıştırılır",
         "Analytics ve Speed Insights production'da veri alıyor (Vercel panelinden kanıt rapora)",
         "WS route'unun maxDuration ayarı production'da etkin: canlı bir WS bağlantısının planlı close(4499) ile döndüğü ve istemcinin gecikmesiz yeniden bağlandığı GÖZLEMLENİR ve süre rapora yazılır (ADR-0007 · Z2)",
         "KK-100 yalnız OPS-001 çözülmüşse doğrulanır; çözülmemişse rapor bunu projenin tek açık kriteri olarak yazar. Agent domain bağlamayı YENİDEN DENEMEZ",
-        "Secret sızıntısı taraması temiz (gitleaks — brew ile kurulan gerçek araç, npm'deki sahte paket DEĞİL)"
+        "Secret sızıntısı taraması temiz (gitleaks — brew ile kurulan gerçek araç, npm'deki sahte paket DEĞİL)",
+        "KISMI 2026-08-29 (lead) — ALTI KRITERDEN DORDU DOGRULANDI, biri gercek bosluk buldu, biri YAPILMADI. Kart ACIK kaliyor.",
+        "DOGRULANDI: production health {\"ok\":true,\"db\":\"xox_prod\",\"skewProtectionEnabled\":true,\"deploymentIdPresent\":true} HTTP 200. gitleaks 8.30.1 (brew, gercek arac) 511 commit taradi, sizinti YOK. vercel.json maxDuration:\"max\" mevcut. Speed Insights CANLI (/_vercel/speed-insights/script.js HTTP 200, 4746 bayt).",
+        "BOSLUK: Web Analytics ACIK DEGIL -> OPS-011.",
+        "YAPILMADI (durustce): WS close(4499) canli gozlemi. Rotasyon deadline-10sn de atesleniyor, maxDuration:\"max\" altinda ~13 dakikalik canli WS oturumu + giris + oda + bilet akisi gerekiyor. UYDURULMADI -> HRD-002b.",
+        "YANLIS ALARM kayda gecti: /api/health/realtime production 404 doner ve bu BILEREKTIR (route.ts:300, yazma yapan sonda canlida acikta birakilmaz). Kaynaga bakildigi icin yanlis kart acilmadi."
       ],
       "blockedReason": null
     },
@@ -2205,17 +2210,22 @@
       "agent": "xox-dev-web",
       "deps": ["W2-02"],
       "conflictSet": ["apps/web/lib/theme.ts", "apps/web/app/layout.tsx"],
-      "status": "todo",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/W2-05.md",
       "blockedReason": null,
       "acceptance": [
         "W2-02 ajani DURUSTCE bildirdi: resolveTheme() yalniz cerezi okuyor, cunku kart app/layout.tsx-e dokunmayi yasakliyordu (W2-04 orada calisiyordu)",
         "SONUC: gercekten yeni bir cihazda (cerez yok) kullanici users.theme tercihini /profil-e ugrayana kadar GORMEZ. Tercih kaydediliyor ama uygulanmiyor",
         "COZUM: resolveTheme() cerez yoksa DB-den okusun. DIKKAT — bu her istekte bir DB sorgusu demek; kok layout zaten dinamik ama maliyeti OLC ve raporla",
         "layout.tsx DONDURULMUS dosya; degisiklik tema okumasiyla SINIRLI kalmali",
-        "Cerez hala hizli yol olmali: DB okumasi yalniz cerez YOKKEN"
+        "Cerez hala hizli yol olmali: DB okumasi yalniz cerez YOKKEN",
+        "KAPANDI 2026-08-29. resolveTheme cerez YOKKEN ve oturum VARKEN users.theme okuyor. layout.tsx degisikligi tema okumasiyla SINIRLI kaldi ve bonus olarak auth() cift cagrisini tek promise paylasimina indirdi.",
+        "OLCULDU (tahmin degil): sicak baglanti ~78ms ortalama / 61ms p50 / 153ms p95; SOGUK baglanti ~918ms (864-1013ms). size-limit: /oda/[kod] 225.16 kB — git stash ile degisiklikli/degisikliksiz AYNI, istemci paketine sifir maliyet.",
+        "LEAD BAGIMSIZ DOGRULAMA: uc koruma da mutasyonla sinandi — anonim korumasi kaldirilinca 1 test, DB hatasi yutulmayinca 2 test, cerez hizli yolu kaldirilinca 2 test KIRMIZI. Geri alindi, git diff bos.",
+        "LEADIN EK BULGUSU (ajan yakalamadi): DB okumasi TEK SEFERLIK DEGIL. Cerez yalnizca ProfileContent.tsx icinde ISTEMCI tarafinda yaziliyor (/profil sayfasi); Server Componentten cerez yazilamaz. Yani /profile hic ugramayan bir kullanici HER istekte DB okumasini oduyor. Takip karti: PERF-008.",
+        "Merge 32ad533. pnpm gates exit 0."
       ]
     },
     {
@@ -2533,16 +2543,20 @@
       "title": "matches explain sondasi AYRI SORT asamasini sinamiyor",
       "priority": "P3",
       "agent": "xox-test-writer",
-      "status": "todo",
+      "status": "done",
       "deps": ["W3-02"],
-      "report": null,
+      "report": "docs/board/reports/PERF-006.md",
       "branch": null,
       "acceptance": [
         "LEAD SONDASI BOS CIKTI (olculdu): matches.test.ts-in explain iddiasi yalniz COLLSCAN yoklugunu siniyor. Siralamayi finishedAt-ten createdAt-e cevirdim ve 328 test YESIL kaldi — filtre hala indeks kullandigi icin COLLSCAN cikmiyor, yalniz ayri bir SORT asamasi ekleniyor. Buyuk koleksiyonda gercek performans riski TAM OLARAK budur.",
         "ORNEK HAZIR: W3-01-in leaderboard testi ikisini birden kontrol ediyor (COLLSCAN yok VE ayri SORT asamasi yok). Ayni deseni matches sorgusuna uygula.",
-        "KAPANIS: siralamayi indeksten saptiran mutasyon testi KIRMIZI dondurmeli."
+        "KAPANIS: siralamayi indeksten saptiran mutasyon testi KIRMIZI dondurmeli.",
+        "KAPANDI 2026-08-29. AJAN LEADIN TESHISINI DUZELTTI: sorun yalniz \"COLLSCAN bakiyor SORT bakmiyor\" degildi — test getMatchHistory URETIM KODUNU HIC CAGIRMIYORDU, sorgu seklini elle kopyalamisti. Bu yuzden leadin matches.ts mutasyonu testi hic etkilemiyordu. Test vi.spyOn(Game, \"find\") ile uretimin kurdugu Query nesnesini yakalayacak sekilde yeniden yazildi.",
+        "LEAD BAGIMSIZ DOGRULAMA: finishedAt -> createdAt mutasyonu KIRMIZI yakti. Planlayici \"stage\":\"SORT\",\"sortPattern\":{\"createdAt\":-1} uretti ve IXSCAN HALA participants_1_finishedAt_-1 kullandi — yani COLLSCAN yoktu. Eski sonda tam da bu durumda kor kaliyordu. Geri alindi, git diff bos.",
+        "Merge 69def8d. pnpm gates exit 0, turbo --force Cached: 0 cached 13/13."
       ],
-      "conflictSet": ["packages/db/src/queries/matches.test.ts"]
+      "conflictSet": ["packages/db/src/queries/matches.test.ts"],
+      "attempts": 1
     },
     {
       "id": "W2-06",
@@ -2688,15 +2702,18 @@
       "agent": "xox-dev-backend",
       "deps": ["SEC-004"],
       "conflictSet": ["apps/web/lib/log.ts", "apps/web/lib/log.test.ts"],
-      "status": "todo",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/SEC-007.md",
       "acceptance": [
         "SEC-004 olctu: JWT-disi (noktasiz, opak) bir bilet `context.ticket` alani olarak YA DA `Authorization: Bearer <bilet>` baslik metni icinde loglanirsa log.ts bugun onu maskelemiyor — duz metin sizar. Bugun canli kod bu iki yoldan loglamiyor (grep ile dogrulandi) ama bu bir GARANTI degil, rastlanti.",
         "Repo PUBLIC ve loglar Vercelde — sizinti gercek.",
         "KAPANIS SARTI: duzeltmeden sonra maskelemeyi gecici boz, SEC-004 un sondasinin ve yeni sondanin KIRMIZI yandigini goster, geri al ve git diff ile dogrula.",
-        "Test dosyasina gercek bir bilet/sir YAZMA — sentetik deger kullan."
+        "Test dosyasina gercek bir bilet/sir YAZMA — sentetik deger kullan.",
+        "KAPANDI 2026-08-29. Iki yol da kapatildi: AUTHORIZATION_BEARER_PATTERN (bicimden bagimsiz Bearer maskesi, JWT bicimindekiler mevcut JWT_PATTERNe birakiliyor) ve isTicketKey (context.ticket tamamen [GIZLI]).",
+        "LEAD BAGIMSIZ DOGRULAMA: iki korumayi AYRI AYRI mutasyona ugrattim — isTicketKey her zaman false -> 1 test kirmizi; AUTHORIZATION_BEARER_PATTERN eslesmeyen desene cevrildi -> 1 test kirmizi. Geri alindi, 15/15 yesil, git diff bos. Asiri maskeleme yok (oda kodu ve tanimsiz alan testleri yesil kaldi).",
+        "Merge 14ef426. pnpm gates exit 0 (alti kapi)."
       ],
       "blockedReason": null
     },
@@ -2741,6 +2758,69 @@
         "W2-06nin guvenlik sozlesmesini BOZMA: redirect_uri allowliste karsi dogrulanir, hedef origin+pathnameden yeniden kurulur, eslesmezse xox:// davranisina duser. Allowlisti gevsetme.",
         "Native yol AYNEN korunur — redirect_uri gondermeyen istemci bugunku davranisi gorur.",
         "KAPANIS SARTI: mobil web hedefinde gercek bir giris akisinin tamamlandigi gosterilecek. \"Alici uc hazir\" YETMEZ — W2-06 zaten oydu."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "OPS-011",
+      "title": "Web Analytics ACIK DEGIL — <Analytics /> bosa byte gonderiyor",
+      "tier": "P2",
+      "wave": "4",
+      "agent": "xox-devops",
+      "deps": [],
+      "conflictSet": ["apps/web/app/layout.tsx", "apps/web/package.json"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "LEAD OLCTU: layout.tsx:52 <Analytics /> mount edilmis ve @vercel/analytics 2.0.1 kurulu, AMA GET /_vercel/insights/script.js production-ta HTTP 404 ve Vercel Web Analytics API (hem slug hem prj_ id ile) 404 \"Web Analytics not found\" donuyor. Toplanan veri SIFIR.",
+        "Karsilastirma: Speed Insights AYNI kalipla kurulu ve CALISIYOR (/_vercel/speed-insights/script.js HTTP 200, 4746 bayt) — yani sorun kodda degil, proje ayarinda.",
+        "PERF-007 ILE BAGLANTILI: en agir rotanin butce payi 9.8 kB. Hicbir sey toplamayan bir istemci betigi o payi yiyorsa hem veri hem butce kaybi.",
+        "KARAR OMERIN — maliyet ve gizlilik boyutu var, tek tarafli ACILMADI. Iki secenek: (a) Vercel projesinde Web Analytics ac, (b) <Analytics /> ve bagimliligi kaldir (PERF-007 e pay kazandirir).",
+        "Hangisi secilirse OLCUMLE kapat: (a) icin script 200 donmeli ve API veri gostermeli; (b) icin size-limit farki raporlanmali."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "PERF-008",
+      "title": "Tema DB okumasi TEK SEFERLIK DEGIL — cerez yalniz /profil-de yaziliyor",
+      "tier": "P2",
+      "wave": "4",
+      "agent": "xox-dev-web",
+      "deps": ["W2-05"],
+      "conflictSet": ["apps/web/proxy.ts", "apps/web/lib/theme.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "LEAD BULDU (W2-05 dogrulamasi sirasinda, ajan yakalamadi): W2-05 cerez yoksa users.theme okuyor ve maliyeti olctu (sicak ~78ms, SOGUK ~918ms). Ama cerez SADECE ProfileContent.tsx icinde ISTEMCI tarafinda yaziliyor (applyThemeLocally, /profil sayfasi).",
+        "SONUC: Server Componentten cerez yazilamaz, dolayisiyla /profile HIC ugramayan giris yapmis bir kullanici kok layoutta HER ISTEKTE bu DB okumasini oduyor. Maliyet tek seferlik DEGIL, kalici.",
+        "COZUM YONU: cerezi yazabilecek bir katmandan yaz — proxy.ts (middleware cerez yazabilir) ya da bir Route Handler. Ilk okumadan sonra cerez dusmeli ve sonraki istekler hizli yola girmeli.",
+        "KAPANIS SARTI: cerezsiz giris yapmis bir kullanici icin ARDISIK iki istekte ikincisinin DB-ye GITMEDIGINI bir testle kanitla. \"Cerez yaziliyor\" demek yetmez — ikinci istegin hizli yola dustugu olculmeli.",
+        "W2-05-in uc korumasi BOZULMAMALI: anonim ziyaretci DB-ye gitmez, DB hatasi sayfayi patlatmaz, cerez hizli yolu onceliklidir. Ucu de bugun mutasyonla dogrulandi."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "HRD-002b",
+      "title": "WS close(4499) planli rotasyonunun CANLI kaniti",
+      "tier": "P2",
+      "wave": "4",
+      "agent": "xox-devops",
+      "deps": [],
+      "conflictSet": [],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "HRD-002 nin YAPILMAYAN tek kriteri. Lead uydurmadi, ayri kart acti.",
+        "Rotasyon deadline - WS_ROTATE_MARGIN_MS (10sn) aninda atesleniyor (apps/web/lib/realtime/rotate.ts). vercel.json maxDuration:\"max\" — canli bir WS oturumunu ~13 dakika acik tutmak gerekiyor.",
+        "Gereken akis: giris -> oda -> tek kullanimlik WS bileti -> WS bagla -> bekle -> close kodunun 4499 oldugunu ve istemcinin GECIKMESIZ (backoff sifirlanarak) yeniden bagLandigini GOZLE. Gecen sureyi rapora yaz (ADR-0007 Z2).",
+        "1006 gorulurse bu bir BASARISIZLIKTIR — rotasyon calismiyor demektir, istemci ag hatasi sanip ustel geri cekilmeye girer ve kullanici her rotasyonda donma yasar.",
+        "PRODUCTION-a yazma yapma. Gozlem odakli; test odasi kullan."
       ],
       "blockedReason": null
     }
