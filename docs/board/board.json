@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T01:06:56.167Z",
+  "updatedAt": "2026-08-28T01:41:32.784Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -809,10 +809,10 @@
         "apps/web/app/siralama/**",
         "apps/web/app/api/leaderboard/**"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W3-01",
-      "report": null,
+      "report": "docs/board/reports/W3-01.md",
       "acceptance": [
         "W2-01 DEVRETTI: rovansin ILK hamlesi suresiz — rooms/rematch.ts turnDeadline:null yaziyor. joinRoomdaki satirin aynisi konmali.",
         "KK-110: eloDelta(ra, rb, result) SAF fonksiyondur — beklenen = 1/(1+10^((rb-ra)/400)), yeni = round(R + ELO_K × (sonuç - beklenen)), sonuç 1/0.5/0. Puan ELO_FLOOR (100) altına İNMEZ (sınır testi)",
@@ -826,7 +826,9 @@
         "Liste boşken tr.leaderboard.empty metni görünür",
         "pnpm gates temiz; testler xox_test'e karşı yeşil"
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "ed88652",
+      "note": "Elo CAS kapisinin ARKASINDA — lead sondasi: finishedAt:null filtreden kaldirilinca 6 test kirmizi (expected 3 to be 1). W2-01in devrettigi rovans turnDeadline hatasi kapandi. leaderboard explain(executionStats) ile dogrulandi: COLLSCAN yok. LEAD HATASI: dispatch mesajimda yazdigim cakisma kumesi KARTIN kumesinden DARDI — apps/web/app/siralama/** ve api/leaderboard/** dusmustu. Ajan acik listeye uydu ve boslugu bildirdi (dogru davranis). Kalan UI+route icin W3-03 acildi."
     },
     {
       "id": "W3-02",

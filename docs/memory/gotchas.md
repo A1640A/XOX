@@ -1676,3 +1676,22 @@ modülünden dışa ver.**
 Ayrıca: `dueSettlement` BİLEREK dışa verilmedi — tek üretim çağıranı `settleDeadlines`.
 Kararı paket dışına açmak ikinci bir yazma yolunu davet ederdi ve knip bunu yakalayamazdı
 (bir test referansı export'u "kullanılıyor" gösterir).
+
+## 2026-08-28 · Dispatch mesajındaki çakışma kümesi KARTINKİNDEN dar olabilir
+
+`W3-01`'i gönderirken çakışma kümesini elle yazdım ve kartın `conflictSet`'inden **iki yol
+düştü** (`apps/web/app/siralama/**`, `apps/web/app/api/leaderboard/**`). Ajan doğru davrandı:
+açık listeye uydu, `apps/web`'e hiç dokunmadı ve **boşluğu raporunda bildirdi.**
+
+Sonuç: veri katmanı tam ve test edilmiş, ama sıralama sayfası ve API route'u yazılmadı —
+kart "bitti" görünürken özellik yarım. Takip kartı (`W3-03`) açıldı.
+
+**Önlem:** dispatch mesajına kümeyi elle yazma, **karttan üret**:
+
+```bash
+node -e 'const b=require("./docs/board/board.json");
+  console.log(b.tasks.find(t=>t.id==="<ID>").conflictSet.join(" · "))'
+```
+
+Daraltmak bilinçli bir karar olabilir — ama o zaman **kartta da daralt** ve kalanı ayrı bir
+karta yaz. Yoksa "bitti" ile "tamamlandı" arasında sessiz bir fark oluşur.
