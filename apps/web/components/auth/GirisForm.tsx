@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { TESTID, type ErrorCode } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { buttonPrimary, textInput, textLink } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 /**
@@ -67,7 +68,7 @@ export function GirisForm(): React.ReactElement {
       }}
       className="flex flex-col gap-4"
     >
-      <label className="flex flex-col gap-1" htmlFor="giris-eposta">
+      <label className="flex flex-col gap-1 text-sm font-medium text-text" htmlFor="giris-eposta">
         {tr.auth.email}
         <input
           id="giris-eposta"
@@ -79,10 +80,10 @@ export function GirisForm(): React.ReactElement {
           onChange={(event) => {
             setEmail(event.target.value)
           }}
-          className="border-border border p-2"
+          className={textInput}
         />
       </label>
-      <label className="flex flex-col gap-1" htmlFor="giris-parola">
+      <label className="flex flex-col gap-1 text-sm font-medium text-text" htmlFor="giris-parola">
         {tr.auth.password}
         <input
           id="giris-parola"
@@ -94,15 +95,23 @@ export function GirisForm(): React.ReactElement {
           onChange={(event) => {
             setPassword(event.target.value)
           }}
-          className="border-border border p-2"
+          className={textInput}
         />
       </label>
-      <button type="submit" data-testid={TESTID.btnGiris} disabled={pending}>
+      <button
+        type="submit"
+        data-testid={TESTID.btnGiris}
+        disabled={pending}
+        className={buttonPrimary}
+      >
         {pending ? tr.auth.signingIn : tr.auth.signIn}
       </button>
       <ErrorBanner code={error} />
-      <p>
-        {tr.auth.noAccount} <Link href="/kayit">{tr.auth.signUp}</Link>
+      <p className="text-text-muted text-sm">
+        {tr.auth.noAccount}{' '}
+        <Link href="/kayit" className={textLink}>
+          {tr.auth.signUp}
+        </Link>
       </p>
     </form>
   )

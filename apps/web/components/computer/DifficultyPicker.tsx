@@ -1,5 +1,6 @@
 import type { Difficulty } from '@xox/game-core'
 import { TESTID } from '@xox/shared'
+import { buttonToggle, mutedText } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 export interface DifficultyPickerProps {
@@ -50,7 +51,7 @@ export function DifficultyPicker({
 }: DifficultyPickerProps): React.ReactElement {
   return (
     <fieldset className="flex flex-col gap-2 border-0 p-0">
-      <legend className="text-text-muted text-sm">{tr.computer.difficulty}</legend>
+      <legend className={`${mutedText} text-sm`}>{tr.computer.difficulty}</legend>
       <div className="flex gap-2">
         {OPTIONS.map((option) => (
           <button
@@ -61,13 +62,13 @@ export function DifficultyPicker({
             onClick={() => {
               onChange(option.value)
             }}
-            className="border-border aria-pressed:bg-accent aria-pressed:text-surface rounded border-2 px-3 py-1"
+            className={buttonToggle}
           >
             {difficultyLabel(option.value, size)}
           </button>
         ))}
       </div>
-      {size > 3 && <p className="text-text-muted text-sm">{tr.computer.strengthNote}</p>}
+      {size > 3 && <p className={`${mutedText} text-sm`}>{tr.computer.strengthNote}</p>}
     </fieldset>
   )
 }

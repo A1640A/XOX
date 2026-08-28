@@ -2,6 +2,7 @@
 
 import { BOARD_MODES, type BoardConfig, type BoardMode } from '@xox/game-core'
 import { TESTID } from '@xox/shared'
+import { buttonToggle, mutedText } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 import { sizeLabel } from './size-label'
 import { useBoardModes } from './use-board-modes'
@@ -45,13 +46,6 @@ function hintFor(size: number): string | null {
   return null
 }
 
-function toggleClassName(pressed: boolean): string {
-  const base = 'rounded border px-3 py-2 text-sm font-medium'
-  return pressed
-    ? `${base} border-accent bg-accent text-white`
-    : `${base} border-border bg-surface text-text`
-}
-
 /**
  * Tahta boyutu + K (kazanma uzunluğu) seçici — uygulamanın TEK seçici
  * bileşeni (kart §Sert şart 1). Oda kurma ekranı (`HomeActions`) ve
@@ -93,7 +87,7 @@ export function BoardConfigPicker({
       <legend className="sr-only">{tr.boardConfig.title}</legend>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">{tr.boardConfig.size}</span>
+        <span className="text-sm font-medium text-text">{tr.boardConfig.size}</span>
         <div role="group" aria-label={tr.boardConfig.size} className="flex gap-2">
           {modes.map((mode) => (
             <button
@@ -104,7 +98,7 @@ export function BoardConfigPicker({
               onClick={() => {
                 selectSize(mode)
               }}
-              className={toggleClassName(mode.size === activeMode?.size)}
+              className={buttonToggle}
             >
               {sizeLabel(mode.size)}
             </button>
@@ -114,7 +108,7 @@ export function BoardConfigPicker({
 
       {activeMode !== undefined && (
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium">{tr.boardConfig.winLength}</span>
+          <span className="text-sm font-medium text-text">{tr.boardConfig.winLength}</span>
           <div
             data-testid={TESTID.kazanmaUzunlugu}
             role="group"
@@ -122,7 +116,7 @@ export function BoardConfigPicker({
             className="flex flex-col gap-2"
           >
             {activeMode.winLengths.length === 1 ? (
-              <p className="text-text-muted text-sm">{tr.boardConfig.winLengthFixed}</p>
+              <p className={`${mutedText} text-sm`}>{tr.boardConfig.winLengthFixed}</p>
             ) : (
               <div className="flex gap-2">
                 {activeMode.winLengths.map((winLength) => (
@@ -133,7 +127,7 @@ export function BoardConfigPicker({
                     onClick={() => {
                       selectWinLength(winLength)
                     }}
-                    className={toggleClassName(winLength === value.winLength)}
+                    className={buttonToggle}
                   >
                     {tr.boardConfig.winLengthOption.replace('{n}', String(winLength))}
                   </button>
@@ -142,7 +136,7 @@ export function BoardConfigPicker({
             )}
           </div>
           {hintFor(activeMode.size) !== null && (
-            <p className="text-text-muted text-sm">{hintFor(activeMode.size)}</p>
+            <p className={`${mutedText} text-sm`}>{hintFor(activeMode.size)}</p>
           )}
         </div>
       )}

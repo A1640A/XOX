@@ -11,6 +11,7 @@ import {
   type RoomStateResponse,
 } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { buttonPrimary, monoField, mutedText } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 import { GameConfigSummary } from './GameConfigSummary'
 import { normalizeRoomCodeInput } from './room-code-input'
@@ -105,7 +106,7 @@ export function JoinRoomPreview(): React.ReactElement {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <label htmlFor="join-code" className="text-sm font-medium">
+        <label htmlFor="join-code" className="text-sm font-medium text-text">
           {tr.home.codePlaceholder}
         </label>
         <input
@@ -115,16 +116,21 @@ export function JoinRoomPreview(): React.ReactElement {
             setCode(normalizeRoomCodeInput(event.target.value))
           }}
           placeholder={tr.home.codePlaceholder}
-          className="border-border border p-2"
+          className={`${monoField} w-40`}
         />
       </div>
 
-      {loading && <p>{tr.common.loading}</p>}
+      {loading && <p className={mutedText}>{tr.common.loading}</p>}
       {preview !== null && (
         <GameConfigSummary config={{ size: preview.size, winLength: preview.winLength }} />
       )}
 
-      <button type="submit" data-testid={TESTID.btnOdayaKatil} disabled={preview === null}>
+      <button
+        type="submit"
+        data-testid={TESTID.btnOdayaKatil}
+        disabled={preview === null}
+        className={buttonPrimary}
+      >
         {tr.home.joinRoom}
       </button>
 

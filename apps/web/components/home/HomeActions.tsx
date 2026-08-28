@@ -9,6 +9,7 @@ import { errorResponseSchema, roomCreateResponseSchema, TESTID, type ErrorCode }
 import { BoardConfigPicker } from '@/components/board-config/BoardConfigPicker'
 import { ErrorBanner } from '@/components/ErrorBanner'
 import { JoinCodeField } from '@/components/JoinCodeField'
+import { buttonPrimary, buttonSecondary, mutedText } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 export interface HomeActionsProps {
@@ -32,13 +33,17 @@ export interface HomeActionsProps {
 export function HomeActions({ enabledSizes }: HomeActionsProps): React.ReactElement {
   const { data: session, status } = useSession()
 
-  if (status === 'loading') return <p>{tr.common.loading}</p>
+  if (status === 'loading') return <p className={mutedText}>{tr.common.loading}</p>
 
   if (session === null) {
     return (
-      <nav className="flex gap-4">
-        <Link href="/giris">{tr.auth.signIn}</Link>
-        <Link href="/kayit">{tr.auth.signUp}</Link>
+      <nav className="flex gap-3">
+        <Link href="/giris" className={buttonSecondary}>
+          {tr.auth.signIn}
+        </Link>
+        <Link href="/kayit" className={buttonPrimary}>
+          {tr.auth.signUp}
+        </Link>
       </nav>
     )
   }
@@ -102,21 +107,26 @@ function SignedInActions({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <p>{tr.home.welcome.replace('{ad}', displayName)}</p>
+    <div className="flex w-full flex-col gap-6">
+      <p className={mutedText}>{tr.home.welcome.replace('{ad}', displayName)}</p>
       <div className="flex gap-2">
         {/* `prefetch={false}` — AUTH-004. `/oyna/:path*` `middleware.ts`in matcher'ında,
             yani bu KORUMALI bir rota. Otomatik prefetch arka planda bir oturum isteği
             başlatır; "Çıkış yap"tan SONRA tamamlanırsa kendi `Set-Cookie`'siyle silmeyi
             geri alır ve oturum canlı kalır. `prefetch-guard.test.ts` bu kuralı tüm
             bileşenlerde dayatıyor — kaldırırsan o test kırmızıya döner. */}
-        <Link href="/oyna/bilgisayar" prefetch={false} data-testid={TESTID.btnBilgisayaraKarsi}>
+        <Link
+          href="/oyna/bilgisayar"
+          prefetch={false}
+          data-testid={TESTID.btnBilgisayaraKarsi}
+          className={buttonSecondary}
+        >
           {tr.home.playVsComputer}
         </Link>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold">{tr.boardConfig.title}</h2>
+      <div className="border-border flex flex-col gap-3 border-t pt-4">
+        <h2 className="text-sm font-semibold text-text">{tr.boardConfig.title}</h2>
         <BoardConfigPicker value={config} onChange={setConfig} enabledSizes={enabledSizes} />
         <button
           type="button"
@@ -125,12 +135,15 @@ function SignedInActions({
             void handleCreateRoom()
           }}
           disabled={creating}
+          className={`${buttonPrimary} w-fit`}
         >
           {tr.home.createRoom}
         </button>
       </div>
 
-      <JoinCodeField />
+      <div className="border-border border-t pt-4">
+        <JoinCodeField />
+      </div>
       <ErrorBanner code={error} />
     </div>
   )

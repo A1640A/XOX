@@ -3,6 +3,7 @@
 import { TESTID } from '@xox/shared'
 import { Board } from '@/components/board/Board'
 import { BoardConfigPicker } from '@/components/board-config/BoardConfigPicker'
+import { buttonSecondary, headingDisplay, mutedText } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 import { DifficultyPicker } from './DifficultyPicker'
 import { HUMAN, turnAttr } from './game-engine'
@@ -34,11 +35,11 @@ export function ComputerGameInner(): React.ReactElement {
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-6">
-      <h1 className="text-2xl font-bold tracking-tight">{tr.computer.title}</h1>
-      <p className="text-text-muted text-sm">{tr.computer.notCounted}</p>
+      <h1 className={`${headingDisplay} text-2xl`}>{tr.computer.title}</h1>
+      <p className={`${mutedText} text-sm`}>{tr.computer.notCounted}</p>
 
-      <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold">{tr.boardConfig.title}</h2>
+      <div className="border-border flex flex-col gap-3 border-t pt-4">
+        <h2 className="text-sm font-semibold text-text">{tr.boardConfig.title}</h2>
         <BoardConfigPicker value={config} onChange={setConfig} />
       </div>
 
@@ -47,7 +48,12 @@ export function ComputerGameInner(): React.ReactElement {
       {/* Spec §2.0 deseni: `sira-gostergesi` yalnız `data-sira` taşır, gösterilen
           metin `durum-metni`dedir (bkz. `apps/web/components/room/RoomScreen.tsx`). */}
       <p data-testid={TESTID.siraGostergesi} data-sira={turnAttr(state.status)} />
-      <p data-testid={TESTID.durumMetni} role="status" aria-live="polite">
+      <p
+        data-testid={TESTID.durumMetni}
+        role="status"
+        aria-live="polite"
+        className="text-base font-medium text-text"
+      >
         {statusText(state.status, config.size)}
       </p>
 
@@ -59,11 +65,7 @@ export function ComputerGameInner(): React.ReactElement {
         onCellPress={playMove}
       />
 
-      <button
-        type="button"
-        onClick={reset}
-        className="border-border w-fit rounded border-2 px-3 py-1"
-      >
+      <button type="button" onClick={reset} className={`${buttonSecondary} w-fit`}>
         {tr.computer.playAgain}
       </button>
     </main>

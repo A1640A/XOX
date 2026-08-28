@@ -1,4 +1,5 @@
 import { JoinRoomPreview } from '@/components/board-config/JoinRoomPreview'
+import { headingDisplay } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 /**
@@ -14,7 +15,7 @@ import { tr } from '@/messages/tr'
 export default function OdaKatilPage(): React.ReactElement {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
-      <h1 className="text-2xl font-bold">{tr.home.joinRoom}</h1>
+      <h1 className={`${headingDisplay} text-2xl`}>{tr.home.joinRoom}</h1>
       <JoinRoomPreview />
     </main>
   )

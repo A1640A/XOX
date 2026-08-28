@@ -9,6 +9,12 @@ import {
   type Friend,
 } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import {
+  buttonGhostSmall,
+  buttonSecondary,
+  headingDisplay,
+  mutedText,
+} from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 interface FriendsView {
@@ -128,29 +134,33 @@ export function FriendsContent(): React.ReactElement | null {
     }
   }
 
-  if (status === 'loading') return <p>{tr.common.loading}</p>
+  if (status === 'loading') return <p className={mutedText}>{tr.common.loading}</p>
   // Middleware zaten girişsizi `/giris`e yönlendirir; bu yalnız bir güvenlik ağıdır.
   if (session === null) return null
 
   const isEmpty = view !== null && view.friends.length === 0 && view.incoming.length === 0
+  const rowClassName =
+    'border-border bg-surface flex items-center justify-between gap-4 rounded-[6px] border px-3 py-2'
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">{tr.friends.title}</h1>
+      <h1 className={`${headingDisplay} text-2xl`}>{tr.friends.title}</h1>
 
       {loadError !== null ? <ErrorBanner code={loadError} /> : null}
-      {view === null && loadError === null ? <p>{tr.common.loading}</p> : null}
+      {view === null && loadError === null ? (
+        <p className={mutedText}>{tr.common.loading}</p>
+      ) : null}
       {actionError !== null ? <ErrorBanner code={actionError} /> : null}
 
-      {view !== null && isEmpty ? <p>{tr.friends.empty}</p> : null}
+      {view !== null && isEmpty ? <p className={mutedText}>{tr.friends.empty}</p> : null}
 
       {view !== null && view.incoming.length > 0 ? (
         <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">{tr.friends.pending}</h2>
+          <h2 className="text-lg font-semibold text-text">{tr.friends.pending}</h2>
           <ul className="flex flex-col gap-2">
             {view.incoming.map((entry) => (
-              <li key={entry.userId} className="flex items-center justify-between gap-4">
-                <span>
+              <li key={entry.userId} className={rowClassName}>
+                <span className="text-text">
                   {entry.name} · {entry.elo}
                 </span>
                 <span className="flex gap-2">
@@ -160,6 +170,7 @@ export function FriendsContent(): React.ReactElement | null {
                     onClick={() => {
                       void handleRespond(entry.userId, 'accept')
                     }}
+                    className={buttonSecondary}
                   >
                     {tr.friends.accept}
                   </button>
@@ -169,6 +180,7 @@ export function FriendsContent(): React.ReactElement | null {
                     onClick={() => {
                       void handleRespond(entry.userId, 'reject')
                     }}
+                    className={buttonGhostSmall}
                   >
                     {tr.friends.reject}
                   </button>
@@ -183,8 +195,8 @@ export function FriendsContent(): React.ReactElement | null {
         <section className="flex flex-col gap-2">
           <ul className="flex flex-col gap-2">
             {view.friends.map((entry) => (
-              <li key={entry.userId} className="flex items-center justify-between gap-4">
-                <span>
+              <li key={entry.userId} className={rowClassName}>
+                <span className="text-text">
                   {entry.name} · {entry.elo}
                 </span>
                 <button
@@ -193,6 +205,7 @@ export function FriendsContent(): React.ReactElement | null {
                   onClick={() => {
                     void handleRemove(entry.userId)
                   }}
+                  className={buttonGhostSmall}
                 >
                   {tr.friends.remove}
                 </button>

@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { errorCodeSchema, TESTID, type ErrorCode } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { buttonPrimary, textInput, textLink } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 /**
@@ -74,7 +75,7 @@ export function KayitForm(): React.ReactElement {
       }}
       className="flex flex-col gap-4"
     >
-      <label className="flex flex-col gap-1" htmlFor="kayit-ad">
+      <label className="flex flex-col gap-1 text-sm font-medium text-text" htmlFor="kayit-ad">
         {tr.auth.displayName}
         <input
           id="kayit-ad"
@@ -83,10 +84,10 @@ export function KayitForm(): React.ReactElement {
           onChange={(event) => {
             setDisplayName(event.target.value)
           }}
-          className="border-border border p-2"
+          className={textInput}
         />
       </label>
-      <label className="flex flex-col gap-1" htmlFor="kayit-eposta">
+      <label className="flex flex-col gap-1 text-sm font-medium text-text" htmlFor="kayit-eposta">
         {tr.auth.email}
         <input
           id="kayit-eposta"
@@ -98,10 +99,10 @@ export function KayitForm(): React.ReactElement {
           onChange={(event) => {
             setEmail(event.target.value)
           }}
-          className="border-border border p-2"
+          className={textInput}
         />
       </label>
-      <label className="flex flex-col gap-1" htmlFor="kayit-parola">
+      <label className="flex flex-col gap-1 text-sm font-medium text-text" htmlFor="kayit-parola">
         {tr.auth.password}
         <input
           id="kayit-parola"
@@ -114,15 +115,23 @@ export function KayitForm(): React.ReactElement {
           onChange={(event) => {
             setPassword(event.target.value)
           }}
-          className="border-border border p-2"
+          className={textInput}
         />
       </label>
-      <button type="submit" data-testid={TESTID.btnKayit} disabled={pending}>
+      <button
+        type="submit"
+        data-testid={TESTID.btnKayit}
+        disabled={pending}
+        className={buttonPrimary}
+      >
         {tr.auth.signUp}
       </button>
       <ErrorBanner code={error} />
-      <p>
-        {tr.auth.hasAccount} <Link href="/giris">{tr.auth.signIn}</Link>
+      <p className="text-text-muted text-sm">
+        {tr.auth.hasAccount}{' '}
+        <Link href="/giris" className={textLink}>
+          {tr.auth.signIn}
+        </Link>
       </p>
     </form>
   )

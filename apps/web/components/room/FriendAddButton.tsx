@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { errorResponseSchema, type ErrorCode } from '@xox/shared'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { buttonSecondary } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 
 export interface FriendAddButtonProps {
@@ -70,11 +71,12 @@ export function FriendAddButton(props: FriendAddButtonProps): React.ReactElement
         onClick={() => {
           void handleClick()
         }}
+        className={`${buttonSecondary} w-fit`}
       >
         {tr.friends.add}
       </button>
       {sent ? (
-        <p role="status" aria-live="polite">
+        <p role="status" aria-live="polite" className="text-win text-sm font-medium">
           {tr.friends.requestSent}
         </p>
       ) : null}

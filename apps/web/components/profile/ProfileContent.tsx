@@ -14,6 +14,7 @@ import type { Theme } from '@xox/ui-tokens'
 import { ErrorBanner } from '@/components/ErrorBanner'
 import { EditNameForm } from '@/components/profile/EditNameForm'
 import { ThemeToggle } from '@/components/profile/ThemeToggle'
+import { buttonGhostSmall, headingDisplay, mutedText } from '@/components/ui/styles'
 import { THEME_COOKIE } from '@/lib/theme-cookie'
 import { tr } from '@/messages/tr'
 
@@ -155,48 +156,70 @@ export function ProfileContent(): React.ReactElement | null {
     }
   }
 
-  if (status === 'loading') return <p>{tr.common.loading}</p>
+  if (status === 'loading') return <p className={mutedText}>{tr.common.loading}</p>
   // Middleware zaten girişsizi `/giris`e yönlendirir; bu yalnız bir güvenlik ağıdır.
   if (session === null) return null
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">{tr.profile.title}</h1>
-      <button
-        type="button"
-        onClick={() => {
-          void signOut({ callbackUrl: '/' })
-        }}
-        className="self-start"
-      >
-        {tr.auth.signOut}
-      </button>
+      <div className="flex items-center justify-between">
+        <h1 className={`${headingDisplay} text-2xl`}>{tr.profile.title}</h1>
+        <button
+          type="button"
+          onClick={() => {
+            void signOut({ callbackUrl: '/' })
+          }}
+          className={buttonGhostSmall}
+        >
+          {tr.auth.signOut}
+        </button>
+      </div>
 
       {loadError !== null ? <ErrorBanner code={loadError} /> : null}
 
-      {profile === null && loadError === null ? <p>{tr.common.loading}</p> : null}
+      {profile === null && loadError === null ? (
+        <p className={mutedText}>{tr.common.loading}</p>
+      ) : null}
 
       {profile !== null ? (
         <>
-          <p className="opacity-70">{profile.email}</p>
+          <p className={mutedText}>{profile.email}</p>
 
-          <dl className="grid grid-cols-3 gap-4 text-center">
+          <dl className="border-border grid grid-cols-3 gap-4 rounded-[12px] border py-4 text-center">
             <div>
-              <dt>{tr.profile.wins}</dt>
-              <dd data-testid={TESTID.istatistikGalibiyet}>{profile.stats.wins}</dd>
+              <dt className={`${mutedText} text-xs`}>{tr.profile.wins}</dt>
+              <dd
+                data-testid={TESTID.istatistikGalibiyet}
+                className="font-mono text-lg font-semibold text-text"
+              >
+                {profile.stats.wins}
+              </dd>
             </div>
             <div>
-              <dt>{tr.profile.losses}</dt>
-              <dd data-testid={TESTID.istatistikMaglubiyet}>{profile.stats.losses}</dd>
+              <dt className={`${mutedText} text-xs`}>{tr.profile.losses}</dt>
+              <dd
+                data-testid={TESTID.istatistikMaglubiyet}
+                className="font-mono text-lg font-semibold text-text"
+              >
+                {profile.stats.losses}
+              </dd>
             </div>
             <div>
-              <dt>{tr.profile.draws}</dt>
-              <dd data-testid={TESTID.istatistikBeraberlik}>{profile.stats.draws}</dd>
+              <dt className={`${mutedText} text-xs`}>{tr.profile.draws}</dt>
+              <dd
+                data-testid={TESTID.istatistikBeraberlik}
+                className="font-mono text-lg font-semibold text-text"
+              >
+                {profile.stats.draws}
+              </dd>
             </div>
           </dl>
 
-          <p>
-            {tr.profile.elo}: <span data-testid={TESTID.eloPuani}>{profile.elo}</span>
+          <p className="text-text">
+            {tr.profile.elo}:{' '}
+            <span data-testid={TESTID.eloPuani} className="font-mono font-semibold">
+              {profile.elo}
+            </span>
           </p>
 
           <EditNameForm

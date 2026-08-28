@@ -27,7 +27,12 @@ export function ErrorBanner({ code }: ErrorBannerProps): React.ReactElement | nu
   const message = code in tr.errors ? tr.errors[code] : tr.errors.SERVER_ERROR
 
   return (
-    <p role="alert" data-testid={TESTID.hataMesaji} data-kod={code}>
+    <p
+      role="alert"
+      data-testid={TESTID.hataMesaji}
+      data-kod={code}
+      className="border-danger text-danger rounded-[6px] border px-3 py-2 text-sm font-medium"
+    >
       {message}
     </p>
   )

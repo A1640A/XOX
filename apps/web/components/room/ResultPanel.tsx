@@ -2,6 +2,7 @@
 
 import { TESTID, type Player, type RematchOffer, type TransportStatus } from '@xox/shared'
 import Link from 'next/link'
+import { buttonPrimary, card, headingDisplay, mutedText, textLink } from '@/components/ui/styles'
 import { tr } from '@/messages/tr'
 import { statusText } from './status-text'
 
@@ -44,27 +45,39 @@ export function ResultPanel({
   const waitingForOpponent = rematch !== null && !offeredByOpponent
 
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-2xl font-bold">{statusText(status, you)}</h2>
+    <section className={`${card} flex flex-col gap-3`}>
+      <h2 className={`${headingDisplay} text-2xl`}>{statusText(status, you)}</h2>
 
       {rematch === null ? (
-        <button type="button" data-testid={TESTID.btnRovansTeklif} onClick={onOfferRematch}>
+        <button
+          type="button"
+          data-testid={TESTID.btnRovansTeklif}
+          onClick={onOfferRematch}
+          className={`${buttonPrimary} w-fit`}
+        >
           {tr.rematch.offer}
         </button>
       ) : null}
 
       {offeredByOpponent ? (
         <>
-          <p>{tr.rematch.offered}</p>
-          <button type="button" data-testid={TESTID.btnRovansKabul} onClick={onAcceptRematch}>
+          <p className={mutedText}>{tr.rematch.offered}</p>
+          <button
+            type="button"
+            data-testid={TESTID.btnRovansKabul}
+            onClick={onAcceptRematch}
+            className={`${buttonPrimary} w-fit`}
+          >
             {tr.rematch.accept}
           </button>
         </>
       ) : null}
 
-      {waitingForOpponent ? <p>{tr.rematch.waiting}</p> : null}
+      {waitingForOpponent ? <p className={mutedText}>{tr.rematch.waiting}</p> : null}
 
-      <Link href="/">{tr.common.home}</Link>
+      <Link href="/" className={`${textLink} w-fit`}>
+        {tr.common.home}
+      </Link>
     </section>
   )
 }
