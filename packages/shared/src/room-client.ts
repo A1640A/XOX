@@ -326,7 +326,7 @@ function fromServer(state: RoomClientState, message: ServerMessage, now: number)
     case 'state':
       return idle(fromStateMessage(state, message, now))
     case 'move:applied':
-      return applyEcho(state, message.index, message.by, message.version)
+      return applyEcho(state, message)
     case 'move:rejected':
       return idle({ ...state, pending: null, lastError: rejectionError(message.reason) })
     case 'opponent:joined':
@@ -406,12 +406,22 @@ function fromStateMessage(
   }
 }
 
-function applyEcho(
-  state: RoomClientState,
-  index: number,
-  by: Player,
-  version: number,
-): RoomClientResult {
+/** Birliğin `move:applied` kolu — `ServerMessage`'tan türetilir, elle yazılmaz. */
+type MoveAppliedMessage = Extract<ServerMessage, { type: 'move:applied' }>
+
+/**
+ * CTR-004 · yankıdaki süre hedefini uygular. Üç hâl AYIRT EDİLİR ve `??`
+ * KULLANILAMAZ: `null` geçerli bir DEĞERDİR ("hedef yok, sayaç dursun"),
+ * yalnız `undefined` "bilgi yok"tur. `message.turnDeadline ?? state.turnDeadline`
+ * yazılsaydı oyunu bitiren hamleden sonra sayaç eski hedefte asılı kalırdı.
+ */
+function echoedDeadline(state: RoomClientState, message: MoveAppliedMessage): number | null {
+  if (message.turnDeadline === undefined) return state.turnDeadline
+  return message.turnDeadline
+}
+
+function applyEcho(state: RoomClientState, message: MoveAppliedMessage): RoomClientResult {
+  const { index, by, version } = message
   if (version <= state.version) return idle(state)
   if (version > state.version + 1) return { state, effects: [{ type: 'resync' }] }
 
@@ -427,6 +437,9 @@ function applyEcho(
     version,
     status: nextStatus(state.status, board),
     pending: state.pending !== null && state.pending.index === index ? null : state.pending,
+    // Sayaç ince yolda da tazelenir (CTR-004): iki tam `state` arasında geçen
+    // hamlelerde istemci artık oyunun BAŞLANGIÇ hedefinde takılı kalmaz.
+    turnDeadline: echoedDeadline(state, message),
     // move:applied lastMove'u GÜNCELLER (state onu TÜMÜYLE değiştirir) — kendi
     // yankım da dahil: rakip görene kadar benim son taşım da "son hamle"dir.
     lastMove: { index, by },
