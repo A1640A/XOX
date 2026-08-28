@@ -58,4 +58,15 @@ describe('auth.ts — ADR-0009 A: adapter alanı yok, mantık DIŞARIYA delege e
       expect(authSource).not.toMatch(/\bjwt\s*\(/)
     },
   )
+
+  it(
+    'SEC-005: events.signOut kancası tanımlıdır ve revokeTicketsOnSignOut ' +
+      'ile DIŞARIYA delege eder — mantık burada satır içi YAZILMAZ',
+    () => {
+      expect(authSource).toMatch(/from ['"]\.\/lib\/auth\/signout-cleanup['"]/)
+      expect(authSource).toMatch(/events:\s*\{/)
+      expect(authSource).toMatch(/async signOut\(message\)/)
+      expect(authSource).toMatch(/revokeTicketsOnSignOut\(token\?\.sub\)/)
+    },
+  )
 })
