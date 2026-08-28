@@ -6,21 +6,12 @@ import {
   requestFriendship,
   respondToFriendRequest,
 } from '@xox/db'
-import {
-  friendActionBodySchema,
-  friendRequestBodySchema,
-  friendsResponseSchema,
-  type ErrorCode,
-  type ErrorResponse,
-} from '@xox/shared'
+import { friendActionBodySchema, friendRequestBodySchema, friendsResponseSchema } from '@xox/shared'
 import { resolveIdentity } from '@/lib/auth/identity'
+import { errorJson } from '@/lib/http/error-json'
 import { logError } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
-}
 
 async function parseJsonBody(req: Request): Promise<{ ok: true; body: unknown } | { ok: false }> {
   try {

@@ -2,19 +2,15 @@ import { connectDb, User, type UserDoc } from '@xox/db'
 import {
   profileUpdateBodySchema,
   type ErrorCode,
-  type ErrorResponse,
   type ProfileResponse,
   type ProfileUpdateBody,
 } from '@xox/shared'
 import { resolveIdentity } from '@/lib/auth/identity'
+import { errorJson } from '@/lib/http/error-json'
 
 export const dynamic = 'force-dynamic'
 
 type ProfileFields = Pick<UserDoc, 'name' | 'email' | 'stats' | 'elo' | 'ratedGames' | 'theme'>
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
-}
 
 function toProfileResponse(user: ProfileFields): ProfileResponse {
   return {
