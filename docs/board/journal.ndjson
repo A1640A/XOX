@@ -1718,3 +1718,7 @@
 {"ts":"2026-08-28T00:19:48Z","event":"file.touched","path":".claude/worktrees/W2-01/docs/board/reports/W2-01.md"}
 {"ts":"2026-08-28T00:22:38Z","event":"file.touched","path":".claude/worktrees/PERF-005/.size-limit.mjs"}
 {"ts":"2026-08-28T03:20:00Z","event":"card.merged","card":"AUTH-004","note":"P0 guvenlik kapandi. AJANIN GEREKCESI EKSIKTI: matcher dort degil ALTI kalip iceriyor, HomeActions.tsx-teki /oyna/bilgisayar baglantisi acikta kalmisti. Lead supurmede buldu ve tek tek yama yerine NOBETCI TEST yazdi. Sonda: prefetch={false} kaldirilinca nobetci kirmizi doner ve dosyayi adiyla soyler."}
+{"ts":"2026-08-28T00:25:17Z","event":"file.touched","path":".claude/worktrees/PERF-005/docs/board/reports/PERF-005.md"}
+{"ts":"2026-08-28T00:26:29Z","event":"subagent.stop"}
+{"ts":"2026-08-28T00:27:56Z","event":"subagent.stop"}
+{"ts":"2026-08-28T00:30:51Z","event":"file.touched","path":".claude/worktrees/PERF-005/.size-limit.mjs"}

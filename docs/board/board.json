@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T00:23:17.810Z",
+  "updatedAt": "2026-08-28T00:39:58.177Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -637,10 +637,10 @@
         "apps/web/lib/realtime/timers.ts",
         "apps/web/components/room/TurnTimer.tsx"
       ],
-      "status": "in_wave",
+      "status": "done",
       "attempts": 0,
       "branch": "feat/W2-01",
-      "report": null,
+      "report": "docs/board/reports/W2-01.md",
       "acceptance": [
         "AS-08'in tek satırı açılır: joinRoom (oyun başlarken) ve applyMove turnDeadline'ı now + MOVE_TIMEOUT_SECONDS olarak yazar; oyun bittiğinde null'a döner",
         "settleDeadlines CAS ile yazar: { code, version, state:'playing' }. İki instance aynı anda süreyi fark ederse YALNIZ BİRİ yazar, diğeri null alır ve change stream'den öğrenir (test)",
@@ -658,7 +658,9 @@
         "BORC (WS-001 incelemesi): apps/web/lib/game/deadlines.ts icindeki dueSettlement uretimde SIFIR cagirana sahip ve dokumante edilmis gelecek tuketicisi packages/db/src/rooms/settle.ts, apps/web-den import EDEMEZ — bagimlilik yonu ters. Bu kart govdeyi yazarken kurali packages/db icinde YENIDEN yazarsa ayni kural iki yerde olur ve saparlar. ONCE dueSettlement-i packages/game-core (saf, bagimliliksiz — tam yeri) ya da packages/shared-a tasi, sonra hem timers.ts hem settle.ts TEK kaynagi cagirsin. Tasarim §5.7 dosya yolunu apps/web diye yaziyor — spec kendi mimarisiyle celisiyor. AYRICA: settle.ts iskeleti WS-001 duzeltme turunda throw yerine return null donuyor; bu kart govdeyi doldurmayi UNUTURSA artik hicbir sey bagirmaz — settle.ts-teki TODO(W2-01) yorumunu ve no-op testini kontrol et.",
         "[W2-02 kartindan TASINDI 2026-08-26 — yanlis karta dusmustu, W2-02 ajani fark edip bildirdi] `move:applied` ince yolu yeni `turnDeadline` TASIMIYOR (CTR-002 kararı). Süre açılırken karar ver: ya mesaja alan ekle, ya her hamlede tam `state` yayınla. P0'da turnDeadline hep null oldugu icin etkisizdi; burada etkili hale geliyor."
       ],
-      "blockedReason": null
+      "blockedReason": null,
+      "mergeSha": "9ef8c2c",
+      "note": "ISKELETTE SAKLI GERCEK HATA BULDU: dueSettlement boardFromCells(room.board) cagiriyordu, varsayilan 3x3, 121 hucrelik tahtada RangeError. Yol hic kosmadigi icin gorunmuyordu; govde dolunca 11x11 odada sure dolunca her ping istisna uretecek, session yutacak, oyun sonsuza kadar askida kalacakti. LEAD SONDASI: duzeltme geri alininca 11 test kirmizi. Cift yurutme idempotent (casUpdateRoom); ajan sondasi CAS kaldirilinca 2 ve 4 kazanan gosterdi. Saat enjekte ediliyor. Ajan kendi sondasinin ILK denemede uygulanmadigini fark edip bildirdi (perl kalibi prettier sonrasi tutmadi)."
     },
     {
       "id": "W2-02",
@@ -812,6 +814,7 @@
       "branch": null,
       "report": null,
       "acceptance": [
+        "W2-01 DEVRETTI: rovansin ILK hamlesi suresiz — rooms/rematch.ts turnDeadline:null yaziyor. joinRoomdaki satirin aynisi konmali.",
         "KK-110: eloDelta(ra, rb, result) SAF fonksiyondur — beklenen = 1/(1+10^((rb-ra)/400)), yeni = round(R + ELO_K × (sonuç - beklenen)), sonuç 1/0.5/0. Puan ELO_FLOOR (100) altına İNMEZ (sınır testi)",
         "KK-111: eşit puanlı iki oyuncunun beraberliğinde delta tam 0",
         "KK-112: toplam hamle sayısı ELO_MIN_MOVES'tan (3) az olan oyunlar rated:false — anında pes ederek puan aktarımı çalışmaz",
@@ -1409,6 +1412,7 @@
       "report": null,
       "blockedReason": null,
       "acceptance": [
+        "ONCELIK YUKSELTILDI P0 (lead, gece kosusu 2): W2-01 ajani bunun `pnpm gates`-in TAMAMINI dusurdugunu olctu — bir E2E kosusundan sonra seed.test.ts paylasilan Atlasta kalici kirmizi veriyor. Ajan gatesi kosabilmek icin kullanicilari ELLE sifirladi; bu duzeltme DEGIL. Gece boyunca previewa karsi E2E kosacagim, yani her kosu kapilari tekrar kiracak. Kosunun engeli.",
         "KANITLANDI (W1-04 integrator, A/B ile): seed.test.ts yerelde {wins:0,losses:0,draws:0} bekliyor, {wins:5,losses:10,draws:0} aliyor. Merge oncesi commit-te BIREBIR AYNI hata — yani W1-04-un sucu degil, mevcut kusur",
         "KOK NEDEN: seedTestUsers stats/elo/ratedGames alanlarini $setOnInsert ile yaziyor. e2e-user-1/2 bir kez var olduktan sonra bu alanlar HIC guncellenmiyor; E2E kosulari paylasilan Atlas xox_test-te gercek oyunlar oynayinca kirlenmis stats kaliciyor",
         "DUZELTME: stats/elo/ratedGames $setOnInsert-ten $set-e tasinir. Kimlik alanlari (email, passwordHash olusturma) $setOnInsert-te KALIR — parola her seed-de yeniden hashlenmemeli",
@@ -1416,7 +1420,8 @@
         "SONDA: seed -> oyun oyna (stats kirlet) -> seed tekrar -> stats SIFIR olmali. Bugun degil, duzeltmeden sonra",
         "DIKKAT: duzeltmeyi test ederken paylasilan xox_test-e E2E ajani kosuyor olabilir. Once kontrol et",
         "SEMPTOM KAYBOLDU AMA KUSUR DURUYOR (PERF-002 merge-i, 2026-08-25 06:48): o kosuda seed.test.ts 4/4 GECTI cunku paylasilan xox_test-teki stats E2E-002-nin akisiyla degisti. $setOnInsert hala orada, yani kusur yapisal. KART KAPANMAZ — semptomun gecmesini duzelme saymak bu gecenin ogrettigi hatanin ta kendisi. Kapanma sarti: $set-e tasima + seed->oyna->seed sondasi"
-      ]
+      ],
+      "priority": "P0"
     },
     {
       "id": "PERF-003",
@@ -2251,9 +2256,9 @@
       "title": "shared barreli istemciye ZOD sokuyor — 68.7 kB gzip, olculdu",
       "priority": "P1",
       "agent": "xox-dev-backend",
-      "status": "in_wave",
+      "status": "done",
       "deps": ["UI-CFG-001", "UI-COMP-001"],
-      "report": null,
+      "report": "docs/board/reports/PERF-005.md",
       "branch": "feat/PERF-005",
       "acceptance": [
         "AJAN DUZELTILDI (lead): xox-dev-web -> xox-dev-backend. Kartin kume dosyalari o ajanin varsayilan yazma alaninda degildi. Ajan tanimlarina 2026-08-28-de eklenen madde geregi KART KUMESI YETKILI KAYNAKTIR.",
@@ -2264,7 +2269,9 @@
         "Disa verim ADI kaldirma kurali gecerli: shared calisma zamani listesi bugun 103 ad; degisecekse bilincli ve kayitli olsun.",
         "ONCE OLC, SONRA DUZELT: PERF-004 tam bu kartin atasinda bes ayri kaynagin ayni yanlis suclyuyu gosterdigini ortaya cikardi. Parcayi ac, icine bak."
       ],
-      "conflictSet": ["packages/shared/src/**", ".size-limit.mjs"]
+      "conflictSet": ["packages/shared/src/**", ".size-limit.mjs"],
+      "mergeSha": "9ef8c2c",
+      "note": "Olculen: /giris 216.30 -> 146.66 (-69.7, hafif sinifin altina dustu), /kayit -49.2, /profil -48.8. 103 disa verim adi BIREBIR AYNI (lead main ile karsilastirdi, diff bos). zod/mini YENI BAGIMLILIK DEGIL (v4 alt yolu). sideEffects:false guvenli — sharedda modul seviyesi yan etki yok, tarandi. LEAD KARARI: /profil hafif gruba donemedi (kalan ~10 kB zod/mini TABAN maliyeti, dosya bolmeyle kuculmez). Istemci safeParse-i sokmek yerine UCUNCU KATMAN tanimlandi (orta 184 kB): sinif landirma bu dosyada HEDEF degil BETIMLEME ve olcum UC kume gosteriyor. Sonda: MEDIUM_LIMIT 150-e dusurulunce size-limit kirmizi."
     },
     {
       "id": "SEC-005",
@@ -2347,6 +2354,41 @@
       ],
       "mergeSha": "5281c5b",
       "note": "Ajan TopBar-in DORT statik baglantisini kapatti ve raporunda matcher-in tam bu dordu kapsadigini soyledi. LEAD SUPURMESI bunu YANLISLADI: matcher ALTI kalip iceriyor (/oyna/:path* ve /oda/:path* de var) ve HomeActions.tsx-teki /oyna/bilgisayar baglantisi ACIKTA KALMISTI. Ajan kendi artik notunda bu riski sezmisti ama olcmemisti. Lead tek tek yama yerine NOBETCI TEST yazdi (prefetch-guard.test.ts): kaynak tarayip MIDDLEWARE_MATCHER ile karsilastiriyor, dinamik kaliplari da kapsiyor. Sonda: iki dosyadan da prefetch={false} kaldirilinca nobetci kirmizi donuyor ve ihlal eden dosyayi adiyla soyluyor. auth.ts DOKUNULMADI (bos diff)."
+    },
+    {
+      "id": "CTR-004",
+      "title": "move:applied turnDeadline TASIMIYOR — istemci sayaci state mesajlari arasinda bayatliyor",
+      "priority": "P1",
+      "agent": "xox-dev-realtime",
+      "status": "todo",
+      "deps": ["W2-01"],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "W2-01 ajani devretti (kartin son maddesi, kumesi disindaydi). Sunucu otoritesi DOGRU ama istemcinin geri sayimi tam state mesajlari arasinda bayatliyor ve ~60 sn sonra 0 gosteriyor.",
+        "KARAR ZATEN VERILDI ve yazildi: move:applied semasina alan EKLENMELI. Her hamlede tam state yayinlamak REDDEDILDI (R1 fan-out butcesi, 2026-08-25 karari).",
+        "Uc dosya: packages/shared/src/ws-protocol.ts, packages/shared/src/room-client.ts, apps/web/lib/realtime/connection.ts."
+      ],
+      "conflictSet": [
+        "packages/shared/src/ws-protocol.ts",
+        "packages/shared/src/room-client.ts",
+        "apps/web/lib/realtime/connection.ts"
+      ]
+    },
+    {
+      "id": "UI-004",
+      "title": "KK-070/071 gorunen yuzu yok — OpponentLeftBanner + grace geri sayimi",
+      "priority": "P2",
+      "agent": "xox-dev-web",
+      "status": "todo",
+      "deps": ["W2-01"],
+      "report": null,
+      "branch": null,
+      "acceptance": [
+        "W2-01 devretti: sunucu tarafi TAMAMEN calisiyor, eksik olan yalniz Turkce banner + grace geri sayimi. Dosya W2-01-in conflictSetinde YOKTU.",
+        "apps/web/components/room/OpponentLeftBanner.tsx — metin messages/tr.ts icinde anahtar olarak yasar."
+      ],
+      "conflictSet": ["apps/web/components/room/OpponentLeftBanner.tsx", "apps/web/messages/tr.ts"]
     }
   ],
   "wave": "G2-1"
