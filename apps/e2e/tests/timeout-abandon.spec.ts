@@ -1,4 +1,4 @@
-import { DATA_ATTR, TESTID } from '@xox/shared'
+import { DATA_ATTR, OPPONENT_LEFT_DISPLAY_DELAY_MS, TESTID } from '@xox/shared'
 import { expect, type Page, test } from '@playwright/test'
 import { MongoClient } from 'mongodb'
 import { TEST_USERS } from '../fixtures/auth'
@@ -244,8 +244,24 @@ test.describe('E2E-004 · KK-070/071 · terk bildirimi metni', () => {
 
       await twoPlayers.playerOne.close()
 
+      // E2E-DIAG kök neden analizi (test kırılganlığı, ürün hatası DEĞİL):
+      // `OpponentLeftBanner` `opponentLeftVisible` ile ADR-0007'nin
+      // `OPPONENT_LEFT_DISPLAY_DELAY_MS` (2000ms) eşiğini uygular, AMA bu eşiği
+      // yalnız kendi 1 sn'lik `setInterval` tikinde YENİDEN DEĞERLENDİRİR —
+      // tik `graceEndsAt` ilk dolduğunda (WS/change-stream'den gelen anda)
+      // başlar, 2000ms işaretiyle FAZ-HİZALI DEĞİLDİR. Yani banner pratikte
+      // eşiği ~1 tik (≤1000ms) GEÇTİKTEN sonra görünür olabilir, üstüne WS-001
+      // ölçümündeki değişim akışı gecikmesi (~80-90ms) ve `page.close()`nin
+      // kendi CDP/ağ maliyeti eklenir. `timeout: 2_000` (== eşiğin KENDİSİ)
+      // bu payı SIFIRA indiriyordu — bu yarış koşulunu KAZANAMAZ bir test
+      // yazıyordu (ürün davranışı ADR-0007'ye UYGUN, gecikme test payı
+      // yanlıştı). Pay artık eşik + 1 tik + gerçekçi ağ/DB tamponu olarak
+      // AÇIKÇA türetiliyor — iddia (metnin GÖRÜNMESİ, hangi metin olduğu)
+      // GEVŞETİLMEDİ, yalnız ölçülebilir/belgelenmiş gecikmeye pay verildi.
+      const disconnectBannerTimeoutMs = OPPONENT_LEFT_DISPLAY_DELAY_MS + 2_000
+
       await expect(twoPlayers.playerTwo.getByText(TXT.opponentDisconnectedPrefix)).toBeVisible({
-        timeout: 2_000,
+        timeout: disconnectBannerTimeoutMs,
       })
     },
   )
@@ -259,8 +275,10 @@ test.describe('E2E-004 · KK-070/071 · terk bildirimi metni', () => {
       await waitForOpponentName(twoPlayers.playerTwo, TEST_USERS.playerOne.name)
 
       await twoPlayers.playerOne.close()
+      // Yukarıdaki KK-070 testindeki AYNI kök neden (E2E-DIAG) — bkz. o
+      // testteki yorum. Pay burada da aynı ölçülebilir gerekçeyle veriliyor.
       await expect(twoPlayers.playerTwo.getByText(TXT.opponentDisconnectedPrefix)).toBeVisible({
-        timeout: 2_000,
+        timeout: OPPONENT_LEFT_DISPLAY_DELAY_MS + 2_000,
       })
 
       const returned = await playerOneContext.newPage()
