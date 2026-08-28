@@ -2,17 +2,12 @@ import { connectDb, getLeaderboardView, type LeaderboardEntry } from '@xox/db'
 import {
   leaderboardResponseSchema,
   type LeaderboardEntry as LeaderboardEntryDto,
-  type ErrorCode,
-  type ErrorResponse,
 } from '@xox/shared'
 import { resolveIdentity } from '@/lib/auth/identity'
+import { errorJson } from '@/lib/http/error-json'
 import { logError } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
-}
 
 /**
  * `@xox/db`nin iç görünümü (`stats: {wins,losses,draws}`) ile REST sözleşmesinin
