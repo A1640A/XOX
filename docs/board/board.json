@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T02:17:18.238Z",
+  "updatedAt": "2026-08-28T02:18:39.871Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -2456,10 +2456,10 @@
       "title": "WsTicket indeksleri EXPECTED_INDEXES listesinde YOK — ensureIndexes onlari hic kurmuyor",
       "priority": "P1",
       "agent": "xox-dev-backend",
-      "status": "todo",
+      "status": "in_wave",
       "deps": [],
       "report": null,
-      "branch": null,
+      "branch": "feat/DB-006",
       "acceptance": [
         "PERF-001 olctu: packages/db/src/indexes.ts icindeki EXPECTED_INDEXES/MODELS listesi WsTicket-i HIC icermiyor (Room/Game/User/Friendship/MobileRefreshToken var). wsTickets koleksiyonunun uc indeksi (jti unique, expiresAt TTL, userId+usedAt) su an YALNIZCA mongoose autoIndex ile var — canli sorgulandi, ucu de mevcut.",
         "IKI SONUC: (1) indexes.test.ts-in \"tasarim §3.6 tam liste\" iddiasi WsTicket-a hic bakmiyor; ws-ticket.ts-ten bir indeks satiri silinse test YAKALAMAZ. (2) migrate.ts -> ensureIndexes() ve /api/admin/migrate runbooku bu uc indeksi asla acikca kurmuyor — dosyanin KENDI yorumunun diger bes koleksiyon icin kacindigi risk (autoIndex ne zaman biter belli degil) WsTicket icin hic kapatilmamis.",
