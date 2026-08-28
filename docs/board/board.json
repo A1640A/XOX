@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "XOX",
-  "updatedAt": "2026-08-28T03:07:18.994Z",
+  "updatedAt": "2026-08-28T03:09:30.944Z",
   "nightRun": {
     "active": false,
     "deadline": null,
@@ -1613,9 +1613,9 @@
         "apps/web/app/kayit/**",
         "apps/web/app/profil/**"
       ],
-      "status": "todo",
+      "status": "in_wave",
       "attempts": 0,
-      "branch": null,
+      "branch": "feat/DESIGN-001b",
       "report": null,
       "acceptance": [
         "SIRA DUZELTILDI (lead): ADR-0017 §10 ile tasarim §10.2 celisiyordu; ADR dogru. Bu kart B2-den B5b-ye alindi — UI-BOARD-001, UI-CFG-001 ve UI-COMP-001 BITTIKTEN SONRA. Gerekce: aksi halde RoomScreen.tsx ve ComputerGameScreen.tsx UC DALGADA UC KEZ yazilacakti. Bitmis olani cilalarsin, degismek uzere olani degil.",
@@ -2420,10 +2420,10 @@
       "title": "knip is paketlerindeki olu disa verimi goremiyor — alti kapi onerisi",
       "priority": "P2",
       "agent": "xox-devops",
-      "status": "todo",
+      "status": "in_wave",
       "deps": [],
       "report": null,
-      "branch": null,
+      "branch": "feat/CI-006",
       "acceptance": [
         "IKI BAGIMSIZ KOR NOKTA olculdu (SEC-005 raporu): (1) knip.json packages/* icin entry:[\"src/index.ts\"] tanimliyor; entry dosyasinin exportlari ASLA unused sayilmiyor — bu varsayim yayinlanan kutuphaneler icin dogru, bizimkiler yayinlanmiyor. (2) knip bir exportun YALNIZ kendi *.test.ts-inden import edilmesini de kullanim sayiyor.",
         "KANIT: bu hafta IKI olu kod merge oldu ve gates yesil gecti — revokeWsTicketsForUser (kor nokta 1, SEC-005 canlandirdi) ve useBoardModes (kor nokta 2, lead bagladi).",
