@@ -336,3 +336,45 @@ instance başına tek change stream'in olay hacmini büyütür, bkz. 2026-08-25 
 kümesinde değildi. Saat rövanşta ancak İLK hamleden SONRA (`applyMove`) kurulur; grace yolu
 etkilenmez. W3-01 (rövanş/istatistik) bu satırı `joinRoom`daki ile aynı şekilde doldurmalı:
 `turnDeadline: new Date(nowMs + MOVE_TIMEOUT_SECONDS * 1000)`.
+
+## 2026-08-28 · `move:applied.turnDeadline` opsiyonel-nullable (CTR-004)
+
+**Karar:** `move:applied` şemasına `turnDeadline: epochMsSchema.nullable().optional()`.
+
+**Reddedilen alternatif:** her hamlede tam `state` yayınlamak. Ağ yükü ~350 B/çerçeve
+olurdu; seçilen yol **+31 B** (55 → 86 B). R1 fan-out bütçesi kararı (2026-08-25) zaten
+bunu dışlıyordu.
+
+**Neden `.optional()` — zorunlu `.nullable()` değil:** belirleyici yön **yeni istemci ←
+ESKİ sunucu**. Zorunlu olsaydı yeni istemci eski sunucunun yankısını tümüyle **reddeder**,
+hamleyi kaçırır, tahtayı dondururdu. Mobil bağımsız sürümlendiği için bu senaryo kuramsal
+değil.
+
+**Neden `null` iken alan ATLANMIYOR:** atlanan alan istemcide "bilgi yok" ile karışırdı.
+Üç hâl ayrı: `number` = yeni hedef · `null` = hedef yok · alan yok = eski sunucu.
+
+**Neden `serverTime` eklenmedi:** `state` mesajı zaten taşıyor; her `move:applied`'a
+koymak saat sapması sorununu çözmez, yalnız çerçeveyi büyütür.
+
+**Ölçülmüş tuzak:** istemcide `??` kullanmak bu üçlüyü ikiye indirir. Ajanın mutasyonu
+gösterdi ki `??` yalnız **tek** testi öldürüyor — o test yazılmamış olsaydı sessizce merge
+olurdu. Bkz. `api-contract.md`.
+
+## 2026-08-28 · `seedTestUsers` `$set` kullanır (DB-005)
+
+**Karar:** `$setOnInsert` → `$set`. Seed her koşuda `TEST_USERS`'ı bilinen sıfır duruma
+**geri döndürür**.
+
+**Sebep ölçüldü:** `apps/e2e` gerçek oyunlar oynayıp `stats` sayaçlarını artırıyor;
+`$setOnInsert` var olan kullanıcıda asla sıfırlamıyordu. Sonuç: bir E2E koşusundan sonra
+`seed.test.ts` paylaşılan Atlas'ta **kalıcı kırmızı** ve `pnpm gates`'in tamamı düşüyordu.
+
+**Neden testi izole etmek (alternatif b) seçilmedi:** o, testin "seed gerçekten idempotent
+reset yapıyor mu" iddiasını gevşetirdi. Kapıyı korumak için kapının sınadığı şeyi
+küçültmek yanlış takas.
+
+**Güvenlik:** filtre sabit `_id` literalinden (`e2e-user-1`/`e2e-user-2`) geliyor, kullanıcı
+girdisinden değil — gerçek oyuncu verisine sıçrama yolu yok.
+
+**`$setOnInsert` başka yerde:** `queries/friends.ts:54` — orada **bilinçli** ("yalnız yoksa
+oluştur, var olan pending/accepted durumu ezme", KK-125/126). Aynı tuzak değil, dokunulmadı.

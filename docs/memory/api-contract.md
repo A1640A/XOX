@@ -125,6 +125,27 @@ değerine sıkıştırılamaz, bkz. `decisions.md`.
 state:'playing' })` ile **tam olarak biri** yazar (çift yürütme idempotansı, ADR-0004).
 Sonuç `forfeitStatus(winner, 'timeout'|'abandon')` → `rooms.result` + `games.endReason`.
 
-**Uyarı — `move:applied` `turnDeadline` TAŞIMIYOR.** İstemcinin gördüğü sayaç tam `state`
-mesajları arasında bayatlar. Sunucu otoritesi doğrudur; düzeltme için takip kartı gerekiyor
-(decisions.md, 2026-08-28).
+**`move:applied` `turnDeadline` TAŞIR** (`CTR-004`, 2026-08-28 — yukarıdaki eski uyarı
+kapandı). Alan **opsiyonel ve nullable**; üç hâli ayırt eder:
+
+| Değer        | Anlamı                                | İstemci ne yapar        |
+| ------------ | ------------------------------------- | ----------------------- |
+| `number`     | yeni son tarih                        | sayacı bu hedefe kurar  |
+| `null`       | hedef yok (hamle oyunu bitirdi)       | sayacı durdurur         |
+| **alan yok** | sunucu bilgi göndermiyor (eski sürüm) | **son bildiğini korur** |
+
+**`??` KULLANMA.** `null` ile `undefined` bu üçlüde farklı şeylerdir; `??` ikisini
+birleştirir ve oyunu bitiren hamleden sonra sayaç eski hedefte asılı kalır — düzeltilen
+kusurun ikizi. İstemci açık kontrol yapar:
+`if (message.turnDeadline === undefined) return state.turnDeadline`.
+
+**Neden zorunlu-nullable değil de opsiyonel:** yön **yeni istemci ← ESKİ sunucu**. Zorunlu
+olsaydı yeni istemci eski sunucunun yankısını tümüyle reddeder, hamleyi kaçırır ve tahtayı
+dondururdu. Mobil bağımsız sürümlendiği için bu yön kuramsal değil.
+
+**Açık kalan (ayrı iş):** rövanşın İLK hamlesi süresiz — `packages/db/src/rooms/rematch.ts`
+`turnDeadline: null` yazıyor. `CTR-004` taşımayı düzeltti, o satırı düzeltmez; `W3-01`'in işi.
+
+⚠️ `zorunluAlanHaritasi(serverMessageSchema)` tablosu **opsiyonel alanı göremez** — alan
+şemadan silinse o tablo kırmızı olmaz. Tek kilit `connection.test.ts`'teki
+`CTR-004 — move:applied.turnDeadline` bloğudur.
