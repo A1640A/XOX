@@ -1,20 +1,12 @@
 import { connectDb, createRoom } from '@xox/db'
 import { parseBoardConfig } from '@xox/game-core'
-import {
-  roomCreateBodySchema,
-  roomCreateResponseSchema,
-  type ErrorCode,
-  type ErrorResponse,
-} from '@xox/shared'
+import { roomCreateBodySchema, roomCreateResponseSchema } from '@xox/shared'
 import { resolveIdentity } from '@/lib/auth/identity'
 import { isBoardSizeEnabled } from '@/lib/game/enabled-sizes'
+import { errorJson } from '@/lib/http/error-json'
 import { logError } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
-
-function errorJson(code: ErrorCode, message: string, status: number): Response {
-  return Response.json({ code, message } satisfies ErrorResponse, { status })
-}
 
 /**
  * Gövde OPSİYONELDİR (KK-B14/B15, ADR-0015 §2). `req.json()` boş gövdede
