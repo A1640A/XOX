@@ -270,8 +270,30 @@ export default tseslint.config(
 
   // Konfig dosyaları — tip bilgisi gerektirmeyen
   {
-    files: ['**/*.config.{js,mjs,ts}', '**/*.setup.ts', 'vitest.shared.ts', '.size-limit.mjs'],
+    // CI-006: `scripts/**/*.mjs` eklendi — `scripts/dead-export-probe.mjs`
+    // hiçbir tsconfig'e dahil değil (kök `tsconfig.json`da `files: []`),
+    // `.size-limit.mjs` ile AYNI konumda (tipsiz, düz Node betiği). Bu satır
+    // CI-006'nın çakışma kümesinin (knip.json/package.json/yeni dosya) DIŞINDA
+    // — `pnpm gates` bu satır olmadan `Parsing error: ... was not found by
+    // the project service` ile kırmızı kalıyordu, rapora açıkça yazıldı.
+    files: [
+      '**/*.config.{js,mjs,ts}',
+      '**/*.setup.ts',
+      'vitest.shared.ts',
+      '.size-limit.mjs',
+      'scripts/**/*.mjs',
+    ],
     ...tseslint.configs.disableTypeChecked,
+  },
+
+  // CI-006: `scripts/**` bir Node CLI betiğidir (tarayıcı/DOM değil) — `console`/
+  // `process` global'ları hiçbir yerde tanımlı değildi (repoda Node ortamı bildiren
+  // başka bir betik yok, `globals` paketi de bağımlılık değil). Aynı gerekçeyle
+  // bu blok CI-006'nın çakışma kümesi DIŞINDA.
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+    rules: { 'no-console': 'off' },
   },
 
   prettier,

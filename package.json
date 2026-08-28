@@ -17,9 +17,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "knip": "knip",
+    "check:dead-exports": "node scripts/dead-export-probe.mjs",
     "e2e": "pnpm --filter @xox/e2e e2e",
     "mutation": "pnpm --filter @xox/game-core mutation",
-    "gates": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test:coverage && pnpm knip"
+    "gates": "pnpm check:dead-exports && pnpm typecheck && pnpm lint && pnpm format:check && pnpm test:coverage && pnpm knip"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.2",

@@ -1,0 +1,18 @@
+[
+  "packages/db/src/models/validators.ts:hasExactLength",
+  "packages/game-core/src/board.ts:boardToString",
+  "packages/shared/src/constants.ts:MAX_PROTOCOL_VIOLATIONS",
+  "packages/shared/src/primitives.ts:BoardCells",
+  "packages/shared/src/primitives.ts:WinLength",
+  "packages/shared/src/rest-contract/rooms.ts:RoomCreateBody",
+  "packages/shared/src/testids.ts:TestId",
+  "packages/shared/src/ws-close.ts:WsCloseCode",
+  "packages/ui-tokens/src/contrast.ts:meetsTextContrast",
+  "packages/ui-tokens/src/css.ts:cssVariableTokenNames",
+  "packages/ui-tokens/src/motion.ts:MotionToken",
+  "packages/ui-tokens/src/spacing.ts:SpacingToken",
+  "packages/ui-tokens/src/spacing.ts:radius",
+  "packages/ui-tokens/src/typography.ts:FontFamilyToken",
+  "packages/ui-tokens/src/typography.ts:FontSizeToken",
+  "packages/ui-tokens/src/typography.ts:LineHeightToken"
+]
