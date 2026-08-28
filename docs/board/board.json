@@ -1371,11 +1371,11 @@
       "mergeSha": "e0f9f28"
     },
     {
-      "attempts": 0,
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/CI-003.md",
       "blockedReason": null,
-      "status": "todo",
+      "status": "done",
       "id": "CI-003",
       "title": "E2E (preview) isi HIC kosmuyor — main = Production Branch",
       "tier": "P1",
@@ -1388,15 +1388,16 @@
         "KANIT: CI-002 ajani feat/CI-002-ten PR acinca ILK KEZ environment:\"Preview\" uretildi ve E2E (preview) gercekten kosup gecti",
         "Yani bu gece boyunca E2E kapisi CI seviyesinde HIC calismadi — E2E dogrulamasinin tamami lead-in elle dispatch ettigi qa-e2e ajanlariyla yapildi. Oruntu #1: kural yazilmis ama atesLenmiyor",
         "Cozum: is akisini production deployment_status-u de kabul edecek sekilde genislet, ya da ayri bir preview deploy adimi ekle. Hangisi secilirse gerekcesi yazilir",
-        "SONDA: main-e bir push yap ve E2E isinin GERCEKTEN kostugunu goster. skipped gormek yeterli degil"
+        "SONDA: main-e bir push yap ve E2E isinin GERCEKTEN kostugunu goster. skipped gormek yeterli degil",
+        "KAPANDI 2026-08-28: kartin onculu KISMEN YANLISTI. Son 100 kosu: 81 skipped / 10 failure / 9 success. main uzerinde skip DOGRU davranis (environment=Production). CI-004 allowlist duzeltmesi (eb2be58) ve trace-zip dislamasi (6742241) ZATEN mainde merged. Gercek sorun sureste: worktree dallari origina hic push edilmedigi icin gercek bir Preview deployment_status olayi nadiren doguyor. Cozum: workflow_dispatch girdisi + production alan adina karsi guard. actionlint exit 0. workflow_dispatch yolu DOGRULANMADI (ref origina push edilmedi) — merge sonrasi tek seferlik dogrulama gerekiyor."
       ]
     },
     {
-      "attempts": 0,
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/UI-002.md",
       "blockedReason": null,
-      "status": "todo",
+      "status": "done",
       "id": "UI-002",
       "title": "Ana sayfada iki bagimsiz hata-mesaji dugumu olusabiliyor",
       "tier": "P2",
@@ -1412,7 +1413,8 @@
         "Sonuc: getByTestId(\"hata-mesaji\") \"found multiple elements\" ile patlar. E2E yazildiginda ilk kurbani bu olur",
         "Kusur W1-04-ten ONCE de vardi; W1-04 JoinCodeField-in hata yuzeyini genislettigi icin olasiligi artirdi",
         "Cozum: ya JoinCodeField-in banner-ini cagirana kaldir, ya da tek bir hata bolgesi olsun. E2E selector-unu kapsamlandirmak ikinci tercih — asil sorun iki dugumun ayni anda var olabilmesi",
-        "EK (W1-04 merge): HomeActions.test.tsx 6/6 gecyor ama join akisina HIC dokunmuyor — yani W1-04-un ekledigi GET /api/rooms/[code] on kontrolu ana sayfada HIC test edilmeden gecti. Yesil olmasi calistigin kaniti DEGIL. Bu kart o kapsam boslugunu da kapatmali."
+        "EK (W1-04 merge): HomeActions.test.tsx 6/6 gecyor ama join akisina HIC dokunmuyor — yani W1-04-un ekledigi GET /api/rooms/[code] on kontrolu ana sayfada HIC test edilmeden gecti. Yesil olmasi calistigin kaniti DEGIL. Bu kart o kapsam boslugunu da kapatmali.",
+        "KAPANDI 2026-08-28: kirmizi kanit \"expected [...] to have a length of 1 but got 2\" — iki role=alert dugumu ayni anda gorunuyordu. JoinCodeField opsiyonel kontrollu moda alindi, HomeActions tek paylasilan state veriyor; propsuz cagri davranisi birebir korunuyor (10/10 mevcut test yesil). Erisilebilirlik: role=alert 2->1, aria-live/describedby/invalid oncesinde de sonrasinda da 0 (gerileme yok). pnpm gates exit 0, size-limit / rotasi 219.69 kB."
       ]
     },
     {
@@ -1667,17 +1669,18 @@
       "agent": "xox-devops",
       "deps": [],
       "conflictSet": [".github/workflows/e2e-preview.yml"],
-      "status": "reviewing",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/CI-003.md",
       "blockedReason": null,
       "acceptance": [
         "OLAY: filtre environment != Production && != production seklinde IKI DENYLIST karsilastirmasiydi. Vercel Production – xox (uzun tire + proje eki) etiketi yollayinca ikisine de esit olmadi, filtre GECILDI ve E2E isi PRODUCTION URL-lerine karsi kostu",
         "apps/e2e ilk adimi pnpm --filter @xox/db reset. Production veritabanini kurtaran sey IKINCI savunma hatti oldu: global-setup.ts assertTestDatabase guard-i db !== xox_test gorup hicbir test kosturmadan durdu",
         "DUZELTILDI (lead, dogrudan): kosul allowlist-e cevrildi — startsWith(environment, Preview). Beklenmeyen etiket artik CALISTIRMAZ, atlar. YAML gecerliligi ve yorumsuz dosyada denylist kalmadigi dogrulandi",
         "DOGRULANACAK: bir PR preview deploy-u ile is GERCEKTEN kosmali. Allowlist fazla dar olursa is hic kosmaz ve bu SESSIZ bir kayiptir — skipped gormek yeterli degil, YESIL gormek gerekir",
-        "GENEL DERS: kapinin IZIN VERDIGI seyi saymak, YASAKLADIGI seyi saymaktan guvenlidir. Ayni ders bu gece uc ayri yerde cikti (PERF-002 size-limit glob, W1-01 ag sondasi, bu)"
+        "GENEL DERS: kapinin IZIN VERDIGI seyi saymak, YASAKLADIGI seyi saymaktan guvenlidir. Ayni ders bu gece uc ayri yerde cikti (PERF-002 size-limit glob, W1-01 ag sondasi, bu)",
+        "KAPANDI 2026-08-28: CI-003 olcumunde zaten mainde merged bulundu (eb2be58, 2026-08-25). Tarihsel kanit: eb2be58 ONCESINDE main pushlari gercekten production URLine karsi kosmus (4 kosu) — CI-004un duzelttigi tam olay."
       ]
     },
     {
@@ -2218,17 +2221,18 @@
       "agent": "xox-test-writer",
       "deps": ["W2-04"],
       "conflictSet": ["apps/web/lib/log.test.ts"],
-      "status": "todo",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "branch": null,
-      "report": null,
+      "report": "docs/board/reports/SEC-004.md",
       "blockedReason": null,
       "acceptance": [
         "LEAD SONDASI (W2-04 merge oncesi): TICKET_QUERY_PATTERN kasitli olarak bozuldu, log testlerinin 12-si de YESIL kaldi. Ayni sonda EMAIL_PATTERN-e uygulandiginda 2 test kirmizi dondu — yani e-posta kilitli, bilet DEGIL",
         "NEDEN BUGUN ZARARSIZ: bilet bir JWT ve JWT_PATTERN onu yine yakaliyor. Ikinci bir ag var",
         "NEDEN YARIN TEHLIKELI: SEC-003 bileti tek kullanimlik yapmayi planliyor ve format degisebilir. Bilet opak bir token-a donerse TICKET_QUERY_PATTERN tek savunma olur ve onu hicbir test korumaz",
         "YAP: ?ticket= degerini JWT OLMAYAN bir dize ile (or. rastgele 40 karakter) iceren bir log satiri test et, maskelendigini iddia et",
-        "SONDA: TICKET_QUERY_PATTERN bozuldugunda o test KIRMIZI donmeli. Bugun donmuyor — kartin kapanma sarti bu"
+        "SONDA: TICKET_QUERY_PATTERN bozuldugunda o test KIRMIZI donmeli. Bugun donmuyor — kartin kapanma sarti bu",
+        "KAPANDI 2026-08-28: TICKET_QUERY_PATTERN log.ts ten gecici silindiginde YENI test kirmizi yandi, ESKI test yesil kaldi — eski testin bu yolu hic sinamadiginin kaniti. git checkout sonrasi diff bos. AYRICA kartin hipotezi DOGRULANDI: JWT-disi opak bir bilet context.ticket alani ya da Authorization: Bearer basligi icinde loglanirsa BUGUN maskelenmiyor. Bugun canli kod bu iki yoldan loglamiyor (grep) ama bu rastlanti, garanti degil -> SEC-007."
       ]
     },
     {
@@ -2619,6 +2623,84 @@
         "Her kalemi uc siniftan birine ata ve GEREKCESINI yaz: (a) SIL — gercekten olu; (b) BIRAK — test-ici kapi/assertion yardimcisi, baseline da kalir ve NEDENI baseline yaninda belgelenir; (c) URETIMDE CAGRILMALI — eksik davranis, AYRI kart ac.",
         "(a) sinifi silindikten sonra pnpm gates exit 0 VE node scripts/dead-export-probe.mjs exit 0",
         "Hicbir testi ZAYIFLATMA. Bir export silinince testi de siliniyorsa, o testin neyi korudugunu ONCE yaz. Koruma kaybi varsa o kalem (a) degildir."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "CI-007",
+      "title": "CI bes gecedir kirmizi: AUTH_SECRET yok + kapi listesi pnpm gates ten ayrismis",
+      "tier": "P0",
+      "wave": "4",
+      "agent": "lead",
+      "deps": [],
+      "conflictSet": [".github/workflows/ci.yml"],
+      "status": "done",
+      "attempts": 1,
+      "branch": null,
+      "report": "docs/board/reports/CI-007.md",
+      "acceptance": [
+        "KOK NEDEN 1: ci.yml in yazdigi .env.local de AUTH_SECRET YOKTU; gelistiricinin yerelinde VAR. Duseni: app/api/auth/mobile/refresh/route.test.ts (rotating refresh, yeniden-kullanim tespiti ve Promise.all yaris kosulu) 6/6 KIRMIZI. Yerel taklit olcumu: AUTH_SECRET satiri silinince 6 failed, CI nin yeni sahte degeriyle 6 passed — CI daki sayiyla birebir.",
+        "Duzeltme sentetik bir degerdir, GERCEK SIR DEGILDIR: yalniz tokens.ts MIN_SECRET_LENGTH=32 esigini gecmek icin. GitHub secret gerekmedi — repo PUBLIC oldugu icin kapiyi acmak gizli bir degere bagli birakilmadi.",
+        "KOK NEDEN 2: ci.yml kapilari TEK TEK cagiriyordu; CI-006 pnpm gates e altinci kapiyi ekleyince bu liste guncellenmedi ve yeni kapi CI da HIC kosmadi. Kapi ilk gununde CI da olu dogmustu. Duzeltme: bes adim tek `pnpm gates` cagrisina indirildi — yerel ile CI bir daha AYRISAMAZ.",
+        "ELE ALINMADI (bilerek): art arda push onceki CI kosusunu iptal ediyor; son 15 kosunun hicbiri yesil degildi, cogu cancelled. Dogru cozum bir politika karari -> CI-008."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "CI-008",
+      "title": "Art arda push CI kosusunu iptal ediyor — cogu commit hic dogrulanmiyor",
+      "tier": "P1",
+      "wave": "4",
+      "agent": "xox-devops",
+      "deps": ["CI-007"],
+      "conflictSet": [".github/workflows/ci.yml"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "OLCUM (CI-007, lead): son 15 CI kosusunun HICBIRI yesil degil — 3 failure, geri kalani cancelled. Iptaller dalga sirasinda art arda atilan pushlardan. Sonuc: cogu commit CI dan hic gecmedi ve kirmizi bes gece fark edilmedi.",
+        "Karar gerekiyor (lead/Omer): (a) concurrency grubu + cancel-in-progress: false, (b) dalga sonunda TEK push, (c) PR akisina gecis. Secilen secenegin GEREKCESI yazilacak.",
+        "KAPANIS SARTI: degisiklikten sonra art arda iki push atilip HER IKISININ de kosuyu tamamladigi gosterilecek (run idleri raporda). \"Artik iptal olmaz\" demek yetmez."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "SEC-007",
+      "title": "JWT-disi opak bilet log.ts te MASKELENMIYOR (SEC-004 olcumu)",
+      "tier": "P1",
+      "wave": "4",
+      "agent": "xox-dev-backend",
+      "deps": ["SEC-004"],
+      "conflictSet": ["apps/web/lib/log.ts", "apps/web/lib/log.test.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "SEC-004 olctu: JWT-disi (noktasiz, opak) bir bilet `context.ticket` alani olarak YA DA `Authorization: Bearer <bilet>` baslik metni icinde loglanirsa log.ts bugun onu maskelemiyor — duz metin sizar. Bugun canli kod bu iki yoldan loglamiyor (grep ile dogrulandi) ama bu bir GARANTI degil, rastlanti.",
+        "Repo PUBLIC ve loglar Vercelde — sizinti gercek.",
+        "KAPANIS SARTI: duzeltmeden sonra maskelemeyi gecici boz, SEC-004 un sondasinin ve yeni sondanin KIRMIZI yandigini goster, geri al ve git diff ile dogrula.",
+        "Test dosyasina gercek bir bilet/sir YAZMA — sentetik deger kullan."
+      ],
+      "blockedReason": null
+    },
+    {
+      "id": "E2E-007",
+      "title": "Preview E2E gercekten KIRMIZI kosmus ve kimse dokunmamis — 3 test + 1 flaky",
+      "tier": "P1",
+      "wave": "4",
+      "agent": "xox-qa-e2e",
+      "deps": [],
+      "conflictSet": ["apps/e2e/tests/timeout-abandon.spec.ts", "apps/e2e/tests/profile.spec.ts"],
+      "status": "todo",
+      "attempts": 0,
+      "branch": null,
+      "report": null,
+      "acceptance": [
+        "CI-003 olctu: bugun gercek bir Preview olayina karsi kosan run 33134842205 KIRMIZI — timeout-abandon.spec.ts (KK-070/071/072) 3 test failed, profile.spec.ts (KK-083) 1 flaky. Run 33133885483 ise basariliydi.",
+        "Bu kirmizi bir kapinin CALISTIGININ kanitidir — kapatmak icin testi zayiflatma. Once KK-070/071/072 nin gercekten mi kirildigini yoksa preview ortamina mi duyarli oldugunu OLC.",
+        "Urun hatasi cikarsa AYRI kart ac; test kirilganligi cikarsa kirilganligin KAYNAGINI duzelt (bekleme/senkronizasyon), timeout buyutme."
       ],
       "blockedReason": null
     }

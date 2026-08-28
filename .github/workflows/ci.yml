@@ -90,17 +90,33 @@ jobs:
         # @xox/db'nin branch coverage eşiği (%85) gerçek bir regresyonla
         # değil, salt bu mekanizma farkıyla kırmızıya döner (yerelde ölçülüp
         # doğrulanmıştı — bkz. CI-002 raporu).
+        #
+        # CI-007: `AUTH_SECRET` BURADA OLMAK ZORUNDA. Geliştiricinin yerel
+        # `.env.local`inde var, CI'ınkinde YOKTU — bu yüzden
+        # `app/api/auth/mobile/refresh/route.test.ts` (gerçek Atlas'a koşan
+        # rotating-refresh süiti) yerelde yeşil, CI'da 6/6 KIRMIZI oldu ve
+        # kimse fark etmedi. Aşağıdaki değer GERÇEK BİR SIR DEĞİLDİR: yalnız
+        # testlerin HS256 asgarisini (32 karakter, `tokens.ts`
+        # MIN_SECRET_LENGTH) geçmesi için var; hiçbir ortamda kullanılmıyor.
+        #
+        # Değer dosyaya SABİT yazılmaz, her koşumda RASTGELE üretilir. İki nedeni
+        # var: (1) repoda `AUTH_SECRET=<sabit>` biçiminde bir satır dursaydı
+        # `gitleaks` kapısı onu haklı olarak sır sanıp commit'i bloklardı — ve o
+        # kapıyı sahte bir değer için gevşetmek, gerçek bir sızıntıda da
+        # gevşemesi demekti; (2) tek kullanımlık değer, yanlışlıkla bir yere
+        # kopyalanıp kalıcılaşamaz.
         run: |
           cat > .env.local <<'EOF'
           MONGODB_URI=mongodb://127.0.0.1:27017/?replicaSet=rs0&directConnection=true
           MONGODB_DB=xox_test
           EOF
+          printf 'AUTH_SECRET=%s\n' "$(openssl rand -hex 32)" >> .env.local
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint
-      - run: pnpm format:check
-      - run: pnpm test:coverage
-      - run: pnpm knip
+      # CI-007: kapılar TEK TEK değil `pnpm gates` ile koşar. Eskiden bu adımlar
+      # beş ayrı `run:` idi; `pnpm gates`e altıncı kapı (`check:dead-exports`,
+      # CI-006) eklenince CI'daki liste sessizce ESKİ kaldı ve yeni kapı CI'da
+      # HİÇ koşmadı. Tek çağrı = yerel ile CI'ın bir daha ayrışamaması.
+      - run: pnpm gates
       - name: TypeScript sürüm kilidi (7.x lint katmanını kırar)
         run: |
           v=$(pnpm exec tsc --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
