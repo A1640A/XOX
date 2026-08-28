@@ -1,12 +1,11 @@
-import type { SettlementInput } from '@/lib/game/deadlines'
+import type { DeadlineFields } from '@xox/db'
 import { describe, expect, it } from 'vitest'
 import { createSettlementTimer, type SettlementTimerDeps } from './timers'
 
 const NOW = 1_700_000_000_000
 
-const ROOM: SettlementInput = {
+const ROOM: DeadlineFields = {
   state: 'playing',
-  board: [null, null, null, null, null, null, null, null, null],
   turnDeadline: null,
   disconnected: null,
 }

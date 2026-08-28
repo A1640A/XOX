@@ -274,3 +274,65 @@ A'nın tonunu tercih etti.
 ölçeklenir · kazanan çizgi renkten bağımsız ≥3 px dış çizgi + diğer hücrelerde ≥%40 opaklık
 düşüşü · tüm metin token'ları ≥4.5:1, kenarlıklar ≥3:1, iki temada da.
 **Not:** kontrastlar tahmin edilmedi, `contrast.ts` ile aynı WCAG formülüyle hesaplandı.
+
+## 2026-08-28 · `dueSettlement` `apps/web`ten `packages/db`ye TAŞINDI — `game-core` değil (W2-01)
+
+**Bağlam:** Süre aşımı/terk kararının saf hâli `apps/web/lib/game/deadlines.ts`teydi ve tek
+üretim tüketicisi olacak `packages/db/src/rooms/settle.ts` onu import EDEMİYORDU — bağımlılık
+yönü `packages/db → apps/web` olamaz. WS-001 incelemesi bunu borç olarak yazmıştı: gövde
+yazılırken kural `packages/db` içinde YENİDEN yazılsaydı aynı kural iki yerde yaşar ve saparlardı.
+**Karar:** Kural `packages/db/src/rooms/deadlines.ts`e taşındı (`dueSettlement` + `nextDeadlineAt`).
+`apps/web/lib/realtime/timers.ts` `nextDeadlineAt`i `@xox/db`den tüketiyor; `settleDeadlines`
+`dueSettlement`i aynı klasörden çağırıyor. Eski dosya ve testi SİLİNDİ.
+**Reddedilenler:** **`packages/game-core`** (kartın önerdiği ilk yer) — ADR-0001 gereği kural
+motoru pes etme/süre aşımı/terk kavramlarını BİLMEZ ve bilmemelidir; `reason: 'timeout'|'abandon'`
+üreten bir fonksiyon %98.56 mutasyonla sertleştirilmiş saf motora ürün kavramı sokardı.
+**`packages/shared`** — karar `RoomDoc` şekline (`presence`, `disconnected`, `size/winLength`)
+bağlı; ayrıca `packages/shared` bu dalgada PERF-005 tarafından yeniden düzenleniyordu.
+**Tasarım §5.7 dosya yolunu `apps/web` diye yazıyor — spec kendi mimarisiyle çelişiyordu, yol
+lead kararıyla düzeltildi.**
+
+## 2026-08-28 · "Kimse bağlı değilse yazma" kuralı SAF karar fonksiyonunun İÇİNDE (W2-01)
+
+**Karar:** KK-076'nın `presence.X === null && presence.O === null → null` koşulu
+`dueSettlement`in içinde yaşıyor, `settleDeadlines`in yazma yolunda değil.
+**Gerekçe:** Çift yürütmenin iki yolu da (zamanlayıcı + tembel) aynı saf karara bakar. Koşul
+yazma yolunda dursaydı `settleDeadlines`e ikinci bir "karar" sızardı ve iki yol farklı
+davranabilirdi. `nextDeadlineAt` bilerek `presence`e BAKMAZ: zamanlayıcı kurmak yazma değildir,
+odaya yalnız "yine de bir kez bak" der.
+**Sonuç:** İki oyuncu da düşmüşse oyun `finishedAt:null` kalır ve oda TTL ile silinir —
+telafi eden cron/süpürücü BİLEREK yoktur (ADR-0004 değişmezi).
+
+## 2026-08-28 · Süre saati ENJEKTE edilir: `applyMove(code, userId, index, now?)` (W2-01)
+
+**Karar:** `applyMove` ve `joinRoom` son parametre olarak opsiyonel bir epoch-ms saat alır
+(`now`/`nowMs`, varsayılan `Date.now()`); `settleDeadlines(code, now)` ve `dueSettlement(room, now)`
+saati ZORUNLU alır ve içeride `Date.now()` HİÇ çağırmaz. `TurnTimer` de aynı disiplinle
+opsiyonel `clock` prop'u alır.
+**Gerekçe:** `game-core`'un `searchMove(options.now)` / `rng` konvansiyonunun aynısı — duvar
+saatine bağlı bir test CI'da kararsız olur. Opsiyonel parametre `RoomTransitions` arayüzünü
+BOZMAZ (daha az parametreli imzaya atanabilir), yani `context.ts`/`handlers/**` açılmadı.
+**Reddedilen:** Ayrı bir `Clock` bağımlılığı enjekte etmek — `packages/db`de böyle bir kalıp yok,
+tek parametre yeterli.
+
+## 2026-08-28 · `move:applied` ince yolu `turnDeadline` TAŞIMIYOR — bilinen açık, takip kartı gerekiyor (W2-01)
+
+**Bağlam:** CTR-002'nin ince `move:applied` çerçevesinde `turnDeadline` alanı yok. P0'da
+`turnDeadline` daima `null` yazıldığı için etkisizdi; W2-01 saati AÇTIĞI için artık etkili.
+**Bugünkü davranış:** Sunucu otoritesi DOĞRU (her hamlede saat yeniden kuruluyor, iki yürütme
+yolu da doğru sonlandırıyor). Yanlış olan tek şey İSTEMCİNİN GÖSTERDİĞİ sayaç: tam `state`
+mesajları arasında (rotasyon, resync, rövanş, boşluk) sayaç oyunun BAŞLANGIÇ son tarihinde
+takılı kalır ve 60 sn sonra 0 gösterir — oysa sunucu hâlâ süre veriyordur.
+**Karar:** Doğru çözüm `move:applied`e `turnDeadline: epochMsSchema.nullable()` EKLEMEK
+(her hamlede tam `state` yayınlamak DEĞİL — R1 fan-out bütçesini ~350 bayta çıkarır ve
+instance başına tek change stream'in olay hacmini büyütür, bkz. 2026-08-25 kararı).
+**Neden bu kartta yapılmadı:** üç dosya da W2-01'in çakışma kümesi DIŞINDA —
+`packages/shared/src/ws-protocol.ts` (PERF-005 paralel), `packages/shared/src/room-client.ts`,
+`apps/web/lib/realtime/connection.ts`. **Takip kartı açılmalı.**
+
+## 2026-08-28 · Rövanşın İLK hamlesi süresizdir — bilinen açık (W2-01)
+
+`rooms/rematch.ts` yeni oyunu `turnDeadline: null` ile başlatıyor ve o dosya W2-01'in çakışma
+kümesinde değildi. Saat rövanşta ancak İLK hamleden SONRA (`applyMove`) kurulur; grace yolu
+etkilenmez. W3-01 (rövanş/istatistik) bu satırı `joinRoom`daki ile aynı şekilde doldurmalı:
+`turnDeadline: new Date(nowMs + MOVE_TIMEOUT_SECONDS * 1000)`.

@@ -1,4 +1,5 @@
-import type { SettlementInput } from '@/lib/game/deadlines'
+import { nextDeadlineAt } from '@xox/db'
+import type { DeadlineFields } from '@xox/db'
 
 export interface SettlementTimerDeps {
   setTimer(callback: () => void, ms: number): unknown
@@ -10,7 +11,7 @@ export interface SettlementTimerDeps {
 
 export interface SettlementTimer {
   /** Odanın güncel hâline göre zamanlayıcıyı yeniden kurar (idempotent). */
-  schedule(room: SettlementInput): void
+  schedule(room: DeadlineFields): void
   cancel(): void
   /** Kurulu bir zamanlayıcı var mı — kablolamayı testte gözlemlemek için. */
   isArmed(): boolean
@@ -24,21 +25,21 @@ function delayUntil(target: number, now: number): number {
 /**
  * ADR-0004'ün "çift yürütme"sinin **BİRİNCİ** yolu (§5.7): bağlı bir instance
  * `min(turnDeadline, graceEndsAt)` için bir zamanlayıcı kurar, dolunca
- * `settleDeadlines` çağrılır. İkinci yol (tembel kontrol) `session.ts`te zaten
- * canlı: `settleDeadlines` gelen her geçerli mesajdan önce çağrılıyor.
+ * `settleDeadlines` çağrılır. İkinci yol (tembel kontrol) `session.ts`te canlı:
+ * `settleDeadlines` gelen her geçerli mesajdan (bir `ping` dahil) önce çağrılır.
  *
- * **Burada KARAR ve YAZMA yok.** `dueSettlement`in kuralları da, CAS yazması da
- * W2-01'in işi (`packages/db/src/rooms/settle.ts`). Bu modülün tek sorumluluğu
- * ZAMANLAMA: "şu ana kadar kimse temas etmezse yine de bir kez bak."
+ * Neden İKİSİ birden: bu yol tek başına yetmez — Vercel Fluid instance'ı ölürse
+ * zamanlayıcı da onunla ölür ve oyun sonsuza kadar askıda kalır. Tembel yol da
+ * tek başına yetmez — kimse temas etmezse oyun hiç bitmez ve karşı taraf
+ * bekler. İkisi AYNI ANDA koşabilir; idempotanslık `settleDeadlines`in
+ * `casUpdateRoom({ code, version, state:'playing' })` koşulundan gelir:
+ * **tam olarak biri** yazar.
  *
- * Neden gövde bugün boş DEĞİL: bir önceki sürüm tam no-op'tu ve `onDue`
- * kablosu %0 kapsamdaydı — yani "kablolama kilitlendi" iddiası yalnız çağrı
- * SAYISI için geçerliydi. W2-01 kabloyu yanlış bağlarsa ADR-0004'ün çift
- * yürütmesi sessizce TEK yürütmeye düşerdi ve bunu hiçbir kapı görmezdi.
- *
- * P0'da pratik etkisi sınırlı: `turnDeadline` daima `null` yazılıyor (AS-08),
- * yani yalnız `detachConnection`ın damgaladığı `graceEndsAt` bir zamanlayıcı
- * kurdurur ve dolduğunda `settleDeadlines` bugün `null` döner.
+ * **Burada KARAR ve YAZMA yok.** "Ne zaman bakmalıyım" sorusunun cevabı bile
+ * burada hesaplanmaz: `nextDeadlineAt` `@xox/db`den gelir, `dueSettlement` ile
+ * aynı dosyadan. Kural iki yerde yaşasaydı (ör. odaya üçüncü bir son tarih
+ * eklenince) zamanlayıcı hiç kurulmaz ama tembel yol yine sonlandırırdı —
+ * çift yürütme sessizce TEK yürütmeye düşer ve bunu hiçbir kapı görmez.
  */
 export function createSettlementTimer(deps: SettlementTimerDeps): SettlementTimer {
   let handle: unknown = null
@@ -50,16 +51,11 @@ export function createSettlementTimer(deps: SettlementTimerDeps): SettlementTime
   }
 
   return {
-    schedule(room: SettlementInput): void {
+    schedule(room: DeadlineFields): void {
       cancel()
-      if (room.state !== 'playing') return
+      const dueAt = nextDeadlineAt(room)
+      if (dueAt === null) return
 
-      const candidates: number[] = []
-      if (room.turnDeadline !== null) candidates.push(room.turnDeadline.getTime())
-      if (room.disconnected !== null) candidates.push(room.disconnected.graceEndsAt.getTime())
-      if (candidates.length === 0) return
-
-      const dueAt = Math.min(...candidates)
       handle = deps.setTimer(
         () => {
           handle = null

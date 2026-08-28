@@ -1,3 +1,4 @@
+import { MOVE_TIMEOUT_SECONDS } from '@xox/shared'
 import type { Player, SeatOccupant } from '@xox/shared'
 import { Game } from '../models/game'
 import { Room } from '../models/room'
@@ -54,6 +55,7 @@ export async function joinRoom(
   code: string,
   user: SeatOccupant,
   connId: string,
+  nowMs: number = Date.now(),
 ): Promise<TransitionResult> {
   const room = await Room.findOne({ code }).lean()
   if (room === null) return { ok: false, code: 'ROOM_NOT_FOUND' }
@@ -68,7 +70,10 @@ export async function joinRoom(
   const seat: Player = room.seats.X === null ? 'X' : 'O'
   const otherSeat: Player = seat === 'X' ? 'O' : 'X'
   const otherOccupant = room.seats[otherSeat]
-  const now = new Date()
+  // Saat DIŞARIDAN gelir (`rng` konvansiyonunun aynısı): oyunun başladığı an
+  // ile ilk hamlenin son tarihi TEK bir kaynaktan türesin ve test sahte saatle
+  // deterministik olsun.
+  const now = new Date(nowMs)
 
   if (otherOccupant === null) {
     // İkisi de boş olamayacak durumdayken (kurucu her zaman X'i doldurur)
@@ -104,6 +109,10 @@ export async function joinRoom(
       [`presence.${seat}`]: { connId, since: now },
       state: 'playing',
       startedAt: now,
+      // AS-08 (W2-01): oyunun BAŞLADIĞI yazma aynı zamanda ilk hamlenin
+      // saatini kurar. Burada kurulmazsa ilk hamle süresiz olur ve X sonsuza
+      // kadar düşünebilir — `applyMove` saati ancak İLK hamleden SONRA yazar.
+      turnDeadline: new Date(nowMs + MOVE_TIMEOUT_SECONDS * 1000),
       gameId: game._id,
     },
   })

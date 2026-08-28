@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { MOVE_TIMEOUT_SECONDS } from '@xox/shared'
 import type { Cell, SeatOccupant } from '@xox/shared'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { connectDb, disconnectDb } from '../client'
@@ -196,6 +197,71 @@ describe('applyMove', () => {
       expect(after?.version).toBe((before?.version ?? 0) + 1)
     },
   )
+
+  describe('AS-08 / W2-01: hamle süresi saati', () => {
+    /**
+     * Sahte saat — `Date.now()` BEKLENMEZ. Çıplak sayı bilerek: beklentiyi
+     * `Date.now()`tan türetmek testi duvar saatine bağlar ve CI'da kararsız
+     * yapar; `MOVE_TIMEOUT_SECONDS`i beklentinin İÇİNDE kullanmak ise sabit
+     * yanlış değişirse testi de birlikte götürür. Bu yüzden beklenen an
+     * ELLE yazılmış (60 sn = 60_000 ms sonrası).
+     */
+    const NOW = 1_767_225_600_000
+
+    it('süren oyunda turnDeadline now + 60 sn olarak yazılır (saat ENJEKTE edilir)', async () => {
+      const code = await makePlayingRoom({ version: 2 })
+
+      const result = await applyMove(code, xUser.userId, 4, NOW)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      expect(result.room.turnDeadline?.getTime()).toBe(NOW + 60_000)
+    })
+
+    it('sabitten türetilmiş kontrol: yazılan an MOVE_TIMEOUT_SECONDS ile birebir örtüşür', async () => {
+      const code = await makePlayingRoom({ version: 2 })
+
+      const result = await applyMove(code, xUser.userId, 4, NOW)
+
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      expect(result.room.turnDeadline?.getTime()).toBe(NOW + MOVE_TIMEOUT_SECONDS * 1000)
+    })
+
+    it('NÖTR OLMAYAN ikinci an: farklı bir `now` farklı bir deadline yazar', async () => {
+      const code = await makePlayingRoom({ version: 2 })
+
+      const result = await applyMove(code, xUser.userId, 4, NOW + 123_456)
+
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      expect(result.room.turnDeadline?.getTime()).toBe(NOW + 123_456 + 60_000)
+    })
+
+    it('oyun BİTİNCE turnDeadline null`a döner (kazanılan hamle)', async () => {
+      const code = await makePlayingRoom({
+        board: ['X', 'X', null, 'O', 'O', null, null, null, null],
+        version: 5,
+      })
+
+      const result = await applyMove(code, xUser.userId, 2, NOW)
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      expect(result.room.state).toBe('finished')
+      expect(result.room.turnDeadline).toBeNull()
+    })
+
+    it('`now` verilmezse duvar saatine düşer — üretim yolu da saati yazar', async () => {
+      const code = await makePlayingRoom({ version: 2 })
+      const before = Date.now()
+
+      const result = await applyMove(code, xUser.userId, 4)
+
+      if (!result.ok) throw new Error('beklenmeyen red: ' + result.code)
+      const written = result.room.turnDeadline?.getTime() ?? 0
+      expect(written).toBeGreaterThanOrEqual(before + 60_000)
+      expect(written).toBeLessThanOrEqual(Date.now() + 60_000)
+    })
+  })
 
   describe('DB-BOARD-001: odanın KENDİ konfigürasyonu — 3×3 sabit değil', () => {
     it('11×11 odada 120 geçerli bir indekstir (3×3 sınırıyla out-of-range SAYILMAZ)', async () => {
