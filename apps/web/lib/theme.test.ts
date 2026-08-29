@@ -116,3 +116,84 @@ describe('resolveTheme', () => {
     await expect(resolveTheme('u1')).resolves.toBe('acik')
   })
 })
+
+/**
+ * PERF-008 — `proxy.ts`'in tema-çerezi kararını verdiği fonksiyon.
+ * `next/headers` KULLANMAZ (proxy `NextRequest.cookies`'ten geçer), bu
+ * yüzden `getMock`'a hiç dokunulmaz; yalnız `@xox/db` mock'u paylaşılır.
+ */
+describe('resolveThemeCookieValue (proxy.ts tema-çerezi kararı)', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('mevcut çerez zaten geçerliyse (koyu/acik) undefined döner — DB-ye HİÇ gidilmez', async () => {
+    const { resolveThemeCookieValue } = await import('./theme')
+
+    await expect(resolveThemeCookieValue('koyu', 'u1')).resolves.toBeUndefined()
+    expect(mockConnectDb).not.toHaveBeenCalled()
+    expect(mockFindById).not.toHaveBeenCalled()
+  })
+
+  it('geçersiz bir çerez (fast-path DIŞI) yine de DB-ye gitmeyi TETİKLER — yalnız acik/koyu hızlı yol sayılır', async () => {
+    mockDbTheme({ theme: 'koyu' })
+    const { resolveThemeCookieValue } = await import('./theme')
+
+    await expect(resolveThemeCookieValue('mavi', 'u1')).resolves.toBe('koyu')
+    expect(mockConnectDb).toHaveBeenCalledOnce()
+  })
+
+  it('userId boş string ise undefined döner — DB-ye HİÇ gidilmez', async () => {
+    const { resolveThemeCookieValue } = await import('./theme')
+
+    await expect(resolveThemeCookieValue(undefined, '')).resolves.toBeUndefined()
+    expect(mockConnectDb).not.toHaveBeenCalled()
+    expect(mockFindById).not.toHaveBeenCalled()
+  })
+
+  it('DB-de kullanıcı silinmişse (null) yine de acik döner (patlamaz), bu geçerli bir çözümdür', async () => {
+    mockDbTheme(null)
+    const { resolveThemeCookieValue } = await import('./theme')
+
+    await expect(resolveThemeCookieValue(undefined, 'silinmis-kullanici')).resolves.toBe('acik')
+  })
+
+  it('DB sorgusu düşerse undefined döner — çerez YAZILMAZ (kendi kendini onarma korunur)', async () => {
+    mockDbThrows(new Error('Mongo bağlantı hatası'))
+    const { resolveThemeCookieValue } = await import('./theme')
+
+    await expect(resolveThemeCookieValue(undefined, 'u1')).resolves.toBeUndefined()
+  })
+
+  it('connectDb-in kendisi düşerse de undefined döner — çerez YAZILMAZ', async () => {
+    mockConnectDb.mockRejectedValueOnce(new Error('Atlas erişilemez'))
+    const { resolveThemeCookieValue } = await import('./theme')
+
+    await expect(resolveThemeCookieValue(undefined, 'u1')).resolves.toBeUndefined()
+  })
+
+  /**
+   * KAPANIŞ ŞARTI (kart PERF-008) — çerezsiz, oturumlu bir kullanıcı için
+   * ARDIŞIK İKİ "istek" kurulur (proxy.ts'in aynı fonksiyonu iki kez, ikinci
+   * seferinde birincinin döndürdüğü çerezle çağırdığı senaryonun birebir
+   * taklidi). DB-çağrısı casusu: BİRİNCİ istekte 1, İKİNCİ istekte 0.
+   */
+  it('ARDIŞIK İKİ istek: birinci DB-ye 1 kez gider ve çerez döner, ikinci (o çerezle) DB-ye HİÇ gitmez', async () => {
+    mockDbTheme({ theme: 'koyu' })
+    const { resolveThemeCookieValue } = await import('./theme')
+
+    // 1. istek — proxy.ts'e göre gelen istekte tema çerezi henüz yok.
+    const first = await resolveThemeCookieValue(undefined, 'u1')
+    expect(first).toBe('koyu')
+    expect(mockConnectDb).toHaveBeenCalledOnce()
+    expect(mockFindById).toHaveBeenCalledOnce()
+
+    // Tarayıcı artık `Set-Cookie: xox-tema=koyu`yu saklıyor — proxy.ts bir
+    // SONRAKİ istekte bu değeri `req.cookies.get(...)`ten okuyacak.
+    // 2. istek — aynı kullanıcı, şimdi çerez MEVCUT.
+    const second = await resolveThemeCookieValue(first, 'u1')
+    expect(second).toBeUndefined() // "çerez zaten var, yazma" sinyali
+    expect(mockConnectDb).toHaveBeenCalledOnce() // HÂLÂ bir kez — ikinci istekte ARTMADI
+    expect(mockFindById).toHaveBeenCalledOnce() // HÂLÂ bir kez
+  })
+})
