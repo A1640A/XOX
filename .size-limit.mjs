@@ -174,6 +174,50 @@ const LIGHT_LIMIT = '158 kB'
 //
 // Lead sondası: `MEDIUM_LIMIT` 150 kB'ye düşürülünce `size-limit` KIRMIZI döndü — katman
 // gerçekten dayatıyor, süs değil.
+//
+// ✅ PERF-007 (2026-08-29) — `/oda/[kod]` 222.08 → **225.16 kB** (gece başından bu yana
+// +3.08 kB: DESIGN-001b +1.12, CTR-004 +0.03, kalan ~1.93 kB `W3-02`/`W3-03`'ün paylaşılan
+// grafiğe eklediği gürültü). Pay hâlâ 9.84 kB — bütçe (235 kB) İHLAL EDİLMEDİ, revize
+// GEREKMEDİ. `PERF-004`'ün dersi tekrarlanmadı: bu kart TEORİYLE değil gerçek chunk
+// içeriğiyle (`.next/diagnostics/route-bundle-stats.json` + chunk'ların kendisi, `strings`/
+// `grep` ile) çalıştı. Tam tablo `docs/board/reports/PERF-007.md`'de; özet:
+//
+//   Tüm rotalarda ortak "kabuk" (react + react-dom + Next runtime + Turbopack loader +
+//   next-auth `SessionProvider`/`useSession` + `@vercel/analytics` + `@vercel/speed-insights`,
+//   7 chunk)                                                          ≈ 145.6 kB gzip
+//   + zod/mini çekirdeği (orta+ağır katman ortak, `0i8vuyke0uxew.js`)  ≈  20.4 kB gzip
+//   + klasik `zod` (yalnız ağır katman ortak, ws-protocol, `3lbfsuatfhxh9.js`) ≈ 45.8 kB gzip
+//   + `/oda/[kod]`'e özel sayfa chunk'ı (RoomScreen ağacı: Board, use-room WS
+//     istemcisi, emoji/resign/reconnect metinleri)                    ≈  12.9 kB gzip
+//   ────────────────────────────────────────────────────────────────────────
+//   TOPLAM (size-limit'in kendi gzip'iyle)                              225.16 kB
+//
+// OPS-011 için ayrı ölçüldü (`layout.tsx`'e DOKUNMADAN — bu kartın DOKUNMA listesi; `esbuild`
+// ile paketlerin `next` giriş noktaları izole minify+gzip edildi, PROXY ölçüm):
+// `<Analytics />` tek başına ≈ 1.66 kB gzip, `<SpeedInsights />` tek başına ≈ 1.52 kB gzip,
+// İKİSİ AYNI CHUNK'TA BİRLİKTE ≈ **2.2 kB gzip** (gzip'in ortak örüntüleri paylaşması
+// yüzünden toplamdan küçük). Bu 2.2 kB yukarıdaki "ortak kabuk"un (145.6 kB) İÇİNDE —yani
+// TÜM 12 rotanın ödediği bir maliyet, yalnız ağır rotaların değil. `SpeedInsights` ÇALIŞIYOR
+// (`/_vercel/speed-insights/script.js` 200), `Analytics` ÇALIŞMIYOR (proje ayarında kapalı,
+// `/_vercel/insights/script.js` 404) — yani bu 2.2 kB'nin ~1.66 kB'lik dilimi şu an HİÇBİR
+// veri üretmeden her sayfa yüklemesinde indiriliyor. Karar Ömer'in (`OPS-011`); bu kart
+// yalnız ölçtü, `layout.tsx`'e dokunmadı.
+//
+// Bulunan ama bu kartın çakışma kümesi (`apps/web/components/room/**`) DIŞINDA kalan bir
+// sızıntı: `/` ve `/oda/[kod]`'in kendi sayfa chunk'ı `@xox/game-core`'un ANA barrel'ından
+// (`Board.tsx` → `cellCount`, `HomeActions.tsx` → `DEFAULT_BOARD_CONFIG`) tek bir sembol
+// çekiyor, ama Turbopack barrel'ın KULLANILMAYAN `export { bestMove, chooseMove } from
+// './ai'` satırını ELEMİYOR — minimax + arama motoru (`ai.ts`+`ai-config.ts`+`search.ts`)
+// bu iki rotanın chunk'ına da GERÇEKTEN gömülüyor (canlı doğrulandı: derlenmiş chunk'ta
+// `chooseMove`'un GÖVDESİ var, yalnız adı değil). İzole `esbuild` ile ölçülen ağırlığı
+// ≈ **3.1 kB gzip** (`/oda/[kod]`'in 12.9 kB'lık kendi chunk'ının ~%24'ü). Şüphelenilen kök
+// neden: `packages/game-core/package.json`'da `"sideEffects": false` YOK (`packages/shared`
+// PERF-005'te bunu eklediğinde tam bu sınıf sızıntı kapanmıştı). Düzeltme
+// `packages/game-core/**` ve `apps/web/components/board/Board.tsx` /
+// `apps/web/components/home/HomeActions.tsx`'i (ikisi de bu kartın DIŞINDA) alt yoldan
+// import etmeye (`@xox/game-core/board`, `@xox/game-core/config` — ikisi de zaten mevcut
+// `exports` haritasında) taşımayı gerektiriyor; ayrı bir kart gerekiyor. 3.1 kB, 9.84 kB'lık
+// mevcut payı tehdit etmediği için bu kart bütçeyi REVİZE ETMEDİ.
 const LIGHT_ROUTES = new Set(['/_not-found', '/oyna/bilgisayar', '/giris', '/davet/[kod]'])
 const MEDIUM_ROUTES = new Set(['/profil', '/kayit'])
 const MEDIUM_LIMIT = '184 kB'
