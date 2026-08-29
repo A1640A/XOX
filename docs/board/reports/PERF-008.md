@@ -169,7 +169,7 @@ build_kaniti: >
 test_ciktisi_ozet:
   theme_test: 'lib/theme.test.ts — 18/18 geçti (11 eski `resolveTheme` testi DOKUNULMADAN yeşil + 7 yeni `resolveThemeCookieValue` testi)'
   proxy_test: 'proxy.test.ts — 4/4 geçti (2 eski assertion + 1 güncellenmiş "mongoose doğrudan import etmez" + 1 yeni "export const runtime yok")'
-  tum_paket: "pnpm --filter @xox/web test:coverage → 96 dosya / 967 test, hepsi yeşil"
+  tum_paket: 'pnpm --filter @xox/web test:coverage → 96 dosya / 967 test, hepsi yeşil'
   typecheck: 'pnpm --filter @xox/web typecheck → temiz'
   gates: 'pnpm gates → exit 0 (check:dead-exports && typecheck && lint && format:check && test:coverage && knip, hepsi TEK komutla &&; herhangi biri kırılsaydı komut orada dururdu)'
   coverage_ozet: 'statements 94.26% / branches 89.63% / functions 94.02% / lines 96.44%'
