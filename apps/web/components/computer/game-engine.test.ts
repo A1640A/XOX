@@ -207,12 +207,18 @@ describe('yenilmezlik sondası — zorluk-unbeatable', () => {
   const OPENINGS = [0, 1, 2, 3, 4, 5, 6, 7, 8]
   const GAMES_PER_OPENING = 23 // 9 açılış × 23 = 207 ≥ 200 (kart kriter 8)
 
-  // Alfa-beta budaması olmayan minimax, insanın ilk hamlesinden sonraki 8 boş
-  // hücreli tahtada tam ağacı tarar (~60 ms/çağrı — bkz. `game-core`
-  // `placeStone` yorumu). 207 oyun × bu tek pahalı çağrı düz `vitest run`da
-  // ~15 sn, V8 kapsam ölçümü AÇIKKEN (`test:coverage`) enstrümantasyon
-  // yükünden ~2 katına çıkabiliyor; varsayılan 5 sn zaman aşımı bu yüzden
-  // bolca pay bırakılarak yükseltilir (3. argüman).
+  // CI-005 (2026-08-29) GÜNCEL ÖLÇÜM: CORE-AI-002 3×3 minimax'a alfa-beta
+  // budaması ekledikten SONRA bu 207 oyunluk sonda yüksüz ~2-4 sn, 5×
+  // CPU aşırı-abonelik altında (10 çekirdekli makinede 50 arka plan
+  // CPU-tüketici iş parçacığı + gerçek `turbo test:coverage --force`
+  // 5-paket paralel) bile ~11-14 sn sürüyor — ölçülen en kötü durumun
+  // yaklaşık 6-8 katı pay. Eski yorum (alfa-beta ÖNCESİ ~60 ms/çağrı,
+  // ~15 sn toplam) artık GEÇERSİZ, CORE-AI-002 aynı gün ilerleyen
+  // saatte birleşti; bkz. docs/board/reports/CI-005.md ölçüm tablosu.
+  // Sondanın SELF-contention'ı (apps/web'in KENDİ ~95 diğer test dosyasıyla
+  // aynı worker havuzunu paylaşması) `vitest.config.ts`teki ayrı
+  // `web-yenilmezlik` projesiyle kesildi — bu zaman aşımı yalnız DIŞ
+  // (turbo'nun diğer paketleri / başka bir agent) yüke karşı pay bırakır.
   const SONDA_TIMEOUT_MS = 90_000
 
   it(

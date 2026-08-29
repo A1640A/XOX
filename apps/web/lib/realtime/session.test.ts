@@ -1,4 +1,4 @@
-import type { RoomDoc } from '@xox/db'
+import { nextDeadlineAt, type DeadlineFields, type RoomDoc } from '@xox/db'
 import { type Cell, type ServerMessage, serverMessageSchema } from '@xox/shared'
 import { describe, expect, it, vi } from 'vitest'
 import type { RoomTransitions } from './context'
@@ -40,9 +40,23 @@ interface Fixture {
   sent: ServerMessage[]
   closes: { code: number; reason: string }[]
   timers: { callback: () => void; ms: number }[]
+  /** `clearTimer`a verilen handle'lar — `timers` dizisindeki indeksler. */
+  cleared: unknown[]
+  /** İptal edilmemiş (hâlâ ateşlenebilir) zamanlayıcıların gecikmeleri. */
+  liveTimerDelays(): number[]
   subscribed: RoomSubscriber[]
   unsubscribed: RoomSubscriber[]
-  settlementTimer: SettlementTimer & { scheduled: number; cancelled: number }
+  settlementTimer: SettlementTimer & {
+    scheduled: number
+    cancelled: number
+    /**
+     * ⚠️ BUG-001. Bu dizi eskiden YOKTU: sahte `schedule()` kendisine verilen
+     * `room`u ATIYORDU ve testler yalnız ÇAĞRI SAYISINI doğruluyordu. Yani
+     * yeniden zamanlama tamamen YANLIŞ bir son tarih hesaplasa bile testler
+     * yeşil kalırdı (gotchas örüntü 2: "test yeşil ama hiçbir şey doğrulamıyor").
+     */
+    rooms: DeadlineFields[]
+  }
   hubState: { openStreams: number }
   db: RoomTransitions
   detach: ReturnType<typeof vi.fn>
@@ -111,14 +125,18 @@ function fixture(
   const settlementTimer: Fixture['settlementTimer'] = {
     scheduled: 0,
     cancelled: 0,
-    schedule() {
+    rooms: [],
+    schedule(room) {
       settlementTimer.scheduled += 1
+      settlementTimer.rooms.push(room)
     },
     cancel() {
       settlementTimer.cancelled += 1
     },
     isArmed: () => false,
   }
+
+  const cleared: unknown[] = []
 
   const session = createRoomSession({
     roomCode: CODE,
@@ -135,7 +153,9 @@ function fixture(
       timers.push({ callback, ms })
       return timers.length - 1
     },
-    clearTimer: () => undefined,
+    clearTimer: (handle) => {
+      cleared.push(handle)
+    },
     getDeadline: () => new Date(NOW + 800_000),
     logError: () => undefined,
     ...(useRealTimer ? {} : { settlementTimer }),
@@ -147,6 +167,9 @@ function fixture(
     sent,
     closes,
     timers,
+    cleared,
+    liveTimerDelays: () =>
+      timers.filter((_, index) => !cleared.includes(index)).map((timer) => timer.ms),
     subscribed,
     unsubscribed,
     settlementTimer,
@@ -715,15 +738,21 @@ describe('session · change stream olayları', () => {
         version: 11,
         board: ['X', null, null, null, null, null, null, null, null],
         moves: [{ index: 0, by: 'X', at: new Date(NOW) }],
+        turnDeadline: new Date(NOW + 60_000),
       }),
     )
 
-    // `turnDeadline` CTR-004 ile ince yola eklendi; bu fixture'ın odasında
-    // hedef yok, dolayısıyla `null` gider ("hedef yok", "bilgi yok" DEĞİL).
     expect(f.sent).toStrictEqual([
-      { type: 'move:applied', index: 0, by: 'X', version: 11, turnDeadline: null },
+      { type: 'move:applied', index: 0, by: 'X', version: 11, turnDeadline: NOW + 60_000 },
     ])
     expect(f.settlementTimer.scheduled).toBe(before + 1)
+    // ⚠️ DEĞER doğrulaması (BUG-001). `toBe(before + 1)` tek başına KÖRDÜ:
+    // sahte `schedule()` argümanı yuttuğu için zamanlayıcıya BAYAT ya da
+    // tamamen alakasız bir oda verilse de bu test yeşil kalıyordu. Artık
+    // zamanlayıcıya OLAYIN taşıdığı son tarihin gittiği iddia ediliyor;
+    // çıplak sayı bilerek (sabitten türetilmiş beklenti kör olur).
+    expect(f.settlementTimer.rooms.at(-1)?.turnDeadline?.getTime()).toBe(NOW + 60_000)
+    expect(nextDeadlineAt(f.settlementTimer.rooms.at(-1) ?? makeRoom())).toBe(NOW + 60_000)
   })
 
   it('zorunlu resync tam durum gönderir', async () => {
@@ -740,5 +769,150 @@ describe('session · change stream olayları', () => {
     await f.session.start()
     f.subscribed[0]?.onRoomDeleted()
     expect(f.closes).toStrictEqual([{ code: 4404, reason: 'room-deleted' }])
+  })
+})
+
+/**
+ * BUG-001 / KK-072 — E2E-007'nin canlı Preview koşusunda (33134842205) 3/3
+ * başarısız olan senaryonun birim seviyesindeki karşılığı.
+ *
+ * Kurulum tam olarak `apps/e2e/tests/timeout-abandon.spec.ts`'in KK-072'si:
+ * iki oyuncu eşleşir (join `turnDeadline`i **60 sn** sonraya yazar, AS-08),
+ * hiç hamle oynanmaz, sonra X sekmeyi kapatır. `detachConnection`
+ * `presence.X`i siler ve `disconnected.graceEndsAt`i **30 sn** sonraya
+ * damgalar. Kalan oyuncunun (O) instance'ında ZATEN KURULU 60 sn'lik
+ * zamanlayıcının 30 sn'ye YENİDEN kurulması gerekir — KK-074 (saf timeout)
+ * tek seferlik kurulum olduğu için aynı koşuda GEÇMİŞTİ.
+ */
+describe('session · BUG-001 · KK-072 · grace, kurulu turnDeadline`ın ÜSTÜNE yeniden kurulur', () => {
+  /** Kalan oyuncu O = `u2`/`c2`; ayrılan oyuncu X = `u1`/`c1`. */
+  const REMAINING = { connId: 'c2', identity: { userId: 'u2', name: 'Kaan' } } as const
+
+  /** `join.ts` AS-08: eşleşme yazması ilk hamlenin saatini de kurar. */
+  const matched = makeRoom({ turnDeadline: new Date(NOW + 60_000) })
+
+  /** `detach.ts`in yazdığı doküman: koltuk boşalır, grace damgalanır. */
+  const abandoned = makeRoom({
+    version: 11,
+    turnDeadline: new Date(NOW + 60_000),
+    presence: { X: null, O: { connId: 'c2', since: new Date(NOW) } },
+    disconnected: { seat: 'X', at: new Date(NOW), graceEndsAt: new Date(NOW + 30_000) },
+  })
+
+  it('rakip kopunca 60 sn`lik zamanlayıcı İPTAL EDİLİR ve 30 sn`lik grace kurulur', async () => {
+    const f = fixture(
+      { joinRoom: () => Promise.resolve({ ok: true, room: matched, events: [] }) },
+      REMAINING,
+      true,
+    )
+    await f.session.start()
+
+    // Kurulumda yalnız hamle saati var: 60 sn.
+    expect(f.liveTimerDelays()).toContain(60_000)
+    expect(f.liveTimerDelays()).not.toContain(30_000)
+
+    f.subscribed[0]?.onRoomChange(abandoned)
+
+    // KAPANIŞ ŞARTI, birinci yarısı: DEĞER doğrulaması. Çıplak sayılar
+    // bilerek — `DISCONNECT_GRACE_SECONDS`ten türetilmiş bir beklenti,
+    // sabit değişince sessizce kayardı.
+    expect(f.liveTimerDelays()).toContain(30_000)
+    expect(f.liveTimerDelays()).not.toContain(60_000)
+  })
+
+  it('30 sn dolunca settleDeadlines KOŞAR — kalan oyuncunun galibiyeti yazılır', async () => {
+    let clock = NOW
+    const f = fixture(
+      { joinRoom: () => Promise.resolve({ ok: true, room: matched, events: [] }) },
+      { ...REMAINING, now: () => clock },
+      true,
+    )
+    await f.session.start()
+    f.subscribed[0]?.onRoomChange(abandoned)
+    f.settle.mockClear()
+
+    const grace = f.timers.findIndex((t) => t.ms === 30_000)
+    expect(grace, 'grace için gerçek bir zamanlayıcı kurulmalı').toBeGreaterThanOrEqual(0)
+    expect(f.cleared).not.toContain(grace)
+
+    // Saat GERÇEKTEN 30 sn ilerler: `settleDeadlines`e giden `now` grace'in
+    // dolduğu andan SONRA olmalı, yoksa `dueSettlement` `null` döner ve
+    // yazma hiç olmaz (oyun sonsuza kadar askıda kalır — KK-072'nin belirtisi).
+    clock = NOW + 30_000
+    f.runTimer(grace)
+
+    await vi.waitFor(() => {
+      expect(f.settle).toHaveBeenCalledWith(CODE, NOW + 30_000)
+    })
+  })
+
+  /**
+   * ⚠️ GERÇEK KUSUR (BUG-001). `resyncIfDeaf` `connection.onForcedState`i
+   * DOĞRUDAN çağırıyordu — hub'ın `subscriber.onForcedState`ini DEĞİL. Yani
+   * sağır bir instance'ta bağlantı taze odayı görüyor ama süre zamanlayıcısı
+   * o taze odadan HİÇ yeniden kurulmuyordu: ADR-0004'ün çift yürütmesi tam da
+   * change stream'in düştüğü anda — yani zamanlayıcıya EN ÇOK ihtiyaç
+   * duyulduğu anda — sessizce TEK yürütmeye (tembel yol) düşüyordu.
+   *
+   * Bedeli KK-072'nin belirtisinin ta kendisi: nabız 25 sn'de bir attığı için
+   * 30 sn'lik grace ancak t=50'de kesinleşir; E2E 40 sn bekliyor ve hiçbir
+   * ilerleme göremiyor.
+   */
+  it('SAĞIR instance resync`i süre zamanlayıcısını da yeniden kurar', async () => {
+    const f = fixture(
+      { joinRoom: () => Promise.resolve({ ok: true, room: matched, events: [] }) },
+      REMAINING,
+      true,
+    )
+    await f.session.start()
+    expect(f.liveTimerDelays()).toContain(60_000)
+
+    // Change stream düştü: olay GELMİYOR, taze oda yalnız tembel okumadan gelir.
+    f.hubState.openStreams = 0
+    vi.spyOn(f.db, 'findRoom').mockResolvedValue(abandoned)
+
+    await f.session.handleMessage(JSON.stringify({ type: 'ping' }))
+
+    expect(f.liveTimerDelays()).toContain(30_000)
+    expect(f.liveTimerDelays()).not.toContain(60_000)
+  })
+
+  /**
+   * Aynı sınıf, ikinci yol: `join` mid-session bir RESYNC'tir (KK-047) ve
+   * `primeState` bağlantının oda görüşünü tazeler, ama zamanlayıcı yine
+   * kurulum anındaki odaya bağlı kalıyordu.
+   */
+  it('mid-session join resync`i süre zamanlayıcısını yeniden kurar', async () => {
+    let room = matched
+    const f = fixture(
+      { joinRoom: () => Promise.resolve({ ok: true, room, events: [] }) },
+      REMAINING,
+      true,
+    )
+    await f.session.start()
+    expect(f.liveTimerDelays()).toContain(60_000)
+
+    room = abandoned
+    await f.session.handleMessage(JSON.stringify({ type: 'join', roomCode: CODE }))
+
+    expect(f.liveTimerDelays()).toContain(30_000)
+    expect(f.liveTimerDelays()).not.toContain(60_000)
+  })
+
+  it('grace, 60 sn`lik turnDeadline`dan ÖNCE geldiği için kazanır (min seçimi)', async () => {
+    const f = fixture(
+      { joinRoom: () => Promise.resolve({ ok: true, room: matched, events: [] }) },
+      REMAINING,
+    )
+    await f.session.start()
+    f.subscribed[0]?.onRoomChange(abandoned)
+
+    // Sahte zamanlayıcıya giden odanın KENDİSİ doğrulanıyor: `nextDeadlineAt`
+    // 60 sn'yi değil 30 sn'yi seçmeli. (`timers.ts` bu kararı `@xox/db`ye
+    // delege eder — kural iki yerde yaşamaz.)
+    const last = f.settlementTimer.rooms.at(-1)
+    expect(last?.disconnected?.graceEndsAt.getTime()).toBe(NOW + 30_000)
+    expect(last?.turnDeadline?.getTime()).toBe(NOW + 60_000)
+    expect(nextDeadlineAt(last ?? makeRoom())).toBe(NOW + 30_000)
   })
 })
