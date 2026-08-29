@@ -94,18 +94,50 @@ export function createRoomSession(deps: RoomSessionDeps): RoomSession {
   }
 
   /**
-   * Hub ile bağlantı arasındaki tel. Her olaydan sonra süre zamanlayıcısı
-   * tazelenir — W2-01 gövdeyi doldurduğunda kablolama zaten yerinde olsun.
+   * En son ZAMANLAYICIYA verilen oda. Yalnız kimlik (referans) karşılaştırması
+   * için: aynı dokümanla art arda `schedule` çağırmak zararsızdır ama
+   * gereksizdir ve testte "kaç kez kuruldu" sinyalini gürültüye boğar.
    */
+  let armedRoom: RoomDoc | null = null
+
+  /**
+   * ⚠️ BUG-001 · KK-072. Süre zamanlayıcısının kurulduğu **TEK** kapı.
+   *
+   * Önceden `settlementTimer.schedule` üç ayrı yerde elle çağrılıyordu ve bir
+   * DÖRDÜNCÜ yol — bağlantının odayı tazelediği ama hub'ın haberi olmadığı
+   * yol — hiç çağırmıyordu:
+   *
+   * - `resyncIfDeaf` `connection.onForcedState`i **doğrudan** çağırır (hub'ın
+   *   `subscriber.onForcedState`ini DEĞİL), yani sağır instance taze odayı
+   *   görür ama zamanlayıcı ESKİ son tarihte asılı kalırdı;
+   * - `join` mid-session bir resync'tir (KK-047) ve `primeState` oda görüşünü
+   *   tazeler — zamanlayıcı yine kurulum anındaki odaya bağlı kalırdı.
+   *
+   * Sonuç, ADR-0004'ün çift yürütmesinin **change stream'in düştüğü anda**,
+   * yani zamanlayıcıya EN ÇOK ihtiyaç duyulan anda, sessizce TEK yürütmeye
+   * (tembel yol) düşmesiydi. Bedeli ölçülebilir: nabız `WS_HEARTBEAT_MS`
+   * (25 sn) aralıklı olduğu için 30 sn'lik terk grace'i ancak ~50. saniyede
+   * kesinleşir — KK-072'nin 40 sn'lik penceresinde HİÇBİR ilerleme görünmez.
+   *
+   * Kararın kendisi burada YOK: "ne zaman bakmalıyım" sorusunu `timers.ts`
+   * üzerinden `@xox/db`nin `nextDeadlineAt`i cevaplar (kural tek yerde yaşar).
+   */
+  function armSettlement(room: RoomDoc | null): void {
+    if (room === null || room === armedRoom) return
+    armedRoom = room
+    settlementTimer.schedule(room)
+  }
+
+  /** Hub ile bağlantı arasındaki tel. Her olaydan sonra zamanlayıcı tazelenir. */
   const subscriber: RoomSubscriber = {
     roomCode: deps.roomCode,
     onRoomChange(room: RoomDoc): void {
       connection.onRoomChange(room)
-      settlementTimer.schedule(room)
+      armSettlement(room)
     },
     onForcedState(room: RoomDoc | null): void {
       connection.onForcedState(room)
-      if (room !== null) settlementTimer.schedule(room)
+      armSettlement(room)
     },
     onRoomDeleted(): void {
       connection.onRoomDeleted()
@@ -244,8 +276,7 @@ export function createRoomSession(deps: RoomSessionDeps): RoomSession {
       return
     }
 
-    const room = connection.lastRoom()
-    if (room !== null) settlementTimer.schedule(room)
+    armSettlement(connection.lastRoom())
   }
 
   async function doHandle(raw: string): Promise<void> {
@@ -295,6 +326,11 @@ export function createRoomSession(deps: RoomSessionDeps): RoomSession {
     }
 
     await resyncIfDeaf()
+
+    // Handler ya da sağır-resync bağlantının oda görüşünü tazelemiş olabilir
+    // (`join` resync'i, `onForcedState`). Kimlik kapısı sayesinde change
+    // stream'in zaten kurduğu bir zamanlayıcı burada yeniden kurulmaz.
+    armSettlement(connection.lastRoom())
   }
 
   /**
